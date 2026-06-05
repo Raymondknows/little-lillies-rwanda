@@ -8,7 +8,7 @@ import { getStaffSession, requireStaffSession, hashPassword, normalizePhone } fr
 import { getCurrentSchoolId } from "@/lib/school";
 import { sendEmail, buildGuardianRegistrationEmail, buildTeacherRegistrationEmail, buildTeacherAssignmentEmail } from "@/lib/email";
 import { sendFeeReminderNotification } from "@/lib/notification";
-import { saveStudentPhoto } from "@/lib/storage";
+import { uploadStudentPhotoToBackend } from "@/lib/storage";
 import { calculateGrade, updateAssessmentPositions } from "@/lib/grade-calculator";
 import { sendResultPublishedNotifications } from "@/lib/notification";
 import { getTeacherAccessibleClassIds, getTeacherAccessibleSubjectIds } from "@/lib/teacher-permissions";
@@ -830,10 +830,10 @@ export async function createStudent(formData: FormData) {
 
   const photoFile = formData.get("photo") as File | null;
   if (photoFile?.size && photoFile.type.startsWith("image/")) {
-    const photoRoute = await saveStudentPhoto(pupil.id, photoFile);
+    const photoUrl = await uploadStudentPhotoToBackend(pupil.id, photoFile);
     await prisma.pupil.update({
       where: { id: pupil.id },
-      data: { photoUrl: photoRoute },
+      data: { photoUrl },
     });
   }
 
@@ -952,8 +952,8 @@ export async function updateStudent(formData: FormData) {
 
   const photoFile = formData.get("photo") as File | null;
   if (photoFile?.size && photoFile.type.startsWith("image/")) {
-    const photoRoute = await saveStudentPhoto(studentId, photoFile);
-    updateData.photoUrl = photoRoute;
+    const photoUrl = await uploadStudentPhotoToBackend(studentId, photoFile);
+    updateData.photoUrl = photoUrl;
   }
 
   await prisma.pupil.updateMany({

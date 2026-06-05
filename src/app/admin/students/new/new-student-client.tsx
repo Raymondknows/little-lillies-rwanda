@@ -3,7 +3,7 @@
 import { useState, type ChangeEvent, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2, Upload, ChevronDown } from "lucide-react";
-import { createStudent } from "@/app/admin/actions";
+import { createStudent } from "../../actions";
 
 export default function NewStudentClient({
   classes,

@@ -159,180 +159,163 @@ export default async function AnalyticsPage() {
       </div>
 
       {/* Grade Distribution */}
-      <Card className="border-border bg-surface">
-        <CardHeader>
-          <CardTitle>Grade Distribution</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {["A", "B", "C", "D", "E", "F"].map((grade) => {
-              const gradeKey = grade as keyof typeof gradeDistribution;
-              const count = gradeDistribution[gradeKey] || 0;
-              const percentage = totalGrades > 0 ? (count / totalGrades) * 100 : 0;
-              const gradeColor: Record<keyof typeof gradeDistribution, string> = {
-                A: "bg-success",
-                B: "bg-brand",
-                C: "bg-brand",
-                D: "bg-warning",
-                E: "bg-warning",
-                F: "bg-error",
-              };
-
-              return (
-                <div key={grade} className="flex items-center gap-3">
-                  <Badge className={`w-8 justify-center ${gradeColor[gradeKey]}`}>
-                    {grade}
-                  </Badge>
-                  <div className="flex-1">
-                    <div className="h-2 w-full rounded-full bg-background">
-                      <div
-                        className={`h-full rounded-full ${gradeColor[gradeKey]}`}
-                        style={{ width: `${percentage}%` }}
-                      />
-                    </div>
-                  </div>
-                  <span className="w-16 text-right text-xs text-muted">
-                    {count} ({percentage.toFixed(0)}%)
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Top Performers */}
-      {schoolAnalytics.topPerformers.length > 0 && (
-        <Card className="border-border bg-surface">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <Card className="border-border bg-surface lg:col-span-1">
           <CardHeader>
-            <CardTitle>Top 5 Performing Students</CardTitle>
+            <CardTitle className="text-base">Grade Distribution</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {schoolAnalytics.topPerformers.map((performer, idx) => (
-                <div key={idx} className="flex items-center justify-between rounded-lg bg-background/50 p-3">
-                  <div>
-                    <p className="font-medium text-foreground">
-                      {performer.pupilName}
-                    </p>
-                    <p className="text-xs text-muted">
-                      {performer.className}
-                    </p>
-                  </div>
-                  <Badge className="bg-success">
-                    Avg: {performer.averageScore.toFixed(1)}%
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+            <div className="space-y-2">
+              {["A", "B", "C", "D", "E", "F"].map((grade) => {
+                const gradeKey = grade as keyof typeof gradeDistribution;
+                const count = gradeDistribution[gradeKey] || 0;
+                const percentage = totalGrades > 0 ? (count / totalGrades) * 100 : 0;
+                const gradeColor: Record<keyof typeof gradeDistribution, string> = {
+                  A: "bg-success",
+                  B: "bg-brand",
+                  C: "bg-brand",
+                  D: "bg-warning",
+                  E: "bg-warning",
+                  F: "bg-error",
+                };
 
-      {/* Struggling Students */}
-      {schoolAnalytics.strugglingStudents.length > 0 && (
-        <Card className="border-border bg-surface">
-          <CardHeader>
-            <CardTitle>5 Students Needing Support</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {schoolAnalytics.strugglingStudents.map((student, idx) => (
-                <div key={idx} className="flex items-center justify-between rounded-lg bg-background/50 p-3">
-                  <div>
-                    <p className="font-medium text-foreground">
-                      {student.pupilName}
-                    </p>
-                    <p className="text-xs text-muted">
-                      {student.className}
-                    </p>
-                  </div>
-                  <Badge className="bg-warning">
-                    Grade: {student.grade}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Class Performance Comparison */}
-      {classesWithAnalytics.length > 0 && (
-        <Card className="border-border bg-surface">
-          <CardHeader>
-            <CardTitle>Class Performance</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {classesWithAnalytics.map((classData) => (
-                <div key={classData.id} className="rounded-lg border border-border p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-medium text-foreground">
-                      {classData.name}
-                    </h3>
-                    <span className="text-xs text-muted">
-                      {classData.analytics?.totalResults ?? 0} results
+                return (
+                  <div key={grade} className="flex items-center justify-between">
+                    <Badge className={`w-8 justify-center ${gradeColor[gradeKey]}`}>
+                      {grade}
+                    </Badge>
+                    <span className="text-sm font-medium text-foreground">
+                      {count} ({percentage.toFixed(0)}%)
                     </span>
                   </div>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="rounded bg-background p-3">
-                      <p className="text-xs text-muted">Class Average</p>
-                      <p className="mt-1 text-lg font-bold text-brand">
-                        {(classData.analytics?.classAverage ?? 0).toFixed(1)}%
-                      </p>
-                    </div>
-                    <div className="rounded bg-background p-3">
-                      <p className="text-xs text-muted">Pass Rate</p>
-                      <p className="mt-1 text-lg font-bold text-success">
-                        {(classData.analytics?.passRate ?? 0).toFixed(1)}%
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </CardContent>
         </Card>
-      )}
+
+        {/* Top Performers */}
+        {schoolAnalytics.topPerformers.length > 0 && (
+          <Card className="border-border bg-surface lg:col-span-1">
+            <CardHeader>
+              <CardTitle className="text-base">Top 5 Students</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {schoolAnalytics.topPerformers.map((performer, idx) => (
+                  <div key={idx} className="flex items-center justify-between rounded-lg bg-background/50 p-2">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-foreground">
+                        {performer.pupilName}
+                      </p>
+                      <p className="text-xs text-muted">
+                        {performer.className}
+                      </p>
+                    </div>
+                    <Badge className="ml-2 bg-success text-xs whitespace-nowrap">
+                      {performer.averageScore.toFixed(0)}%
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Struggling Students */}
+        {schoolAnalytics.strugglingStudents.length > 0 && (
+          <Card className="border-border bg-surface lg:col-span-1">
+            <CardHeader>
+              <CardTitle className="text-base">Needing Support</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {schoolAnalytics.strugglingStudents.map((student, idx) => (
+                  <div key={idx} className="flex items-center justify-between rounded-lg bg-background/50 p-2">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-foreground">
+                        {student.pupilName}
+                      </p>
+                      <p className="text-xs text-muted">
+                        {student.className}
+                      </p>
+                    </div>
+                    <Badge className="ml-2 bg-warning text-xs whitespace-nowrap">
+                      {student.grade}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Class Performance - on same grid */}
+        {classesWithAnalytics.length > 0 && classesWithAnalytics.map((classData) => (
+          <Card key={classData.id} className="border-border bg-surface">
+            <CardContent className="pt-6">
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="font-medium text-foreground">
+                  {classData.name}
+                </h3>
+                <span className="text-xs text-muted">
+                  {classData.analytics?.totalResults ?? 0} results
+                </span>
+              </div>
+              <div className="space-y-3">
+                <div className="rounded bg-background/50 p-3">
+                  <p className="text-xs text-muted">Class Average</p>
+                  <p className="mt-1 text-lg font-bold text-brand">
+                    {(classData.analytics?.classAverage ?? 0).toFixed(1)}%
+                  </p>
+                </div>
+                <div className="rounded bg-background/50 p-3">
+                  <p className="text-xs text-muted">Pass Rate</p>
+                  <p className="mt-1 text-lg font-bold text-success">
+                    {(classData.analytics?.passRate ?? 0).toFixed(1)}%
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
       {/* Subject Performance */}
       {subjectsWithAnalytics.length > 0 && (
-        <Card className="border-border bg-surface">
-          <CardHeader>
-            <CardTitle>Subject Performance</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {subjectsWithAnalytics.map((subjectData) => (
-                <div key={subjectData.id} className="flex items-center justify-between rounded-lg bg-background/50 p-3">
-                  <div>
-                    <p className="font-medium text-foreground">
+        <div>
+          <h2 className="mb-4 text-lg font-semibold text-foreground">Subject Performance</h2>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {subjectsWithAnalytics.map((subjectData) => (
+              <Card key={subjectData.id} className="border-border bg-surface">
+                <CardContent className="pt-6">
+                  <div className="mb-4">
+                    <h3 className="font-medium text-foreground">
                       {subjectData.name}
-                    </p>
+                    </h3>
                     <p className="text-xs text-muted">
                       {subjectData.analytics?.totalResults ?? 0} results
                     </p>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
+                  <div className="space-y-3">
+                    <div className="rounded bg-background/50 p-3">
                       <p className="text-xs text-muted">Average</p>
-                      <p className="font-bold text-brand">
+                      <p className="mt-1 text-lg font-bold text-brand">
                         {(subjectData.analytics?.subjectAverage ?? 0).toFixed(1)}%
                       </p>
                     </div>
-                    <div className="text-right">
+                    <div className="rounded bg-background/50 p-3">
                       <p className="text-xs text-muted">Pass Rate</p>
-                      <p className="font-bold text-success">
+                      <p className="mt-1 text-lg font-bold text-success">
                         {(subjectData.analytics?.passRate ?? 0).toFixed(1)}%
                       </p>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* Empty State */}

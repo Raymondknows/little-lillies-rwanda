@@ -1,11 +1,9 @@
 import fs from "fs/promises";
 import path from "path";
-import { fileURLToPath } from "url";
 
-const storageRoot = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  "../../../../storage",
-);
+// Use process.cwd() which works in both development and production Next.js builds
+// In production, Next.js runs from the app root directory
+const storageRoot = path.resolve(process.cwd(), "storage");
 const photoDir = path.join(storageRoot, "photos");
 const transcriptDir = path.join(storageRoot, "transcripts");
 const receiptDir = path.join(storageRoot, "receipts");
@@ -42,6 +40,11 @@ export function photoApiUrl(pupilId: string) {
   return `/api/photos/${pupilId}`;
 }
 
+/**
+ * LEGACY: Saves photo locally to /storage/photos/
+ * Only used for backward compatibility with existing photos
+ * New photos should use uploadStudentPhotoToBackend() instead
+ */
 export async function saveStudentPhoto(pupilId: string, file: File) {
   await ensureDirectories();
   const ext = allowedPhotoTypes[file.type];
@@ -60,6 +63,35 @@ export async function saveStudentPhoto(pupilId: string, file: File) {
   const buffer = Buffer.from(await file.arrayBuffer());
   await fs.writeFile(filePath, buffer);
   return `${photoApiUrl(pupilId)}?t=${Date.now()}`;
+}
+
+/**
+ * Upload photo directly to backend for centralized storage
+ * This ensures consistency across local dev and live server
+ * Backend saves to /uploads/photos/ and returns the path
+ */
+export async function uploadStudentPhotoToBackend(pupilId: string, file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append("photo", file);
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:3006";
+  const response = await fetch(
+    `${apiUrl}/api/admin/students/${encodeURIComponent(pupilId)}/photo`,
+    {
+      method: "POST",
+      body: formData,
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(
+      error.message || `Failed to upload photo: ${response.statusText}`
+    );
+  }
+
+  const result = await response.json();
+  return result.photoUrl; // Returns: /uploads/photos/{filename}
 }
 
 export async function getStudentPhotoFilePath(pupilId: string) {

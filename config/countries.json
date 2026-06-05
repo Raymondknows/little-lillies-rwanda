@@ -1,0 +1,55 @@
+{
+  "default": "NG",
+  "countries": {
+    "NG": {
+      "name": "Nigeria",
+      "currency": "NGN",
+      "timezone": "Africa/Lagos",
+      "plans": {
+        "starter": { "amountMinor": 3500000, "priceLabel": "₦35,000 / term" },
+        "standard": { "amountMinor": 4500000, "priceLabel": "₦45,000 / term" },
+        "group": { "amountMinor": 0, "priceLabel": "Talk to us" }
+      }
+    },
+    "GH": {
+      "name": "Ghana",
+      "currency": "GHS",
+      "timezone": "Africa/Accra",
+      "plans": {
+        "starter": { "amountMinor": 300000, "priceLabel": "GHS300 / term" },
+        "standard": { "amountMinor": 400000, "priceLabel": "GHS400 / term" },
+        "group": { "amountMinor": 0, "priceLabel": "Talk to us" }
+      }
+    },
+    "KE": {
+      "name": "Kenya",
+      "currency": "KES",
+      "timezone": "Africa/Nairobi",
+      "plans": {
+        "starter": { "amountMinor": 35000, "priceLabel": "KES35,000 / term" },
+        "standard": { "amountMinor": 45000, "priceLabel": "KES45,000 / term" },
+        "group": { "amountMinor": 0, "priceLabel": "Talk to us" }
+      }
+    },
+    "UG": {
+      "name": "Uganda",
+      "currency": "UGX",
+      "timezone": "Africa/Kampala",
+      "plans": {
+        "starter": { "amountMinor": 35000000, "priceLabel": "UGX35,000,000 / term" },
+        "standard": { "amountMinor": 45000000, "priceLabel": "UGX45,000,000 / term" },
+        "group": { "amountMinor": 0, "priceLabel": "Talk to us" }
+      }
+    },
+    "ZA": {
+      "name": "South Africa",
+      "currency": "ZAR",
+      "timezone": "Africa/Johannesburg",
+      "plans": {
+        "starter": { "amountMinor": 350000, "priceLabel": "R3,500 / term" },
+        "standard": { "amountMinor": 450000, "priceLabel": "R4,500 / term" },
+        "group": { "amountMinor": 0, "priceLabel": "Talk to us" }
+      }
+    }
+  }
+}

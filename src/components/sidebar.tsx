@@ -1,0 +1,144 @@
+"use client";
+
+import { createElement } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { AppLogo } from "@/components/app-logo";
+import { Button } from "@/components/ui/button";
+import {
+  LayoutDashboard,
+  BookOpen,
+  BookMarked,
+  FileText,
+  ClipboardList,
+  Users,
+  Bell,
+  Mail,
+  UserCircle,
+  CreditCard,
+  GraduationCap,
+  BarChart3,
+  Settings,
+  Globe,
+  Layers,
+  HelpCircle,
+} from "lucide-react";
+import { WhatsAppIcon } from "@/components/ui/icons";
+
+type NavItem = {
+  href: string;
+  label: string;
+  icon: string;
+  section?: string;
+};
+
+const icons: Record<string, any> = {
+  LayoutDashboard,
+  BookOpen,
+  BookMarked,
+  FileText,
+  ClipboardList,
+  Users,
+  Bell,
+  Mail,
+  UserCircle,
+  CreditCard,
+  GraduationCap,
+  WhatsApp: WhatsAppIcon,
+  BarChart3,
+  Settings,
+  Globe,
+  Layers,
+  HelpCircle,
+};
+
+export default function Sidebar({
+  navItems,
+  school,
+  session,
+  logoHref = "/",
+  logoutAction,
+  isMobile = false,
+  onClose,
+}: {
+  navItems: NavItem[];
+  school?: { name?: string | null; city?: string | null; country?: string | null } | null;
+  session?: { name?: string } | null;
+  logoHref?: string;
+  logoutAction?: any;
+  isMobile?: boolean;
+  onClose?: () => void;
+}) {
+  const pathname = usePathname();
+  let lastSection: string | undefined;
+
+  const handleNavClick = () => {
+    if (isMobile && onClose) {
+      onClose();
+    }
+  };
+
+  return (
+    <aside className={`w-56 h-screen flex flex-col border-r border-border bg-surface overflow-hidden print:hidden ${
+      isMobile ? "" : "hidden md:flex"
+    }`}>
+      <div className="border-b border-border px-4 py-4 flex-shrink-0">
+        <AppLogo href={logoHref} size="md" />
+        <p className="mt-3 truncate text-sm font-semibold text-foreground">{school?.name}</p>
+        <p className="text-xs text-muted">{session?.name ?? "Staff"} · {school?.city ?? school?.country}</p>
+      </div>
+
+      <nav className="flex-1 space-y-2 p-2 overflow-y-auto">
+        {navItems.map(({ href, label, icon, section }) => {
+          const isActive = pathname === href || pathname.startsWith(`${href}/`);
+          const showSection = section && section !== lastSection;
+          lastSection = section;
+
+          return (
+            <div key={href}>
+              {showSection ? (
+                <div className="px-3 pb-2 pt-3 text-xs font-semibold uppercase tracking-[0.2em] text-muted">
+                  {section}
+                </div>
+              ) : null}
+              <Link
+                href={href}
+                onClick={handleNavClick}
+                className={`flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors ${
+                  isActive
+                    ? "bg-brand/10 text-brand"
+                    : "text-muted hover:bg-brand-light hover:text-brand"
+                }`}
+              >
+                {icons[icon] ? createElement(icons[icon], { className: "h-4 w-4" }) : null}
+                {label}
+              </Link>
+            </div>
+          );
+        })}
+      </nav>
+
+      <div className="border-t border-border px-3 py-3 space-y-2 flex-shrink-0">
+        <form action={logoutAction}>
+          <Button type="submit" variant="ghost" className="w-full justify-start gap-2 text-sm">
+            Sign out
+          </Button>
+        </form>
+        <Link 
+          href="/demo" 
+          onClick={handleNavClick}
+          className="mb-1 flex items-center gap-2 text-sm text-brand hover:underline"
+        >
+          Public website
+        </Link>
+        <Link 
+          href="/" 
+          onClick={handleNavClick}
+          className="flex items-center gap-2 text-sm text-muted hover:text-brand"
+        >
+          SchoolBase home
+        </Link>
+      </div>
+    </aside>
+  );
+}

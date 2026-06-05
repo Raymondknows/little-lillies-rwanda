@@ -1,21 +1,23 @@
 import fs from "fs/promises";
 import path from "path";
 
-// Use process.cwd() which works in both development and production Next.js builds
-// In production, Next.js runs from the app root directory
+// Local storage root (ONLY used for legacy/offline fallback if needed)
 const storageRoot = path.resolve(process.cwd(), "storage");
+
 const photoDir = path.join(storageRoot, "photos");
 const transcriptDir = path.join(storageRoot, "transcripts");
 const receiptDir = path.join(storageRoot, "receipts");
 const signaturesDir = path.join(storageRoot, "signatures");
 const stampsDir = path.join(storageRoot, "stamps");
 const logosDir = path.join(storageRoot, "logos");
+
 const allowedPhotoTypes: Record<string, string> = {
   "image/png": "png",
   "image/jpeg": "jpg",
   "image/jpg": "jpg",
   "image/webp": "webp",
 };
+
 const allowedPhotoExtensions = ["png", "jpg", "jpeg", "webp"];
 
 async function ensureDirectories() {
@@ -36,17 +38,20 @@ async function fileExists(filePath: string) {
   }
 }
 
+/**
+ * 🚨 LEGACY ONLY (DEPRECATED)
+ * Backend now serves images directly via /uploads/photos
+ */
 export function photoApiUrl(pupilId: string) {
-  return `/api/photos/${pupilId}`;
+  return `/uploads/photos/${encodeURIComponent(pupilId)}`;
 }
 
 /**
- * LEGACY: Saves photo locally to /storage/photos/
- * Only used for backward compatibility with existing photos
- * New photos should use uploadStudentPhotoToBackend() instead
+ * LEGACY LOCAL SAVE (not used in production anymore)
  */
 export async function saveStudentPhoto(pupilId: string, file: File) {
   await ensureDirectories();
+
   const ext = allowedPhotoTypes[file.type];
   if (!ext) {
     throw new Error("Unsupported photo type. Use PNG, JPG, or WEBP.");
@@ -62,19 +67,24 @@ export async function saveStudentPhoto(pupilId: string, file: File) {
   const filePath = path.join(photoDir, `${pupilId}.${ext}`);
   const buffer = Buffer.from(await file.arrayBuffer());
   await fs.writeFile(filePath, buffer);
-  return `${photoApiUrl(pupilId)}?t=${Date.now()}`;
+
+  // ⚠️ still returns backend-compatible path
+  return `/uploads/photos/${pupilId}.${ext}`;
 }
 
 /**
- * Upload photo directly to backend for centralized storage
- * This ensures consistency across local dev and live server
- * Backend saves to /uploads/photos/ and returns the path
+ * MAIN UPLOAD FLOW (USED IN PROD)
  */
-export async function uploadStudentPhotoToBackend(pupilId: string, file: File): Promise<string> {
+export async function uploadStudentPhotoToBackend(
+  pupilId: string,
+  file: File
+): Promise<string> {
   const formData = new FormData();
   formData.append("photo", file);
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:3006";
+  const apiUrl =
+    process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:3006";
+
   const response = await fetch(
     `${apiUrl}/api/admin/students/${encodeURIComponent(pupilId)}/photo`,
     {
@@ -91,44 +101,67 @@ export async function uploadStudentPhotoToBackend(pupilId: string, file: File): 
   }
 
   const result = await response.json();
-  return result.photoUrl; // Returns: /uploads/photos/{filename}
+
+  // backend returns: /uploads/photos/{filename}
+  return result.photoUrl;
 }
 
 export async function getStudentPhotoFilePath(pupilId: string) {
   await ensureDirectories();
+
   for (const ext of allowedPhotoExtensions) {
     const candidate = path.join(photoDir, `${pupilId}.${ext}`);
     if (await fileExists(candidate)) {
       return candidate;
     }
   }
+
   return null;
 }
 
-export async function saveTranscriptPdf(pupilId: string, pdfData: Uint8Array) {
+/* =========================
+   PDFs / RECEIPTS / ETC
+========================= */
+
+export async function saveTranscriptPdf(
+  pupilId: string,
+  pdfData: Uint8Array
+) {
   await ensureDirectories();
+
   const filePath = path.join(transcriptDir, `${pupilId}.pdf`);
   await fs.writeFile(filePath, Buffer.from(pdfData));
   return filePath;
 }
 
-export async function saveReceiptPdf(paymentId: string, pdfData: Uint8Array) {
+export async function saveReceiptPdf(
+  paymentId: string,
+  pdfData: Uint8Array
+) {
   await ensureDirectories();
+
   const filePath = path.join(receiptDir, `${paymentId}.pdf`);
   await fs.writeFile(filePath, Buffer.from(pdfData));
   return filePath;
 }
 
+/* =========================
+   SCHOOL ASSETS
+========================= */
+
 export async function saveSchoolSignature(schoolId: string, file: File) {
   await ensureDirectories();
+
   const ext = allowedPhotoTypes[file.type];
   if (!ext) {
     throw new Error("Unsupported image type. Use PNG, JPG, or WEBP.");
   }
 
-  // Remove old signature if exists
   for (const existingExt of allowedPhotoExtensions) {
-    const existingPath = path.join(signaturesDir, `${schoolId}.${existingExt}`);
+    const existingPath = path.join(
+      signaturesDir,
+      `${schoolId}.${existingExt}`
+    );
     if (await fileExists(existingPath)) {
       await fs.rm(existingPath);
     }
@@ -137,17 +170,18 @@ export async function saveSchoolSignature(schoolId: string, file: File) {
   const filePath = path.join(signaturesDir, `${schoolId}.${ext}`);
   const buffer = Buffer.from(await file.arrayBuffer());
   await fs.writeFile(filePath, buffer);
-  return `/api/school-signature/${schoolId}`;
+
+  return `/uploads/signatures/${schoolId}.${ext}`;
 }
 
 export async function saveSchoolStamp(schoolId: string, file: File) {
   await ensureDirectories();
+
   const ext = allowedPhotoTypes[file.type];
   if (!ext) {
     throw new Error("Unsupported image type. Use PNG, JPG, or WEBP.");
   }
 
-  // Remove old stamp if exists
   for (const existingExt of allowedPhotoExtensions) {
     const existingPath = path.join(stampsDir, `${schoolId}.${existingExt}`);
     if (await fileExists(existingPath)) {
@@ -158,11 +192,13 @@ export async function saveSchoolStamp(schoolId: string, file: File) {
   const filePath = path.join(stampsDir, `${schoolId}.${ext}`);
   const buffer = Buffer.from(await file.arrayBuffer());
   await fs.writeFile(filePath, buffer);
-  return `/api/school-stamp/${schoolId}`;
+
+  return `/uploads/stamps/${schoolId}.${ext}`;
 }
 
 export async function saveSchoolLogo(schoolId: string, file: File) {
   await ensureDirectories();
+
   const ext = allowedPhotoTypes[file.type];
   if (!ext) {
     throw new Error("Unsupported image type. Use PNG, JPG, or WEBP.");
@@ -170,44 +206,54 @@ export async function saveSchoolLogo(schoolId: string, file: File) {
 
   const buffer = Buffer.from(await file.arrayBuffer());
   const webpSizes = [64, 200, 600];
+
   for (const size of webpSizes) {
     const outputPath = path.join(logosDir, `${schoolId}-${size}.webp`);
+
     const output = await import("sharp").then((sharpModule) =>
-      sharpModule.default(buffer).resize(size, size, { fit: "cover" }).webp({ quality: 80 }).toBuffer(),
+      sharpModule.default(buffer)
+        .resize(size, size, { fit: "cover" })
+        .webp({ quality: 80 })
+        .toBuffer()
     );
+
     await fs.writeFile(outputPath, output);
   }
 
-  return `/api/school-logo/${schoolId}`;
+  return `/uploads/logos/${schoolId}-200.webp`;
 }
+
+/* =========================
+   FILE LOOKUPS
+========================= */
 
 export async function getSchoolSignatureFilePath(schoolId: string) {
   await ensureDirectories();
+
   for (const ext of allowedPhotoExtensions) {
     const candidate = path.join(signaturesDir, `${schoolId}.${ext}`);
-    if (await fileExists(candidate)) {
-      return candidate;
-    }
+    if (await fileExists(candidate)) return candidate;
   }
+
   return null;
 }
 
 export async function getSchoolStampFilePath(schoolId: string) {
   await ensureDirectories();
+
   for (const ext of allowedPhotoExtensions) {
     const candidate = path.join(stampsDir, `${schoolId}.${ext}`);
-    if (await fileExists(candidate)) {
-      return candidate;
-    }
+    if (await fileExists(candidate)) return candidate;
   }
+
   return null;
 }
 
 export async function getSchoolLogoFilePath(schoolId: string) {
   await ensureDirectories();
+
   const candidate = path.join(logosDir, `${schoolId}-200.webp`);
-  if (await fileExists(candidate)) {
-    return candidate;
-  }
+  if (await fileExists(candidate)) return candidate;
+
   return null;
 }

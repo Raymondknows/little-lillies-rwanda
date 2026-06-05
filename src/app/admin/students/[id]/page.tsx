@@ -1,11 +1,9 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { pupilName } from "@/lib/format";
 import { getCurrentSchoolId } from "@/lib/school";
-import { EditStudentForm } from "@/components/admin/edit-student-form";
+import StudentProfileView from "@/components/admin/student-profile-view";
 
-export default async function EditStudentPage({
+export default async function StudentPage({
   params,
 }: {
   params: Promise<{ id: string }>;
@@ -20,23 +18,10 @@ export default async function EditStudentPage({
 
   if (!pupil) notFound();
 
-  const guardianLink = pupil.guardians[0];
-  const guardian = guardianLink?.guardian;
-
   const classes = await prisma.class.findMany({
     where: { schoolId },
     orderBy: { name: "asc" },
   });
 
-  return (
-    <div className="mx-auto max-w-xl">
-      <Link href="/admin/students" className="text-sm text-brand hover:underline">
-        ← Students
-      </Link>
-      <h1 className="mt-4 text-2xl font-bold">Edit student</h1>
-      <p className="mt-1 text-muted">Update pupil details and upload a new photo.</p>
-
-      <EditStudentForm pupil={pupil} classes={classes} />
-    </div>
-  );
+  return <StudentProfileView pupil={pupil} classes={classes} />;
 }

@@ -1,12 +1,11 @@
 "use client";
 
-import { useMemo, useState, useTransition, type FormEvent } from "react";
-import { useSearchParams } from "next/navigation";
+import { useMemo, useState, type FormEvent } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Loader2, X } from "lucide-react";
+import { X } from "lucide-react";
 import { Pagination } from "@/components/ui/pagination";
 import { UserGuide, type PageHelpGuide } from "@/components/ui/user-guide";
-import { createStudent, updateStudent } from "@/app/admin/actions";
 import { pupilName } from "@/lib/format";
 
 const PHASE_CONFIG = {
@@ -79,11 +78,11 @@ const HELP_GUIDE: PageHelpGuide = {
 };
 
 export default function StudentsPageClient({ pupils, classes }: { pupils: any[]; classes: any[] }) {
+  const router = useRouter();
   const [activePhase, setActivePhase] = useState("ALL");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(DEFAULT_ITEMS_PER_PAGE);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const searchParams = useSearchParams();
   const [successModalMessage, setSuccessModalMessage] = useState<string | null>(() => {
     if (searchParams?.get("saved")) {
@@ -97,84 +96,10 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
   const [emailErrorMessage, setEmailErrorMessage] = useState<string | null>(
     searchParams?.get("emailError") ?? null
   );
-  const [smtpTestRecipient, setSmtpTestRecipient] = useState("");
-  const [smtpTestStatus, setSmtpTestStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
-  const [smtpTestMessage, setSmtpTestMessage] = useState<string | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [profileStudent, setProfileStudent] = useState<any | null>(null);
-  const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
-  const [firstName, setFirstName] = useState("");
-  const [middleName, setMiddleName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [gender, setGender] = useState("Male");
-  const [dateOfBirth, setDateOfBirth] = useState("");
-  const [classId, setClassId] = useState("");
-  const [admissionNo, setAdmissionNo] = useState("");
-  const [guardianFirst, setGuardianFirst] = useState("");
-  const [guardianLast, setGuardianLast] = useState("");
-  const [guardianRelationship, setGuardianRelationship] = useState("Parent");
-  const [guardianEmail, setGuardianEmail] = useState("");
-  const [guardianPhone, setGuardianPhone] = useState("");
-  const [address, setAddress] = useState("");
-  const [isAdmissionAuto, setIsAdmissionAuto] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isPending, startTransition] = useTransition();
 
-  const openStudentModal = (student?: any) => {
-    setIsSubmitting(false);
 
-    if (student) {
-      const guardianLink = student.guardians?.[0];
-      setSelectedStudent(student);
-      setFirstName(student.firstName ?? "");
-      setMiddleName(student.middleName ?? "");
-      setLastName(student.lastName ?? "");
-      setGender(student.gender ?? "Male");
-      setDateOfBirth(student.dateOfBirth ? new Date(student.dateOfBirth).toISOString().slice(0, 10) : "");
-      setClassId(student.classId ?? "");
-      setAdmissionNo(student.admissionNo ?? "");
-      setGuardianFirst(guardianLink?.guardian?.firstName ?? "");
-      setGuardianLast(guardianLink?.guardian?.lastName ?? "");
-      setGuardianRelationship(guardianLink?.relation ?? "Parent");
-      setGuardianEmail(guardianLink?.guardian?.email ?? "");
-      setGuardianPhone(guardianLink?.guardian?.phone ?? "");
-      setAddress(student.address ?? "");
-    } else {
-      setSelectedStudent(null);
-      setFirstName("");
-      setMiddleName("");
-      setLastName("");
-      setGender("Male");
-      setDateOfBirth("");
-      setClassId("");
-      setAdmissionNo("Generating...");
-      setGuardianFirst("");
-      setGuardianLast("");
-      setGuardianRelationship("Parent");
-      setGuardianEmail("");
-      setGuardianPhone("");
-      setAddress("");
-      // Fetch next admission number and keep the field read-only
-      setIsAdmissionAuto(true);
-      fetch("/api/admin/next-admission")
-        .then((r) => r.json())
-        .then((d) => {
-          if (d?.nextAdmissionNo) {
-            setAdmissionNo(d.nextAdmissionNo);
-          }
-        })
-        .catch(() => {
-          setAdmissionNo("");
-          setIsAdmissionAuto(true);
-        });
-    }
-    setIsModalOpen(true);
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setIsSubmitting(false);
-  };
   const openProfileModal = (student: any) => {
     setProfileStudent(student);
     setIsProfileOpen(true);
@@ -184,16 +109,7 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
     setProfileStudent(null);
   };
 
-  const handleStudentSubmit = (event: FormEvent<HTMLFormElement>) => {
-    if (isSubmitting) {
-      event.preventDefault();
-      return;
-    }
 
-    startTransition(() => {
-      setIsSubmitting(true);
-    });
-  };
 
   const formatDate = (value?: string | Date | null) => {
     if (!value) return "—";
@@ -282,7 +198,7 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
               {pupils.length} active student{pupils.length !== 1 ? "s" : ""} across all phases
             </p>
           </div>
-          <Button type="button" onClick={() => openStudentModal()} className="w-full sm:w-auto px-3 py-2 text-sm">
+          <Button type="button" onClick={() => router.push('/admin/students/new')} className="w-full sm:w-auto px-3 py-2 text-sm">
             Register Student
           </Button>
         </div>
@@ -451,12 +367,12 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
                       <td className="px-4 py-2 flex flex-wrap gap-2">
                         <button
                           type="button"
-                          onClick={() => openProfileModal(p)}
+                          onClick={() => router.push(`/admin/students/${p.id}`)}
                           className="rounded-full border border-border bg-white px-1.5 py-0.5 text-xs font-semibold text-foreground transition hover:bg-surface"
                         >
                           View
                         </button>
-                        <Button type="button" variant="secondary" className="text-xs px-1.5 py-0.5" onClick={() => openStudentModal(p)}>
+                        <Button type="button" variant="secondary" className="text-xs px-1.5 py-0.5" onClick={() => router.push(`/admin/students/${p.id}/edit`)}>
                           Edit
                         </Button>
                       </td>
@@ -489,14 +405,14 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
                     <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
-                        onClick={() => openProfileModal(p)}
+                        onClick={() => router.push(`/admin/students/${p.id}`)}
                         className="rounded-full border border-border bg-white px-1.5 py-0.5 text-xs font-semibold text-foreground transition hover:bg-surface"
                       >
                         View
                       </button>
                       <button
                         type="button"
-                        onClick={() => openStudentModal(p)}
+                        onClick={() => router.push(`/admin/students/${p.id}/edit`)}
                         className="rounded-full border border-border bg-surface px-1.5 py-0.5 text-xs font-semibold text-foreground transition hover:bg-background"
                       >
                         Edit
@@ -569,237 +485,6 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
         </div>
       )}
     </div>
-
-      {isModalOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-6xl overflow-hidden rounded-[28px] border border-border bg-surface shadow-2xl">
-            <div className="flex flex-col gap-4 border-b border-border bg-background px-6 py-5 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <h2 className="text-xl font-semibold text-foreground">
-                  {selectedStudent ? "Edit student" : "Register student"}
-                </h2>
-                <p className="mt-1 text-sm text-muted">
-                  {selectedStudent
-                    ? "Update student details and guardian contact information."
-                    : "Register a new student and link a guardian contact."}
-                </p>
-              </div>
-              <Button type="button" variant="secondary" onClick={closeModal}>
-                Close
-              </Button>
-            </div>
-
-            <form
-              action={selectedStudent ? updateStudent : createStudent}
-              className="grid gap-6 p-6 xl:grid-cols-[1.1fr_0.9fr]"
-              onSubmit={handleStudentSubmit}
-            >
-              <div className="space-y-6">
-                {selectedStudent ? <input type="hidden" name="studentId" value={selectedStudent.id} /> : null}
-                <div className="rounded-3xl border border-border bg-surface p-5">
-                  <p className="text-sm font-semibold">Student information</p>
-                  <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                    <label className="text-sm font-medium">
-                      First name *
-                      <input
-                        name="firstName"
-                        value={firstName}
-                        onChange={(event) => setFirstName(event.target.value)}
-                        required
-                        className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm"
-                      />
-                    </label>
-                    <label className="text-sm font-medium">
-                      Middle name
-                      <input
-                        name="middleName"
-                        value={middleName}
-                        onChange={(event) => setMiddleName(event.target.value)}
-                        className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm"
-                      />
-                    </label>
-                  </div>
-                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                    <label className="text-sm font-medium">
-                      Last name *
-                      <input
-                        name="lastName"
-                        value={lastName}
-                        onChange={(event) => setLastName(event.target.value)}
-                        required
-                        className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm"
-                      />
-                    </label>
-                    <label className="text-sm font-medium">
-                      Gender *
-                      <select
-                        name="gender"
-                        value={gender}
-                        onChange={(event) => setGender(event.target.value)}
-                        required
-                        className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm"
-                      >
-                        <option value="">Select gender</option>
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
-                      </select>
-                    </label>
-                  </div>
-                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                    <label className="text-sm font-medium">
-                      Date of birth
-                      <input
-                        name="dateOfBirth"
-                        type="date"
-                        value={dateOfBirth}
-                        onChange={(event) => setDateOfBirth(event.target.value)}
-                        className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm"
-                      />
-                    </label>
-                    <label className="text-sm font-medium">
-                      Class *
-                      <select
-                        name="classId"
-                        value={classId}
-                        onChange={(event) => setClassId(event.target.value)}
-                        required
-                        className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm"
-                      >
-                        <option value="">Select class</option>
-                        {classes.map((c) => (
-                          <option key={c.id} value={c.id}>
-                            {c.name}
-                            {c.arm ? ` ${c.arm}` : ""}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  </div>
-                  <label className="block text-sm font-medium">
-                    Address
-                    <textarea
-                      name="address"
-                      value={address}
-                      onChange={(event) => setAddress(event.target.value)}
-                      placeholder="Home address or postal address"
-                      className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm"
-                      rows={3}
-                    />
-                  </label>
-                  <label className="block text-sm font-medium">
-                    Admission number
-                    <input
-                      name="admissionNo"
-                      value={admissionNo}
-                      readOnly
-                      className="mt-1 w-full rounded-lg border border-border bg-muted px-3 py-2 text-sm"
-                    />
-                  </label>
-                  <label className="block text-sm font-medium">
-                    Student photo
-                    <input
-                      name="photo"
-                      type="file"
-                      accept="image/*"
-                      className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm"
-                    />
-                  </label>
-                </div>
-
-                <div className="rounded-3xl border border-border bg-surface p-5">
-                  <p className="text-sm font-semibold">Parent / guardian</p>
-                  {selectedStudent ? <input type="hidden" name="guardianId" value={selectedStudent.guardians?.[0]?.guardian?.id ?? ""} /> : null}
-                  <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                    <label className="text-sm font-medium">
-                      First name
-                      <input
-                        name="guardianFirst"
-                        value={guardianFirst}
-                        onChange={(event) => setGuardianFirst(event.target.value)}
-                        className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm"
-                      />
-                    </label>
-                    <label className="text-sm font-medium">
-                      Last name
-                      <input
-                        name="guardianLast"
-                        value={guardianLast}
-                        onChange={(event) => setGuardianLast(event.target.value)}
-                        className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm"
-                      />
-                    </label>
-                  </div>
-                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                    <label className="text-sm font-medium">
-                      Relationship *
-                      <select
-                        name="guardianRelationship"
-                        value={guardianRelationship}
-                        onChange={(event) => setGuardianRelationship(event.target.value)}
-                        required
-                        className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm"
-                      >
-                        <option value="">Select relationship</option>
-                        <option value="Parent">Parent</option>
-                        <option value="Father">Father</option>
-                        <option value="Mother">Mother</option>
-                        <option value="Guardian">Guardian</option>
-                        <option value="Other">Other</option>
-                      </select>
-                    </label>
-                    <label className="text-sm font-medium">
-                      Email
-                      <input
-                        name="guardianEmail"
-                        type="email"
-                        value={guardianEmail}
-                        onChange={(event) => setGuardianEmail(event.target.value)}
-                        className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm"
-                      />
-                    </label>
-                  </div>
-                  <label className="block text-sm font-medium">
-                    Phone (WhatsApp) *
-                    <input
-                      name="guardianPhone"
-                      type="tel"
-                      value={guardianPhone}
-                      onChange={(event) => setGuardianPhone(event.target.value)}
-                      required
-                      placeholder="+234..."
-                      className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm"
-                    />
-                  </label>
-                </div>
-              </div>
-
-              <div className="space-y-6 rounded-3xl border border-border bg-background p-5">
-                <div className="rounded-3xl bg-surface p-4">
-                  <p className="text-sm font-semibold">Form summary</p>
-                  <div className="mt-4 space-y-2 text-sm text-muted">
-                    <p>
-                      Use this form to {selectedStudent ? "update an existing student" : "create a new student"}. The layout is wider to fit more fields cleanly.
-                    </p>
-                    <p>Fields are grouped for clarity and mobile-friendly readability.</p>
-                  </div>
-                </div>
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      {selectedStudent ? "Saving student details..." : "Registering student..."}
-                    </>
-                  ) : selectedStudent ? (
-                    "Save student changes"
-                  ) : (
-                    "Register student"
-                  )}
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      ) : null}
 
       {isProfileOpen && profileStudent ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">

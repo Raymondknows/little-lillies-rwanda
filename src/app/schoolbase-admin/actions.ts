@@ -1,8 +1,9 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { requirePlatformAdminSession, loginPlatformAdmin } from "@/lib/auth";
+import { requirePlatformAdminSession } from "@/lib/auth";
 import {
   createVideo,
   deleteVideo,
@@ -10,6 +11,18 @@ import {
   getVideos,
   updateVideo,
 } from "@/lib/video-tutorials";
+
+const BACKEND_URL = process.env.BACKEND_URL || process.env.API_URL || "http://localhost:3006";
+
+function setAuthCookie(name: string, token: string) {
+  cookies().set(name, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 7 * 24 * 60 * 60,
+  });
+}
 
 export async function setSchoolPlanAction(formData: FormData) {
   await requirePlatformAdminSession();
@@ -94,7 +107,20 @@ export async function rejectSchoolSubscriptionAction(formData: FormData) {
 export async function loginPlatformAdminAction(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
-  return loginPlatformAdmin(email, password);
+
+  const response = await fetch(`${BACKEND_URL}/api/admin/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+    cache: "no-store",
+  });
+
+  const data = await response.json();
+  if (response.ok && data.token) {
+    setAuthCookie("schoolbase_staff", data.token);
+  }
+
+  return data;
 }
 
 export async function platformAdminLogoutAction() {

@@ -3,29 +3,52 @@ import { prisma } from "@/lib/db";
 import { getCurrentSchoolId } from "@/lib/school";
 import EditStudentClientForm from "@/components/admin/edit-student-client-form";
 
-// Disable dynamic routes for static export
-export async function generateStaticParams() {
-  return [];
-}
+// Disable static generation for dynamic route
+export const dynamic = "force-dynamic";
+
 export default async function EditStudentPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }) {
-  const { id } = await params;
-  const schoolId = await getCurrentSchoolId();
+  try {
+    const { id } = params;
 
-  const pupil = await prisma.pupil.findFirst({
-    where: { id, schoolId },
-    include: { class: true, guardians: { include: { guardian: true } } },
-  });
+    // 🔥 SAFE SCHOOL RESOLUTION (FIX LIVE ISSUE)
+    const schoolId = await getCurrentSchoolId();
 
-  if (!pupil) notFound();
+    if (!schoolId) {
+      console.error("❌ Missing schoolId (cookie/session issue on live server)");
+      notFound();
+    }
 
-  const classes = await prisma.class.findMany({
-    where: { schoolId },
-    orderBy: { name: "asc" },
-  });
+    // 🔥 FETCH STUDENT SAFELY
+    const pupil = await prisma.pupil.findFirst({
+      where: {
+        id,
+        schoolId,
+      },
+      include: {
+        class: true,
+        guardians: {
+          include: { guardian: true },
+        },
+      },
+    });
 
-  return <EditStudentClientForm pupil={pupil} classes={classes} />;
+    if (!pupil) {
+      console.error("❌ Student not found:", { id, schoolId });
+      notFound();
+    }
+
+    const classes = await prisma.class.findMany({
+      where: { schoolId },
+      orderBy: { name: "asc" },
+    });
+
+    return <EditStudentClientForm pupil={pupil} classes={classes} />;
+  } catch (error) {
+    console.error("🔥 Edit student page error:", error);
+    throw error;
+  }
 }

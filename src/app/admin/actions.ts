@@ -754,218 +754,384 @@ export async function saveResultMarks(formData: FormData) {
 }
 
 export async function createStudent(formData: FormData) {
-  const schoolId = await requireSchoolId();
-  const firstName = String(formData.get("firstName") ?? "").trim();
-  const middleName = String(formData.get("middleName") ?? "").trim();
-  const lastName = String(formData.get("lastName") ?? "").trim();
-  const gender = String(formData.get("gender") ?? "").trim();
-  const dateOfBirth = String(formData.get("dateOfBirth") ?? "").trim();
-  const classId = String(formData.get("classId") ?? "");
-  const admissionNo = String(formData.get("admissionNo") ?? "").trim();
-  const guardianFirst = String(formData.get("guardianFirst") ?? "").trim();
-  const guardianLast = String(formData.get("guardianLast") ?? "").trim();
-  const guardianRelationship = String(formData.get("guardianRelationship") ?? "").trim();
-  const guardianEmail = String(formData.get("guardianEmail") ?? "").trim();
-  const guardianPhone = String(formData.get("guardianPhone") ?? "").trim();
-  const address = String(formData.get("address") ?? "").trim();
-  const school = await prisma.school.findUnique({ where: { id: schoolId } });
-  const normalizedGuardianPhone = guardianPhone
-    ? normalizePhone(guardianPhone, school?.country ?? undefined)
-    : "";
+  console.log("CREATE_STUDENT_START", { timestamp: new Date().toISOString() });
 
-  if (!firstName || !lastName || !classId || !gender || !guardianPhone || !guardianRelationship) return;
+  try {
+    const schoolId = await requireSchoolId();
+    console.log("SCHOOL_ID_VERIFIED", { schoolId });
 
-  // If an admission number wasn't provided, generate one using the school's
-  // slug as a prefix and the current year, e.g. GFA-2026-0012
-  let finalAdmissionNo: string | undefined = admissionNo || undefined;
-  if (!finalAdmissionNo) {
-    // Otherwise derive initials from the school name (up to 3 letters).
-    const rawInitials = (school as { initials?: string } | null)?.initials;
-    let prefix = "SCH";
-    if (rawInitials && typeof rawInitials === "string" && rawInitials.trim()) {
-      prefix = rawInitials.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
-    } else if (school?.name) {
-      const words = school.name.split(/[^A-Za-z0-9]+/).filter(Boolean);
-      // Take first letters of up to 3 words
-      let letters = words.slice(0, 3).map((w: string) => w[0]).join("").toUpperCase();
-      // If < 3 letters, take more letters from the first word
-      if (letters.length < 3 && words[0]) {
-        const remaining = words[0].slice(1).replace(/[^A-Za-z0-9]/g, "");
-        for (const ch of remaining) {
-          letters += ch.toUpperCase();
-          if (letters.length >= 3) break;
+    const firstName = String(formData.get("firstName") ?? "").trim();
+    const middleName = String(formData.get("middleName") ?? "").trim();
+    const lastName = String(formData.get("lastName") ?? "").trim();
+    const gender = String(formData.get("gender") ?? "").trim();
+    const dateOfBirth = String(formData.get("dateOfBirth") ?? "").trim();
+    const classId = String(formData.get("classId") ?? "").trim();
+    const admissionNo = String(formData.get("admissionNo") ?? "").trim();
+    const guardianFirst = String(formData.get("guardianFirst") ?? "").trim();
+    const guardianLast = String(formData.get("guardianLast") ?? "").trim();
+    const guardianRelationship = String(formData.get("guardianRelationship") ?? "").trim();
+    const guardianEmail = String(formData.get("guardianEmail") ?? "").trim();
+    const guardianPhone = String(formData.get("guardianPhone") ?? "").trim();
+    const address = String(formData.get("address") ?? "").trim();
+
+    // Validate required fields
+    if (!firstName || !lastName || !classId || !gender || !guardianPhone || !guardianRelationship) {
+      console.error("VALIDATION_FAILED", { firstName, lastName, classId, gender, guardianPhone, guardianRelationship });
+      throw new Error("Missing required fields: firstName, lastName, classId, gender, guardianPhone, guardianRelationship");
+    }
+
+    console.log("VALIDATION_PASSED", { firstName, lastName, classId, gender });
+
+    const school = await prisma.school.findUnique({ where: { id: schoolId } });
+    if (!school) {
+      throw new Error(`School not found: ${schoolId}`);
+    }
+
+    const normalizedGuardianPhone = guardianPhone
+      ? normalizePhone(guardianPhone, school?.country ?? undefined)
+      : "";
+
+    // If an admission number wasn't provided, generate one using the school's
+    // slug as a prefix and the current year, e.g. GFA-2026-0012
+    let finalAdmissionNo: string | undefined = admissionNo || undefined;
+    if (!finalAdmissionNo) {
+      // Otherwise derive initials from the school name (up to 3 letters).
+      const rawInitials = (school as { initials?: string } | null)?.initials;
+      let prefix = "SCH";
+      if (rawInitials && typeof rawInitials === "string" && rawInitials.trim()) {
+        prefix = rawInitials.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+      } else if (school?.name) {
+        const words = school.name.split(/[^A-Za-z0-9]+/).filter(Boolean);
+        // Take first letters of up to 3 words
+        let letters = words.slice(0, 3).map((w: string) => w[0]).join("").toUpperCase();
+        // If < 3 letters, take more letters from the first word
+        if (letters.length < 3 && words[0]) {
+          const remaining = words[0].slice(1).replace(/[^A-Za-z0-9]/g, "");
+          for (const ch of remaining) {
+            letters += ch.toUpperCase();
+            if (letters.length >= 3) break;
+          }
         }
+        prefix = (letters || "SCH").replace(/[^A-Z0-9]/g, "").slice(0, 6);
       }
-      prefix = (letters || "SCH").replace(/[^A-Z0-9]/g, "").slice(0, 6);
-    }
-    const year = new Date().getFullYear();
+      const year = new Date().getFullYear();
 
-    // Use an admission counter to allocate a unique sequence atomically per school/year
-    const counter = await prisma.$transaction(async (tx) => {
-      const up = await tx.admissionCounter.upsert({
-        where: { schoolId_year: { schoolId, year } },
-        update: { lastSeq: { increment: 1 } },
-        create: { schoolId, year, lastSeq: 1 },
+      // Use an admission counter to allocate a unique sequence atomically per school/year
+      const counter = await prisma.$transaction(async (tx) => {
+        const up = await tx.admissionCounter.upsert({
+          where: { schoolId_year: { schoolId, year } },
+          update: { lastSeq: { increment: 1 } },
+          create: { schoolId, year, lastSeq: 1 },
+        });
+        return up;
       });
-      return up;
-    });
 
-    const seq = String(counter.lastSeq).padStart(4, "0");
-    finalAdmissionNo = `${prefix}-${year}-${seq}`;
-  }
+      const seq = String(counter.lastSeq).padStart(4, "0");
+      finalAdmissionNo = `${prefix}-${year}-${seq}`;
+    }
 
-  const pupil = await prisma.pupil.create({
-    data: {
-      schoolId,
-      classId,
-      firstName,
-      middleName: middleName || undefined,
-      lastName,
-      gender,
-      dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
-      address: address || undefined,
-      admissionNo: finalAdmissionNo,
-    },
-  });
+    console.log("ADMISSION_NUMBER_GENERATED", { finalAdmissionNo });
 
-  const photoFile = formData.get("photo") as File | null;
-  if (photoFile?.size && photoFile.type.startsWith("image/")) {
-    const photoUrl = await uploadStudentPhotoToBackend(pupil.id, photoFile);
-    await prisma.pupil.update({
-      where: { id: pupil.id },
-      data: { photoUrl },
-    });
-  }
-
-  const guardian = await prisma.guardian.create({
-    data: {
-      schoolId,
-      firstName: guardianFirst || "Parent",
-      lastName: guardianLast || lastName,
-      phone: normalizedGuardianPhone,
-      whatsapp: normalizedGuardianPhone,
-      email: guardianEmail || undefined,
-    },
-  });
-
-  await prisma.guardianPupil.create({
-    data: {
-      guardianId: guardian.id,
-      pupilId: pupil.id,
-      relation: guardianRelationship || "Guardian",
-    },
-  });
-
-  let guardianEmailFailed = false;
-  let guardianEmailError = "";
-
-  if (guardianEmail) {
-    try {
-      const classRecord = await prisma.class.findUnique({ where: { id: classId } });
-      const className = classRecord?.arm
-        ? `${classRecord.name} ${classRecord.arm}`
-        : classRecord?.name ?? "your class";
-      const guardianName = [guardianFirst || "Parent", guardianLast].filter(Boolean).join(" ");
-      const schoolNameValue = school?.name?.trim() || "SchoolBase";
-      const rawLogo = (school as any)?.logoUrl;
-      const logoUrlForEmail = rawLogo
-        ? rawLogo.startsWith("/")
-          ? `${process.env.NEXT_PUBLIC_APP_URL ?? "https://schoolbase.live"}${rawLogo}`
-          : rawLogo
-        : undefined;
-      const emailContent = buildGuardianRegistrationEmail({
-        guardianName,
-        pupilName: `${firstName} ${lastName}`,
-        className,
+    const pupil = await prisma.pupil.create({
+      data: {
+        schoolId,
+        classId,
+        firstName,
+        middleName: middleName || undefined,
+        lastName,
+        gender,
+        dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
+        address: address || undefined,
         admissionNo: finalAdmissionNo,
-        relation: guardianRelationship || "Guardian",
-        schoolName: schoolNameValue,
-        headerLogoUrl: logoUrlForEmail,
-      });
+      },
+    });
 
-      const info = await sendEmail({
-        to: guardianEmail,
-        subject: emailContent.subject,
-        text: emailContent.text,
-        html: emailContent.html,
-      });
+    console.log("PUPIL_CREATED", { pupilId: pupil.id });
 
-      console.info("Parent registration email accepted by SMTP:", {
-        guardianEmail,
-        messageId: info.messageId,
-        response: info.response,
-        accepted: info.accepted,
-        rejected: info.rejected,
+    // Safe photo file handling with detailed type checking
+    const photoFormValue = formData.get("photo");
+    console.log("PHOTO_FORM_VALUE_TYPE", { type: typeof photoFormValue, constructor: photoFormValue?.constructor?.name });
+
+    if (photoFormValue && typeof photoFormValue === "object" && "arrayBuffer" in photoFormValue) {
+      try {
+        const photo = photoFormValue as File | Blob;
+        const photoType = photo instanceof File ? photo.type : (photo as any).type;
+        const photoSize = photo instanceof File ? photo.size : (photo as any).size;
+
+        console.log("PHOTO_DETAILS", { 
+          isFile: photo instanceof File, 
+          size: photoSize, 
+          type: photoType,
+          hasArrayBuffer: "arrayBuffer" in photo 
+        });
+
+        // Validate photo type
+        if (photoType && photoType.startsWith("image/") && photoSize > 0) {
+          try {
+            console.log("PHOTO_UPLOAD_START", { pupilId: pupil.id, photoType, photoSize });
+            const photoUrl = await uploadStudentPhotoToBackend(pupil.id, photo as File);
+            console.log("PHOTO_UPLOAD_SUCCESS", { pupilId: pupil.id, photoUrl });
+            
+            await prisma.pupil.update({
+              where: { id: pupil.id },
+              data: { photoUrl },
+            });
+
+            console.log("PHOTO_URL_SAVED", { pupilId: pupil.id });
+          } catch (photoError) {
+            console.error("PHOTO_UPLOAD_FAILED", { pupilId: pupil.id, error: String(photoError) });
+            // Continue without photo - don't crash the entire student creation
+            console.warn("Continuing student creation without photo due to upload failure");
+          }
+        } else {
+          console.warn("PHOTO_VALIDATION_SKIPPED", { photoType, photoSize });
+        }
+      } catch (photoHandlerError) {
+        console.error("PHOTO_HANDLER_ERROR", { error: String(photoHandlerError) });
+        console.warn("Continuing student creation despite photo handler error");
+      }
+    } else if (photoFormValue) {
+      console.warn("PHOTO_NOT_FILE_LIKE", { 
+        type: typeof photoFormValue, 
+        isNull: photoFormValue === null 
       });
-    } catch (error) {
-      guardianEmailFailed = true;
-      guardianEmailError = String(error instanceof Error ? error.message : error);
-      console.error("Parent registration email failed for guardian:", guardianEmail, error);
-      // Keep registration working while surfacing the failure in the UI.
     }
-  }
 
-  revalidatePath("/admin/students");
-  redirect(
-    `/admin/students?saved=1${guardianEmailFailed ? `&emailFailed=1&emailError=${encodeURIComponent(guardianEmailError)}` : ""}`
-  );
+    console.log("GUARDIAN_CREATE_START", { pupilId: pupil.id });
+    const guardian = await prisma.guardian.create({
+      data: {
+        schoolId,
+        firstName: guardianFirst || "Parent",
+        lastName: guardianLast || lastName,
+        phone: normalizedGuardianPhone,
+        whatsapp: normalizedGuardianPhone,
+        email: guardianEmail || undefined,
+      },
+    });
+
+    console.log("GUARDIAN_CREATED", { guardianId: guardian.id });
+
+    await prisma.guardianPupil.create({
+      data: {
+        guardianId: guardian.id,
+        pupilId: pupil.id,
+        relation: guardianRelationship || "Guardian",
+      },
+    });
+
+    console.log("GUARDIAN_PUPIL_LINK_CREATED", { guardianId: guardian.id, pupilId: pupil.id });
+
+    let guardianEmailFailed = false;
+    let guardianEmailError = "";
+
+    if (guardianEmail) {
+      try {
+        const classRecord = await prisma.class.findUnique({ where: { id: classId } });
+        const className = classRecord?.arm
+          ? `${classRecord.name} ${classRecord.arm}`
+          : classRecord?.name ?? "your class";
+        const guardianName = [guardianFirst || "Parent", guardianLast].filter(Boolean).join(" ");
+        const schoolNameValue = school?.name?.trim() || "SchoolBase";
+        const rawLogo = (school as any)?.logoUrl;
+        const logoUrlForEmail = rawLogo
+          ? rawLogo.startsWith("/")
+            ? `${process.env.NEXT_PUBLIC_APP_URL ?? "https://schoolbase.live"}${rawLogo}`
+            : rawLogo
+          : undefined;
+        const emailContent = buildGuardianRegistrationEmail({
+          guardianName,
+          pupilName: `${firstName} ${lastName}`,
+          className,
+          admissionNo: finalAdmissionNo,
+          relation: guardianRelationship || "Guardian",
+          schoolName: schoolNameValue,
+          headerLogoUrl: logoUrlForEmail,
+        });
+
+        const info = await sendEmail({
+          to: guardianEmail,
+          subject: emailContent.subject,
+          text: emailContent.text,
+          html: emailContent.html,
+        });
+
+        console.info("Parent registration email accepted by SMTP:", {
+          guardianEmail,
+          messageId: info.messageId,
+          response: info.response,
+          accepted: info.accepted,
+          rejected: info.rejected,
+        });
+      } catch (error) {
+        guardianEmailFailed = true;
+        guardianEmailError = String(error instanceof Error ? error.message : error);
+        console.error("Parent registration email failed for guardian:", guardianEmail, error);
+        // Keep registration working while surfacing the failure in the UI.
+      }
+    }
+
+    console.log("CREATE_STUDENT_SUCCESS", { pupilId: pupil.id });
+    revalidatePath("/admin/students");
+    redirect(
+      `/admin/students?saved=1${guardianEmailFailed ? `&emailFailed=1&emailError=${encodeURIComponent(guardianEmailError)}` : ""}`
+    );
+  } catch (error) {
+    console.error("CREATE_STUDENT_ERROR", { 
+      error: String(error), 
+      message: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    throw error;
+  }
 }
 
 export async function updateStudent(formData: FormData) {
-  const schoolId = await requireSchoolId();
-  const studentId = String(formData.get("studentId") ?? "");
-  const guardianId = String(formData.get("guardianId") ?? "").trim();
-  const firstName = String(formData.get("firstName") ?? "").trim();
-  const lastName = String(formData.get("lastName") ?? "").trim();
-  const classId = String(formData.get("classId") ?? "");
-  const guardianFirst = String(formData.get("guardianFirst") ?? "").trim();
-  const guardianLast = String(formData.get("guardianLast") ?? "").trim();
-  const guardianPhone = String(formData.get("guardianPhone") ?? "").trim();
-  const school = await prisma.school.findUnique({
-    where: { id: schoolId },
-    select: { country: true },
-  });
-  const normalizedGuardianPhone = guardianPhone
-    ? normalizePhone(guardianPhone, school?.country ?? undefined)
-    : "";
+  console.log("UPDATE_STUDENT_START", { timestamp: new Date().toISOString() });
 
-  if (!studentId || !firstName || !lastName || !classId) return;
+  try {
+    const schoolId = await requireSchoolId();
+    console.log("SCHOOL_ID_VERIFIED", { schoolId });
 
-  const middleName = String(formData.get("middleName") ?? "").trim();
-  const gender = String(formData.get("gender") ?? "").trim();
-  const dateOfBirth = String(formData.get("dateOfBirth") ?? "").trim();
-  const address = String(formData.get("address") ?? "").trim();
-  const guardianRelationship = String(formData.get("guardianRelationship") ?? "").trim();
-  const guardianEmail = String(formData.get("guardianEmail") ?? "").trim();
+    // Extract all form fields
+    const studentId = String(formData.get("studentId") ?? "").trim();
+    const guardianId = String(formData.get("guardianId") ?? "").trim();
+    const firstName = String(formData.get("firstName") ?? "").trim();
+    const lastName = String(formData.get("lastName") ?? "").trim();
+    const classId = String(formData.get("classId") ?? "").trim();
+    const middleName = String(formData.get("middleName") ?? "").trim();
+    const gender = String(formData.get("gender") ?? "").trim();
+    const dateOfBirth = String(formData.get("dateOfBirth") ?? "").trim();
+    const admissionDate = String(formData.get("admissionDate") ?? "").trim();
+    const status = String(formData.get("status") ?? "ACTIVE").trim();
+    const address = String(formData.get("address") ?? "").trim();
+    const studentEmail = String(formData.get("studentEmail") ?? "").trim();
+    const studentPhone = String(formData.get("studentPhone") ?? "").trim();
+    const bloodGroup = String(formData.get("bloodGroup") ?? "").trim();
+    const genotype = String(formData.get("genotype") ?? "").trim();
+    const medicalNotes = String(formData.get("medicalNotes") ?? "").trim();
+    const previousSchool = String(formData.get("previousSchool") ?? "").trim();
+    const previousClass = String(formData.get("previousClass") ?? "").trim();
+    const guardianFirst = String(formData.get("guardianFirst") ?? "").trim();
+    const guardianLast = String(formData.get("guardianLast") ?? "").trim();
+    const guardianPhone = String(formData.get("guardianPhone") ?? "").trim();
+    const guardianAltPhone = String(formData.get("guardianAltPhone") ?? "").trim();
+    const guardianOccupation = String(formData.get("guardianOccupation") ?? "").trim();
+    const guardianRelationship = String(formData.get("guardianRelationship") ?? "").trim();
+    const guardianEmail = String(formData.get("guardianEmail") ?? "").trim();
 
-  const updateData: Record<string, unknown> = {
-    firstName,
-    middleName: middleName || null,
-    lastName,
-    gender: gender || null,
-    dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
-    address: address || null,
-    classId,
-    // NOTE: admissionNo is NOT updated during edits to prevent accidental clearing
-    // Admission numbers are only set at student creation and should be immutable
-  };
+    // Validate required fields
+    if (!studentId || !firstName || !lastName || !classId) {
+      console.error("VALIDATION_FAILED", { studentId, firstName, lastName, classId });
+      throw new Error("Missing required fields: studentId, firstName, lastName, classId");
+    }
 
-  const photoFile = formData.get("photo") as File | null;
-  if (photoFile?.size && photoFile.type.startsWith("image/")) {
-    const photoUrl = await uploadStudentPhotoToBackend(studentId, photoFile);
-    updateData.photoUrl = photoUrl;
-  }
+    console.log("VALIDATION_PASSED", { studentId, firstName, lastName, classId });
 
-  await prisma.pupil.updateMany({
-    where: { id: studentId, schoolId },
-    data: updateData,
-  });
+    // Get school and normalize phone
+    const school = await prisma.school.findUnique({
+      where: { id: schoolId },
+      select: { country: true },
+    });
 
-  if (guardianId || guardianPhone || guardianFirst || guardianLast || guardianEmail || guardianRelationship) {
-    if (guardianId) {
-      const guardian = await prisma.guardian.findFirst({ where: { id: guardianId, schoolId } });
-      if (guardian) {
-        const guardianUpdateData: Record<string, string> = {};
+    if (!school) {
+      throw new Error(`School not found: ${schoolId}`);
+    }
+
+    const normalizedGuardianPhone = guardianPhone
+      ? normalizePhone(guardianPhone, school?.country ?? undefined)
+      : "";
+
+    // Build student update data
+    const updateData: Record<string, unknown> = {
+      firstName,
+      middleName: middleName || null,
+      lastName,
+      gender: gender || null,
+      dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
+      admissionDate: admissionDate ? new Date(admissionDate) : null,
+      status: status || "ACTIVE",
+      address: address || null,
+      classId,
+      studentEmail: studentEmail || null,
+      studentPhone: studentPhone || null,
+      bloodGroup: bloodGroup || null,
+      genotype: genotype || null,
+      medicalNotes: medicalNotes || null,
+      previousSchool: previousSchool || null,
+      previousClass: previousClass || null,
+      // NOTE: admissionNo is NOT updated during edits to prevent accidental clearing
+      // Admission numbers are only set at student creation and should be immutable
+    };
+
+    // Safe photo file handling with detailed type checking
+    const photoFormValue = formData.get("photo");
+    console.log("PHOTO_FORM_VALUE_TYPE", { type: typeof photoFormValue, constructor: photoFormValue?.constructor?.name });
+
+    if (photoFormValue && typeof photoFormValue === "object" && "arrayBuffer" in photoFormValue) {
+      try {
+        const photo = photoFormValue as File | Blob;
+        const photoType = photo instanceof File ? photo.type : (photo as any).type;
+        const photoSize = photo instanceof File ? photo.size : (photo as any).size;
+
+        console.log("PHOTO_DETAILS", { 
+          isFile: photo instanceof File, 
+          size: photoSize, 
+          type: photoType,
+          hasArrayBuffer: "arrayBuffer" in photo 
+        });
+
+        // Validate photo type
+        if (photoType && photoType.startsWith("image/") && photoSize > 0) {
+          try {
+            console.log("PHOTO_UPLOAD_START", { studentId, photoType, photoSize });
+            const photoUrl = await uploadStudentPhotoToBackend(studentId, photo as File);
+            console.log("PHOTO_UPLOAD_SUCCESS", { studentId, photoUrl });
+            updateData.photoUrl = photoUrl;
+          } catch (photoError) {
+            console.error("PHOTO_UPLOAD_FAILED", { studentId, error: String(photoError) });
+            // Continue without photo - don't crash the entire update
+            console.warn("Continuing student update without photo due to upload failure");
+          }
+        } else {
+          console.warn("PHOTO_VALIDATION_SKIPPED", { photoType, photoSize });
+        }
+      } catch (photoHandlerError) {
+        console.error("PHOTO_HANDLER_ERROR", { error: String(photoHandlerError) });
+        console.warn("Continuing student update despite photo handler error");
+      }
+    } else if (photoFormValue) {
+      console.warn("PHOTO_NOT_FILE_LIKE", { 
+        type: typeof photoFormValue, 
+        isNull: photoFormValue === null 
+      });
+    }
+
+    // Update student record - use updateMany to respect school isolation
+    console.log("PUPIL_UPDATE_START", { studentId, schoolId });
+    const updateResult = await prisma.pupil.updateMany({
+      where: { id: studentId, schoolId },
+      data: updateData,
+    });
+
+    if (updateResult.count === 0) {
+      throw new Error(`Student not found or not in your school: ${studentId}`);
+    }
+
+    console.log("PUPIL_UPDATE_SUCCESS", { studentId, recordsUpdated: updateResult.count });
+
+    // Update guardian information if provided
+    if (guardianId || guardianPhone || guardianFirst || guardianLast || guardianEmail || guardianRelationship) {
+      if (guardianId) {
+        console.log("GUARDIAN_UPDATE_BY_ID_START", { guardianId, studentId });
+        const guardian = await prisma.guardian.findFirst({ 
+          where: { id: guardianId, schoolId } 
+        });
+
+        if (!guardian) {
+          throw new Error(`Guardian not found or not in your school: ${guardianId}`);
+        }
+
+        const guardianUpdateData: Record<string, string | undefined> = {};
         if (guardianFirst) guardianUpdateData.firstName = guardianFirst;
         if (guardianLast) guardianUpdateData.lastName = guardianLast;
         if (guardianPhone) {
@@ -973,42 +1139,63 @@ export async function updateStudent(formData: FormData) {
           guardianUpdateData.whatsapp = normalizedGuardianPhone;
         }
         if (guardianEmail) guardianUpdateData.email = guardianEmail;
+        if (guardianOccupation) guardianUpdateData.occupation = guardianOccupation;
+        if (guardianAltPhone) guardianUpdateData.altPhone = guardianAltPhone;
+
         if (Object.keys(guardianUpdateData).length > 0) {
           await prisma.guardian.update({
             where: { id: guardianId },
             data: guardianUpdateData,
           });
+          console.log("GUARDIAN_UPDATE_SUCCESS", { guardianId });
         }
-      }
-      if (guardianRelationship) {
-        await prisma.guardianPupil.updateMany({
-          where: { guardianId, pupilId: studentId },
-          data: { relation: guardianRelationship },
-        });
-      }
-    } else if (guardianPhone) {
-      const guardian = await prisma.guardian.create({
-        data: {
-          schoolId,
-          firstName: guardianFirst || "Parent",
-          lastName: guardianLast || lastName,
-          phone: normalizedGuardianPhone,
-          whatsapp: normalizedGuardianPhone,
-          email: guardianEmail || undefined,
-        },
-      });
-      await prisma.guardianPupil.create({
-        data: {
-          guardianId: guardian.id,
-          pupilId: studentId,
-          relation: guardianRelationship || "Guardian",
-        },
-      });
-    }
-  }
 
-  revalidatePath("/admin/students");
-  redirect("/admin/students?updated=1");
+        if (guardianRelationship) {
+          await prisma.guardianPupil.updateMany({
+            where: { guardianId, pupilId: studentId },
+            data: { relation: guardianRelationship },
+          });
+          console.log("GUARDIAN_RELATIONSHIP_UPDATE_SUCCESS", { guardianId, guardianRelationship });
+        }
+      } else if (guardianPhone) {
+        // Create new guardian if phone is provided but no guardianId
+        console.log("GUARDIAN_CREATE_START", { studentId, guardianPhone });
+        const guardian = await prisma.guardian.create({
+          data: {
+            schoolId,
+            firstName: guardianFirst || "Parent",
+            lastName: guardianLast || lastName,
+            phone: normalizedGuardianPhone,
+            whatsapp: normalizedGuardianPhone,
+            email: guardianEmail || undefined,
+            occupation: guardianOccupation || undefined,
+            altPhone: guardianAltPhone || undefined,
+          },
+        });
+
+        await prisma.guardianPupil.create({
+          data: {
+            guardianId: guardian.id,
+            pupilId: studentId,
+            relation: guardianRelationship || "Guardian",
+          },
+        });
+
+        console.log("GUARDIAN_CREATE_SUCCESS", { guardianId: guardian.id, studentId });
+      }
+    }
+
+    console.log("UPDATE_STUDENT_SUCCESS", { studentId });
+    revalidatePath("/admin/students");
+    redirect("/admin/students?updated=1");
+  } catch (error) {
+    console.error("UPDATE_STUDENT_ERROR", { 
+      error: String(error), 
+      message: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    throw error;
+  }
 }
 
 export async function createSubject(formData: FormData) {

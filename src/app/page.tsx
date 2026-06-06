@@ -11,7 +11,7 @@ import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { AppLogo } from "@/components/app-logo";
 import { CountrySelectModal } from "@/components/country-select-modal";
-import countriesJson from "@/../../frontend/config/countries.json";
+import countriesJson from "../../config/countries.json";
 import { getCountryFromHeaders } from "@/lib/country";
 import { getParentSession, getStaffSession } from "@/lib/auth";
 

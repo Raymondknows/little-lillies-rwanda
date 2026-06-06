@@ -1,4 +1,4 @@
-import countriesJson from "@/../../frontend/config/countries.json";
+import countriesJson from "../../../../../config/countries.json";
 import { NextResponse } from "next/server";
 import {
   getCountryFromCookieHeader,

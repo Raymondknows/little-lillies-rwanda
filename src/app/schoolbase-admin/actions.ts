@@ -14,8 +14,9 @@ import {
 
 const BACKEND_URL = process.env.BACKEND_URL || process.env.API_URL || "http://localhost:3006";
 
-function setAuthCookie(name: string, token: string) {
-  cookies().set(name, token, {
+async function setAuthCookie(name: string, token: string) {
+  const cookieStore = await cookies();
+  cookieStore.set(name, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
@@ -117,7 +118,7 @@ export async function loginPlatformAdminAction(formData: FormData) {
 
   const data = await response.json();
   if (response.ok && data.token) {
-    setAuthCookie("schoolbase_staff", data.token);
+    await setAuthCookie("schoolbase_staff", data.token);
   }
 
   return data;

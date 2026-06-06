@@ -918,7 +918,6 @@ export async function updateStudent(formData: FormData) {
   const firstName = String(formData.get("firstName") ?? "").trim();
   const lastName = String(formData.get("lastName") ?? "").trim();
   const classId = String(formData.get("classId") ?? "");
-  const admissionNo = String(formData.get("admissionNo") ?? "").trim();
   const guardianFirst = String(formData.get("guardianFirst") ?? "").trim();
   const guardianLast = String(formData.get("guardianLast") ?? "").trim();
   const guardianPhone = String(formData.get("guardianPhone") ?? "").trim();
@@ -947,7 +946,8 @@ export async function updateStudent(formData: FormData) {
     dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
     address: address || null,
     classId,
-    admissionNo: admissionNo || null,
+    // NOTE: admissionNo is NOT updated during edits to prevent accidental clearing
+    // Admission numbers are only set at student creation and should be immutable
   };
 
   const photoFile = formData.get("photo") as File | null;

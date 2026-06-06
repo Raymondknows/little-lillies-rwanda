@@ -5,12 +5,13 @@ import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/db";
 import { getCurrentSchoolId } from "@/lib/school";
 
-export default async function EditSubjectPage({ params }: { params: { id: string } }) {
+export default async function EditSubjectPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const schoolId = await getCurrentSchoolId();
   const [subject, classes, subjectClasses] = await Promise.all([
-    prisma.subject.findFirst({ where: { id: params.id, schoolId } }),
+    prisma.subject.findFirst({ where: { id, schoolId } }),
     prisma.class.findMany({ where: { schoolId }, orderBy: { name: "asc" } }),
-    prisma.subjectClass.findMany({ where: { subjectId: params.id }, select: { classId: true } }),
+    prisma.subjectClass.findMany({ where: { subjectId: id }, select: { classId: true } }),
   ]);
   if (!subject) notFound();
 

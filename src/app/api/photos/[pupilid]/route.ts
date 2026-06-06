@@ -1,7 +1,4 @@
-import { promises as fs } from "fs";
-import path from "path";
 import { NextResponse } from "next/server";
-import { getStudentPhotoFilePath } from "@/lib/storage";
 import { getStaffSession, getParentSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getTeacherAccessibleClassIds } from "@/lib/teacher-permissions";
@@ -63,72 +60,28 @@ export async function GET(
     }
   }
 
-  // First try to get photo from local storage
-  let photoPath = await getStudentPhotoFilePath(pupilId);
-  
-  if (!photoPath) {
-    console.log(`[PHOTO ROUTE] Local file not found`);
-  } else {
-    console.log(`[PHOTO ROUTE] Local file found: ${photoPath}`);
-  }
-  
-  // If not found locally, check if backend has it and proxy the request
-  if (!photoPath && pupil.photoUrl) {
-    if (pupil.photoUrl.startsWith("/uploads/photos/")) {
-      console.log(`[PHOTO ROUTE] Proxying to backend: ${pupil.photoUrl}`);
+  // Proxy photo requests to the backend if a photoUrl exists.
+  if (pupil.photoUrl) {
+    try {
       const backendUrl = process.env.BACKEND_URL || process.env.API_URL || "http://127.0.0.1:3006";
-      const fullUrl = `${backendUrl}${pupil.photoUrl}`;
-      
-      try {
-        const response = await fetch(fullUrl, {
-          next: { revalidate: 3600 },
-        });
-        
-        if (response.ok) {
-          const buffer = await response.arrayBuffer();
-          const contentType = response.headers.get("content-type") || "image/jpeg";
-          console.log(`[PHOTO ROUTE] Backend proxy SUCCESS`);
-          return new Response(buffer, {
-            status: 200,
-            headers: {
-              "Content-Type": contentType,
-              "Cache-Control": "public, max-age=3600",
-            },
-          });
-        } else {
-          console.log(`[PHOTO ROUTE] Backend proxy FAILED: HTTP ${response.status}`);
-        }
-      } catch (error) {
-        console.error(`[PHOTO ROUTE] Backend proxy ERROR: ${error}`);
-      }
-    } else {
-      console.log(`[PHOTO ROUTE] photoUrl exists but not a backend path: ${pupil.photoUrl}`);
+      const fullUrl = pupil.photoUrl.startsWith("/") ? `${backendUrl.replace(/\/$/, "")}${pupil.photoUrl}` : pupil.photoUrl;
+
+      const response = await fetch(fullUrl, { next: { revalidate: 3600 } });
+      if (!response.ok) return new Response(null, { status: response.status });
+      const buffer = await response.arrayBuffer();
+      const contentType = response.headers.get("content-type") || "image/jpeg";
+      return new Response(buffer, {
+        status: 200,
+        headers: {
+          "Content-Type": contentType,
+          "Cache-Control": "public, max-age=31536000",
+        },
+      });
+    } catch (err) {
+      console.error(`[PHOTO ROUTE] proxy error`, err);
+      return new Response("Error", { status: 500 });
     }
-    console.log(`[PHOTO ROUTE] Returning 404`);
-    return new Response("Not found", { status: 404 });
-  }
-  
-  if (!photoPath) {
-    console.log(`[PHOTO ROUTE] No photoPath and no photoUrl in DB - returning 404`);
-    return new Response("Not found", { status: 404 });
   }
 
-  const buffer = await fs.readFile(photoPath);
-  const ext = path.extname(photoPath).slice(1).toLowerCase();
-  const contentType =
-    ext === "png"
-      ? "image/png"
-      : ext === "webp"
-      ? "image/webp"
-      : "image/jpeg";
-
-  return new Response(buffer, {
-    status: 200,
-    headers: {
-      "Content-Type": contentType,
-      "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-      "Pragma": "no-cache",
-      "Expires": "0",
-    },
-  });
+  return new Response("Not found", { status: 404 });
 }

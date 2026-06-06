@@ -1,4 +1,4 @@
-import { appendFile } from "fs/promises";
+// Logging is handled by backend; avoid writing local files from frontend.
 import { prisma } from "@/lib/db";
 import { decryptText } from "@/lib/crypto";
 
@@ -204,11 +204,7 @@ export async function sendWhatsAppMessage(
 
   if (!config) {
     logEntry.reason = "missing-credentials";
-    try {
-      await appendFile("publish/whatsapp_deliveries.jsonl", JSON.stringify(logEntry) + "\n");
-    } catch (e) {
-      console.error("Failed to write whatsapp log:", e);
-    }
+    // backend should record missing credentials and delivery attempts
     return false;
   }
 
@@ -230,16 +226,12 @@ export async function sendWhatsAppMessage(
       }
     }
 
-    await appendFile("publish/whatsapp_deliveries.jsonl", JSON.stringify(logEntry) + "\n");
+    // backend should record delivery results; skip local write
     return response.ok;
   } catch (err: any) {
     logEntry.success = false;
     logEntry.reason = err?.message ?? String(err);
-    try {
-      await appendFile("publish/whatsapp_deliveries.jsonl", JSON.stringify(logEntry) + "\n");
-    } catch (e) {
-      console.error("Failed to write whatsapp log:", e);
-    }
+    // skip local log write
     return false;
   }
 }

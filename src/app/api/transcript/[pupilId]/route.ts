@@ -2,7 +2,7 @@ import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { prisma } from "@/lib/db";
 import { getParentSession, getStaffSession } from "@/lib/auth";
 import { pupilName } from "@/lib/format";
-import { saveTranscriptPdf } from "@/lib/storage";
+// Persisting transcripts is handled by backend; frontend will stream PDF directly.
 
 const BRAND_BLUE = rgb(0.04, 0.4, 0.76); // #0A66C2
 const LIGHT_BLUE = rgb(0.91, 0.96, 0.99); // #E8F4FC
@@ -495,7 +495,6 @@ export async function GET(
 
   const pdfBytes = await pdfDoc.save();
   const pdfBuffer = Buffer.from(pdfBytes);
-  await saveTranscriptPdf(pupil.id, pdfBuffer);
 
   return new Response(pdfBuffer, {
     status: 200,

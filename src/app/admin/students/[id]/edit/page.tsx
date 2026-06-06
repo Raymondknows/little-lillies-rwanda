@@ -9,10 +9,10 @@ export const dynamic = "force-dynamic";
 export default async function EditStudentPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     // 🔥 SAFE SCHOOL RESOLUTION (FIX LIVE ISSUE)
     const schoolId = await getCurrentSchoolId();

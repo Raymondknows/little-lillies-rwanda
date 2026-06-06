@@ -1,4 +1,4 @@
-import { appendFile } from "fs/promises";
+// Logging is handled by backend; avoid writing local files from frontend.
 
 export async function sendSMS(to: string, body: string): Promise<boolean> {
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -15,11 +15,7 @@ export async function sendSMS(to: string, body: string): Promise<boolean> {
 
   if (!accountSid || !authToken || !from) {
     logEntry.reason = "missing-credentials";
-    try {
-      await appendFile("publish/sms_deliveries.jsonl", JSON.stringify(logEntry) + "\n");
-    } catch (e) {
-      console.error("Failed to write SMS log:", e);
-    }
+    // backend should record missing credentials and delivery attempts
     return false;
   }
 
@@ -58,16 +54,12 @@ export async function sendSMS(to: string, body: string): Promise<boolean> {
       }
     }
 
-    await appendFile("publish/sms_deliveries.jsonl", JSON.stringify(logEntry) + "\n");
+    // backend should record delivery results; skip local write
     return response.ok;
   } catch (err: any) {
     logEntry.success = false;
     logEntry.reason = err?.message ?? String(err);
-    try {
-      await appendFile("publish/sms_deliveries.jsonl", JSON.stringify(logEntry) + "\n");
-    } catch (e) {
-      console.error("Failed to write SMS log:", e);
-    }
+    // skip local log write
     return false;
   }
 }

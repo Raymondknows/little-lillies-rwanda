@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Loader2, Upload, ChevronDown } from "lucide-react";
 import { updateStudent } from "@/app/admin/actions";
-import { resolvePhotoSrc } from "@/lib/photo";
+import { resolveFileUrl } from "@/lib/api-client";
 
 export default function EditStudentClientForm({
   pupil,
@@ -186,7 +186,7 @@ export default function EditStudentClientForm({
                 />
               ) : pupil.photoUrl ? (
                 <img
-                  src={resolvePhotoSrc(pupil.photoUrl, pupil.id) ?? undefined}
+                  src={resolveFileUrl(pupil.photoUrl, pupil.id) ?? undefined}
                   alt={`${firstName} ${lastName}`}
                   className="mx-auto h-40 w-40 rounded-3xl object-cover"
                 />

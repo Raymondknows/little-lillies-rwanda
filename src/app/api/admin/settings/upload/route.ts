@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getStaffSession } from "@/lib/auth";
 import { getCurrentSchoolId } from "@/lib/school";
-import { saveSchoolSignature, saveSchoolStamp } from "@/lib/storage";
+import { uploadSchoolAssetToBackend } from "@/lib/storage";
 
 export async function POST(request: Request) {
   try {
@@ -27,9 +27,9 @@ export async function POST(request: Request) {
     let url: string;
     
     if (type === "signature") {
-      url = await saveSchoolSignature(schoolId, file);
+      url = await uploadSchoolAssetToBackend(file, "signature");
     } else {
-      url = await saveSchoolStamp(schoolId, file);
+      url = await uploadSchoolAssetToBackend(file, "stamp");
     }
 
     return NextResponse.json({ success: true, url });

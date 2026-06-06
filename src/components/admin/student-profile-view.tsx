@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { pupilName } from "@/lib/format";
-import { resolvePhotoSrc } from "@/lib/photo";
+import { resolveFileUrl } from "@/lib/api-client";
 
 export default function StudentProfileView({ pupil, classes }: { pupil: any; classes: any[] }) {
   const router = useRouter();
@@ -56,7 +56,7 @@ export default function StudentProfileView({ pupil, classes }: { pupil: any; cla
           <div className="flex h-40 w-40 items-center justify-center overflow-hidden rounded-3xl bg-slate-100">
             {pupil.photoUrl ? (
               <img
-                src={resolvePhotoSrc(pupil.photoUrl, pupil.id) ?? undefined}
+                src={resolveFileUrl(pupil.photoUrl, pupil.id) ?? undefined}
                 alt={pupilName(pupil.firstName, pupil.lastName)}
                 className="h-full w-full object-cover"
               />

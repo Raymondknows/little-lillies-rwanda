@@ -7,7 +7,7 @@ import { X } from "lucide-react";
 import { Pagination } from "@/components/ui/pagination";
 import { UserGuide, type PageHelpGuide } from "@/components/ui/user-guide";
 import { pupilName } from "@/lib/format";
-import { resolvePhotoSrc } from "@/lib/photo";
+import { resolveFileUrl } from "@/lib/api-client";
 
 const PHASE_CONFIG = {
   EARLY_YEARS: { label: "Early Years", badge: "bg-amber-100 text-amber-800" },
@@ -341,7 +341,7 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
                       <td className="px-4 py-2">
                         {p.photoUrl ? (
                           <img
-                            src={resolvePhotoSrc(p.photoUrl, p.id) ?? undefined}
+                            src={resolveFileUrl(p.photoUrl, p.id) ?? undefined}
                             alt={`${p.firstName} ${p.lastName}`}
                             className="h-10 w-10 rounded-full object-cover"
                           />
@@ -513,7 +513,7 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
                     <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-3xl bg-slate-100">
                       {profileStudent.photoUrl ? (
                         <img
-                          src={resolvePhotoSrc(profileStudent.photoUrl, profileStudent.id) ?? undefined}
+                          src={resolveFileUrl(profileStudent.photoUrl, profileStudent.id) ?? undefined}
                           alt={pupilName(profileStudent.firstName, profileStudent.lastName)}
                           className="h-full w-full object-cover"
                         />

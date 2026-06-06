@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/db";
 import { getCurrentSchoolId } from "@/lib/school";
 
-export default async function EditTeacherPage({ params }: { params: { id: string } }) {
+export default async function EditTeacherPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const schoolId = await getCurrentSchoolId();
   const [teacher, classes, subjects] = await Promise.all([
-    prisma.user.findFirst({ where: { id: params.id, schoolId, role: 'TEACHER' }, include: { teacherClasses: true, teacherSubjects: true } }),
+    prisma.user.findFirst({ where: { id, schoolId, role: 'TEACHER' }, include: { teacherClasses: true, teacherSubjects: true } }),
     prisma.class.findMany({ where: { schoolId }, orderBy: { name: 'asc' } }),
     prisma.subject.findMany({ where: { schoolId }, orderBy: { name: 'asc' } }),
   ]);

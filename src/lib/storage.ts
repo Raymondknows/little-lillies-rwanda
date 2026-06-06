@@ -1,81 +1,18 @@
-import fs from "fs/promises";
-import path from "path";
+/**
+ * Backend-only upload helpers.
+ *
+ * The frontend no longer reads or writes any local files on disk.
+ * All file uploads and asset storage are handled by the backend API.
+ */
+
 import { cookies as nextCookies } from "next/headers";
-import { getBackendUrl } from "./proxy-url";
-
-// Local storage root (ONLY used for legacy/offline fallback if needed)
-const storageRoot = path.resolve(process.cwd(), "storage");
-
-const photoDir = path.join(storageRoot, "photos");
-const transcriptDir = path.join(storageRoot, "transcripts");
-const receiptDir = path.join(storageRoot, "receipts");
-const signaturesDir = path.join(storageRoot, "signatures");
-const stampsDir = path.join(storageRoot, "stamps");
-const logosDir = path.join(storageRoot, "logos");
-
-const allowedPhotoTypes: Record<string, string> = {
-  "image/png": "png",
-  "image/jpeg": "jpg",
-  "image/jpg": "jpg",
-  "image/webp": "webp",
-};
-
-const allowedPhotoExtensions = ["png", "jpg", "jpeg", "webp"];
-
-async function ensureDirectories() {
-  await fs.mkdir(photoDir, { recursive: true, mode: 0o775 });
-  await fs.mkdir(transcriptDir, { recursive: true, mode: 0o775 });
-  await fs.mkdir(receiptDir, { recursive: true, mode: 0o775 });
-  await fs.mkdir(signaturesDir, { recursive: true, mode: 0o775 });
-  await fs.mkdir(stampsDir, { recursive: true, mode: 0o775 });
-  await fs.mkdir(logosDir, { recursive: true, mode: 0o775 });
-}
-
-async function fileExists(filePath: string) {
-  try {
-    await fs.access(filePath);
-    return true;
-  } catch {
-    return false;
-  }
-}
+import { buildApiUrl } from "./api-client";
 
 /**
- * 🚨 LEGACY ONLY (DEPRECATED)
- * Backend now serves images directly via /uploads/photos
- */
-export function photoApiUrl(pupilId: string) {
-  return `/uploads/photos/${encodeURIComponent(pupilId)}`;
-}
-
-/**
- * LEGACY LOCAL SAVE (not used in production anymore)
- */
-export async function saveStudentPhoto(pupilId: string, file: File) {
-  await ensureDirectories();
-
-  const ext = allowedPhotoTypes[file.type];
-  if (!ext) {
-    throw new Error("Unsupported photo type. Use PNG, JPG, or WEBP.");
-  }
-
-  for (const existingExt of allowedPhotoExtensions) {
-    const existingPath = path.join(photoDir, `${pupilId}.${existingExt}`);
-    if (await fileExists(existingPath)) {
-      await fs.rm(existingPath);
-    }
-  }
-
-  const filePath = path.join(photoDir, `${pupilId}.${ext}`);
-  const buffer = Buffer.from(await file.arrayBuffer());
-  await fs.writeFile(filePath, buffer);
-
-  // ⚠️ still returns backend-compatible path
-  return `/uploads/photos/${pupilId}.${ext}`;
-}
-
-/**
- * MAIN UPLOAD FLOW (USED IN PROD)
+ * Upload student photo to backend
+ * @param pupilId - Student ID
+ * @param file - Photo file to upload
+ * @returns Backend photo URL path (e.g., /uploads/photos/filename.jpg)
  */
 export async function uploadStudentPhotoToBackend(
   pupilId: string,
@@ -84,202 +21,81 @@ export async function uploadStudentPhotoToBackend(
   const formData = new FormData();
   formData.append("photo", file);
 
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || "/api";
-  const backendUrl = getBackendUrl(
-    apiBase,
-    `/admin/students/${encodeURIComponent(pupilId)}/photo`
-  );
+  const endpoint = `/admin/students/${encodeURIComponent(pupilId)}/photo`;
+  const backendUrl = buildApiUrl(endpoint);
 
-  // Attempt to forward server cookies when available (server actions / server components)
   let cookieHeader = "";
   try {
     const ck = await nextCookies();
     const all = typeof ck.getAll === "function" ? ck.getAll() : [];
     cookieHeader = all.map((c: any) => `${c.name}=${encodeURIComponent(c.value)}`).join("; ");
   } catch (err) {
-    // ignore - not available in some contexts
+    // Cookies not available in some contexts
   }
 
-  let response: Response | null = null;
   try {
-    response = await fetch(backendUrl, {
+    const response = await fetch(backendUrl, {
       method: "POST",
       body: formData,
       headers: cookieHeader ? { cookie: cookieHeader } : undefined,
     });
-  } catch (err: any) {
-    console.error("Photo upload fetch failed to", backendUrl, err);
-    // Dev-friendly fallback: save locally when backend unreachable
-    try {
-      const local = await saveStudentPhoto(pupilId, file);
-      return local;
-    } catch (saveErr) {
-      console.error("Local fallback save failed", saveErr);
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.message || `Photo upload failed: ${response.statusText}`);
     }
+
+    const result = await response.json();
+    return result.photoUrl;
+  } catch (err: any) {
+    console.error("[PHOTO_UPLOAD_ERROR]", { pupilId, error: String(err) });
     throw err;
   }
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(
-      error.message || `Failed to upload photo: ${response.statusText}`
-    );
-  }
-
-  const result = await response.json();
-
-  // backend returns: /uploads/photos/{filename}
-  return result.photoUrl;
 }
 
-export async function getStudentPhotoFilePath(pupilId: string) {
-  await ensureDirectories();
+/**
+ * Upload school asset (logo, signature, stamp) to backend
+ * @param file - Asset file to upload
+ * @param assetType - Type of asset: "logo", "signature", or "stamp"
+ * @returns Backend asset URL path (e.g., /uploads/settings/filename.jpg)
+ */
+export async function uploadSchoolAssetToBackend(
+  file: File,
+  assetType: "logo" | "signature" | "stamp"
+): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("type", assetType);
 
-  for (const ext of allowedPhotoExtensions) {
-    const candidate = path.join(photoDir, `${pupilId}.${ext}`);
-    if (await fileExists(candidate)) {
-      return candidate;
+  const endpoint = `/admin/settings/upload`;
+  const backendUrl = buildApiUrl(endpoint);
+
+  let cookieHeader = "";
+  try {
+    const ck = await nextCookies();
+    const all = typeof ck.getAll === "function" ? ck.getAll() : [];
+    cookieHeader = all.map((c: any) => `${c.name}=${encodeURIComponent(c.value)}`).join("; ");
+  } catch (err) {
+    // Cookies not available in some contexts
+  }
+
+  try {
+    const response = await fetch(backendUrl, {
+      method: "POST",
+      body: formData,
+      headers: cookieHeader ? { cookie: cookieHeader } : undefined,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.message || `Asset upload failed: ${response.statusText}`);
     }
-  }
 
-  return null;
+    const result = await response.json();
+    return result.url;
+  } catch (err: any) {
+    console.error("[ASSET_UPLOAD_ERROR]", { assetType, error: String(err) });
+    throw err;
+  }
 }
 
-/* =========================
-   PDFs / RECEIPTS / ETC
-========================= */
-
-export async function saveTranscriptPdf(
-  pupilId: string,
-  pdfData: Uint8Array
-) {
-  await ensureDirectories();
-
-  const filePath = path.join(transcriptDir, `${pupilId}.pdf`);
-  await fs.writeFile(filePath, Buffer.from(pdfData));
-  return filePath;
-}
-
-export async function saveReceiptPdf(
-  paymentId: string,
-  pdfData: Uint8Array
-) {
-  await ensureDirectories();
-
-  const filePath = path.join(receiptDir, `${paymentId}.pdf`);
-  await fs.writeFile(filePath, Buffer.from(pdfData));
-  return filePath;
-}
-
-/* =========================
-   SCHOOL ASSETS
-========================= */
-
-export async function saveSchoolSignature(schoolId: string, file: File) {
-  await ensureDirectories();
-
-  const ext = allowedPhotoTypes[file.type];
-  if (!ext) {
-    throw new Error("Unsupported image type. Use PNG, JPG, or WEBP.");
-  }
-
-  for (const existingExt of allowedPhotoExtensions) {
-    const existingPath = path.join(
-      signaturesDir,
-      `${schoolId}.${existingExt}`
-    );
-    if (await fileExists(existingPath)) {
-      await fs.rm(existingPath);
-    }
-  }
-
-  const filePath = path.join(signaturesDir, `${schoolId}.${ext}`);
-  const buffer = Buffer.from(await file.arrayBuffer());
-  await fs.writeFile(filePath, buffer);
-
-  return `/api/admin/school-signature?t=${Date.now()}`;
-}
-
-export async function saveSchoolStamp(schoolId: string, file: File) {
-  await ensureDirectories();
-
-  const ext = allowedPhotoTypes[file.type];
-  if (!ext) {
-    throw new Error("Unsupported image type. Use PNG, JPG, or WEBP.");
-  }
-
-  for (const existingExt of allowedPhotoExtensions) {
-    const existingPath = path.join(stampsDir, `${schoolId}.${existingExt}`);
-    if (await fileExists(existingPath)) {
-      await fs.rm(existingPath);
-    }
-  }
-
-  const filePath = path.join(stampsDir, `${schoolId}.${ext}`);
-  const buffer = Buffer.from(await file.arrayBuffer());
-  await fs.writeFile(filePath, buffer);
-
-  return `/api/admin/school-stamp?t=${Date.now()}`;
-}
-
-export async function saveSchoolLogo(schoolId: string, file: File) {
-  await ensureDirectories();
-
-  const ext = allowedPhotoTypes[file.type];
-  if (!ext) {
-    throw new Error("Unsupported image type. Use PNG, JPG, or WEBP.");
-  }
-
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const webpSizes = [64, 200, 600];
-
-  for (const size of webpSizes) {
-    const outputPath = path.join(logosDir, `${schoolId}-${size}.webp`);
-
-    const output = await import("sharp").then((sharpModule) =>
-      sharpModule.default(buffer)
-        .resize(size, size, { fit: "cover" })
-        .webp({ quality: 80 })
-        .toBuffer()
-    );
-
-    await fs.writeFile(outputPath, output);
-  }
-
-  return `/api/admin/school-logo?t=${Date.now()}`;
-}
-
-/* =========================
-   FILE LOOKUPS
-========================= */
-
-export async function getSchoolSignatureFilePath(schoolId: string) {
-  await ensureDirectories();
-
-  for (const ext of allowedPhotoExtensions) {
-    const candidate = path.join(signaturesDir, `${schoolId}.${ext}`);
-    if (await fileExists(candidate)) return candidate;
-  }
-
-  return null;
-}
-
-export async function getSchoolStampFilePath(schoolId: string) {
-  await ensureDirectories();
-
-  for (const ext of allowedPhotoExtensions) {
-    const candidate = path.join(stampsDir, `${schoolId}.${ext}`);
-    if (await fileExists(candidate)) return candidate;
-  }
-
-  return null;
-}
-
-export async function getSchoolLogoFilePath(schoolId: string) {
-  await ensureDirectories();
-
-  const candidate = path.join(logosDir, `${schoolId}-200.webp`);
-  if (await fileExists(candidate)) return candidate;
-
-  return null;
-}

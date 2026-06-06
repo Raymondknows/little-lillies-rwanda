@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getStaffSession } from "@/lib/auth";
 import { getCurrentSchoolId } from "@/lib/school";
 import { prisma } from "@/lib/db";
-import { saveSchoolLogo } from "@/lib/storage";
+import { uploadSchoolAssetToBackend } from "@/lib/storage";
 
 const MAX_BYTES = 3 * 1024 * 1024;
 const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, message: "File too large. Max 3MB." }, { status: 413 });
     }
 
-    const url = await saveSchoolLogo(schoolId, file);
+    const url = await uploadSchoolAssetToBackend(file, "logo");
     await prisma.school.update({ where: { id: schoolId }, data: { logoUrl: url } });
 
     return NextResponse.json({ success: true, url });

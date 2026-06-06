@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { readFile } from "fs/promises";
-import { Button } from "@/components/ui/button";
 import { getCurrentSchool } from "@/lib/school";
+import { Button } from "@/components/ui/button";
 import { WhatsAppRetryButton } from "@/app/admin/whatsapp/retry-button";
 import { WhatsAppIcon } from "@/components/ui/icons";
 
@@ -17,21 +16,11 @@ type DeliveryEntry = {
 
 async function getWhatsAppDeliveries(): Promise<DeliveryEntry[] | null> {
   try {
-    const content = await readFile("publish/whatsapp_deliveries.jsonl", "utf8");
-    const records = content
-      .trim()
-      .split(/\r?\n/)
-      .filter(Boolean)
-      .map((line) => {
-        try {
-          return JSON.parse(line) as DeliveryEntry;
-        } catch {
-          return null;
-        }
-      })
-      .filter((record): record is DeliveryEntry => record !== null);
-
-    return records.slice(-200).reverse();
+    const backend = process.env.BACKEND_URL || process.env.API_URL || "http://127.0.0.1:3006";
+    const res = await fetch(`${backend.replace(/\/$/, '')}/api/admin/whatsapp/data`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return (data.deliveries ?? []) as DeliveryEntry[];
   } catch (err) {
     return null;
   }

@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server';
-import { getBackendUrl } from '@/lib/proxy-url';
+import { buildApiUrl } from '@/lib/api-client';
 
 export async function POST(request: Request) {
   try {
-    const apiBase = process.env.NEXT_PUBLIC_API_URL || '/api';
-    const backendUrl = getBackendUrl(apiBase, '/api/admin/verify');
+    const backendUrl = buildApiUrl('/admin/verify');
 
     const body = await request.text();
     

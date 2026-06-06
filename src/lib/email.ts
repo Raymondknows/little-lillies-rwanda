@@ -1,5 +1,3 @@
-import fs from "fs";
-import path from "path";
 import nodemailer from "nodemailer";
 import { sendViaBrevoAPI } from "@/lib/brevo";
 import { escapeHtml } from "@/lib/email-utils";
@@ -33,36 +31,7 @@ function parseEnvFile(content: string) {
   return env;
 }
 
-function loadEnvFallback() {
-  const required = ["SMTP_HOST", "SMTP_USER", "SMTP_PASS", "SMTP_FROM"];
-  const missing = required.filter((key) => !process.env[key]);
-  if (missing.length === 0) return;
-
-  const candidates = [
-    path.join(process.cwd(), ".env"),
-    path.join(process.cwd(), "frontend", ".env"),
-    path.join(process.cwd(), "..", "frontend", ".env"),
-  ];
-
-  for (const candidate of candidates) {
-    if (!fs.existsSync(candidate)) continue;
-
-    try {
-      const content = fs.readFileSync(candidate, "utf8");
-      const loaded = parseEnvFile(content);
-      for (const key of missing) {
-        if (loaded[key]) {
-          process.env[key] = loaded[key];
-        }
-      }
-      break;
-    } catch {
-      continue;
-    }
-  }
-}
-
-loadEnvFallback();
+// Do not attempt to read local .env files from frontend; rely on actual environment variables.
 
 const smtpHost = process.env.SMTP_HOST;
 const smtpPort = Number(process.env.SMTP_PORT ?? 587);

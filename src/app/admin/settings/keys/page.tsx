@@ -1,20 +1,20 @@
 import { getCurrentSchool } from "@/lib/school";
-import fs from "fs/promises";
-import path from "path";
+// Avoid reading local config files from frontend; query backend for per-school config instead.
 
 export default async function KeysDebugPage() {
   const school = await getCurrentSchool();
   const schoolId = school.id;
 
-  const cfgPath = path.join(process.cwd(), "storage", "configs", `${schoolId}.json`);
-  const fsData = await fs.readFile(cfgPath, "utf8").catch(() => null);
   let parsed: any = null;
-  if (fsData) {
-    try {
-      parsed = JSON.parse(fsData);
-    } catch {
-      parsed = null;
+  try {
+    const backend = process.env.BACKEND_URL || process.env.API_URL || "http://127.0.0.1:3006";
+    const res = await fetch(`${backend.replace(/\/$/, '')}/api/admin/settings/data?schoolId=${encodeURIComponent(schoolId)}`);
+    if (res.ok) {
+      const json = await res.json();
+      parsed = json?.config ?? null;
     }
+  } catch (err) {
+    parsed = null;
   }
 
   const env = {
@@ -64,7 +64,7 @@ export default async function KeysDebugPage() {
             <dd className="font-medium">{env.paystackSecret ? "present" : "missing"}</dd>
           </div>
         </dl>
-        <p className="mt-4 text-xs text-muted">Config file: {fsData ? cfgPath : "not present"}</p>
+        <p className="mt-4 text-xs text-muted">Config source: {parsed ? "backend (per-school)" : "none"}</p>
       </section>
 
       <section className="rounded-2xl border border-border bg-surface p-6">
@@ -96,7 +96,7 @@ export default async function KeysDebugPage() {
             <dd className="font-medium">{env.whatsappFrom ? "present" : "missing"}</dd>
           </div>
         </dl>
-        <p className="mt-4 text-xs text-muted">Config file: {fsData ? cfgPath : "not present"}</p>
+        <p className="mt-4 text-xs text-muted">Config source: {parsed ? "backend (per-school)" : "none"}</p>
       </section>
     </div>
   );

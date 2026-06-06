@@ -1,6 +1,4 @@
 import { NextResponse } from "next/server";
-import { getSchoolLogoFilePath } from "@/lib/storage";
-import fs from "fs/promises";
 
 export async function GET(
   request: Request,
@@ -8,16 +6,23 @@ export async function GET(
 ) {
   try {
     const { schoolId } = await params;
-    const filePath = await getSchoolLogoFilePath(schoolId);
+    const backendUrl = process.env.BACKEND_URL || "http://localhost:3006";
 
-    if (!filePath) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    const resp = await fetch(`${backendUrl}/api/admin/school-logo/${schoolId}`, {
+      headers: { cookie: request.headers.get("cookie") || "" },
+      redirect: "follow",
+    });
+
+    if (!resp.ok) {
+      return NextResponse.json({ error: "Not found" }, { status: resp.status });
     }
 
-    const fileBuffer = await fs.readFile(filePath);
+    const fileBuffer = await resp.arrayBuffer();
+    const mimeType = resp.headers.get("content-type") || "image/webp";
+
     return new NextResponse(fileBuffer, {
       headers: {
-        "Content-Type": "image/webp",
+        "Content-Type": mimeType,
         "Cache-Control": "public, max-age=3600",
       },
     });

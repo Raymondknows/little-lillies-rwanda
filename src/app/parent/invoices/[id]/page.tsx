@@ -12,13 +12,14 @@ export const metadata: Metadata = {
   description: 'View detailed fee invoice information and payment activity for your child.',
 }
 
-export default async function ParentInvoicePage({ params }: { params: { id: string } }) {
+export default async function ParentInvoicePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const session = await getParentSession()
   if (!session) redirect('/parent/login')
 
   const invoice = await prisma.invoice.findFirst({
     where: {
-      id: params.id,
+      id,
       schoolId: session.schoolId,
       pupil: {
         guardians: {

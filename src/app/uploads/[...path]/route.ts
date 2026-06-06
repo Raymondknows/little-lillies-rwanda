@@ -1,7 +1,4 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs/promises';
-import path from 'path';
-import { getStudentPhotoFilePath } from '@/lib/storage';
 
 export async function GET(request: Request) {
   try {
@@ -12,7 +9,6 @@ export async function GET(request: Request) {
     }
 
     const base = apiBase.replace(/\/$/, '');
-
     const url = new URL(request.url);
     const prefix = '/uploads/';
     const uploadPath = url.pathname.startsWith(prefix)
@@ -20,58 +16,31 @@ export async function GET(request: Request) {
       : '';
 
     if (!uploadPath) {
-      return NextResponse.json(
-        { error: 'Upload path required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Upload path required' }, { status: 400 });
     }
 
-    const backendUrl = new URL(
-      `/uploads/${uploadPath}`,
-      base
-    ).toString();
+    const backendUrl = new URL(`/uploads/${uploadPath}`, base).toString();
+    const resp = await fetch(backendUrl, {
+      headers: {
+        cookie: request.headers.get('cookie') || '',
+      },
+      redirect: 'follow',
+    });
 
-    try {
-      const resp = await fetch(backendUrl, {
-        headers: {
-          cookie: request.headers.get('cookie') || '',
-        },
-        redirect: 'follow',
-      });
-
-      const body = await resp.arrayBuffer();
-
-      return new NextResponse(body, {
-        status: resp.status,
-        headers: resp.headers,
-      });
-    } catch (err) {
-      console.warn('Backend fetch failed for upload; attempting local fallback', err);
-
-      // Try to serve from local storage (dev fallback)
-      const parts = uploadPath.split('/');
-      const filename = parts[parts.length - 1] || '';
-      const pupilId = filename.split('.')[0];
-      const localPath = await getStudentPhotoFilePath(pupilId);
-      if (localPath) {
-        try {
-          const buf = await fs.readFile(localPath);
-          const ext = path.extname(localPath).slice(1).toLowerCase();
-          const contentType = ext === 'webp' ? 'image/webp' : ext === 'png' ? 'image/png' : 'image/jpeg';
-          return new NextResponse(buf, { status: 200, headers: { 'Content-Type': contentType } });
-        } catch (readErr) {
-          console.error('Failed to read local upload file', readErr);
-        }
-      }
-
-      throw err;
+    if (!resp.ok) {
+      return NextResponse.json({ error: `Backend returned ${resp.status}` }, { status: resp.status });
     }
 
+    const body = await resp.arrayBuffer();
+    return new NextResponse(body, {
+      status: resp.status,
+      headers: {
+        'Content-Type': resp.headers.get('content-type') || 'application/octet-stream',
+        'Cache-Control': 'public, max-age=86400',
+      },
+    });
   } catch (err) {
-    console.error('Proxy /uploads error:', err);
-    return NextResponse.json(
-      { error: String(err) },
-      { status: 500 }
-    );
+    console.error('[UPLOADS API] Error:', err);
+    return NextResponse.json({ error: 'Failed to fetch from backend' }, { status: 500 });
   }
 }

@@ -1,13 +1,11 @@
 import { getCurrentSchoolId } from '@/lib/school';
 import { NextRequest, NextResponse } from 'next/server';
-import { getBackendUrl } from '@/lib/proxy-url';
-
-const apiBase = process.env.BACKEND_API_URL || '/api';
+import { buildApiUrl } from '@/lib/api-client';
 
 export async function GET(request: NextRequest) {
   try {
     const params = new URL(request.url).searchParams;
-    let backendUrl = getBackendUrl(apiBase, '/api/admin/analytics/data');
+    let backendUrl = buildApiUrl('/admin/analytics/data');
 
     if (!params.get('schoolId')) {
       const schoolId = await getCurrentSchoolId();

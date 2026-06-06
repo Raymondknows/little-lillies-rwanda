@@ -28,14 +28,15 @@ function getStatusClasses(status: string) {
 export default async function SchoolDetailsPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
   const session = await getPlatformAdminSession();
   if (!session) {
     redirect("/schoolbase-admin/login");
   }
 
-  const school = await getPlatformSchoolById(params.id);
+  const school = await getPlatformSchoolById(id);
   if (!school) {
     notFound();
   }

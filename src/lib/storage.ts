@@ -171,7 +171,7 @@ export async function saveSchoolSignature(schoolId: string, file: File) {
   const buffer = Buffer.from(await file.arrayBuffer());
   await fs.writeFile(filePath, buffer);
 
-  return `/uploads/signatures/${schoolId}.${ext}`;
+  return `/api/admin/school-signature?t=${Date.now()}`;
 }
 
 export async function saveSchoolStamp(schoolId: string, file: File) {
@@ -193,7 +193,7 @@ export async function saveSchoolStamp(schoolId: string, file: File) {
   const buffer = Buffer.from(await file.arrayBuffer());
   await fs.writeFile(filePath, buffer);
 
-  return `/uploads/stamps/${schoolId}.${ext}`;
+  return `/api/admin/school-stamp?t=${Date.now()}`;
 }
 
 export async function saveSchoolLogo(schoolId: string, file: File) {
@@ -220,7 +220,7 @@ export async function saveSchoolLogo(schoolId: string, file: File) {
     await fs.writeFile(outputPath, output);
   }
 
-  return `/uploads/logos/${schoolId}-200.webp`;
+  return `/api/admin/school-logo?t=${Date.now()}`;
 }
 
 /* =========================

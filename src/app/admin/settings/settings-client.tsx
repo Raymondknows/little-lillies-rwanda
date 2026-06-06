@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import countriesData from "../../../../config/countries.json";
+import { resolveSchoolAssetUrl } from "@/lib/asset-urls";
 
 interface SchoolSettingsProps {
   school: {
@@ -270,9 +271,9 @@ export default function SettingsPageClient({
           setManualPaymentAccountName(d.config.manualPaymentAccountName || "");
           setManualPaymentAccountNumber(d.config.manualPaymentAccountNumber || "");
           setManualPaymentBankName(d.config.manualPaymentBankName || "");
-          setPrincipalSignatureUrl(d.config.principalSignatureUrl || null);
-          setStampUrl(d.config.stampUrl || null);
-          setLogoUrl(d.config.logoUrl || null);
+          setPrincipalSignatureUrl(resolveSchoolAssetUrl(d.config.principalSignatureUrl) || null);
+          setStampUrl(resolveSchoolAssetUrl(d.config.stampUrl) || null);
+          setLogoUrl(resolveSchoolAssetUrl(d.config.logoUrl) || null);
           setAddress(d.config.address || "");
         }
       } catch (err) {

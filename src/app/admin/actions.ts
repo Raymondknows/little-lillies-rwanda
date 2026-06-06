@@ -1793,7 +1793,7 @@ export async function saveTeacherAssignments(formData: FormData) {
         assignedSubjects: assignedSubjects.map((subject) => subject.name),
         appUrl,
         headerLogoUrl,
-      });
+      }); 
 
       await sendEmail({
         to: teacher.email,

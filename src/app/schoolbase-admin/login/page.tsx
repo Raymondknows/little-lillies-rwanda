@@ -1,15 +1,48 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { loginPlatformAdminAction } from "@/app/schoolbase-admin/actions";
 import { AppLogo } from "@/components/app-logo";
 import { Button } from "@/components/ui/button";
 
 export default function PlatformAdminLoginPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
+  const [pending, setPending] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setPending(true);
+    setError(null);
+
+    try {
+      const formData = new FormData(e.currentTarget);
+      const email = formData.get("email") as string;
+      const password = formData.get("password") as string;
+
+      const res = await fetch("/api/auth/admin-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Login failed");
+        setPending(false);
+        return;
+      }
+
+      router.push("/schoolbase-admin");
+      router.refresh();
+    } catch (err) {
+      setError("An error occurred. Please try again.");
+      console.error("Login error:", err);
+    } finally {
+      setPending(false);
+    }
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -26,18 +59,7 @@ export default function PlatformAdminLoginPage() {
 
         <form
           className="space-y-4"
-          action={(formData: FormData) => {
-            startTransition(async () => {
-              setError(null);
-              const result = await loginPlatformAdminAction(formData);
-              if (result.error) {
-                setError(result.error);
-                return;
-              }
-              router.push("/schoolbase-admin");
-              router.refresh();
-            });
-          }}
+          onSubmit={handleSubmit}
         >
           {error ? (
             <p className="rounded-2xl border border-error/20 bg-error/10 px-4 py-3 text-sm text-error">

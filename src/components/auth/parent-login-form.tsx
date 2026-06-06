@@ -1,30 +1,53 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { parentLoginAction } from "@/app/auth/actions";
 import { Button } from "@/components/ui/button";
 
 export function ParentLoginForm() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
+  const [pending, setPending] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setPending(true);
+    setError(null);
+
+    try {
+      const formData = new FormData(e.currentTarget);
+      const phone = formData.get("phone") as string;
+      const admissionNo = formData.get("admissionNo") as string;
+      const schoolSlug = formData.get("schoolSlug") as string;
+
+      const res = await fetch("/api/auth/parent-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone, admissionNo, schoolSlug }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Login failed");
+        setPending(false);
+        return;
+      }
+
+      router.push("/parent");
+      router.refresh();
+    } catch (err) {
+      setError("An error occurred. Please try again.");
+      console.error("Login error:", err);
+    } finally {
+      setPending(false);
+    }
+  };
 
   return (
     <form
       className="mt-8 space-y-4"
-      action={(fd) => {
-        startTransition(async () => {
-          setError(null);
-          const res = await parentLoginAction(fd);
-          if (res.error) {
-            setError(res.error);
-            return;
-          }
-          router.push("/parent");
-          router.refresh();
-        });
-      }}
+      onSubmit={handleSubmit}
     >
       {error && (
         <p className="rounded-lg bg-error/10 px-3 py-2 text-sm text-error">

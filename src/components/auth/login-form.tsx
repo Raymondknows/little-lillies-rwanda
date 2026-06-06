@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { staffLoginAction } from "@/app/auth/actions";
 import { Button } from "@/components/ui/button";
 
 export function LoginForm({ redirectTo }: { redirectTo: string }) {
@@ -11,29 +10,52 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-  const [pending, startTransition] = useTransition();
+  const [pending, setPending] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setPending(true);
+    setError(null);
+    setNotice(null);
+
+    try {
+      const formData = new FormData(e.currentTarget);
+      const email = formData.get("email") as string;
+      const password = formData.get("password") as string;
+
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Login failed");
+        setPending(false);
+        return;
+      }
+
+      if (data.verifyEmail) {
+        setNotice(data.verifyMessage ?? "Redirecting to verification...");
+        router.push(`/signup/verify?email=${encodeURIComponent(data.verifyEmail)}`);
+      } else {
+        router.push(redirectTo);
+        router.refresh();
+      }
+    } catch (err) {
+      setError("An error occurred. Please try again.");
+      console.error("Login error:", err);
+    } finally {
+      setPending(false);
+    }
+  };
 
   return (
     <form
       className="mt-8 space-y-4"
-      action={(fd) => {
-        startTransition(async () => {
-          setError(null);
-          setNotice(null);
-          const res = await staffLoginAction(fd);
-          if (res.error) {
-            setError(res.error);
-            return;
-          }
-          if (res.verifyEmail) {
-            setNotice(res.verifyMessage ?? "Redirecting to verification...");
-            router.push(`/signup/verify?email=${encodeURIComponent(res.verifyEmail)}`);
-            return;
-          }
-          router.push(redirectTo);
-          router.refresh();
-        });
-      }}
+      onSubmit={handleSubmit}
     >
       {error && (
         <p className="rounded-lg bg-error/10 px-3 py-2 text-sm text-error">

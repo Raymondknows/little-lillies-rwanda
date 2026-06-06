@@ -19,10 +19,35 @@ export async function GET(request: Request) {
       return new Response("Unauthorized", { status: 401 });
     }
 
-    // Get signature file path
-    const signaturePath = await getSchoolSignatureFilePath(schoolId);
+    // Try to get signature from local storage first
+    let signaturePath = await getSchoolSignatureFilePath(schoolId);
 
+    // If not found locally, proxy to backend
     if (!signaturePath) {
+      const backendUrl = process.env.BACKEND_URL || process.env.API_URL || "http://127.0.0.1:3006";
+      const backendPath = `/uploads/signatures/${schoolId}`;
+      const fullUrl = `${backendUrl}${backendPath}`;
+      
+      try {
+        const response = await fetch(fullUrl, {
+          next: { revalidate: 3600 },
+        });
+        
+        if (response.ok) {
+          const buffer = await response.arrayBuffer();
+          const contentType = response.headers.get("content-type") || "image/png";
+          return new Response(buffer, {
+            status: 200,
+            headers: {
+              "Content-Type": contentType,
+              "Cache-Control": "public, max-age=86400",
+            },
+          });
+        }
+      } catch (error) {
+        console.error("[SCHOOL SIGNATURE] Backend proxy error:", error);
+      }
+      
       return new Response("Not found", { status: 404 });
     }
 

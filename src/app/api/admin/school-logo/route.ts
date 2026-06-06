@@ -19,10 +19,35 @@ export async function GET(request: Request) {
       return new Response("Unauthorized", { status: 401 });
     }
 
-    // Get logo file path
-    const logoPath = await getSchoolLogoFilePath(schoolId);
+    // Try to get logo from local storage first
+    let logoPath = await getSchoolLogoFilePath(schoolId);
 
+    // If not found locally, proxy to backend
     if (!logoPath) {
+      const backendUrl = process.env.BACKEND_URL || process.env.API_URL || "http://127.0.0.1:3006";
+      const backendPath = `/uploads/logos/${schoolId}-200.webp`;
+      const fullUrl = `${backendUrl}${backendPath}`;
+      
+      try {
+        const response = await fetch(fullUrl, {
+          next: { revalidate: 3600 },
+        });
+        
+        if (response.ok) {
+          const buffer = await response.arrayBuffer();
+          const contentType = response.headers.get("content-type") || "image/webp";
+          return new Response(buffer, {
+            status: 200,
+            headers: {
+              "Content-Type": contentType,
+              "Cache-Control": "public, max-age=86400",
+            },
+          });
+        }
+      } catch (error) {
+        console.error("[SCHOOL LOGO] Backend proxy error:", error);
+      }
+      
       return new Response("Not found", { status: 404 });
     }
 

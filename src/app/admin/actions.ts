@@ -1795,7 +1795,6 @@ export async function saveTeacherAssignments(formData: FormData) {
         headerLogoUrl,
       });
 
-      
       await sendEmail({
         to: teacher.email,
         subject: emailPayload.subject,

@@ -87,7 +87,7 @@ export async function uploadStudentPhotoToBackend(
   const apiBase = process.env.NEXT_PUBLIC_API_URL || "/api";
   const backendUrl = getBackendUrl(
     apiBase,
-    `/api/admin/students/${encodeURIComponent(pupilId)}/photo`
+    `/admin/students/${encodeURIComponent(pupilId)}/photo`
   );
 
   // Attempt to forward server cookies when available (server actions / server components)

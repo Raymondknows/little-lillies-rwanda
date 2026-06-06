@@ -1,5 +1,7 @@
 import fs from "fs/promises";
 import path from "path";
+import { cookies as nextCookies } from "next/headers";
+import { getBackendUrl } from "./proxy-url";
 
 // Local storage root (ONLY used for legacy/offline fallback if needed)
 const storageRoot = path.resolve(process.cwd(), "storage");
@@ -82,16 +84,40 @@ export async function uploadStudentPhotoToBackend(
   const formData = new FormData();
   formData.append("photo", file);
 
-  const apiUrl =
-    process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:3006";
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || "/api";
+  const backendUrl = getBackendUrl(
+    apiBase,
+    `/api/admin/students/${encodeURIComponent(pupilId)}/photo`
+  );
 
-  const response = await fetch(
-    `${apiUrl}/api/admin/students/${encodeURIComponent(pupilId)}/photo`,
-    {
+  // Attempt to forward server cookies when available (server actions / server components)
+  let cookieHeader = "";
+  try {
+    const ck = await nextCookies();
+    const all = typeof ck.getAll === "function" ? ck.getAll() : [];
+    cookieHeader = all.map((c: any) => `${c.name}=${encodeURIComponent(c.value)}`).join("; ");
+  } catch (err) {
+    // ignore - not available in some contexts
+  }
+
+  let response: Response | null = null;
+  try {
+    response = await fetch(backendUrl, {
       method: "POST",
       body: formData,
+      headers: cookieHeader ? { cookie: cookieHeader } : undefined,
+    });
+  } catch (err: any) {
+    console.error("Photo upload fetch failed to", backendUrl, err);
+    // Dev-friendly fallback: save locally when backend unreachable
+    try {
+      const local = await saveStudentPhoto(pupilId, file);
+      return local;
+    } catch (saveErr) {
+      console.error("Local fallback save failed", saveErr);
     }
-  );
+    throw err;
+  }
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));

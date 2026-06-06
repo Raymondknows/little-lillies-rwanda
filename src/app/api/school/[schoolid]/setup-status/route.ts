@@ -10,6 +10,15 @@ export async function GET(
     await requirePlatformAdminSession();
 
     const { schoolid: schoolId } = await params;
+    console.log("API route - fetching setup status for school:", schoolId);
+    if (!schoolId) {
+      console.error("Missing school id in route params");
+      return NextResponse.json(
+        { error: "Missing school id in route params" },
+        { status: 400 }
+      );
+    }
+
     const status = await checkSchoolSetup(schoolId);
 
     return NextResponse.json({
@@ -18,8 +27,9 @@ export async function GET(
     });
   } catch (error) {
     console.error("Failed to get setup status:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
-      { error: "Failed to get setup status" },
+      { error: "Failed to get setup status", details: errorMessage },
       { status: 500 }
     );
   }

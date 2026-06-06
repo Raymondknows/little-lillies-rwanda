@@ -7,21 +7,32 @@ export type SetupStatus = {
 };
 
 export async function checkSchoolSetup(schoolId: string): Promise<SetupStatus> {
-  const school = await prisma.school.findUnique({
-    where: { id: schoolId },
-    include: {
-      users: {
-        where: { role: "TEACHER" },
-        select: { id: true },
-      },
-      classes: {
-        select: { id: true },
-      },
-      academicYears: {
-        select: { id: true },
-      },
+  if (!schoolId) {
+    return {
+      isComplete: false,
+      completionPercentage: 0,
+      incompleteTasks: ["Missing school id"],
+    };
+  }
+
+  const include = {
+    users: {
+      where: { role: "TEACHER" },
+      select: { id: true },
     },
-  });
+    classes: {
+      select: { id: true },
+    },
+    academicYears: {
+      select: { id: true },
+    },
+  } as const;
+
+  // Try lookup by id first, then fallback to slug
+  let school = await prisma.school.findUnique({ where: { id: schoolId }, include });
+  if (!school) {
+    school = await prisma.school.findUnique({ where: { slug: schoolId }, include });
+  }
 
   if (!school) {
     return {

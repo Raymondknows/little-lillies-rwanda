@@ -15,6 +15,26 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Missing amount or email." }, { status: 400 });
   }
 
+  // Basic server-side email validation to catch obvious problems
+  function isValidEmail(e: string) {
+    // simple RFC-ish check: local@domain.tld and domain contains at least one dot
+    if (!e || typeof e !== "string") return false;
+    const parts = e.split("@");
+    if (parts.length !== 2) return false;
+    const domain = parts[1];
+    if (!domain.includes(".")) return false;
+    const tld = domain.split(".").pop() || "";
+    if (tld.length < 2) return false;
+    // reject obviously fake dev-only hostnames like .demo
+    if (domain.endsWith(".demo") || domain.endsWith(".local")) return false;
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+  }
+
+  if (!isValidEmail(email)) {
+    console.error("Invalid email passed to Paystack init", { email });
+    return NextResponse.json({ error: "Invalid email address passed." }, { status: 400 });
+  }
+
   // Get schoolId from session
   const session = await getStaffSession();
   if (!session) {

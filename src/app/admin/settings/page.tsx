@@ -6,9 +6,10 @@ import { Suspense } from "react";
 export default async function SettingsPage({
   searchParams,
 }: {
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const isOnboarding = searchParams.onboarding === "1";
+  const resolvedSearchParams = await searchParams;
+  const isOnboarding = resolvedSearchParams?.onboarding === "1";
   const school = await getCurrentSchool();
 
   const staff = await prisma.user.findMany({

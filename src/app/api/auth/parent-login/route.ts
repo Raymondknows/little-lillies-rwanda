@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3006';
+import { getBackendUrl } from '@/lib/backend-url';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    const BACKEND_URL = getBackendUrl();
     
     // Proxy to backend API
     const response = await fetch(`${BACKEND_URL}/api/parent/login`, {

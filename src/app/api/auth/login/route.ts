@@ -1,10 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3006';
+function getBackendUrl() {
+  // For production (Vercel), use api.schoolbase.live
+  if (process.env.NODE_ENV === 'production') {
+    return 'https://api.schoolbase.live';
+  }
+  // For development, use localhost
+  return process.env.BACKEND_URL || 'http://localhost:3006';
+}
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    const BACKEND_URL = getBackendUrl();
     
     console.log('Login attempt:', { email: body.email, backendUrl: BACKEND_URL });
     
@@ -36,6 +44,7 @@ export async function POST(request: NextRequest) {
 
     return res;
   } catch (error) {
+    const BACKEND_URL = getBackendUrl();
     console.error('Login error:', error);
     console.error('Backend URL:', BACKEND_URL);
     return NextResponse.json({ 

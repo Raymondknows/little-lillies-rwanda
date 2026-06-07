@@ -17,18 +17,24 @@ export function AdminDashboardContent() {
       try {
         const response = await fetch('/api/dashboard/stats');
         
+        console.log('Dashboard stats response:', response.status);
+        
         if (response.status === 401) {
           router.push('/login');
           return;
         }
 
         if (!response.ok) {
-          throw new Error('Failed to load dashboard');
+          const errorText = await response.text();
+          console.error('Dashboard stats error:', response.status, errorText);
+          throw new Error(`Failed to load dashboard (${response.status})`);
         }
 
         const dashboardData = await response.json();
+        console.log('Dashboard data loaded successfully');
         setData(dashboardData);
       } catch (err) {
+        console.error('Dashboard fetch error:', err);
         setError(err instanceof Error ? err.message : 'Unknown error');
       } finally {
         setLoading(false);

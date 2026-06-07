@@ -62,22 +62,8 @@ export function buildApiUrl(endpoint: string, search: string = ""): string {
     cleanEndpoint = "/" + cleanEndpoint;
   }
 
-  // Get backend URL - use api.schoolbase.live for production, localhost for development
-  let backendBase = "http://localhost:3006";
-  
-  // Check if we're on Vercel/production domain
-  if (typeof window !== "undefined") {
-    const host = window.location.hostname;
-    if (host === "schoolbase.live" || host === "www.schoolbase.live" || host.includes("vercel.app")) {
-      backendBase = "https://api.schoolbase.live";
-    }
-  } else {
-    // Server-side: check environment
-    if (process.env.NODE_ENV === "production") {
-      backendBase = "https://api.schoolbase.live";
-    }
-  }
-  
+  // Get backend URL
+  const backendBase = process.env.BACKEND_URL || "http://localhost:3006";
   const baseUrl = backendBase.replace(/\/$/, "");
 
   // Build with EXACTLY one /api prefix

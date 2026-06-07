@@ -45,6 +45,14 @@ export async function getStaffSession(): Promise<StaffSession | null> {
   }
 }
 
+export async function getPlatformAdminSession() {
+  throw new Error("Use GET /api/platform-admin/session instead");
+}
+
+export async function requirePlatformAdminSession() {
+  throw new Error("Use GET /api/platform-admin/session instead");
+}
+
 export async function getParentSession(): Promise<ParentSession | null> {
   const jar = await cookies();
   const token = jar.get(PARENT_COOKIE)?.value;
@@ -67,12 +75,12 @@ export async function destroyParentSession() {
   jar.delete(PARENT_COOKIE);
 }
 
-export async function requireStaffSession() {
-  const session = await getStaffSession();
-  if (!session) {
-    throw new Error("UNAUTHORIZED");
-  }
-  return session;
+export async function requireStaffSession(options?: { allowTrial?: boolean }) {
+  throw new Error("Use backend API for session validation instead");
+}
+
+export async function createStaffSession() {
+  throw new Error("Use backend API for session creation instead");
 }
 
 export async function hashPassword(password: string): Promise<string> {

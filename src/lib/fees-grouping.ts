@@ -1,4 +1,4 @@
-export type InvoiceStatus = "PENDING" | "PAID" | "PARTIAL" | "OVERDUE" | "CANCELLED";
+export type InvoiceStatus = "DRAFT" | "SENT" | "PART_PAID" | "PAID" | "OVERDUE";
 export type SchoolPhase = "NURSERY" | "PRIMARY" | "SECONDARY" | "TERTIARY";
 
 export type ClassItem = {

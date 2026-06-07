@@ -62,7 +62,7 @@ export default function StudentViewClient({ studentId }: { studentId: string }) 
           <h1 className="flex-1 text-center text-lg font-semibold text-slate-900">{fullName}</h1>
           <div className="flex items-center gap-2">
             <Link href={`/admin/students/${studentId}/edit`}>
-              <Button size="sm" className="gap-2">
+              <Button className="gap-2">
                 <Edit2 className="h-4 w-4" />
                 Edit
               </Button>
@@ -420,13 +420,13 @@ export default function StudentViewClient({ studentId }: { studentId: string }) 
         {/* Action Buttons */}
         <div className="flex gap-3 mt-8">
           <Link href={`/admin/students/${studentId}/edit`} className="flex-1">
-            <Button size="lg" className="w-full gap-2">
+            <Button className="w-full gap-2">
               <Edit2 className="h-4 w-4" />
               Edit Student
             </Button>
           </Link>
           <Link href="/admin/students" className="flex-1">
-            <Button variant="outline" size="lg" className="w-full">
+            <Button variant="outline" className="w-full">
               Back to List
             </Button>
           </Link>

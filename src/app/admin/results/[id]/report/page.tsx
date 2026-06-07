@@ -31,8 +31,11 @@ export default async function AssessmentReportPage({
 
   // Get all unique subjects in this assessment
   const uniqueSubjects = Array.from(
-    new Map(results.map((r) => [r.subjectId, r.subjectRef])).values()
-  ).filter(Boolean);
+    new Map(results.map((r: typeof results[number]) => [r.subjectId, r.subjectRef])).values()
+  ).filter(
+    (subject): subject is NonNullable<typeof results[number]["subjectRef"]> =>
+      Boolean(subject),
+  );
 
   // Group results by pupil
   const resultsByPupil = new Map<
@@ -63,11 +66,11 @@ export default async function AssessmentReportPage({
   // Calculate stats for each pupil
   const pupilReports = Array.from(resultsByPupil.values()).map((entry) => {
     const totalScores = entry.results
-      .filter((r) => r.totalScore !== null)
-      .map((r) => r.totalScore as number);
+      .filter((r: typeof entry.results[number]) => r.totalScore !== null)
+      .map((r: typeof entry.results[number]) => r.totalScore as number);
     const avgScore =
       totalScores.length > 0
-        ? totalScores.reduce((a, b) => a + b, 0) / totalScores.length
+        ? totalScores.reduce((a: number, b: number) => a + b, 0) / totalScores.length
         : 0;
 
     return {
@@ -160,7 +163,7 @@ export default async function AssessmentReportPage({
             </p>
             <p className="text-xl sm:text-2xl font-bold text-orange-600 print:text-gray-900">
               {(
-                pupilReports.reduce((sum, p) => sum + p.avgScore, 0) /
+                pupilReports.reduce((sum: number, p: typeof pupilReports[number]) => sum + p.avgScore, 0) /
                   pupilReports.length || 0
               ).toFixed(1)}
             </p>
@@ -221,7 +224,7 @@ export default async function AssessmentReportPage({
                   </td>
                   {uniqueSubjects.map((subject) => {
                     const result = report.results.find(
-                      (r) => r.subjectId === subject?.id
+                      (r: typeof report.results[number]) => r.subjectId === subject?.id
                     );
                     return (
                       <td

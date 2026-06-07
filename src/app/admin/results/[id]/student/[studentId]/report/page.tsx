@@ -54,8 +54,8 @@ export default async function StudentReportPage({
   });
 
   // Calculate stats
-  const scores = results.filter(r => r.totalScore !== null).map(r => r.totalScore as number);
-  const avgScore = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+  const scores = results.filter((r: typeof results[number]) => r.totalScore !== null).map((r: typeof results[number]) => r.totalScore as number);
+  const avgScore = scores.length > 0 ? scores.reduce((a: number, b: number) => a + b, 0) / scores.length : 0;
 
   return (
     <div className="min-h-screen bg-white p-6 sm:p-12 print:p-4">
@@ -156,7 +156,7 @@ export default async function StudentReportPage({
               </tr>
             </thead>
             <tbody>
-              {results.map((result, idx) => (
+              {results.map((result: typeof results[number], idx: number) => (
                 <tr key={result.id} className={idx % 2 === 0 ? "bg-white" : "bg-background"}>
                   <td className="px-4 py-3 font-medium text-foreground">{result.subjectRef?.name || result.subject}</td>
                   <td className="px-4 py-3 text-center text-muted">{result.caScore !== null ? result.caScore.toFixed(1) : "—"}</td>
@@ -173,11 +173,11 @@ export default async function StudentReportPage({
         </div>
 
         {/* Comments */}
-        {results.some(r => r.comment) && (
+        {results.some((r: typeof results[number]) => r.comment) && (
           <div className="mt-6" style={{ breakInside: "avoid", pageBreakInside: "avoid" }}>
             <h3 className="text-lg font-semibold text-foreground mb-3">Comments</h3>
             <div className="flex flex-wrap gap-4 text-sm text-muted">
-              {results.filter(r => r.comment).map(r => (
+              {results.filter((r: typeof results[number]) => r.comment).map((r: typeof results[number]) => (
                 <div key={r.id} className="flex items-center gap-2">
                   <span className="font-semibold text-foreground">{r.subjectRef?.name || r.subject}</span>
                   <span>=</span>

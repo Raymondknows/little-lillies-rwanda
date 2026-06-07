@@ -2,7 +2,7 @@
 // All backend operations must use API routes (e.g., POST /api/admin/...)
 // This file is kept for build compatibility but contains no functional code
 
-export async function recordPayment() {
+export async function recordPayment(formData: FormData) {
   throw new Error("Use POST /api/admin/payments instead");
 }
 
@@ -46,31 +46,31 @@ export async function saveAttendance() {
   throw new Error("Use POST /api/admin/attendance instead");
 }
 
-export async function createAnnouncement() {
+export async function createAnnouncement(formData: FormData) {
   throw new Error("Use POST /api/admin/announcements instead");
 }
 
-export async function saveTeacherAssignments() {
+export async function saveTeacherAssignments(formData: FormData) {
   throw new Error("Use POST /api/admin/teachers/assignments instead");
 }
 
-export async function createSubject() {
+export async function createSubject(formData: FormData) {
   throw new Error("Use POST /api/admin/subjects instead");
 }
 
-export async function updateSubject() {
+export async function updateSubject(formData: FormData) {
   throw new Error("Use PATCH /api/admin/subjects instead");
 }
 
-export async function deleteSubject() {
+export async function deleteSubject(formData: FormData) {
   throw new Error("Use DELETE /api/admin/subjects instead");
 }
 
-export async function createTeacher() {
+export async function createTeacher(formData: FormData) {
   throw new Error("Use POST /api/admin/teachers instead");
 }
 
-export async function updateTeacher() {
+export async function updateTeacher(formData: FormData) {
   throw new Error("Use PATCH /api/admin/teachers instead");
 }
 
@@ -96,4 +96,24 @@ export async function createAssessment() {
 
 export async function createStudent() {
   throw new Error("Use POST /api/admin/students instead");
+}
+
+export async function createAcademicYear() {
+  throw new Error("Use POST /api/admin/academic-years instead");
+}
+
+export async function createTerm() {
+  throw new Error("Use POST /api/admin/terms instead");
+}
+
+export async function setCurrentAcademicYear() {
+  throw new Error("Use PATCH /api/admin/academic-years/current instead");
+}
+
+export async function updateTerm(formData: FormData) {
+  throw new Error("Use PATCH /api/admin/terms instead");
+}
+
+export async function saveResultMarks() {
+  throw new Error("Use POST /api/admin/results instead");
 }

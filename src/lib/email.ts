@@ -13,3 +13,19 @@ export function buildInvoicePaymentEmail() {
 export async function sendEmail() {
   throw new Error("Use backend API for email operations");
 }
+
+export function buildPurchaseEmail() {
+  throw new Error("Use backend API for email operations");
+}
+
+export function buildTrialEmail() {
+  throw new Error("Use backend API for email operations");
+}
+
+export function buildPlatformCommunicationEmail() {
+  throw new Error("Use backend API for email operations");
+}
+
+export function logEmail() {
+  throw new Error("Use backend API for email operations");
+}

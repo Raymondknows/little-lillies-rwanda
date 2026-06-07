@@ -54,8 +54,8 @@ export default async function SubjectReportPage({
   });
   
   // Calculate stats
-  const scores = results.filter(r => r.totalScore !== null).map(r => r.totalScore as number);
-  const avgScore = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+  const scores = results.filter((r: typeof results[number]) => r.totalScore !== null).map((r: typeof results[number]) => r.totalScore as number);
+  const avgScore = scores.length > 0 ? scores.reduce((a: number, b: number) => a + b, 0) / scores.length : 0;
   const maxScore = Math.max(...scores);
   const minScore = Math.min(...scores);
 
@@ -166,7 +166,7 @@ export default async function SubjectReportPage({
               </tr>
             </thead>
             <tbody>
-              {results.map((result, idx) => (
+              {results.map((result: typeof results[number], idx: number) => (
                 <tr
                   key={result.id}
                   className={

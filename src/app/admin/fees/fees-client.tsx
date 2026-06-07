@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Pagination } from "@/components/ui/pagination";
 import { UserGuide, type PageHelpGuide } from "@/components/ui/user-guide";
-import type { InvoiceStatus, PaymentMethod } from "@prisma/client";
+import type { PaymentMethod } from "@prisma/client";
 import {
   formatMoney,
   invoiceStatusClass,
@@ -22,6 +22,7 @@ import {
   type Invoice,
   type TermItem,
   type Stats,
+  type InvoiceStatus,
 } from "@/lib/fees-grouping";
 import { ArrowUpRight, TrendingUp, CheckCircle, AlertCircle, Clock } from "lucide-react";
 
@@ -217,7 +218,7 @@ export default function FeesPageClient({
         PAID: 0,
         OVERDUE: 0,
       },
-    };
+    } as Stats;
 
     filteredInvoices.forEach((inv) => {
       stats.totalDue += inv.amountDue;
@@ -564,18 +565,18 @@ export default function FeesPageClient({
                   </option>
                 ))}
               </select>
-              <Button type="submit" size="sm" className="text-xs px-2.5 py-1.5 h-auto">
+              <Button type="submit" className="text-xs px-2.5 py-1.5 h-auto">
                 Issue Bills
               </Button>
             </form>
 
             <form action={sendFeeRemindersAction}>
-              <Button type="submit" variant="secondary" size="sm" className="text-xs px-2.5 py-1.5 h-auto">
+              <Button type="submit" variant="secondary" className="text-xs px-2.5 py-1.5 h-auto">
                 Send Reminders
               </Button>
             </form>
 
-            <Button href="/admin/fees/schedules" variant="secondary" size="sm" className="text-xs px-2.5 py-1.5 h-auto">
+            <Button href="/admin/fees/schedules" variant="secondary" className="text-xs px-2.5 py-1.5 h-auto">
               Fee Schedules
             </Button>
           </div>

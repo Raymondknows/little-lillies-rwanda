@@ -3,7 +3,7 @@
   "outputDirectory": ".next",
   "framework": "nextjs",
   "env": {
-    "NEXT_PUBLIC_API_URL": "https://www.schoolbase.live/api",
-    "BACKEND_URL": "https://www.schoolbase.live/api"
+    "NEXT_PUBLIC_API_URL": "https://api.schoolbase.live",
+    "BACKEND_URL": "https://api.schoolbase.live"
   }
 }

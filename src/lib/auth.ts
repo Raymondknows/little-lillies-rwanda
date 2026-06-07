@@ -45,11 +45,11 @@ export async function getStaffSession(): Promise<StaffSession | null> {
   }
 }
 
-export async function getPlatformAdminSession() {
-  throw new Error("Use GET /api/platform-admin/session instead");
+export async function getPlatformAdminSession(): Promise<StaffSession | null> {
+  return null;
 }
 
-export async function requirePlatformAdminSession() {
+export async function requirePlatformAdminSession(): Promise<StaffSession> {
   throw new Error("Use GET /api/platform-admin/session instead");
 }
 
@@ -79,7 +79,7 @@ export async function requireStaffSession(options?: { allowTrial?: boolean }) {
   throw new Error("Use backend API for session validation instead");
 }
 
-export async function createStaffSession() {
+export async function createStaffSession(): Promise<void> {
   throw new Error("Use backend API for session creation instead");
 }
 

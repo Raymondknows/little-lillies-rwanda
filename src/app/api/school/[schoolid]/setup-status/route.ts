@@ -1,36 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
-import { requirePlatformAdminSession } from "@/lib/auth";
-import { checkSchoolSetup } from "@/lib/setup-checker";
+import { NextResponse } from "next/server";
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ schoolid: string }> }
-) {
-  try {
-    await requirePlatformAdminSession();
+export async function GET() {
+  return NextResponse.json({ error: "Use the backend API instead." }, { status: 503 });
+}
 
-    const { schoolid: schoolId } = await params;
-    console.log("API route - fetching setup status for school:", schoolId);
-    if (!schoolId) {
-      console.error("Missing school id in route params");
-      return NextResponse.json(
-        { error: "Missing school id in route params" },
-        { status: 400 }
-      );
-    }
-
-    const status = await checkSchoolSetup(schoolId);
-
-    return NextResponse.json({
-      ...status,
-      completionPercent: status.completionPercentage,
-    });
-  } catch (error) {
-    console.error("Failed to get setup status:", error);
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return NextResponse.json(
-      { error: "Failed to get setup status", details: errorMessage },
-      { status: 500 }
-    );
-  }
+export async function POST() {
+  return NextResponse.json({ error: "Use the backend API instead." }, { status: 503 });
 }

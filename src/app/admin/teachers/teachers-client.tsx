@@ -244,16 +244,11 @@ export default function TeachersPageClient({
                 const formData = new FormData(e.currentTarget);
                 startTransition(async () => {
                   try {
-                    const result = await createTeacher(formData);
-                    if (result && !result.success && result.error) {
-                      setErrorMessage(result.error);
-                      setShowErrorModal(true);
-                    } else if (result && result.success) {
-                      // Close modal and refresh page
-                      setIsOpen(false);
-                      setErrorMessage(null);
-                      window.location.reload();
-                    }
+                    await createTeacher(formData);
+                    // If this runs, the stub threw an error before reaching here
+                    setIsOpen(false);
+                    setErrorMessage(null);
+                    window.location.reload();
                   } catch (error: unknown) {
                     if (error instanceof Error) {
                       setErrorMessage(error.message);

@@ -1,3 +1,5 @@
+"use server";
+
 // Server actions removed for Vercel compatibility
 // Use backend API endpoints instead
 

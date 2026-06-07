@@ -10,7 +10,7 @@ export async function GET(request: Request) {
       return new Response("Unauthorized", { status: 401 });
     }
 
-    const schoolId = staffSession?.schoolId || parentSession?.schoolId;
+    const schoolId = (staffSession as any)?.schoolId || (parentSession as any)?.schoolId;
     if (!schoolId) {
       return new Response("Unauthorized", { status: 401 });
     }

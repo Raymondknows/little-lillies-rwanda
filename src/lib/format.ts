@@ -17,22 +17,22 @@ export function formatMoney(amountMinor: number, currency = "NGN") {
 
 export function invoiceStatusLabel(status: InvoiceStatus): string {
   const map: Record<InvoiceStatus, string> = {
-    DRAFT: "Draft",
-    SENT: "Sent",
-    PART_PAID: "Part paid",
+    PENDING: "Pending",
     PAID: "Paid",
+    PARTIAL: "Partial",
     OVERDUE: "Overdue",
+    CANCELLED: "Cancelled",
   };
   return map[status] ?? status;
 }
 
 export function invoiceStatusClass(status: InvoiceStatus): string {
   const map: Record<InvoiceStatus, string> = {
-    DRAFT: "text-muted",
-    SENT: "text-brand",
-    PART_PAID: "text-warning",
+    PENDING: "text-brand",
+    PARTIAL: "text-warning",
     PAID: "text-success",
     OVERDUE: "text-error",
+    CANCELLED: "text-muted",
   };
   return map[status] ?? "text-muted";
 }
@@ -40,8 +40,8 @@ export function invoiceStatusClass(status: InvoiceStatus): string {
 export function resultStatusLabel(status: ResultStatus): string {
   const map: Record<ResultStatus, string> = {
     DRAFT: "Draft",
-    APPROVED: "Ready to publish",
     PUBLISHED: "Published",
+    ARCHIVED: "Archived",
   };
   return map[status] ?? status;
 }

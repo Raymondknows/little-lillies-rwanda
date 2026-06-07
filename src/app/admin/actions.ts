@@ -1,3 +1,5 @@
+"use server";
+
 // Server actions removed for Vercel compatibility
 // All backend operations must use API routes (e.g., POST /api/admin/...)
 // This file is kept for build compatibility but contains no functional code
@@ -18,15 +20,19 @@ export async function sendFeeRemindersAction() {
   throw new Error("Use POST /api/admin/fees/reminders instead");
 }
 
-export async function publishAssessment() {
+export async function publishAssessment(...args: any[]): Promise<any> {
   throw new Error("Use POST /api/admin/assessments/publish instead");
 }
 
-export async function approveAssessment() {
+export async function approveAssessment(...args: any[]): Promise<any> {
   throw new Error("Use POST /api/admin/assessments/approve instead");
 }
 
-export async function returnAssessmentToDraft() {
+export async function returnAssessmentToDraft(...args: any[]): Promise<any> {
+  throw new Error("Use POST /api/admin/assessments/return-draft instead");
+}
+
+export async function returnAssessmentToDraftForm(...args: any[]): Promise<any> {
   throw new Error("Use POST /api/admin/assessments/return-draft instead");
 }
 
@@ -97,6 +103,11 @@ export async function createAssessment() {
 export async function createStudent() {
   throw new Error("Use POST /api/admin/students instead");
 }
+
+export async function updateStudent(...args: any[]): Promise<any> {
+  throw new Error("Use PATCH /api/admin/students/[id] instead");
+}
+
 
 export async function createAcademicYear() {
   throw new Error("Use POST /api/admin/academic-years instead");

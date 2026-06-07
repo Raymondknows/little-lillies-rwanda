@@ -1,29 +1,5 @@
-"use server";
-
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import {
-  destroyParentSession,
-  destroyStaffSession,
-} from "@/lib/auth";
-import { prisma } from "@/lib/db";
-import bcrypt from "bcryptjs";
-import crypto from "crypto";
-import { sendEmail, buildPasswordResetEmail } from "@/lib/email";
-import { hashPassword } from "@/lib/auth";
-
-const BACKEND_URL = process.env.BACKEND_URL || process.env.API_URL || "http://localhost:3006";
-
-async function setAuthCookie(name: string, token: string) {
-  const cookieStore = await cookies();
-  cookieStore.set(name, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 7 * 24 * 60 * 60,
-  });
-}
+// Server actions removed for Vercel compatibility
+// Use API routes instead (e.g., POST /api/auth/...)
 
 export async function staffLoginAction(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim();

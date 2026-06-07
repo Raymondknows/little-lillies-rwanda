@@ -1,20 +1,20 @@
 "use client";
 
-import { useState, type ChangeEvent, type FormEvent } from "react";
+import { useState, useEffect, type ChangeEvent, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Loader2, Upload, ChevronDown } from "lucide-react";
-import { createStudent } from "../../actions";
 
-export default function NewStudentClient({
-  classes,
-  nextAdmissionNo,
-}: {
-  classes: any[];
-  nextAdmissionNo: string;
-}) {
+export default function NewStudentClient() {
+  const router = useRouter();
+  const [classes, setClasses] = useState<any[]>([]);
+  const [nextAdmissionNo, setNextAdmissionNo] = useState("---");
+  const [isLoadingPage, setIsLoadingPage] = useState(true);
+  
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string>("");
 
   const [firstName, setFirstName] = useState("");
   const [middleName, setMiddleName] = useState("");
@@ -46,6 +46,25 @@ export default function NewStudentClient({
   const [medicalOpen, setMedicalOpen] = useState(false);
   const [previousOpen, setPreviousOpen] = useState(false);
 
+  // Fetch classes and next admission number on mount
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const response = await fetch("/api/admin/students/data");
+        if (response.ok) {
+          const data = await response.json();
+          setClasses(data.classes || []);
+          setNextAdmissionNo(data.nextAdmissionNo || "---");
+        }
+      } catch (err) {
+        console.error("Failed to load page data:", err);
+      } finally {
+        setIsLoadingPage(false);
+      }
+    };
+    loadData();
+  }, []);
+
   const handlePhotoChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] ?? null;
     if (!file) {
@@ -58,8 +77,58 @@ export default function NewStudentClient({
     setPhotoPreview(URL.createObjectURL(file));
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     setIsSubmitting(true);
+    setError("");
+
+    try {
+      const formData = new FormData();
+      formData.append("lastName", lastName);
+      formData.append("firstName", firstName);
+      formData.append("middleName", middleName);
+      formData.append("admissionNo", nextAdmissionNo);
+      formData.append("classId", classId);
+      formData.append("status", status);
+      formData.append("admissionDate", admissionDate || new Date().toISOString().split("T")[0]);
+      formData.append("gender", gender);
+      formData.append("dateOfBirth", dateOfBirth);
+      formData.append("studentEmail", studentEmail);
+      formData.append("studentPhone", studentPhone);
+      formData.append("address", address);
+      formData.append("bloodGroup", bloodGroup);
+      formData.append("genotype", genotype);
+      formData.append("medicalNotes", medicalNotes);
+      formData.append("previousSchool", previousSchool);
+      formData.append("previousClass", previousClass);
+      formData.append("guardianFirst", guardianFirst);
+      formData.append("guardianLast", guardianLast);
+      formData.append("guardianRelationship", guardianRelationship);
+      formData.append("guardianEmail", guardianEmail);
+      formData.append("guardianPhone", guardianPhone);
+      formData.append("guardianAltPhone", guardianAltPhone);
+      formData.append("guardianOccupation", guardianOccupation);
+
+      if (photoFile) {
+        formData.append("photo", photoFile);
+      }
+
+      const response = await fetch("/api/admin/students", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const result = await response.json();
+        throw new Error(result.error || "Failed to create student");
+      }
+
+      router.push("/admin/students?created=1");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -89,7 +158,14 @@ export default function NewStudentClient({
         </div>
       </div>
 
-      <form id="new-student-form" action={createStudent} onSubmit={handleSubmit} className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <form id="new-student-form" onSubmit={handleSubmit} className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+        {/* Error Alert */}
+        {error && (
+          <div className="lg:col-span-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            {error}
+          </div>
+        )}
+
         {/* Left: photo card (sticky) */}
         <div className="lg:col-span-1">
           <div className="rounded-[28px] border border-border bg-white p-5 shadow-sm lg:sticky lg:top-28">

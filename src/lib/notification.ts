@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/db";
+// Prisma removed - use backend API instead
 import { sendEmail, buildFeeReminderEmail } from "@/lib/email";
 import { createFeeReminderMessage, sendWhatsAppMessage } from "@/lib/whatsapp";
 

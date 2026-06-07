@@ -1,4 +1,5 @@
-import type { InvoiceStatus, ResultStatus } from "@prisma/client";
+export type InvoiceStatus = "PENDING" | "PAID" | "PARTIAL" | "OVERDUE" | "CANCELLED";
+export type ResultStatus = "DRAFT" | "PUBLISHED" | "ARCHIVED";
 
 export function formatMoney(amountMinor: number, currency = "NGN") {
   const value = amountMinor / 100;

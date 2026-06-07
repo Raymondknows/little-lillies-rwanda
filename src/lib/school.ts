@@ -1,17 +1,35 @@
-import { prisma } from "@/lib/db";
 import { getStaffSession } from "@/lib/auth";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
+
+// Fetch school data from the backend API instead of direct database access
+async function fetchSchoolFromAPI(schoolId: string) {
+  const baseUrl = process.env.BACKEND_URL || "http://localhost:3006";
+  
+  try {
+    const response = await fetch(`${baseUrl}/api/admin/school/${schoolId}`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+    
+    if (!response.ok) {
+      console.error(`Failed to fetch school: ${response.status}`);
+      return null;
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching school from API:", error);
+    return null;
+  }
+}
 
 export async function getCurrentSchool() {
   const session = await getStaffSession();
 
   // If a staff session exists, use its schoolId (staff are scoped to a school)
   if (session) {
-    const school = await prisma.school.findUnique({
-      where: { id: session.schoolId as string },
-      include: { partner: true, enabledPhases: true },
-    });
+    const school = await fetchSchoolFromAPI(session.schoolId as string);
     if (!school) {
       // School not found - this shouldn't happen in normal operation
       // Return a fallback to prevent crashes
@@ -21,48 +39,9 @@ export async function getCurrentSchool() {
     return school;
   }
 
-  // Otherwise check for a `schoolSlug` cookie (set by middleware from subdomain)
-  const cookieStore = await cookies();
-  const signedCookieName = "schoolSlug_v2";
-  const legacyCookieName = "schoolSlug";
-
-  let slug = process.env.SCHOOL_SLUG ?? "greenfield";
-
-  // Prefer the signed v2 cookie
-  const signedToken = cookieStore.get(signedCookieName)?.value;
-  if (signedToken) {
-    try {
-      const { payload } = await jwtVerify(
-        signedToken,
-        new TextEncoder().encode(process.env.SESSION_SECRET ?? "schoolbase-dev-secret-change-me"),
-      );
-      if (payload && typeof payload === "object" && "slug" in payload) {
-        slug = String((payload as any).slug);
-      }
-    } catch (e) {
-      // Log minimal info for detection of tampering or misconfiguration,
-      // but do not expose sensitive token contents.
-      console.warn("getCurrentSchool: invalid signed schoolSlug_v2 token");
-    }
-  } else {
-    // Support legacy plain cookie as a last-resort fallback to avoid breaking older deployments.
-    const legacy = cookieStore.get(legacyCookieName)?.value;
-    if (legacy && /^[a-z0-9-]+$/.test(legacy)) {
-      slug = legacy;
-    }
-  }
-
-  const school = await prisma.school.findUnique({
-    where: { slug },
-    include: { partner: true, enabledPhases: true },
-  });
-
-  if (!school) {
-    console.error(`School not found for slug: ${slug}`);
-    throw new Error("School not found. Please ensure you're accessing the correct URL.");
-  }
-
-  return school;
+  // For non-authenticated users, we can't fetch school data without direct database access
+  // This function should only be called from authenticated contexts
+  throw new Error("No session found. Please log in.");
 }
 
 export async function getCurrentSchoolId() {

@@ -1,5 +1,5 @@
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
-import { prisma } from "@/lib/db";
+// Database access removed - use backend API instead
 import { getParentSession, getStaffSession } from "@/lib/auth";
 import { pupilName } from "@/lib/format";
 // Persisting transcripts is handled by backend; frontend will stream PDF directly.

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+// Database access removed - use backend API instead
 import { requirePlatformAdminSession } from "@/lib/auth";
 import { sendEmail, buildPlatformCommunicationEmail, logEmail } from "@/lib/email";
 

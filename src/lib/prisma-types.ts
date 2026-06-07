@@ -4,8 +4,7 @@
  */
 
 // Re-export Prisma package exports so runtime enums and types are available
-import type { Prisma } from "@prisma/client";
-export * from "@prisma/client";
+// Prisma types removed - use type definitions from backend instead
 
 export { prisma } from "./db";
 

@@ -1,23 +1,41 @@
-import { prisma } from "@/lib/db";
-import { getCurrentSchool } from "@/lib/school";
+"use client";
+
+import { useEffect, useState } from "react";
 import StudentsPageClient from "./students-client";
 
-export default async function StudentsPage() {
-  const school = await getCurrentSchool();
+export default function StudentsPage() {
+  const [pupils, setPupils] = useState([]);
+  const [classes, setClasses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const pupils = await prisma.pupil.findMany({
-    where: { schoolId: school.id, isActive: true },
-    include: {
-      class: true,
-      guardians: { include: { guardian: true } },
-    },
-    orderBy: { lastName: "asc" },
-  });
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const response = await fetch("/api/admin/students/data");
+        if (!response.ok) {
+          throw new Error(`Failed to fetch: ${response.statusText}`);
+        }
+        const data = await response.json();
+        setPupils(data.pupils || []);
+        setClasses(data.classes || []);
+      } catch (err) {
+        console.error("Error loading students:", err);
+        setError("Failed to load students");
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
 
-  const classes = await prisma.class.findMany({
-    where: { schoolId: school.id },
-    orderBy: { name: "asc" },
-  });
+  if (loading) {
+    return <div className="p-6">Loading...</div>;
+  }
+
+  if (error) {
+    return <div className="p-6 text-red-600">{error}</div>;
+  }
 
   return <StudentsPageClient pupils={pupils} classes={classes} />;
 }

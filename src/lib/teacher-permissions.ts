@@ -1,4 +1,5 @@
-import { prisma } from "@/lib/db";
+// Database access removed for Vercel compatibility
+// Use backend API endpoints instead
 
 /**
  * Get all classes a teacher is assigned to

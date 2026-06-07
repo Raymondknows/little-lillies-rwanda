@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/db";
+// Prisma removed - use backend API instead
 
 /**
  * In-memory cache for grading scales per school (schoolId -> scales[])

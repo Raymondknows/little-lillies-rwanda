@@ -1,36 +1,54 @@
-import { prisma } from "@/lib/db";
-import { getCurrentSchool } from "@/lib/school";
+"use client";
+
 import SettingsPageClient from "./settings-client";
-import { Suspense } from "react";
+import { useState, useEffect } from "react";
 
-export default async function SettingsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
-  const resolvedSearchParams = await searchParams;
-  const isOnboarding = resolvedSearchParams?.onboarding === "1";
-  const school = await getCurrentSchool();
+export default function SettingsPage() {
+  const [school, setSchool] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const staff = await prisma.user.findMany({
-    where: { schoolId: school.id },
-    orderBy: { name: "asc" },
-  });
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        // Fetch school data from the API
+        const schoolRes = await fetch("/api/admin/school");
+        if (!schoolRes.ok) {
+          throw new Error(`Failed to fetch school: ${schoolRes.status}`);
+        }
+        const schoolData = await schoolRes.json();
+        setSchool(schoolData);
+        setLoading(false);
+      } catch (err) {
+        console.error("Error loading settings:", err);
+        setError(err instanceof Error ? err.message : "Failed to load settings");
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
 
-  const paystackConfigured = Boolean(
-    process.env.PAYSTACK_SECRET_KEY && process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
-  );
-  const whatsappConfigured = Boolean(
-    process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.WHATSAPP_FROM,
-  );
+  if (loading) {
+    return <div className="p-6">Loading settings...</div>;
+  }
+
+  if (error) {
+    return <div className="p-6 text-red-600">{error}</div>;
+  }
+
+  if (!school) {
+    return <div className="p-6 text-red-600">No school data available</div>;
+  }
 
   return (
     <SettingsPageClient
-      school={school as any}
-      staff={staff}
-      paystackConfigured={paystackConfigured}
-      whatsappConfigured={whatsappConfigured}
-      isOnboarding={isOnboarding}
+      school={school}
+      staff={[]}
+      paystackConfigured={Boolean(
+        process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY,
+      )}
+      whatsappConfigured={false}
+      isOnboarding={false}
     />
   );
 }

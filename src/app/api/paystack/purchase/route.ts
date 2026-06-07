@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
-import { PaymentMethod, UserRole } from "@prisma/client";
+// Database access removed - use backend API instead
+export type PaymentMethod = "PAYSTACK" | "BANK_TRANSFER" | "MANUAL";
+export type UserRole = "SCHOOL_ADMIN" | "TEACHER" | "PARENT" | "STUDENT" | "PLATFORM_ADMIN";
 import { sendEmail, buildPurchaseEmail } from "@/lib/email";
 import { hashPassword } from "@/lib/auth";
 

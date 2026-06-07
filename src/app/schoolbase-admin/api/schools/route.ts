@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+// Prisma removed - must use backend API instead
 import { requirePlatformAdminSession } from "@/lib/auth";
 import { recordPlatformAuditLog } from "@/lib/platform-admin";
 

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getStaffSession } from "@/lib/auth";
 import { getCurrentSchoolId } from "@/lib/school";
-import { prisma } from "@/lib/db";
+// Database access removed - use backend API instead
 import { uploadSchoolAssetToBackend } from "@/lib/storage";
 
 const MAX_BYTES = 3 * 1024 * 1024;

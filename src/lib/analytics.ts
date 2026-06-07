@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/db";
+// Prisma removed - use backend API instead
 
 export async function getClassAnalytics(classId: string, schoolId: string) {
   const results = await prisma.result.findMany({

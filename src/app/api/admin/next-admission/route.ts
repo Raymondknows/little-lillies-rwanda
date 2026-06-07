@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCurrentSchoolId } from "@/lib/school";
-import { prisma } from "@/lib/db";
+// Database access removed - use backend API instead
 
 export async function GET() {
   const schoolId = await getCurrentSchoolId();

@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/db";
+// Database access removed - use backend API instead
 import { getCurrentSchool } from "@/lib/school";
 import { PDFDocument, StandardFonts } from "pdf-lib";
 

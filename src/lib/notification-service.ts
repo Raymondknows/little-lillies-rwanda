@@ -1,4 +1,5 @@
-import { prisma } from "@/lib/db";
+// Database access removed for Vercel compatibility
+// Use backend API endpoints instead
 import { sendEmail } from "@/lib/email";
 import { sendSMS } from "@/lib/sms";
 import { sendWhatsAppMessage } from "@/lib/whatsapp";

@@ -1,5 +1,5 @@
 // Logging is handled by backend; avoid writing local files from frontend.
-import { prisma } from "@/lib/db";
+// Prisma removed - use backend API instead
 import { decryptText } from "@/lib/crypto";
 
 export function createFeeReminderMessage(

@@ -1,6 +1,12 @@
 import crypto from "crypto";
-import { prisma } from "@/lib/db";
-import type { VideoTutorial } from "@prisma/client";
+// Prisma removed - use backend API instead
+
+export interface VideoTutorial {
+  id: string;
+  title: string;
+  description?: string;
+  url: string;
+}
 
 const VIDEO_TUTORIAL_TABLE = "VideoTutorial";
 

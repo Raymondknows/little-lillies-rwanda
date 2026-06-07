@@ -1,4 +1,5 @@
-import type { InvoiceStatus, SchoolPhase } from "@prisma/client";
+export type InvoiceStatus = "PENDING" | "PAID" | "PARTIAL" | "OVERDUE" | "CANCELLED";
+export type SchoolPhase = "NURSERY" | "PRIMARY" | "SECONDARY" | "TERTIARY";
 
 export type ClassItem = {
   id: string;

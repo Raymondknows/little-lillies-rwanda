@@ -95,21 +95,21 @@ const HELP_GUIDE: PageHelpGuide = {
 };
 
 export default function FeesPageClient({
-  invoices,
-  outstanding,
-  currency,
-  terms,
-  issueTermInvoicesAction,
-  sendFeeRemindersAction,
-  recordPaymentAction,
+  invoices = [],
+  outstanding = 0,
+  currency = "NGN",
+  terms = [],
+  issueTermInvoicesAction = async () => {},
+  sendFeeRemindersAction = async () => {},
+  recordPaymentAction = async () => {},
 }: {
-  invoices: any[];
-  outstanding: number;
-  currency: string;
-  terms: TermItem[];
-  issueTermInvoicesAction: (formData: FormData) => Promise<void>;
-  sendFeeRemindersAction: (formData: FormData) => Promise<void>;
-  recordPaymentAction: (formData: FormData) => Promise<void>;
+  invoices?: any[];
+  outstanding?: number;
+  currency?: string;
+  terms?: TermItem[];
+  issueTermInvoicesAction?: (formData: FormData) => Promise<void>;
+  sendFeeRemindersAction?: (formData: FormData) => Promise<void>;
+  recordPaymentAction?: (formData: FormData) => Promise<void>;
 }) {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -418,148 +418,167 @@ export default function FeesPageClient({
         </div>
 
         {/* Summary Cards */}
-        <div className="hidden sm:grid grid-cols-4 gap-4">
-          <div className="group rounded-xl border border-border bg-surface p-6 shadow-sm transition-shadow hover:shadow-md">
-            <div className="flex items-start justify-between">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-border">
-                <TrendingUp className="h-5 w-5 text-brand" />
+        <div className="hidden sm:grid grid-cols-4 gap-3">
+          <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md h-full cursor-pointer hover:border-brand/50 flex flex-col">
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
+                <TrendingUp className="h-4 w-4 text-brand" />
               </div>
-              <ArrowUpRight className="h-4 w-4 text-muted opacity-0 transition-opacity group-hover:opacity-100" />
+              <div className="flex-1">
+                <p className="text-xs text-muted">Total Due</p>
+                <p className="mt-1 text-lg font-bold text-foreground">{formatStatMoney(summaryStats.totalDue)}</p>
+              </div>
+              <ArrowUpRight className="h-3 w-3 text-muted opacity-0 transition-opacity group-hover:opacity-100 flex-shrink-0" />
             </div>
-            <p className="mt-4 text-sm text-muted">Total Due</p>
-            <p className="mt-1 text-xl font-bold text-foreground">{formatStatMoney(summaryStats.totalDue)}</p>
-            <p className="mt-1 text-xs text-muted">{summaryStats.count} invoice{summaryStats.count !== 1 ? "s" : ""}</p>
+            <p className="mt-2 text-[11px] text-muted">{summaryStats.count} invoice{summaryStats.count !== 1 ? "s" : ""}</p>
           </div>
 
-          <div className="group rounded-xl border border-border bg-surface p-6 shadow-sm transition-shadow hover:shadow-md">
-            <div className="flex items-start justify-between">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-border">
-                <CheckCircle className="h-5 w-5 text-brand" />
+          <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md h-full cursor-pointer hover:border-brand/50 flex flex-col">
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
+                <CheckCircle className="h-4 w-4 text-brand" />
               </div>
-              <ArrowUpRight className="h-4 w-4 text-muted opacity-0 transition-opacity group-hover:opacity-100" />
+              <div className="flex-1">
+                <p className="text-xs text-muted">Paid</p>
+                <p className="mt-1 text-lg font-bold text-foreground">{formatStatMoney(summaryStats.totalPaid)}</p>
+              </div>
+              <ArrowUpRight className="h-3 w-3 text-muted opacity-0 transition-opacity group-hover:opacity-100 flex-shrink-0" />
             </div>
-            <p className="mt-4 text-sm text-muted">Paid</p>
-            <p className="mt-1 text-xl font-bold text-foreground">{formatStatMoney(summaryStats.totalPaid)}</p>
-            <p className="mt-1 text-xs text-muted">{summaryStats.byStatus.PAID} fully paid</p>
+            <p className="mt-2 text-[11px] text-muted">{summaryStats.byStatus.PAID} fully paid</p>
           </div>
 
-          <div className="group rounded-xl border border-border bg-surface p-6 shadow-sm transition-shadow hover:shadow-md">
-            <div className="flex items-start justify-between">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-border">
-                <AlertCircle className="h-5 w-5 text-brand" />
+          <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md h-full cursor-pointer hover:border-brand/50 flex flex-col">
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
+                <AlertCircle className="h-4 w-4 text-brand" />
               </div>
-              <ArrowUpRight className="h-4 w-4 text-muted opacity-0 transition-opacity group-hover:opacity-100" />
+              <div className="flex-1">
+                <p className="text-xs text-muted">Outstanding</p>
+                <p className="mt-1 text-lg font-bold text-foreground">{formatStatMoney(summaryStats.outstanding)}</p>
+              </div>
+              <ArrowUpRight className="h-3 w-3 text-muted opacity-0 transition-opacity group-hover:opacity-100 flex-shrink-0" />
             </div>
-            <p className="mt-4 text-sm text-muted">Outstanding</p>
-            <p className="mt-1 text-xl font-bold text-foreground">{formatStatMoney(summaryStats.outstanding)}</p>
-            <p className="mt-1 text-xs text-muted">{summaryStats.byStatus.OVERDUE} overdue</p>
+            <p className="mt-2 text-[11px] text-muted">{summaryStats.byStatus.OVERDUE} overdue</p>
           </div>
 
-          <div className="group rounded-xl border border-border bg-surface p-6 shadow-sm transition-shadow hover:shadow-md">
-            <div className="flex items-start justify-between">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-border">
-                <Clock className="h-5 w-5 text-brand" />
+          <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md h-full cursor-pointer hover:border-brand/50 flex flex-col">
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
+                <Clock className="h-4 w-4 text-brand" />
               </div>
-              <ArrowUpRight className="h-4 w-4 text-muted opacity-0 transition-opacity group-hover:opacity-100" />
+              <div className="flex-1">
+                <p className="text-xs text-muted">Part Paid</p>
+                <p className="mt-1 text-lg font-bold text-foreground">{summaryStats.byStatus.PART_PAID}</p>
+              </div>
+              <ArrowUpRight className="h-3 w-3 text-muted opacity-0 transition-opacity group-hover:opacity-100 flex-shrink-0" />
             </div>
-            <p className="mt-4 text-sm text-muted">Part Paid</p>
-            <p className="mt-1 text-xl font-bold text-foreground">{summaryStats.byStatus.PART_PAID}</p>
-            <p className="mt-1 text-xs text-muted">Partial payments recorded</p>
+            <p className="mt-2 text-[11px] text-muted">Partial payments recorded</p>
           </div>
         </div>
 
         {/* Mobile Summary Cards */}
-        <div className="sm:hidden space-y-4">
-          <div className="group rounded-xl border border-border bg-surface p-6 shadow-sm transition-shadow hover:shadow-md">
-            <div className="flex items-start justify-between">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-border">
-                <TrendingUp className="h-5 w-5 text-brand" />
+        <div className="sm:hidden space-y-3">
+          <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50">
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
+                <TrendingUp className="h-4 w-4 text-brand" />
               </div>
-              <ArrowUpRight className="h-4 w-4 text-muted opacity-0 transition-opacity group-hover:opacity-100" />
+              <div className="flex-1">
+                <p className="text-xs text-muted">Total Due</p>
+                <p className="mt-1 text-lg font-bold text-foreground">{formatStatMoney(summaryStats.totalDue)}</p>
+              </div>
+              <ArrowUpRight className="h-3 w-3 text-muted opacity-0 transition-opacity group-hover:opacity-100 flex-shrink-0" />
             </div>
-            <p className="mt-4 text-sm text-muted">Total Due</p>
-            <p className="mt-1 text-xl font-bold text-foreground">{formatStatMoney(summaryStats.totalDue)}</p>
-            <p className="mt-1 text-xs text-muted">{summaryStats.count} invoice{summaryStats.count !== 1 ? "s" : ""}</p>
+            <p className="mt-2 text-[11px] text-muted">{summaryStats.count} invoice{summaryStats.count !== 1 ? "s" : ""}</p>
           </div>
 
-          <div className="group rounded-xl border border-border bg-surface p-6 shadow-sm transition-shadow hover:shadow-md">
-            <div className="flex items-start justify-between">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-border">
-                <CheckCircle className="h-5 w-5 text-brand" />
+          <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50">
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
+                <CheckCircle className="h-4 w-4 text-brand" />
               </div>
-              <ArrowUpRight className="h-4 w-4 text-muted opacity-0 transition-opacity group-hover:opacity-100" />
+              <div className="flex-1">
+                <p className="text-xs text-muted">Paid</p>
+                <p className="mt-1 text-lg font-bold text-foreground">{formatStatMoney(summaryStats.totalPaid)}</p>
+              </div>
+              <ArrowUpRight className="h-3 w-3 text-muted opacity-0 transition-opacity group-hover:opacity-100 flex-shrink-0" />
             </div>
-            <p className="mt-4 text-sm text-muted">Paid</p>
-            <p className="mt-1 text-xl font-bold text-foreground">{formatStatMoney(summaryStats.totalPaid)}</p>
-            <p className="mt-1 text-xs text-muted">{summaryStats.byStatus.PAID} fully paid</p>
+            <p className="mt-2 text-[11px] text-muted">{summaryStats.byStatus.PAID} fully paid</p>
           </div>
 
-          <div className="group rounded-xl border border-border bg-surface p-6 shadow-sm transition-shadow hover:shadow-md">
-            <div className="flex items-start justify-between">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-border">
-                <AlertCircle className="h-5 w-5 text-brand" />
+          <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50">
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
+                <AlertCircle className="h-4 w-4 text-brand" />
               </div>
-              <ArrowUpRight className="h-4 w-4 text-muted opacity-0 transition-opacity group-hover:opacity-100" />
+              <div className="flex-1">
+                <p className="text-xs text-muted">Outstanding</p>
+                <p className="mt-1 text-lg font-bold text-foreground">{formatStatMoney(summaryStats.outstanding)}</p>
+              </div>
+              <ArrowUpRight className="h-3 w-3 text-muted opacity-0 transition-opacity group-hover:opacity-100 flex-shrink-0" />
             </div>
-            <p className="mt-4 text-sm text-muted">Outstanding</p>
-            <p className="mt-1 text-xl font-bold text-foreground">{formatStatMoney(summaryStats.outstanding)}</p>
-            <p className="mt-1 text-xs text-muted">{summaryStats.byStatus.OVERDUE} overdue</p>
+            <p className="mt-2 text-[11px] text-muted">{summaryStats.byStatus.OVERDUE} overdue</p>
           </div>
 
-          <div className="group rounded-xl border border-border bg-surface p-6 shadow-sm transition-shadow hover:shadow-md">
-            <div className="flex items-start justify-between">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-border">
-                <Clock className="h-5 w-5 text-brand" />
+          <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50">
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
+                <Clock className="h-4 w-4 text-brand" />
               </div>
-              <ArrowUpRight className="h-4 w-4 text-muted opacity-0 transition-opacity group-hover:opacity-100" />
+              <div className="flex-1">
+                <p className="text-xs text-muted">Part Paid</p>
+                <p className="mt-1 text-lg font-bold text-foreground">{summaryStats.byStatus.PART_PAID}</p>
+              </div>
+              <ArrowUpRight className="h-3 w-3 text-muted opacity-0 transition-opacity group-hover:opacity-100 flex-shrink-0" />
             </div>
-            <p className="mt-4 text-sm text-muted">Part Paid</p>
-            <p className="mt-1 text-xl font-bold text-foreground">{summaryStats.byStatus.PART_PAID}</p>
-            <p className="mt-1 text-xs text-muted">Partial payments recorded</p>
+            <p className="mt-2 text-[11px] text-muted">Partial payments recorded</p>
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="flex flex-wrap gap-2">
-          <form action={issueTermInvoicesAction} className="flex gap-2 flex-wrap">
-            <select
-              name="termId"
-              required
-              defaultValue=""
-              className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand"
-            >
-              <option value="" disabled>
-                Select a term
-              </option>
-              {terms.map((term) => (
-                <option key={term.id} value={term.id}>
-                  {term.name}
-                </option>
-              ))}
-            </select>
-            <Button type="submit" className="px-3 py-2 text-sm">
-              Issue term bills
-            </Button>
-          </form>
-          <form action={sendFeeRemindersAction}>
-            <Button type="submit" variant="secondary" className="px-3 py-2 text-sm">
-              Send reminders
-            </Button>
-          </form>
-          <Button href="/admin/fees/schedules" variant="secondary" className="px-3 py-2 text-sm">
-            Manage fee schedules
-          </Button>
-        </div>
-
-        {/* Search Bar */}
-        <div className="mb-6">
+        {/* Actions & Search Bar */}
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          {/* Search Box - Left */}
           <input
             type="text"
             placeholder="Search by student name, invoice number, or class..."
             value={searchQuery}
             onChange={handleSearchChange}
-            className="w-full rounded-lg border border-border bg-surface px-4 py-2 text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-brand"
+            className="flex-1 rounded-lg border border-border bg-surface px-4 py-2 text-sm text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-brand"
           />
+
+          {/* Buttons - Right */}
+          <div className="flex flex-wrap gap-2">
+            <form action={issueTermInvoicesAction} className="flex gap-2">
+              <select
+                name="termId"
+                required
+                defaultValue=""
+                className="rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-brand"
+              >
+                <option value="" disabled>
+                  Select term
+                </option>
+                {terms.map((term) => (
+                  <option key={term.id} value={term.id}>
+                    {term.name}
+                  </option>
+                ))}
+              </select>
+              <Button type="submit" size="sm" className="text-xs px-2.5 py-1.5 h-auto">
+                Issue Bills
+              </Button>
+            </form>
+
+            <form action={sendFeeRemindersAction}>
+              <Button type="submit" variant="secondary" size="sm" className="text-xs px-2.5 py-1.5 h-auto">
+                Send Reminders
+              </Button>
+            </form>
+
+            <Button href="/admin/fees/schedules" variant="secondary" size="sm" className="text-xs px-2.5 py-1.5 h-auto">
+              Fee Schedules
+            </Button>
+          </div>
         </div>
 
         {/* Filters */}
@@ -641,16 +660,17 @@ export default function FeesPageClient({
                   </tr>
                 </thead>
                 <tbody>
-                  {paginatedInvoices.map((inv) => {
+                  {paginatedInvoices.map((inv, idx) => {
                     const balance = inv.amountDue - inv.amountPaid;
-                    const classLabel = inv.pupil.class
+                    const classLabel = inv.pupil?.class
                       ? `${inv.pupil.class.name}${inv.pupil.class.arm ? ` ${inv.pupil.class.arm}` : ""}`
                       : "—";
-                    const phase = inv.pupil.class?.phase || "UNASSIGNED";
+                    const phase = inv.pupil?.class?.phase || "UNASSIGNED";
+                    const pupilFullName = inv.pupil ? pupilName(inv.pupil.firstName, inv.pupil.lastName) : "Unknown";
 
                     return (
-                      <tr key={inv.id} className="border-t border-border hover:bg-background/50 transition-colors">
-                        <td className="px-4 py-2 font-medium text-foreground">{pupilName(inv.pupil.firstName, inv.pupil.lastName)}</td>
+                      <tr key={inv.id || `invoice-${idx}`} className="border-t border-border hover:bg-background/50 transition-colors">
+                        <td className="px-4 py-2 font-medium text-foreground">{pupilFullName}</td>
                         <td className="px-4 py-2">
                           <div className="flex items-center gap-2">
                             <span className={`inline-block rounded-md border px-2 py-1 text-xs font-medium ${getPhaseColor(phase)}`}>
@@ -686,22 +706,23 @@ export default function FeesPageClient({
 
             {/* Mobile List */}
             <div className="sm:hidden space-y-2 mb-6">
-              {paginatedInvoices.map((inv) => {
+              {paginatedInvoices.map((inv, idx) => {
                 const balance = inv.amountDue - inv.amountPaid;
-                const classLabel = inv.pupil.class
+                const classLabel = inv.pupil?.class
                   ? `${inv.pupil.class.name}${inv.pupil.class.arm ? ` ${inv.pupil.class.arm}` : ""}`
                   : "Unassigned";
-                const phase = inv.pupil.class?.phase || "UNASSIGNED";
+                const phase = inv.pupil?.class?.phase || "UNASSIGNED";
+                const pupilFullName = inv.pupil ? pupilName(inv.pupil.firstName, inv.pupil.lastName) : "Unknown";
 
                 return (
                   <div
-                    key={inv.id}
+                    key={inv.id || `invoice-${idx}`}
                     className="rounded-lg border border-border bg-surface px-3 py-2 hover:bg-background/50 transition-colors"
                   >
                     <div className="flex items-center justify-between gap-3 mb-2">
                       <div className="min-w-0 flex-1">
                         <p className="font-medium text-sm truncate">
-                          {pupilName(inv.pupil.firstName, inv.pupil.lastName)}
+                          {pupilFullName}
                         </p>
                         <p className="text-xs text-muted mt-1">
                           <span className={`inline-block rounded-md border px-1 py-0.5 text-xs font-medium ${getPhaseColor(phase)}`}>

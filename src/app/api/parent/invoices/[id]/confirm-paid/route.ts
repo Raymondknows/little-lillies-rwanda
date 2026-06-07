@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getParentSession } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+// Database access removed - use backend API instead
 
 export async function POST(request: Request, context: any) {
   const rawParams = context?.params;

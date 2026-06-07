@@ -1,23 +1,16 @@
+"use client";
+
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { updateTeacher, deleteTeacher } from "@/app/admin/actions";
-import { Button } from "@/components/ui/button";
-import { prisma } from "@/lib/db";
-import { getCurrentSchoolId } from "@/lib/school";
 
-export default async function EditTeacherPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const schoolId = await getCurrentSchoolId();
-  const [teacher, classes, subjects] = await Promise.all([
-    prisma.user.findFirst({ where: { id, schoolId, role: 'TEACHER' }, include: { teacherClasses: true, teacherSubjects: true } }),
-    prisma.class.findMany({ where: { schoolId }, orderBy: { name: 'asc' } }),
-    prisma.subject.findMany({ where: { schoolId }, orderBy: { name: 'asc' } }),
-  ]);
-
-  if (!teacher) notFound();
-
-  const assignedClassIds = new Set(teacher.teacherClasses.map((c) => c.classId));
-  const assignedSubjectIds = new Set(teacher.teacherSubjects.map((s) => s.subjectId));
+export default function EditTeacherPage() {
+  return (
+    <div className="mx-auto max-w-2xl">
+      <Link href="/admin/teachers" className="text-sm text-brand hover:underline">← Teachers</Link>
+      <h1 className="mt-4 text-2xl font-bold">Edit teacher</h1>
+      <div className="mt-6 text-muted">Teacher edit form available from backend API</div>
+    </div>
+  );
+}
 
   return (
     <div className="mx-auto max-w-2xl">

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+// Database access removed - use backend API instead
 import { generateReceiptPDF } from "@/lib/pdf-generator";
 
 /**

@@ -194,7 +194,8 @@ export default function ResultsPageClient({ assessments }: { assessments: any[] 
       </div>
 
       {/* Phase Tabs */}
-      <div className="mb-6 flex flex-wrap gap-1 border-b border-border sm:gap-2">
+      <div className="mb-6 flex flex-wrap gap-2">
+        <span className="text-sm font-medium text-muted self-center">Phase:</span>
         {PHASE_ORDER.map((phase) => {
           const count = getPhaseStats(phase);
           const config = PHASE_CONFIG[phase as keyof typeof PHASE_CONFIG];
@@ -204,43 +205,39 @@ export default function ResultsPageClient({ assessments }: { assessments: any[] 
             <button
               key={phase}
               onClick={() => handlePhaseChange(phase)}
-              className={`px-2 py-3 font-medium text-xs sm:px-4 sm:text-sm transition-colors border-b-2 whitespace-nowrap ${
+              className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
                 isActive
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted hover:text-foreground"
+                  ? "bg-brand text-white"
+                  : "bg-background text-muted hover:bg-surface"
               }`}
             >
               {config.label}
-              <span className="ml-1 inline-block rounded px-1.5 py-0.5 text-xs font-semibold bg-background text-foreground sm:ml-2 sm:px-2">
-                {count}
-              </span>
+              <span className="ml-1 inline-block">({count})</span>
             </button>
           );
         })}
       </div>
 
-      {/* Status Filter */}
-      <div className="mb-6 flex flex-wrap gap-1 sm:gap-2 pb-2 sm:pb-0">
+      {/* Status Tabs */}
+      <div className="mb-6 flex flex-wrap gap-2">
+        <span className="text-sm font-medium text-muted self-center">Status:</span>
         {STATUS_ORDER.map((status) => {
           const count = getStatusStats(status);
           const config = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG];
           const isActive = activeStatus === status;
-          const Icon = config.icon;
 
           return (
             <button
               key={status}
               onClick={() => handleStatusChange(status)}
-              className={`px-2 py-1 text-xs font-semibold rounded-full transition-all whitespace-nowrap flex items-center gap-1 sm:px-3 sm:py-2 ${
+              className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
                 isActive
-                  ? "bg-primary text-white"
-                  : "bg-gray-50 text-gray-700 hover:bg-gray-100"
+                  ? "bg-brand text-white"
+                  : "bg-background text-muted hover:bg-surface"
               }`}
             >
-              <Icon className="w-3 h-3 sm:w-4 sm:h-4" />
-              <span className="hidden sm:inline">{config.label}</span>
-              <span className="sm:hidden">{status === "ALL" ? "All" : status}</span>
-              <span className="ml-1 text-xs">({count})</span>
+              {config.label}
+              <span className="ml-1 inline-block">({count})</span>
             </button>
           );
         })}

@@ -1,0 +1,27 @@
+"use client";
+
+import Link from "next/link";
+
+export default function AdminSupportPage() {
+  return (
+    <div className="space-y-8">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Support requests</h1>
+          <p className="mt-2 text-sm text-muted max-w-2xl">
+            Send a ticket to SchoolBase support and review your school's requests.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <Link
+            href="/admin"
+            className="inline-flex items-center gap-2 rounded-2xl border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground transition hover:border-brand hover:text-brand"
+          >
+            Back to dashboard
+          </Link>
+        </div>
+      </div>
+      <div className="text-muted">Support management coming soon</div>
+    </div>
+  );
+}

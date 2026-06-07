@@ -1,4 +1,5 @@
-import { prisma } from "@/lib/db";
+// Database access removed for Vercel compatibility
+// Use backend API endpoints instead
 import { getPlatformAdminSession, requirePlatformAdminSession } from "@/lib/auth";
 
 export async function getPlatformAdminDashboardData() {

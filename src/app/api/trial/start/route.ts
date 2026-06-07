@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
-import { PaymentMethod } from "@prisma/client";
+// Database access removed - use backend API instead
+export type PaymentMethod = "PAYSTACK" | "BANK_TRANSFER" | "MANUAL";
 import { sendEmail, buildTrialEmail } from "@/lib/email";
 
 export async function POST(request: Request) {

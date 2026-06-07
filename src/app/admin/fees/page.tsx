@@ -1,73 +1,64 @@
-import { issueTermInvoicesAction, sendFeeRemindersAction, recordPayment } from "@/app/admin/actions";
-import { prisma } from "@/lib/db";
-import { getCurrentSchool } from "@/lib/school";
+"use client";
+
+import { useEffect, useState } from "react";
 import FeesPageClient from "./fees-client";
 
-export default async function FeesPage() {
-  const school = await getCurrentSchool();
+export default function FeesPage() {
+  const [data, setData] = useState<{ invoices: any[]; outstanding: number } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const currentAcademicYear = await prisma.academicYear.findFirst({
-    where: { schoolId: school.id, isCurrent: true },
-    orderBy: { createdAt: "desc" },
-  });
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const response = await fetch("/api/admin/fees/data", {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
 
-  const terms = currentAcademicYear
-    ? await prisma.term.findMany({
-        where: { academicYearId: currentAcademicYear.id },
-        orderBy: { sortOrder: "asc" },
-      })
-    : [];
-
-  const invoices = await prisma.invoice.findMany({
-    where: { schoolId: school.id },
-    include: {
-      pupil: {
-        include: {
-          class: true,
-          guardians: { include: { guardian: true } },
-        },
-      },
-      payments: { orderBy: { paidAt: "desc" }, take: 1 },
-      feeSchedule: {
-        include: {
-          term: {
-            include: {
-              academicYear: true,
-            },
-          },
-        },
-      },
-    },
-    orderBy: [{ status: "asc" }, { updatedAt: "desc" }],
-  });
-
-  const outstanding = invoices.reduce(
-    (s, i) => s + Math.max(0, i.amountDue - i.amountPaid),
-    0,
-  );
-
-  // Map invoices to match client type expectations
-  const mappedInvoices = invoices.map((inv) => ({
-    ...inv,
-    dueDate: inv.dueDate ? inv.dueDate.toISOString() : null,
-    academicYear: inv.feeSchedule?.term?.academicYear
-      ? {
-          id: inv.feeSchedule.term.academicYear.id,
-          name: inv.feeSchedule.term.academicYear.name,
-          isCurrent: inv.feeSchedule.term.academicYear.isCurrent,
+        if (!response.ok) {
+          throw new Error("Failed to fetch fees data");
         }
-      : null,
-  }));
 
-  return (
-    <FeesPageClient 
-      invoices={mappedInvoices as any}
-      outstanding={outstanding}
-      currency={school.currency}
-      terms={terms}
-      issueTermInvoicesAction={issueTermInvoicesAction}
-      sendFeeRemindersAction={sendFeeRemindersAction}
-      recordPaymentAction={recordPayment as any}
-    />
-  );
+        const feesData = await response.json();
+        setData({
+          invoices: feesData.invoices || [],
+          outstanding: feesData.outstanding || 0,
+        });
+      } catch (err) {
+        console.error("Error loading fees:", err);
+        setError("Failed to load fees data");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="text-muted">Loading fees data...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="text-red-600">{error}</div>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="p-6">
+        <div className="text-muted">No data available</div>
+      </div>
+    );
+  }
+
+  return <FeesPageClient invoices={data.invoices} outstanding={data.outstanding} />;
 }

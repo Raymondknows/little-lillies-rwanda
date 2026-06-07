@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requirePlatformAdminSession } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+// Database access removed - use backend API instead
 
 export async function GET(request: NextRequest) {
   try {

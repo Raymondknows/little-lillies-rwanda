@@ -3,7 +3,7 @@ import { getStaffSession } from "@/lib/auth";
 import { getCurrentSchoolId } from "@/lib/school";
 import { S3Client, GetObjectCommand, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import sharp from "sharp";
-import { prisma } from "@/lib/db";
+// Database access removed - use backend API instead
 
 async function streamToBuffer(readable: any) {
   const chunks: Buffer[] = [];

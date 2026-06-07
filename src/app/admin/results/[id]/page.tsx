@@ -1,233 +1,270 @@
-import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
-import { FileText, Table2 } from "lucide-react";
-import { approveAssessmentForm, saveResultMarks, returnAssessmentToDraftForm } from "@/app/admin/actions";
-import { Button } from "@/components/ui/button";
-import { PublishButton } from "@/components/admin/publish-button";
-import { ReturnToDraftButton } from "@/components/admin/return-to-draft-button";
-import { ResultsEntryForm } from "@/components/admin/results-entry-form";
-import { Badge } from "@/components/ui/badge";
-import { prisma } from "@/lib/db";
-import { resultStatusLabel } from "@/lib/format";
-import { getStaffSession } from "@/lib/auth";
-import { getCurrentSchoolId } from "@/lib/school";
-import { getTeacherAccessibleClassIds } from "@/lib/teacher-permissions";
+"use client";
 
-export default async function AssessmentDetailPage({
+import Link from "next/link";
+import { useEffect, useState, use } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Table2, ChevronRight } from "lucide-react";
+import { AssessmentScores } from "@/components/admin/assessment-scores";
+
+interface Assessment {
+  id: string;
+  name: string;
+  phase: string;
+  status: string;
+  publishedAt?: string;
+  term: {
+    name: string;
+  };
+  results: Array<{
+    pupilId: string;
+    caScore: number | null;
+    testScore: number | null;
+    examScore: number | null;
+    totalScore: number | null;
+    pupil: { id: string; name: string };
+  }>;
+  _count: { results: number };
+}
+
+export default function AssessmentDetailPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ classId?: string }>;
 }) {
-  const { id } = await params;
-  const { classId } = await searchParams;
-  const schoolId = await getCurrentSchoolId();
-  const session = await getStaffSession();
-  
-  // Check teacher permissions
-  let accessibleClassIds: string[] | null = null;
-  if (session && session.role === "TEACHER") {
-    accessibleClassIds = await getTeacherAccessibleClassIds(session.userId, schoolId);
-    if (accessibleClassIds.length === 0) {
-      return (
-        <div className="rounded-lg border border-border bg-surface p-6">
-          <p className="text-muted">
-            No classes assigned. Please contact your administrator.
-          </p>
-        </div>
-      );
+  const { id } = use(params);
+  const router = useRouter();
+  const [assessment, setAssessment] = useState<Assessment | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchAssessment = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`/api/admin/results/${id}`);
+        if (!response.ok) throw new Error("Failed to fetch assessment");
+        const data = await response.json();
+        setAssessment(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Unknown error");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAssessment();
+  }, [id]);
+
+  const handleApprove = async () => {
+    if (!assessment) return;
+    setActionLoading(true);
+
+    try {
+      const response = await fetch(`/api/admin/assessments/${id}/approve`, {
+        method: "POST",
+      });
+
+      if (!response.ok) throw new Error("Failed to approve");
+      const updated = await response.json();
+      setAssessment(updated);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to approve");
+    } finally {
+      setActionLoading(false);
     }
+  };
+
+  const handlePublish = async () => {
+    if (!assessment) return;
+    setActionLoading(true);
+
+    try {
+      const response = await fetch(`/api/admin/assessments/${id}/publish`, {
+        method: "POST",
+      });
+
+      if (!response.ok) throw new Error("Failed to publish");
+      const updated = await response.json();
+      setAssessment(updated);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to publish");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleReturnDraft = async () => {
+    if (!assessment) return;
+    setActionLoading(true);
+
+    try {
+      const response = await fetch(`/api/admin/assessments/${id}/return-draft`, {
+        method: "POST",
+      });
+
+      if (!response.ok) throw new Error("Failed to return to draft");
+      const updated = await response.json();
+      setAssessment(updated);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to return to draft");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-6xl px-3 py-4">
+        <div className="text-center text-muted">Loading assessment details...</div>
+      </div>
+    );
   }
 
-  const assessment = await prisma.assessment.findFirst({
-    where: { id, schoolId },
-    include: { term: true },
-  });
-  if (!assessment) notFound();
-
-  let classes = await prisma.class.findMany({
-    where: { schoolId, phase: assessment.phase },
-    orderBy: { name: "asc" },
-  });
-
-  if (accessibleClassIds) {
-    const allowedClasses = new Set(accessibleClassIds);
-    classes = classes.filter((classItem) => allowedClasses.has(classItem.id));
+  if (error || !assessment) {
+    return (
+      <div className="mx-auto max-w-6xl px-3 py-4">
+        <Link href="/admin/results" className="text-sm font-medium text-brand hover:underline">
+          ← Results
+        </Link>
+        <div className="mt-4 rounded-lg border border-border bg-surface p-4">
+          <p className="text-sm text-muted">{error || "Assessment not found"}</p>
+        </div>
+      </div>
+    );
   }
 
-  const selectedClassId = classId && classes.some((c) => c.id === classId)
-    ? classId
-    : classes[0]?.id;
-
-  const selectedClass = classes.find((c) => c.id === selectedClassId);
-
-  const pupils = selectedClassId
-    ? await prisma.pupil.findMany({
-        where: {
-          schoolId,
-          isActive: true,
-          classId: selectedClassId,
-        },
-        include: {
-          class: true,
-        },
-        orderBy: { lastName: "asc" },
-      })
-    : [];
-
-  // Load any existing results for this assessment and class so the UI can show saved subjects/scores
-  const existingResults = selectedClassId
-    ? await prisma.result.findMany({
-        where: {
-          assessmentId: id,
-          pupil: { classId: selectedClassId },
-        },
-        select: {
-          pupilId: true,
-          subjectId: true,
-          caScore: true,
-          testScore: true,
-          examScore: true,
-          comment: true,
-        },
-      })
-    : [];
-
-  // Load all subjects in school for manual selection
-  let allSubjects = await prisma.subject.findMany({
-    where: { schoolId },
-    orderBy: { name: "asc" },
-  });
-
-  // If teacher, filter subjects to only assigned ones
-  if (session && session.role === "TEACHER") {
-    const teacherSubjects = await prisma.teacherSubject.findMany({
-      where: { teacherId: session.userId, schoolId },
-      include: { subject: true },
-    });
-    allSubjects = teacherSubjects.map((ts) => ts.subject);
-  }
-
-  // Load grading scale for automatic grade calculation
-  const gradingScales = await prisma.gradingScale.findMany({
-    where: { schoolId },
-    orderBy: { minScore: "asc" },
-  });
-
-  const readonly = assessment.status === "PUBLISHED";
-  const locked = assessment.status === "APPROVED"; // Teachers can't edit
-  const canReturnToDraft = session?.role === "SCHOOL_ADMIN" && assessment.status === "APPROVED";
+  const pupils = Array.from(
+    new Map(assessment.results.map((r) => [r.pupil.id, r.pupil])).values()
+  );
+  const existingResults = assessment.results.reduce(
+    (acc, r) => {
+      acc[r.pupilId] = r;
+      return acc;
+    },
+    {} as Record<string, any>
+  );
 
   return (
-    <div>
-      <Link href="/admin/results" className="text-sm text-brand hover:underline">
+    <div className="mx-auto max-w-6xl px-3 py-4">
+      <Link href="/admin/results" className="text-sm font-medium text-brand hover:underline">
         ← Results
       </Link>
+
       <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">{assessment.name}</h1>
           <p className="text-muted">{assessment.term.name}</p>
         </div>
-        <Badge variant={assessment.status === "PUBLISHED" ? "success" : assessment.status === "APPROVED" ? "brand" : "default"}>
-          {resultStatusLabel(assessment.status)}
+        <Badge
+          variant={
+            assessment.status === "PUBLISHED" ? "success" : assessment.status === "APPROVED" ? "brand" : "default"
+          }
+        >
+          {assessment.status}
         </Badge>
       </div>
 
-      {readonly ? (
-        <p className="mt-4 text-sm text-success">Published — parents can see these marks.</p>
-      ) : locked && session?.role === "TEACHER" ? (
-        <div className="mt-4 rounded-lg border border-brand-light bg-brand-light/10 p-3">
-          <p className="text-sm text-brand font-medium">
-            ⏱️ Assessment approved — awaiting final review by administrator
-          </p>
-          <p className="text-sm text-brand/70 mt-1">
-            Teachers cannot edit at this stage. Contact your administrator if corrections are needed.
-          </p>
+      {error && (
+        <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3">
+          <p className="text-sm text-red-700">{error}</p>
         </div>
-      ) : locked && session?.role === "SCHOOL_ADMIN" ? (
-        <div className="mt-4 rounded-lg border border-brand-light bg-brand-light/10 p-3">
-          <p className="text-sm text-brand font-medium">
-            ✓ Assessment approved — ready for final review
-          </p>
-          <p className="text-sm text-brand/70 mt-1">
-            Teachers cannot edit. You can return to draft or publish.
-          </p>
-        </div>
-      ) : null}
+      )}
 
-      {classes.length > 0 ? (
-        <div className="mt-6 rounded-lg border border-border bg-surface p-4">
-          <div className="flex flex-wrap items-center gap-4">
-            <form method="get" className="flex flex-wrap items-end gap-3">
-              <label className="min-w-[220px] text-sm">
-                Class
-                <select
-                  name="classId"
-                  defaultValue={selectedClassId}
-                  className="mt-2 block w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
-                >
-                  {classes.map((classItem) => (
-                    <option key={classItem.id} value={classItem.id}>
-                      {classItem.name}
-                      {classItem.arm ? ` ${classItem.arm}` : ""}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <Button type="submit" variant="secondary">
-                Load class
-              </Button>
-            </form>
-            {selectedClass && (
-              <div className="text-sm text-muted">
-                Enter marks for <span className="font-semibold text-foreground">{selectedClass.name}{selectedClass.arm ? ` ${selectedClass.arm}` : ""}</span>.
-              </div>
-            )}
+      {assessment.status === "DRAFT" && pupils.length > 0 && (
+        <div className="mt-6 space-y-4">
+          <div>
+            <h2 className="text-lg font-semibold">Enter Assessment Scores</h2>
+            <p className="text-sm text-muted">CA (20%) + Test (30%) + Exam (50%) = Total</p>
           </div>
+          <AssessmentScores
+            assessmentId={id}
+            pupils={pupils}
+            existingResults={existingResults}
+          />
         </div>
-      ) : (
-        <div className="mt-6 rounded-lg border border-border bg-surface p-6">
-          <p className="text-sm text-muted">
-            No active classes found for the {assessment.phase.toLowerCase().replace("_", " ")} phase.
+      )}
+
+      {assessment.status === "PUBLISHED" && (
+        <div className="mt-6 rounded-lg border border-green-200 bg-green-50 p-4">
+          <p className="text-sm text-green-700 font-medium">✓ Published to Parents</p>
+          <p className="text-sm text-green-600 mt-1">
+            Results were published on{" "}
+            {new Date(assessment.publishedAt || "").toLocaleDateString()}
           </p>
         </div>
       )}
 
-      {!readonly && !locked && classes.length > 0 && (
-        <ResultsEntryForm
-          pupils={pupils}
-          allSubjects={allSubjects}
-          gradingScales={gradingScales}
-          assessmentId={id}
-          selectedClassId={selectedClassId}
-          existingResults={existingResults}
-        />
-      )}
+      {/* Management Actions */}
+      <div className="mt-6 flex flex-wrap gap-3 border-t border-border pt-4">
+        {assessment.status === "DRAFT" && (
+          <Button
+            onClick={handleApprove}
+            disabled={actionLoading || pupils.length === 0}
+            variant="secondary"
+          >
+            {actionLoading ? "Approving..." : "Mark Ready to Publish"}
+          </Button>
+        )}
 
-      {/* View Report & Broadsheet Links - Always Visible */}
-      <div className="mt-6 flex flex-wrap gap-6">
-        <Link href={`/admin/results/${id}/broadsheet`} className="flex items-center gap-2 text-sm text-brand hover:underline">
-          <Table2 className="h-5 w-5" />
-          <span>View class broadsheet</span>
+        {assessment.status === "APPROVED" && (
+          <>
+            <Button onClick={handlePublish} disabled={actionLoading}>
+              {actionLoading ? "Publishing..." : "Publish to Parents"}
+            </Button>
+            <Button
+              onClick={handleReturnDraft}
+              disabled={actionLoading}
+              variant="secondary"
+            >
+              {actionLoading ? "Returning..." : "Return to Draft"}
+            </Button>
+          </>
+        )}
+
+        <Link href={`/admin/results/${id}/broadsheet`}>
+          <Button variant="secondary">
+            <Table2 className="mr-2 h-4 w-4" />
+            View Broadsheet
+          </Button>
         </Link>
       </div>
 
-      {!readonly && assessment.status === "DRAFT" && (
-        <form action={approveAssessmentForm} className="mt-4">
-          <input type="hidden" name="assessmentId" value={id} />
-          <Button type="submit" variant="secondary">
-            Mark ready to publish
-          </Button>
-        </form>
-      )}
-
-      {assessment.status === "APPROVED" && (
-        <div className="mt-6 flex flex-wrap gap-3">
-          <PublishButton assessmentId={id} />
-          {session?.role === "SCHOOL_ADMIN" && (
-            <ReturnToDraftButton assessmentId={id} />
-          )}
+      {/* Results Summary */}
+      {pupils.length > 0 && (
+        <div className="mt-6">
+          <h2 className="text-lg font-semibold mb-3">Scores Entered</h2>
+          <div className="overflow-x-auto rounded-lg border border-border bg-surface">
+            <table className="w-full text-left text-xs sm:text-sm">
+              <thead className="border-b border-border bg-background text-muted">
+                <tr>
+                  <th className="px-3 py-2 font-medium sm:px-4">Student</th>
+                  <th className="px-3 py-2 font-medium text-center sm:px-4">CA</th>
+                  <th className="px-3 py-2 font-medium text-center sm:px-4">Test</th>
+                  <th className="px-3 py-2 font-medium text-center sm:px-4">Exam</th>
+                  <th className="px-3 py-2 font-medium text-center sm:px-4">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pupils.map((pupil) => {
+                  const result = existingResults[pupil.id];
+                  return (
+                    <tr key={pupil.id} className="border-t border-border hover:bg-background/50">
+                      <td className="px-3 py-2 font-medium sm:px-4">{pupil.name}</td>
+                      <td className="px-3 py-2 text-center sm:px-4">{result?.caScore ?? "—"}</td>
+                      <td className="px-3 py-2 text-center sm:px-4">{result?.testScore ?? "—"}</td>
+                      <td className="px-3 py-2 text-center sm:px-4">{result?.examScore ?? "—"}</td>
+                      <td className="px-3 py-2 text-center font-semibold sm:px-4">
+                        {result?.totalScore ?? "—"}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

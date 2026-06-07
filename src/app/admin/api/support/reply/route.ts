@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
-import { SupportStatus } from "@prisma/client";
+// Database access removed - use backend API instead
+export type SupportStatus = "OPEN" | "IN_PROGRESS" | "RESOLVED" | "CLOSED";
 import { requireStaffSession, getStaffSession } from "@/lib/auth";
 import { sendEmail, buildPlatformCommunicationEmail, logEmail } from "@/lib/email";
 

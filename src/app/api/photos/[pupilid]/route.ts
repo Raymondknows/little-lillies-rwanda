@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getStaffSession, getParentSession } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+// Database access removed - use backend API instead
 import { getTeacherAccessibleClassIds } from "@/lib/teacher-permissions";
 
 export async function GET(

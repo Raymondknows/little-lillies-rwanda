@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     
     // Proxy to backend API
-    const response = await fetch(`${BACKEND_URL}/api/parent/login`, {
+    const response = await fetch(`${BACKEND_URL}/parent/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),

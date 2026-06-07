@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     console.log('Login attempt:', { email: body.email, backendUrl: BACKEND_URL });
     
     // Proxy to backend API
-    const response = await fetch(`${BACKEND_URL}/api/admin/login`, {
+    const response = await fetch(`${BACKEND_URL}/admin/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),

@@ -6,6 +6,8 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
+    console.log('Login attempt:', { email: body.email, backendUrl: BACKEND_URL });
+    
     // Proxy to backend API
     const response = await fetch(`${BACKEND_URL}/api/admin/login`, {
       method: 'POST',
@@ -16,6 +18,7 @@ export async function POST(request: NextRequest) {
     const data = await response.json();
 
     if (!response.ok) {
+      console.error('Backend error:', { status: response.status, data });
       return NextResponse.json(data, { status: response.status });
     }
 
@@ -34,6 +37,13 @@ export async function POST(request: NextRequest) {
     return res;
   } catch (error) {
     console.error('Login error:', error);
-    return NextResponse.json({ error: 'Login failed' }, { status: 500 });
+    console.error('Backend URL:', BACKEND_URL);
+    return NextResponse.json({ 
+      error: 'Login failed',
+      debug: {
+        backendUrl: BACKEND_URL,
+        errorMessage: error instanceof Error ? error.message : String(error)
+      }
+    }, { status: 500 });
   }
 }

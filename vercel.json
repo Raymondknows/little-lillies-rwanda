@@ -2,16 +2,12 @@
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
   "framework": "nextjs",
-  "env": [
-    {
-      "key": "NEXT_PUBLIC_API_URL",
-      "value": "https://www.schoolbase.live/api",
-      "target": ["production", "preview", "development"]
+  "env": {
+    "NEXT_PUBLIC_API_URL": {
+      "default": "https://www.schoolbase.live/api"
     },
-    {
-      "key": "BACKEND_URL",
-      "value": "https://www.schoolbase.live/api",
-      "target": ["production", "preview"]
+    "BACKEND_URL": {
+      "default": "https://www.schoolbase.live/api"
     }
-  ]
+  }
 }

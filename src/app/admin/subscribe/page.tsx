@@ -78,8 +78,8 @@ export default function SubscribePage() {
     let mounted = true;
 
     Promise.all([
-      fetch("/api/country/config").then((r) => r.json()),
-      fetch("/api/admin/verify", { method: "POST" }).then((r) => r.json()),
+      fetch("/api/country/config").then((r) => r.json()).catch(() => ({})),
+      fetch("/api/admin/verify", { method: "POST" }).then((r) => r.json()).catch(() => ({})),
     ])
       .then(([countryData, adminData]) => {
         if (!mounted) return;
@@ -108,20 +108,30 @@ export default function SubscribePage() {
 
           if (session.schoolId) {
             fetch(`/api/admin/school/${session.schoolId}`)
-              .then((r) => r.json())
+              .then((r) => {
+                if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                return r.json();
+              })
               .then((schoolData) => {
                 if (!mounted) return;
 
                 setSchoolName(schoolData.name || "");
                 setSchoolSlug(schoolData.slug || "");
                 setSchoolData(schoolData);
+              })
+              .catch((err) => {
+                console.warn("Failed to fetch school data:", err.message);
+                // Continue loading even if school data fails
               });
           }
         }
 
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch((err) => {
+        console.error("Failed to load subscription page:", err);
+        setLoading(false);
+      });
 
     return () => {
       mounted = false;

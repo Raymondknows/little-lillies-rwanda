@@ -6,8 +6,8 @@
     "NEXT_PUBLIC_API_URL": "https://api.schoolbase.live",
     "BACKEND_URL": "https://api.schoolbase.live",
     "SESSION_SECRET": "5VgLoEqv46hkBH3pFLr04Q8UPEZCFeYJvEo7YP7BdwzO88I7k9NgVFYL3gLVmegr",
-    "NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY": "pk_live_",
-    "NEXT_PUBLIC_PAYSTACK_SUBSCRIPTION_PUBLIC_KEY": "pk_live_",
+    "NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY": "pk_live_8aea06ae2a6f23eae09943bffce2765fe37b5ca3",
+    "NEXT_PUBLIC_PAYSTACK_SUBSCRIPTION_PUBLIC_KEY": "pk_live_8aea06ae2a6f23eae09943bffce2765fe37b5ca3",
     "NEXT_PUBLIC_BANK_ACCOUNT_NAME": "ClickBase Technologies Ltd",
     "NEXT_PUBLIC_BANK_ACCOUNT_NUMBER": "1228481040",
     "NEXT_PUBLIC_BANK_NAME": "Zenith"

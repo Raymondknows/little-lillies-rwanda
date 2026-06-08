@@ -157,44 +157,7 @@ export function PaystackPurchaseButton({
     setLoading(true);
 
     try {
-      if (isSubscription) {
-        // Use server-side initialization and redirect to Paystack hosted checkout
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 15000); // 15 second timeout
-        
-        try {
-          const res = await fetch("/api/paystack/init", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ amountMinor, email, plan, schoolName, name, phone, currency }),
-            signal: controller.signal,
-          });
-          clearTimeout(timeout);
-          
-          if (!res.ok) {
-            const error = await res.json();
-            throw new Error(error.error || `HTTP ${res.status}: Failed to initialize Paystack.`);
-          }
-          
-          const data = await res.json();
-          if (!data.authorization_url) {
-            throw new Error("No payment URL returned from server.");
-          }
-          
-          // Redirect user to Paystack hosted payment page
-          // The authorization_url already contains all necessary parameters
-          window.location.href = data.authorization_url;
-          return;
-        } catch (fetchErr: unknown) {
-          clearTimeout(timeout);
-          if (fetchErr instanceof Error && fetchErr.name === "AbortError") {
-            throw new Error("Payment initialization timed out. Please check your connection and try again.");
-          }
-          throw fetchErr;
-        }
-      }
-
-      // Fallback: inline checkout for non-subscription (per-school) payments
+      // Use inline Paystack checkout for both subscription and school fee payments
       await loadPaystackScript();
       if (!window.PaystackPop) {
         throw new Error("Paystack checkout is unavailable.");

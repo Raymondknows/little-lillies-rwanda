@@ -143,12 +143,14 @@ export default function SettingsPageClient({
     }
   };
 
-  const handleImageUpload = async (file: File, type: "signature" | "stamp") => {
+  const handleImageUpload = async (file: File, type: "signature" | "stamp" | "logo") => {
     setUploadError(null);
     if (type === "signature") {
       setUploadingSignature(true);
-    } else {
+    } else if (type === "stamp") {
       setUploadingStamp(true);
+    } else if (type === "logo") {
+      setUploadingLogo(true);
     }
 
     try {
@@ -156,7 +158,7 @@ export default function SettingsPageClient({
       formData.append("file", file);
       formData.append("type", type);
 
-      const response = await fetch(`/api/admin/settings/upload?schoolId=${school.id}`, {
+      const response = await fetch(`/api/admin/settings/upload`, {
         method: "POST",
         body: formData,
       });
@@ -175,8 +177,10 @@ export default function SettingsPageClient({
       if (data.success && data.url) {
         if (type === "signature") {
           setPrincipalSignatureUrl(data.url);
-        } else {
+        } else if (type === "stamp") {
           setStampUrl(data.url);
+        } else if (type === "logo") {
+          setLogoUrl(data.url);
         }
       } else {
         throw new Error(data?.message || "Upload failed");
@@ -186,72 +190,16 @@ export default function SettingsPageClient({
     } finally {
       if (type === "signature") {
         setUploadingSignature(false);
-      } else {
+      } else if (type === "stamp") {
         setUploadingStamp(false);
+      } else if (type === "logo") {
+        setUploadingLogo(false);
       }
     }
   };
 
-  const handleLogoUpload = async (file: File) => {
-    setUploadError(null);
-    setUploadingLogo(true);
-    try {
-      const MAX_BYTES = 3 * 1024 * 1024; // 3MB
-      const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
-      if (!allowedTypes.includes(file.type)) throw new Error("Unsupported file type. Use PNG, JPG or WEBP.");
-      if (file.size > MAX_BYTES) throw new Error("File too large. Max 3MB.");
-
-      const presignResp = await fetch(`/api/admin/logo/presign?schoolId=${school.id}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fileName: file.name, contentType: file.type, fileSize: file.size }),
-      });
-      if (!presignResp.ok) {
-        const data = await presignResp.json().catch(() => null);
-        throw new Error(data?.message || "Failed to get upload URL");
-      }
-      const presign = await presignResp.json();
-
-      let url: string | null = null;
-      if (presign.type === "local") {
-        const formData = new FormData();
-        formData.append("file", file);
-        const uploadResp = await fetch(presign.uploadUrl, { method: "POST", body: formData });
-        if (!uploadResp.ok) {
-          const data = await uploadResp.json().catch(() => null);
-          throw new Error(data?.message || "Upload failed");
-        }
-        const uploadData = await uploadResp.json();
-        if (!uploadData.success || !uploadData.url) {
-          throw new Error(uploadData?.message || "Upload failed");
-        }
-        url = uploadData.url;
-      } else {
-        const uploadUrl = presign.url;
-        const key = presign.key;
-
-        const uploadResp = await fetch(uploadUrl, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
-        if (!uploadResp.ok) throw new Error("Upload failed");
-
-        const confirmResp = await fetch(`/api/admin/logo/confirm?schoolId=${school.id}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key }) });
-        if (!confirmResp.ok) {
-          const data = await confirmResp.json().catch(() => null);
-          throw new Error(data?.message || "Confirm failed");
-        }
-        const confirm = await confirmResp.json();
-        url = confirm?.url;
-      }
-
-      if (url) setLogoUrl(url);
-    } catch (err) {
-      setUploadError(err instanceof Error ? err.message : "Upload failed");
-    } finally {
-      setUploadingLogo(false);
-    }
-  };
 
   useEffect(() => {
-    // Load presence/preview of per-school config (do not expose secrets to client)
     let mounted = true;
     const loadConfig = async () => {
       try {
@@ -703,7 +651,7 @@ export default function SettingsPageClient({
                       disabled={uploadingLogo}
                       onChange={(e) => {
                         const file = e.target.files?.[0];
-                        if (file) handleLogoUpload(file);
+                        if (file) handleImageUpload(file, "logo");
                       }}
                       className="hidden"
                     />

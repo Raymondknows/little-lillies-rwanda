@@ -232,9 +232,13 @@ export function PaystackPurchaseButton({
 
   if (!publicKey) {
     return (
-      <p className="text-sm text-muted">
-        Paystack is not configured. Please contact the SchoolBase team to enable online subscriptions.
-      </p>
+      <button
+        disabled
+        className="w-full py-3 px-4 rounded-lg font-bold bg-slate-200 text-slate-500 cursor-not-allowed"
+        title="Paystack configuration in progress"
+      >
+        Setting up payment...
+      </button>
     );
   }
 
@@ -244,11 +248,11 @@ export function PaystackPurchaseButton({
         type="button"
         onClick={pay}
         disabled={disabled || loading || !ready}
-        className="bg-[#0A66C2] hover:bg-[#004182] text-white"
+        className="w-full bg-[#0A66C2] hover:bg-[#004FA3] text-white font-bold py-3 px-4 rounded-lg transition-all duration-200"
       >
         {loading ? "Processing…" : "Pay now"}
       </Button>
-      {error ? <p className="text-xs text-error">{error}</p> : null}
+      {error ? <p className="text-xs text-red-600 font-medium">{error}</p> : null}
     </div>
   );
 }

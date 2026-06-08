@@ -4,6 +4,7 @@
   "framework": "nextjs",
   "env": {
     "NEXT_PUBLIC_API_URL": "https://api.schoolbase.live",
-    "BACKEND_URL": "https://api.schoolbase.live"
+    "BACKEND_URL": "https://api.schoolbase.live",
+    "SESSION_SECRET": "5VgLoEqv46hkBH3pFLr04Q8UPEZCFeYJvEo7YP7BdwzO88I7k9NgVFYL3gLVmegr"
   }
 }

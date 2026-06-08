@@ -14,7 +14,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const BACKEND_URL = getBackendUrl();
     
-    console.log('Login attempt:', { email: body.email, backendUrl: BACKEND_URL });
+    console.log('=== LOGIN API ROUTE ===');
+    console.log('Received body:', JSON.stringify(body));
+    console.log('Content-Type header:', request.headers.get('content-type'));
+    console.log('Backend URL:', BACKEND_URL);
     
     // Proxy to backend API
     const response = await fetch(`${BACKEND_URL}/api/admin/login`, {
@@ -24,6 +27,7 @@ export async function POST(request: NextRequest) {
     });
 
     const data = await response.json();
+    console.log('Backend response:', { status: response.status, success: data.success });
 
     if (!response.ok) {
       console.error('Backend error:', { status: response.status, data });
@@ -33,6 +37,7 @@ export async function POST(request: NextRequest) {
     // Extract token and set as httpOnly cookie
     const res = NextResponse.json(data);
     if (data.token) {
+      console.log('Setting schoolbase_staff cookie');
       res.cookies.set('schoolbase_staff', data.token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
@@ -42,10 +47,12 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    console.log('=== LOGIN RESPONSE SENT ===');
     return res;
   } catch (error) {
     const BACKEND_URL = getBackendUrl();
-    console.error('Login error:', error);
+    console.error('=== LOGIN ERROR ===');
+    console.error('Error:', error instanceof Error ? error.message : String(error));
     console.error('Backend URL:', BACKEND_URL);
     return NextResponse.json({ 
       error: 'Login failed',

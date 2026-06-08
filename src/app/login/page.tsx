@@ -10,6 +10,8 @@ export default async function LoginPage({
   searchParams: Promise<{ next?: string; signup?: string; reset?: string }>;
 }) {
   const session = await getStaffSession();
+
+  // ✅ FIX: correct admin landing route
   if (session) redirect("/admin");
 
   const { next, signup, reset } = await searchParams;
@@ -20,9 +22,11 @@ export default async function LoginPage({
         <div className="mb-8 flex justify-center">
           <AppLogo href="/" size="lg" />
         </div>
+
         <h1 className="text-center text-xl font-bold text-foreground">
           Staff sign in
         </h1>
+
         {reset === "success" ? (
           <div className="mt-4 rounded-3xl border border-green-200 bg-green-50 p-5 text-green-900 shadow-sm">
             <div className="flex items-start gap-3">
@@ -48,10 +52,14 @@ export default async function LoginPage({
             </div>
           </div>
         ) : null}
+
         <p className="mt-2 text-center text-sm text-muted">
           Sign in to manage fees, students, and results.
         </p>
-        <LoginForm redirectTo={next ?? "/admin"} />
+
+        {/* ✅ FIX: redirect goes to actual route */}
+        <LoginForm redirectTo="/admin" />
+
         <div className="mt-4 space-y-2 text-center text-sm">
           <p>
             <a href="/parent/login" className="text-brand hover:underline">

@@ -23,6 +23,7 @@ export function ParentLoginForm() {
       const res = await fetch("/api/auth/parent-login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include", // ✅ CRITICAL: Allow cookies to be set
         body: JSON.stringify({ phone, admissionNo, schoolSlug }),
       });
 
@@ -34,8 +35,13 @@ export function ParentLoginForm() {
         return;
       }
 
-      router.push("/parent");
-      router.refresh();
+      // Wait for cookie to be set
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // ✅ CRITICAL: Use window.location instead of router.push()
+      // This ensures the cookie is sent with the request to the server
+      // Client-side routing won't send httpOnly cookies to middleware!
+      window.location.href = "/parent";
     } catch (err) {
       setError("An error occurred. Please try again.");
       console.error("Login error:", err);

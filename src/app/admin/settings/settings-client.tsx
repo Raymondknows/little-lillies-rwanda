@@ -4,6 +4,7 @@ import { useMemo, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Building2, MapPin, DollarSign, FileText, Upload, Save, AlertCircle } from "lucide-react";
 import countriesData from "../../../../config/countries.json";
 import { resolveSchoolAssetUrl } from "@/lib/asset-urls";
 
@@ -83,7 +84,7 @@ export default function SettingsPageClient({
     setIsSaving(true);
 
     try {
-      const response = await fetch("/api/admin/settings", {
+      const response = await fetch(`/api/admin/settings`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -155,7 +156,7 @@ export default function SettingsPageClient({
       formData.append("file", file);
       formData.append("type", type);
 
-      const response = await fetch("/api/admin/settings/upload", {
+      const response = await fetch(`/api/admin/settings/upload?schoolId=${school.id}`, {
         method: "POST",
         body: formData,
       });
@@ -200,7 +201,7 @@ export default function SettingsPageClient({
       if (!allowedTypes.includes(file.type)) throw new Error("Unsupported file type. Use PNG, JPG or WEBP.");
       if (file.size > MAX_BYTES) throw new Error("File too large. Max 3MB.");
 
-      const presignResp = await fetch("/api/admin/logo/presign", {
+      const presignResp = await fetch(`/api/admin/logo/presign?schoolId=${school.id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ fileName: file.name, contentType: file.type, fileSize: file.size }),
@@ -232,7 +233,7 @@ export default function SettingsPageClient({
         const uploadResp = await fetch(uploadUrl, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
         if (!uploadResp.ok) throw new Error("Upload failed");
 
-        const confirmResp = await fetch("/api/admin/logo/confirm", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key }) });
+        const confirmResp = await fetch(`/api/admin/logo/confirm?schoolId=${school.id}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key }) });
         if (!confirmResp.ok) {
           const data = await confirmResp.json().catch(() => null);
           throw new Error(data?.message || "Confirm failed");
@@ -254,7 +255,7 @@ export default function SettingsPageClient({
     let mounted = true;
     const loadConfig = async () => {
       try {
-        const response = await fetch("/api/admin/settings");
+        const response = await fetch(`/api/admin/settings`);
         if (!response.ok) {
           console.error(`Failed to fetch config: ${response.status}`);
           return;
@@ -283,7 +284,7 @@ export default function SettingsPageClient({
 
     const loadStatus = async () => {
       try {
-        const response = await fetch("/api/admin/settings/status");
+        const response = await fetch(`/api/admin/settings/status`);
         if (!response.ok) {
           console.error(`Failed to fetch status: ${response.status}`);
           return;
@@ -305,542 +306,546 @@ export default function SettingsPageClient({
   }, []);
 
   return (
-    <div className="w-full">
+    <div className="w-full min-h-screen">
       {isOnboarding && (
-        <div className="mb-6 rounded-2xl border border-blue-200 bg-blue-50 p-4">
-          <p className="text-sm font-semibold text-blue-900">🎯 Complete Your Setup</p>
-          <p className="mt-2 text-sm text-blue-800">
+        <div className="mb-6 rounded-xl border border-[#0A66C2]/20 bg-[#0A66C2]/5 p-4">
+          <p className="text-sm font-semibold text-[#0A66C2]">🎯 Complete Your Setup</p>
+          <p className="mt-2 text-sm text-[#0A66C2]/80">
             Set your school's location and currency so we can show you the correct subscription pricing. After saving, you'll be guided to select a plan and complete payment.
           </p>
         </div>
       )}
+      
       <div className="space-y-6">
-      <div className="flex flex-col gap-3 rounded-3xl border border-border bg-surface p-3">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        {/* Page Header */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand">Settings</p>
-            <h1 className="mt-2 text-3xl font-bold text-foreground">School configuration</h1>
-            <p className="mt-3 max-w-2xl text-sm text-muted">
-              Update your school profile, admission number prefix, and quick overview details.
-              These settings are used across student records, invoices, and parent notifications.
-            </p>
+            <p className="text-sm font-semibold uppercase tracking-widest text-[#0A66C2]">Configuration</p>
+            <h1 className="mt-2 text-3xl font-bold text-gray-900">School Settings</h1>
+            <p className="mt-2 text-sm text-gray-600">Manage your school profile, location, and system configuration</p>
           </div>
-          <div className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end">
-            <Button href="/admin/settings/academic-years" variant="secondary" className="w-full sm:w-auto text-sm">
-              Manage academic years
-            </Button>
-            <Badge className="w-full sm:w-auto" variant={status?.paystack?.effective === "per-school" || status?.paystack?.effective === "env" ? "success" : "default"}>
-              {status?.paystack?.effective === "per-school"
-                ? "Paystack (per-school)"
-                : status?.paystack?.effective === "env"
-                ? "Paystack (enabled)"
-                : "Paystack not configured"}
-            </Badge>
-
-            <Badge className="w-full sm:w-auto" variant={status?.twilio?.effective === "per-school" || status?.twilio?.effective === "env" ? "success" : "default"}>
-              {status?.twilio?.effective === "per-school"
-                ? "WhatsApp (per-school)"
-                : status?.twilio?.effective === "env"
-                ? "WhatsApp (enabled)"
-                : "WhatsApp not configured"}
-            </Badge>
-          </div>
+          <Button 
+            href="/admin/settings/academic-years" 
+            variant="secondary" 
+            className="text-sm self-start"
+          >
+            Manage Academic Years
+          </Button>
         </div>
-      </div>
 
-      <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-        <section className="rounded-3xl border border-border bg-surface p-3">
-          <div className="flex items-start justify-between gap-4">
+        {/* Status Section */}
+        <div className="flex flex-wrap gap-2">
+          <Badge variant={status?.paystack?.effective === "per-school" || status?.paystack?.effective === "env" ? "success" : "default"}>
+            {status?.paystack?.effective === "per-school"
+              ? "✓ Paystack (Per-School)"
+              : status?.paystack?.effective === "env"
+              ? "✓ Paystack (Enabled)"
+              : "Paystack Not Configured"}
+          </Badge>
+          <Badge variant={status?.twilio?.effective === "per-school" || status?.twilio?.effective === "env" ? "success" : "default"}>
+            {status?.twilio?.effective === "per-school"
+              ? "✓ WhatsApp (Per-School)"
+              : status?.twilio?.effective === "env"
+              ? "✓ WhatsApp (Enabled)"
+              : "WhatsApp Not Configured"}
+          </Badge>
+        </div>
+
+        {/* Error/Success Messages */}
+        {error && (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-4 flex gap-3">
+            <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
             <div>
-              <h2 className="text-xl font-semibold text-foreground">School profile</h2>
-              <p className="mt-1 text-sm text-muted">
-                Set the school name and initials used to generate admissions in the format
-                <span className="font-semibold text-foreground"> PREFIX-YYYY-NNNN</span>.
-              </p>
+              <p className="font-medium text-red-900">{error}</p>
             </div>
           </div>
+        )}
+        
+        {showSuccess && (
+          <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+            <p className="font-medium text-green-900">✓ Settings saved successfully</p>
+          </div>
+        )}
 
-          <form onSubmit={handleSubmit} className="mt-6 space-y-6">
-            <label className="block text-sm font-medium text-foreground">
-              School name
-              <input
-                name="name"
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                placeholder="e.g. Greenfield Academy"
-                className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10"
-              />
-            </label>
-
-            <label className="block text-sm font-medium text-foreground">
-              School initials
-              <input
-                name="initials"
-                value={initials}
-                maxLength={6}
-                onChange={(event) => setInitials(event.target.value.toUpperCase())}
-                placeholder="GFA"
-                className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10"
-              />
-              <p className="mt-2 text-sm text-muted">
-                Used as the prefix for auto-generated pupil admission numbers. Example: {previewPrefix}-2025-0001.
-              </p>
-            </label>
-
-            <label className="block text-sm font-medium text-foreground">
-              School address
-              <textarea
-                name="address"
-                value={address}
-                onChange={(event) => setAddress(event.target.value)}
-                placeholder="e.g. 123 Education Street, City, State"
-                rows={3}
-                className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10"
-              />
-            </label>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="block text-sm font-medium text-foreground">
-                Country
-                <select
-                  name="country"
-                  value={country}
-                  onChange={(event) => {
-                    const nextCountry = event.target.value;
-                    setCountry(nextCountry);
-                    const nextCurrency = (countriesData as any).countries[nextCountry]?.currency ?? currency;
-                    setCurrency(nextCurrency);
-                  }}
-                  className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10"
-                >
-                  {Object.entries(countriesData.countries).map(([code, countryConfig]) => (
-                    <option key={code} value={code}>
-                      {countryConfig.name} ({code})
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="block text-sm font-medium text-foreground">
-                Currency
-                <input
-                  name="currency"
-                  value={currency}
-                  readOnly
-                  className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none"
-                />
-              </label>
-            </div>
-
-            <label className="block text-sm font-medium text-foreground">
-              Principal/Head of School Name
-              <input
-                name="principalName"
-                value={principalName}
-                onChange={(event) => setPrincipalName(event.target.value)}
-                placeholder="e.g. Mr. John Okafor"
-                className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10"
-              />
-              <p className="mt-2 text-sm text-muted">
-                Name will appear on student result sheets.
-              </p>
-            </label>
-
-            <label className="block text-sm font-medium text-foreground">
-              Principal&apos;s Comment
-              <textarea
-                name="principalComment"
-                value={principalComment}
-                onChange={(event) => setPrincipalComment(event.target.value)}
-                placeholder="e.g. Keep up the good work and continue to strive for excellence."
-                rows={4}
-                className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10"
-              />
-              <p className="mt-2 text-sm text-muted">
-                This comment will appear on each student&apos;s result sheet.
-              </p>
-            </label>
-
-            <div className="grid gap-4 sm:grid-cols-3">
-              <label className="block text-sm font-medium text-foreground">
-                Manual payment account name
-                <input
-                  name="manualPaymentAccountName"
-                  value={manualPaymentAccountName}
-                  onChange={(event) => setManualPaymentAccountName(event.target.value)}
-                  placeholder="e.g. Greenfield Academy"
-                  className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10"
-                />
-              </label>
-
-              <label className="block text-sm font-medium text-foreground">
-                Account number
-                <input
-                  name="manualPaymentAccountNumber"
-                  value={manualPaymentAccountNumber}
-                  onChange={(event) => setManualPaymentAccountNumber(event.target.value)}
-                  placeholder="e.g. 1234567890"
-                  className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10"
-                />
-              </label>
-
-              <label className="block text-sm font-medium text-foreground">
-                Bank name
-                <input
-                  name="manualPaymentBankName"
-                  value={manualPaymentBankName}
-                  onChange={(event) => setManualPaymentBankName(event.target.value)}
-                  placeholder="e.g. First Bank"
-                  className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10"
-                />
-              </label>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Principal&apos;s Signature
-                </label>
-                <div className="rounded-xl border-2 border-dashed border-border bg-background p-4">
-                  {principalSignatureUrl ? (
-                    <div className="space-y-3">
-                      <img 
-                        src={principalSignatureUrl} 
-                        alt="Principal Signature" 
-                        className="h-20 mx-auto"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setPrincipalSignatureUrl(null)}
-                        className="w-full text-sm text-error hover:text-error/80"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  ) : (
-                    <label className="block cursor-pointer">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        disabled={uploadingSignature}
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) handleImageUpload(file, "signature");
-                        }}
-                        className="hidden"
-                      />
-                      <div className="text-center py-4">
-                        <p className="text-sm text-muted">
-                          {uploadingSignature ? "Uploading..." : "Click to upload signature"}
-                        </p>
-                        <p className="text-xs text-muted mt-1">PNG, JPG up to 2MB</p>
-                      </div>
-                    </label>
-                  )}
-                </div>
-                <p className="mt-2 text-xs text-muted">
-                  Upload a clean signature image. Will appear on all result sheets.
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  School Stamp/Seal
-                </label>
-                <div className="rounded-xl border-2 border-dashed border-border bg-background p-4">
-                  {stampUrl ? (
-                    <div className="space-y-3">
-                      <img 
-                        src={stampUrl} 
-                        alt="School Stamp" 
-                        className="h-20 w-20 mx-auto"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setStampUrl(null)}
-                        className="w-full text-sm text-error hover:text-error/80"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  ) : (
-                    <label className="block cursor-pointer">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        disabled={uploadingStamp}
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) handleImageUpload(file, "stamp");
-                        }}
-                        className="hidden"
-                      />
-                      <div className="text-center py-4">
-                        <p className="text-sm text-muted">
-                          {uploadingStamp ? "Uploading..." : "Click to upload school stamp"}
-                        </p>
-                        <p className="text-xs text-muted mt-1">PNG, JPG up to 2MB</p>
-                      </div>
-                    </label>
-                  )}
-                </div>
-                <p className="mt-2 text-xs text-muted">
-                  Upload your school&apos;s official stamp or seal. Will appear on all result sheets.
-                </p>
-              </div>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="block text-sm font-medium text-foreground">School logo</label>
-                <div className="mt-2 flex items-center gap-4">
-                  <div className="h-16 w-16 overflow-hidden rounded-full bg-muted">
-                    {logoUrl ? <img src={logoUrl} alt="logo" className="h-full w-full object-cover" /> : <div className="flex h-full w-full items-center justify-center text-sm text-muted">No logo</div>}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <input
-                      id="logo-upload"
-                      type="file"
-                      accept="image/png,image/jpeg,image/webp"
-                      onChange={(e) => {
-                        const f = e.target.files?.[0];
-                        if (f) handleLogoUpload(f);
-                      }}
-                      className="text-sm"
-                    />
-                    {uploadingLogo && <span className="text-sm text-muted">Uploading...</span>}
-                    {uploadError && <span className="text-sm text-red-600">{uploadError}</span>}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {uploadError && (
-              <div className="rounded-2xl border border-error/20 bg-error/10 p-4 text-sm text-error">
-                {uploadError}
-              </div>
-            )}
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="block text-sm font-medium text-foreground">
-                Paystack public key
-                <input
-                  name="paystackPublic"
-                  value={paystackPublic}
-                  onChange={(e) => setPaystackPublic(e.target.value)}
-                  placeholder={paystackConfigured ? "Using environment key" : "pk_test_xxx or pk_live_xxx"}
-                  className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10"
-                />
-              </label>
-
-              <label className="block text-sm font-medium text-foreground">
-                Paystack secret key
-                <input
-                  name="paystackSecret"
-                  value={paystackSecret}
-                  onChange={(e) => setPaystackSecret(e.target.value)}
-                  placeholder={paystackConfigured ? "Using environment key" : "sk_test_xxx or sk_live_xxx"}
-                  className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10"
-                />
-              </label>
-            </div>
-
-            <div className="rounded-2xl border border-border bg-muted p-4">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        {/* Main Form */}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* School Profile Section */}
+          <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+            <div className="border-b border-gray-200 bg-gradient-to-r from-[#0A66C2]/5 to-[#0A66C2]/2 px-6 py-4">
+              <div className="flex items-center gap-3">
+                <Building2 className="h-5 w-5 text-[#0A66C2]" />
                 <div>
-                  <p className="text-sm font-semibold text-foreground">WhatsApp Cloud API</p>
-                  <p className="mt-2 text-sm text-muted">
-                    Enter the school-specific WhatsApp Cloud API credentials below. These override the default environment credentials when set.
-                  </p>
-                </div>
-                <div className="shrink-0">
-                  <Button type="button" variant="secondary" onClick={() => setShowWhatsAppHelp(true)} className="text-sm">
-                    How to get credentials
-                  </Button>
+                  <h2 className="text-lg font-semibold text-gray-900">School Profile</h2>
+                  <p className="text-sm text-gray-600">Name, location, and identification</p>
                 </div>
               </div>
             </div>
+            
+            <div className="p-6 space-y-6">
+              {/* School Name and Initials */}
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    School Name *
+                  </label>
+                  <input
+                    name="name"
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                    placeholder="e.g. Greenfield Academy"
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder-gray-500 transition focus:border-[#0A66C2] focus:ring-2 focus:ring-[#0A66C2]/20 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    School Initials *
+                  </label>
+                  <div>
+                    <input
+                      name="initials"
+                      value={initials}
+                      maxLength={6}
+                      onChange={(event) => setInitials(event.target.value.toUpperCase())}
+                      placeholder="GFA"
+                      className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder-gray-500 transition focus:border-[#0A66C2] focus:ring-2 focus:ring-[#0A66C2]/20 outline-none"
+                    />
+                    <p className="text-xs text-gray-500 mt-2">
+                      Used as prefix for admission numbers: {previewPrefix}-2025-0001
+                    </p>
+                  </div>
+                </div>
+              </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="block text-sm font-medium text-foreground">
-                WhatsApp Cloud access token
-                <input
-                  name="waCloudAccessToken"
-                  value={waCloudAccessToken}
-                  onChange={(e) => setWaCloudAccessToken(e.target.value)}
-                  placeholder="Enter WhatsApp Cloud API access token"
-                  className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10"
+              {/* Location */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  School Address
+                </label>
+                <textarea
+                  name="address"
+                  value={address}
+                  onChange={(event) => setAddress(event.target.value)}
+                  placeholder="e.g. 123 Education Street, Lagos, Nigeria"
+                  rows={3}
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder-gray-500 transition focus:border-[#0A66C2] focus:ring-2 focus:ring-[#0A66C2]/20 outline-none"
                 />
-              </label>
+              </div>
 
-              <label className="block text-sm font-medium text-foreground">
-                WhatsApp Cloud phone number ID
-                <input
-                  name="waCloudPhoneNumberId"
-                  value={waCloudPhoneNumberId}
-                  onChange={(e) => setWaCloudPhoneNumberId(e.target.value)}
-                  placeholder="Enter WhatsApp Cloud API phone number ID"
-                  className="mt-2 w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10"
-                />
-              </label>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-center">
-              <div>
-                <p className="text-sm text-muted">
-                  Current school initials saved: <span className="font-semibold text-foreground">{savedInitials || "Not set"}</span>
-                </p>
-                <p className="text-sm text-muted">
-                  Current school name saved: <span className="font-semibold text-foreground">{savedSchoolName}</span>
-                </p>
-              </div>
-              <Button type="submit" disabled={isSaving}>
-                {isSaving ? "Saving…" : "Save settings"}
-              </Button>
-            </div>
-
-            {error ? (
-              <div className="rounded-2xl border border-error/20 bg-error/10 p-4 text-sm text-error">
-                {error}
-              </div>
-            ) : null}
-          </form>
-
-          <div className="mt-6 rounded-3xl border border-border bg-background p-3 text-sm text-muted">
-            <p className="font-semibold text-foreground">Admission number preview</p>
-            <p className="mt-2 text-sm">
-              {previewPrefix}-{currentYear}-0001
-            </p>
-            <p className="mt-2">
-              Once saved, the admission number prefix will be locked and used automatically
-              when adding new students.
-            </p>
-          </div>
-        </section>
-
-        <aside className="space-y-6">
-          <div className="rounded-3xl border border-border bg-surface p-3">
-            <h2 className="text-lg font-semibold text-foreground">School overview</h2>
-            <p className="mt-1 text-sm text-muted">
-              Core information used across your account and reports.
-            </p>
-            <dl className="mt-6 space-y-4 text-sm text-muted">
-              <div className="flex justify-between gap-4">
-                <dt>School</dt>
-                <dd className="font-medium text-foreground">{savedSchoolName}</dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt>Slug</dt>
-                <dd className="font-medium text-foreground">{school.slug}</dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt>Location</dt>
-                <dd className="font-medium text-foreground">{school.city}, {school.country}</dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt>Currency</dt>
-                <dd className="font-medium text-foreground">{school.currency}</dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt>Phases</dt>
-                <dd className="font-medium text-foreground">{phases.join(", ")}</dd>
-              </div>
-            </dl>
-          </div>
-
-          <div className="rounded-3xl border border-border bg-surface p-3">
-            <div className="flex items-center justify-between">
-              <Badge variant="brand">{staff.length}</Badge>
-            </div>
-            <div className="mt-6 space-y-3 text-sm">
-              {staff.map((user) => (
-                <div key={user.id} className="rounded-2xl border border-border bg-background px-4 py-3">
-                  <p className="font-medium text-foreground">{user.name}</p>
-                  <p className="text-muted">{user.role.replace(/_/g, " ").toLowerCase()}</p>
+              {/* Country and Currency */}
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <MapPin className="inline h-4 w-4 mr-1 text-[#0A66C2]" />
+                    Country *
+                  </label>
+                  <select
+                    name="country"
+                    value={country}
+                    onChange={(event) => {
+                      const nextCountry = event.target.value;
+                      setCountry(nextCountry);
+                      const nextCurrency = (countriesData as any).countries[nextCountry]?.currency ?? currency;
+                      setCurrency(nextCurrency);
+                    }}
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 transition focus:border-[#0A66C2] focus:ring-2 focus:ring-[#0A66C2]/20 outline-none"
+                  >
+                    {Object.entries(countriesData.countries).map(([code, countryConfig]) => (
+                      <option key={code} value={code}>
+                        {countryConfig.name} ({code})
+                      </option>
+                    ))}
+                  </select>
                 </div>
-              ))}
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <DollarSign className="inline h-4 w-4 mr-1 text-[#0A66C2]" />
+                    Currency
+                  </label>
+                  <input
+                    name="currency"
+                    value={currency}
+                    readOnly
+                    className="w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-2.5 text-sm text-gray-900 cursor-not-allowed"
+                  />
+                </div>
+              </div>
             </div>
           </div>
-        </aside>
-      </div>
 
-      {showSuccess ? (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 px-4 py-8">
-          <div className="w-full max-w-xl rounded-3xl border border-border bg-surface p-8 shadow-2xl">
-            <div className="flex items-start gap-4">
-              <div className="mt-1 rounded-2xl bg-success/10 p-3 text-success">
-                ✓
-              </div>
-              <div>
-                <h3 className="text-xl font-semibold text-foreground">Settings updated</h3>
-                <p className="mt-2 text-sm text-muted">
-                  Your school profile and admission prefix have been saved.
-                </p>
+          {/* Principal Information Section */}
+          <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+            <div className="border-b border-gray-200 bg-gradient-to-r from-[#0A66C2]/5 to-[#0A66C2]/2 px-6 py-4">
+              <div className="flex items-center gap-3">
+                <FileText className="h-5 w-5 text-[#0A66C2]" />
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">Principal Information</h2>
+                  <p className="text-sm text-gray-600">Details for result sheets and official documents</p>
+                </div>
               </div>
             </div>
+            
+            <div className="p-6 space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Principal/Head of School Name
+                </label>
+                <input
+                  name="principalName"
+                  value={principalName}
+                  onChange={(event) => setPrincipalName(event.target.value)}
+                  placeholder="e.g. Mr. John Okafor"
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder-gray-500 transition focus:border-[#0A66C2] focus:ring-2 focus:ring-[#0A66C2]/20 outline-none"
+                />
+                <p className="text-xs text-gray-500 mt-2">Name appears on student result sheets</p>
+              </div>
 
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
-              <Button type="button" variant="secondary" onClick={() => setShowSuccess(false)}>
-                Close
-              </Button>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Principal's Comment
+                </label>
+                <textarea
+                  name="principalComment"
+                  value={principalComment}
+                  onChange={(event) => setPrincipalComment(event.target.value)}
+                  placeholder="e.g. Keep up the good work and strive for excellence."
+                  rows={3}
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder-gray-500 transition focus:border-[#0A66C2] focus:ring-2 focus:ring-[#0A66C2]/20 outline-none"
+                />
+                <p className="text-xs text-gray-500 mt-2">This comment appears on each student's result sheet</p>
+              </div>
+
+              {/* Signature and Stamp Upload */}
+              <div className="grid gap-6 sm:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    <Upload className="inline h-4 w-4 mr-1 text-[#0A66C2]" />
+                    Principal's Signature
+                  </label>
+                  <div className="rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-4">
+                    {principalSignatureUrl ? (
+                      <div className="space-y-3">
+                        <img 
+                          src={principalSignatureUrl} 
+                          alt="Principal Signature" 
+                          className="h-20 mx-auto"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setPrincipalSignatureUrl(null)}
+                          className="w-full text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded py-1"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="block cursor-pointer">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          disabled={uploadingSignature}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleImageUpload(file, "signature");
+                          }}
+                          className="hidden"
+                        />
+                        <div className="text-center py-4">
+                          <Upload className="h-6 w-6 text-[#0A66C2] mx-auto mb-2 opacity-40" />
+                          <p className="text-sm font-medium text-gray-700">
+                            {uploadingSignature ? "Uploading..." : "Upload signature"}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">PNG, JPG up to 2MB</p>
+                        </div>
+                      </label>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    <Upload className="inline h-4 w-4 mr-1 text-[#0A66C2]" />
+                    School Stamp/Seal
+                  </label>
+                  <div className="rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-4">
+                    {stampUrl ? (
+                      <div className="space-y-3">
+                        <img 
+                          src={stampUrl} 
+                          alt="School Stamp" 
+                          className="h-20 mx-auto"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setStampUrl(null)}
+                          className="w-full text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded py-1"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="block cursor-pointer">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          disabled={uploadingStamp}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleImageUpload(file, "stamp");
+                          }}
+                          className="hidden"
+                        />
+                        <div className="text-center py-4">
+                          <Upload className="h-6 w-6 text-[#0A66C2] mx-auto mb-2 opacity-40" />
+                          <p className="text-sm font-medium text-gray-700">
+                            {uploadingStamp ? "Uploading..." : "Upload stamp"}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">PNG, JPG up to 2MB</p>
+                        </div>
+                      </label>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      ) : null}
 
-      {showWhatsAppHelp ? (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 px-4 py-8">
-          <div className="w-full max-w-3xl rounded-3xl border border-border bg-surface p-8 shadow-2xl">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand">WhatsApp Cloud API setup</p>
-                <h3 className="mt-2 text-2xl font-semibold text-foreground">Get your WhatsApp Cloud API credentials</h3>
+          {/* Payment Information Section */}
+          <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+            <div className="border-b border-gray-200 bg-gradient-to-r from-[#0A66C2]/5 to-[#0A66C2]/2 px-6 py-4">
+              <div className="flex items-center gap-3">
+                <DollarSign className="h-5 w-5 text-[#0A66C2]" />
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">Bank Payment Details</h2>
+                  <p className="text-sm text-gray-600">Account information for manual payments</p>
+                </div>
               </div>
-              <Button type="button" variant="secondary" onClick={() => setShowWhatsAppHelp(false)}>
-                Close
-              </Button>
             </div>
+            
+            <div className="p-6 space-y-4">
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Account Name
+                  </label>
+                  <input
+                    name="manualPaymentAccountName"
+                    value={manualPaymentAccountName}
+                    onChange={(event) => setManualPaymentAccountName(event.target.value)}
+                    placeholder="School account name"
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder-gray-500 transition focus:border-[#0A66C2] focus:ring-2 focus:ring-[#0A66C2]/20 outline-none"
+                  />
+                </div>
 
-            <div className="mt-6 space-y-5 text-sm text-muted">
-              <p>
-                To configure WhatsApp messages for your school, you need a WhatsApp Cloud API access token and a phone number ID from Meta.
-                These credentials are entered on this page and can be overridden per school.
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Account Number
+                  </label>
+                  <input
+                    name="manualPaymentAccountNumber"
+                    value={manualPaymentAccountNumber}
+                    onChange={(event) => setManualPaymentAccountNumber(event.target.value)}
+                    placeholder="1234567890"
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder-gray-500 transition focus:border-[#0A66C2] focus:ring-2 focus:ring-[#0A66C2]/20 outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Bank Name
+                  </label>
+                  <input
+                    name="manualPaymentBankName"
+                    value={manualPaymentBankName}
+                    onChange={(event) => setManualPaymentBankName(event.target.value)}
+                    placeholder="First Bank, GTBank, etc."
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder-gray-500 transition focus:border-[#0A66C2] focus:ring-2 focus:ring-[#0A66C2]/20 outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Logo Upload Section */}
+          <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+            <div className="border-b border-gray-200 bg-gradient-to-r from-[#0A66C2]/5 to-[#0A66C2]/2 px-6 py-4">
+              <div className="flex items-center gap-3">
+                <Upload className="h-5 w-5 text-[#0A66C2]" />
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">School Logo</h2>
+                  <p className="text-sm text-gray-600">Used on invoices and official documents</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="p-6">
+              <div className="rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-6">
+                {logoUrl ? (
+                  <div className="space-y-4 text-center">
+                    <img 
+                      src={logoUrl} 
+                      alt="School Logo" 
+                      className="h-24 mx-auto"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setLogoUrl(null)}
+                      className="inline-block text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 px-4 py-2 rounded"
+                    >
+                      Replace Logo
+                    </button>
+                  </div>
+                ) : (
+                  <label className="block cursor-pointer">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      disabled={uploadingLogo}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleLogoUpload(file);
+                      }}
+                      className="hidden"
+                    />
+                    <div className="text-center py-8">
+                      <Upload className="h-8 w-8 text-[#0A66C2] mx-auto mb-3 opacity-40" />
+                      <p className="text-sm font-medium text-gray-700">
+                        {uploadingLogo ? "Uploading..." : "Upload school logo"}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-2">PNG, JPG up to 2MB</p>
+                    </div>
+                  </label>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Paystack Configuration */}
+          <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+            <div className="border-b border-gray-200 bg-gradient-to-r from-[#0A66C2]/5 to-[#0A66C2]/2 px-6 py-4">
+              <div className="flex items-center gap-3">
+                <DollarSign className="h-5 w-5 text-[#0A66C2]" />
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">Paystack Configuration</h2>
+                  <p className="text-sm text-gray-600">Payment gateway credentials (optional)</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Public Key
+                  </label>
+                  <input
+                    type="password"
+                    value={paystackPublic}
+                    onChange={(event) => setPaystackPublic(event.target.value)}
+                    placeholder="pk_live_... or leave blank"
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder-gray-500 transition focus:border-[#0A66C2] focus:ring-2 focus:ring-[#0A66C2]/20 outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Secret Key
+                  </label>
+                  <input
+                    type="password"
+                    value={paystackSecret}
+                    onChange={(event) => setPaystackSecret(event.target.value)}
+                    placeholder="sk_live_... or leave blank"
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder-gray-500 transition focus:border-[#0A66C2] focus:ring-2 focus:ring-[#0A66C2]/20 outline-none"
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-gray-500">
+                Leave blank to use system default. <span className="font-medium">Max 50 characters</span>
               </p>
-
-              <ol className="space-y-4 pl-5 text-sm leading-7 text-foreground list-decimal">
-                <li>
-                  Go to <span className="font-semibold">https://developers.facebook.com</span> and sign in with the account linked to your WhatsApp Business profile.
-                </li>
-                <li>
-                  Create a new app, then add the <span className="font-semibold">WhatsApp</span> product and choose the <span className="font-semibold">Cloud API</span> option.
-                </li>
-                <li>
-                  In the WhatsApp Cloud API settings, find the <span className="font-semibold">Access Token</span> and the <span className="font-semibold">Phone Number ID</span> for your business phone number.
-                </li>
-                <li>
-                  Copy those values and paste them into the fields below:
-                  <ul className="mt-2 list-disc pl-5 text-sm text-muted">
-                    <li><span className="font-semibold">WhatsApp Cloud access token</span></li>
-                    <li><span className="font-semibold">WhatsApp Cloud phone number ID</span></li>
-                  </ul>
-                </li>
-                <li>
-                  Save the settings. The system will use these credentials for this school first,
-                  and fall back to the shared environment configuration only if the school values are not set.
-                </li>
-              </ol>
-
-              <div className="rounded-2xl border border-border bg-background p-4">
-                <p className="font-semibold text-foreground">Professional setup tip</p>
-                <p className="mt-2 text-sm text-muted">
-                  Use a dedicated WhatsApp Business phone number for the school to keep communications separate and reliable.
-                  If you need help, the Meta Business Help Center includes step-by-step guidance for setting up the WhatsApp Cloud API.
-                </p>
-              </div>
             </div>
           </div>
-        </div>
-      ) : null}
+
+          {/* WhatsApp Configuration */}
+          <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+            <div className="border-b border-gray-200 bg-gradient-to-r from-[#0A66C2]/5 to-[#0A66C2]/2 px-6 py-4">
+              <div className="flex items-center gap-3">
+                <FileText className="h-5 w-5 text-[#0A66C2]" />
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">WhatsApp Cloud Configuration</h2>
+                  <p className="text-sm text-gray-600">Meta WhatsApp Business API credentials (optional)</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Access Token
+                  </label>
+                  <input
+                    type="password"
+                    value={waCloudAccessToken}
+                    onChange={(event) => setWaCloudAccessToken(event.target.value)}
+                    placeholder="Access token or leave blank"
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder-gray-500 transition focus:border-[#0A66C2] focus:ring-2 focus:ring-[#0A66C2]/20 outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Phone Number ID
+                  </label>
+                  <input
+                    type="password"
+                    value={waCloudPhoneNumberId}
+                    onChange={(event) => setWaCloudPhoneNumberId(event.target.value)}
+                    placeholder="Phone number ID or leave blank"
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder-gray-500 transition focus:border-[#0A66C2] focus:ring-2 focus:ring-[#0A66C2]/20 outline-none"
+                  />
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowWhatsAppHelp(!showWhatsAppHelp)}
+                className="text-sm text-[#0A66C2] hover:text-[#0A66C2]/80 font-medium"
+              >
+                {showWhatsAppHelp ? "Hide setup instructions" : "Show setup instructions"}
+              </button>
+              
+              {showWhatsAppHelp && (
+                <div className="rounded-lg bg-blue-50 p-4 border border-blue-200 text-sm space-y-3 text-gray-700">
+                  <p className="font-medium text-blue-900">WhatsApp Cloud API Setup Instructions</p>
+                  <ol className="list-decimal list-inside space-y-2 text-sm">
+                    <li>Go to <span className="font-mono font-semibold">https://developers.facebook.com</span></li>
+                    <li>Create a new WhatsApp app and enable Cloud API</li>
+                    <li>Get your Access Token and Phone Number ID</li>
+                    <li>Paste the credentials above and save</li>
+                  </ol>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Submit Buttons */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:justify-end sticky bottom-6">
+            <Button
+              type="submit"
+              disabled={isSaving}
+              className="bg-[#0A66C2] hover:bg-[#0A66C2]/90 text-white px-6 py-2.5 rounded-lg font-medium flex items-center gap-2 justify-center"
+            >
+              <Save className="h-4 w-4" />
+              {isSaving ? "Saving..." : "Save Settings"}
+            </Button>
+          </div>
+
+          {uploadError && (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+              <p className="text-sm font-medium text-red-900">{uploadError}</p>
+            </div>
+          )}
+        </form>
       </div>
     </div>
   );

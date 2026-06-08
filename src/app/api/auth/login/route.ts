@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { jwtVerify } from 'jose';
 
 function getBackendUrl() {
   // For production (Vercel), use api.schoolbase.live
@@ -7,6 +8,12 @@ function getBackendUrl() {
   }
   // For development, use localhost
   return process.env.BACKEND_URL || 'http://localhost:3006';
+}
+
+function secret() {
+  return new TextEncoder().encode(
+    process.env.SESSION_SECRET ?? 'your-secret-key',
+  );
 }
 
 export async function POST(request: NextRequest) {
@@ -34,8 +41,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(data, { status: response.status });
     }
 
+    // Decode token to get session data
+    let session = null;
+    if (data.token) {
+      try {
+        const decoded = await jwtVerify(data.token, secret());
+        session = decoded.payload;
+        console.log('Decoded session:', { role: session?.role, userId: session?.userId });
+      } catch (e) {
+        console.error('Token decode error:', e);
+        // Continue anyway, role-based routing will use redirect fallback
+      }
+    }
+
     // Extract token and set as httpOnly cookie
-    const res = NextResponse.json(data);
+    const res = NextResponse.json({
+      success: true,
+      session, // Include decoded session data for role-based routing
+      token: data.token, // Also include token in response
+    });
+    
     if (data.token) {
       console.log('Setting schoolbase_staff cookie');
       res.cookies.set('schoolbase_staff', data.token, {

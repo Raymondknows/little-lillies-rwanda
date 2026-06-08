@@ -3,28 +3,42 @@ import { getStaffSession } from "@/lib/auth";
 import { getCurrentSchool } from "@/lib/school";
 import { staffLogoutAction } from "@/app/auth/actions";
 import SharedLayout from "@/components/shared-layout";
+import { getTeacherNavigation } from "@/lib/teacher-utils";
 
-const navItems = [
-  { href: "/teacher", label: "Dashboard", icon: "LayoutDashboard", section: "Teacher workspace" },
-  { href: "/teacher/teaching", label: "My Teaching", icon: "BookOpen", section: "Teacher workspace" },
-  { href: "/teacher/results", label: "Results", icon: "FileText", section: "Teacher workspace" },
-  { href: "/teacher/attendance", label: "Attendance", icon: "ClipboardList", section: "Teacher workspace" },
-  { href: "/teacher/students", label: "Students", icon: "Users", section: "Teacher workspace" },
-  { href: "/teacher/school", label: "My school", icon: "FileText", section: "Teacher workspace" },
-  { href: "/teacher/profile", label: "Profile", icon: "UserCircle", section: "Teacher settings" },
-];
-
+/**
+ * Teacher portal layout - dynamically adapts UI based on school phase
+ */
 export default async function TeacherLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const session = await getStaffSession();
-  if (!session || session.role !== "TEACHER") {
+
+  if (!session) {
+    redirect("/login");
+  }
+
+  if (session.role !== "TEACHER") {
     redirect("/login");
   }
 
   const school = await getCurrentSchool();
+
+  // Determine school phase
+  const schoolPhase =
+    school?.phase ||
+    school?.schoolPhase ||
+    school?.type ||
+    "PRIMARY";
+
+  // Build teacher navigation
+  const navigation = getTeacherNavigation(schoolPhase);
+
+  const navItems = navigation.all.map((item) => ({
+    ...item,
+    section: "Teacher Workspace",
+  }));
 
   return (
     <SharedLayout

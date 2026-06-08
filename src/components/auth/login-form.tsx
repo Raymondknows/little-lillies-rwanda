@@ -55,12 +55,26 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
       // Wait a moment to ensure cookie is set
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      console.log('Performing full page redirect to:', redirectTo);
+      // ✅ INTELLIGENT REDIRECT: Route based on user role
+      let redirectUrl = redirectTo; // fallback to provided prop
+      
+      if (data.session?.role === "TEACHER") {
+        redirectUrl = "/teacher";
+        console.log('Teacher login detected, redirecting to /teacher');
+      } else if (data.session?.role === "PLATFORM_ADMIN") {
+        redirectUrl = "/schoolbase-admin";
+        console.log('Platform admin login detected, redirecting to /schoolbase-admin');
+      } else if (data.session?.role === "SCHOOL_ADMIN" || data.session?.role === "BURSAR") {
+        redirectUrl = "/admin";
+        console.log('School admin/bursar login detected, redirecting to /admin');
+      }
+      
+      console.log('Performing full page redirect to:', redirectUrl);
       
       // ✅ CRITICAL: Use window.location instead of router.push()
       // This ensures the cookie is sent with the request to the server
       // Client-side routing won't send httpOnly cookies to middleware!
-      window.location.href = redirectTo;
+      window.location.href = redirectUrl;
     } catch (err) {
       setError("An error occurred. Please try again.");
       console.error("Login error:", err);

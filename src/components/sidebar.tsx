@@ -22,6 +22,8 @@ import {
   Globe,
   Layers,
   HelpCircle,
+  MessageSquare,
+  PenTool,
 } from "lucide-react";
 import { WhatsAppIcon } from "@/components/ui/icons";
 
@@ -50,6 +52,8 @@ const icons: Record<string, any> = {
   Globe,
   Layers,
   HelpCircle,
+  MessageSquare,
+  PenTool,
 };
 
 export default function Sidebar({

@@ -5,9 +5,9 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const BACKEND_URL = getBackendUrl();
-    
+
     // Proxy to backend API
-    const response = await fetch(`${BACKEND_URL}/api/admin/login`, {
+    const response = await fetch(`${BACKEND_URL}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
@@ -31,9 +31,14 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    return res;
+    // Check the user's role and redirect accordingly
+    if (data.role === 'teacher') {
+      return NextResponse.redirect('/teacher/dashboard');
+    } else {
+      return res;
+    }
   } catch (error) {
-    console.error('Admin login error:', error);
+    console.error('Login error:', error);
     return NextResponse.json({ error: 'Login failed' }, { status: 500 });
   }
 }

@@ -33,6 +33,15 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  if (pathname.startsWith("/teacher")) {
+    const ok = await hasValidToken(request.cookies.get(STAFF_COOKIE)?.value);
+    if (!ok) {
+      const login = new URL("/login", request.url);
+      login.searchParams.set("next", pathname);
+      return NextResponse.redirect(login);
+    }
+  }
+
   if (
     pathname.startsWith("/parent") &&
     !pathname.startsWith("/parent/login")

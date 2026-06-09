@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 
 // Server actions for Vercel compatibility - use API routes
 
@@ -14,15 +15,15 @@ export async function platformAdminLogoutAction(formData?: FormData): Promise<an
         credentials: "include",
       }
     );
-
-    if (response.ok) {
-      redirect("/login");
-    }
   } catch (error) {
     console.error("Logout failed:", error);
   }
 
-  // Fallback redirect if API fails
+  // Always clear the platform admin cookie regardless of API response
+  const cookieStore = await cookies();
+  cookieStore.delete('schoolbase_staff');
+
+  // Redirect to login immediately
   redirect("/login");
 }
 

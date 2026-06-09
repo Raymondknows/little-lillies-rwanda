@@ -43,6 +43,7 @@ export default function AdminLayout({
         
         // Fetch session
         const sessionRes = await fetch(`${backendUrl}/api/admin/verify`, {
+          method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
         });
@@ -131,7 +132,15 @@ export default function AdminLayout({
           } catch (error) {
             console.error('Logout failed:', error);
           }
-          router.push('/login');
+          // Clear the staff_session cookie - multiple formats to ensure it gets cleared
+          const cookieClear = 'staff_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax';
+          document.cookie = cookieClear;
+          // Also clear with different SameSite values just to be safe
+          document.cookie = 'staff_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=None; Secure';
+          // Use full page reload to ensure cookies are cleared and redirect happens server-side
+          setTimeout(() => {
+            window.location.href = '/login';
+          }, 100);
         }}
       >
         <PendingSchoolModal schoolStatus={school.status} schoolName={school.name} />

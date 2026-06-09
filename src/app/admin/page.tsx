@@ -3,33 +3,53 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { CreditCard, Users, Layers, TrendingUp, ArrowUpRight, Clock, ChevronLeft, ChevronRight, DollarSign, BookOpen, MessageSquare } from "lucide-react";
+import { formatMoney } from "@/lib/format";
 
 export default function AdminDashboardPage() {
-  const [school, setSchool] = useState<any>(null);
   const [dashboardData, setDashboardData] = useState<any>(null);
+  const [schoolName, setSchoolName] = useState<string>('Your School');
   const [loading, setLoading] = useState(true);
   const [cardScroll, setCardScroll] = useState(0);
 
   useEffect(() => {
     async function loadData() {
       try {
-        // Fetch from the dashboard API
         const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3006";
-        const res = await fetch(`${backendUrl}/api/admin/dashboard`, {
+        
+        // Fetch fees data (which includes outstanding fees)
+        const feesRes = await fetch(`${backendUrl}/api/admin/fees/data`, {
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
         });
-        const data = await res.json();
+        const feesData = await feesRes.json();
         
-        // Fetch school info
-        const schoolRes = await fetch(`${backendUrl}/api/admin/school`, {
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
+        // Extract school name from fees data or fetch separately
+        let schoolNameToUse = 'Your School';
+        try {
+          const verifyRes = await fetch(`${backendUrl}/api/admin/verify`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+          });
+          const verifyData = await verifyRes.json();
+          if (verifyData.authenticated && verifyData.session?.schoolName) {
+            schoolNameToUse = verifyData.session.schoolName;
+          }
+        } catch (err) {
+          console.error('Failed to fetch school name:', err);
+        }
+        
+        // Set dashboard data with fees information
+        setDashboardData({
+          outstanding: feesData.outstanding || 0,
+          attentionCount: feesData.invoices?.filter((inv: any) => 
+            ['SENT', 'PART_PAID', 'OVERDUE'].includes(inv.status)
+          ).length || 0,
+          pupilCount: 0,
+          classCount: 0,
+          recentPayments: [],
         });
-        const schoolData = await schoolRes.json();
-        
-        setDashboardData(data);
-        setSchool(schoolData.school || schoolData);
+        setSchoolName(schoolNameToUse);
         setLoading(false);
       } catch (err) {
         console.error("Error loading dashboard:", err);
@@ -50,14 +70,6 @@ export default function AdminDashboardPage() {
       </div>
     );
   }
-
-  const formatMoney = (amount: number, currency = "NGN") => {
-    return new Intl.NumberFormat("en-NG", {
-      style: "currency",
-      currency,
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
 
   const stats = [
     {
@@ -94,7 +106,7 @@ export default function AdminDashboardPage() {
     <div>
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-foreground">
-          Good morning, {school?.name || "SchoolBase"}
+          Good morning, {schoolName}
         </h1>
         <p className="mt-1 text-muted">
           Live dashboard — fees, results, and pupils from your database.

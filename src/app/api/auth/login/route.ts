@@ -21,13 +21,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const BACKEND_URL = getBackendUrl();
     
-    console.log('=== LOGIN API ROUTE ===');
-    console.log('Received body:', JSON.stringify(body));
-    console.log('Content-Type header:', request.headers.get('content-type'));
-    console.log('Backend URL:', BACKEND_URL);
+    console.log('=== LOGIN API ROUTE (DEPRECATED - use /api/auth/school-login) ===');
     
     // Proxy to backend API - CRITICAL: Include credentials to capture Set-Cookie header
-    const response = await fetch(`${BACKEND_URL}/api/admin/login`, {
+    const response = await fetch(`${BACKEND_URL}/api/auth/school-login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include', // Allow backend to set cookies
@@ -35,7 +32,6 @@ export async function POST(request: NextRequest) {
     });
 
     const data = await response.json();
-    console.log('Backend response:', { status: response.status, success: data.success });
 
     if (!response.ok) {
       console.error('Backend error:', { status: response.status, data });
@@ -48,22 +44,19 @@ export async function POST(request: NextRequest) {
       try {
         const decoded = await jwtVerify(data.token, secret());
         session = decoded.payload;
-        console.log('Decoded session:', { role: session?.role, userId: session?.userId });
       } catch (e) {
         console.error('Token decode error:', e);
-        // Continue anyway, role-based routing will use redirect fallback
       }
     }
 
-    // Extract token and set as httpOnly cookie (unified session for all users)
+    // Extract token and set as httpOnly cookie
     const res = NextResponse.json({
       success: true,
-      session, // Include decoded session data for role-based routing
-      token: data.token, // Also include token in response
+      session,
+      token: data.token,
     });
     
     if (data.token) {
-      console.log('Setting schoolbase_session cookie');
       res.cookies.set('schoolbase_session', data.token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
@@ -74,7 +67,6 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    console.log('=== LOGIN RESPONSE SENT ===');
     return res;
   } catch (error) {
     const BACKEND_URL = getBackendUrl();

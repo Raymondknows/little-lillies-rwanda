@@ -22,12 +22,8 @@ export default function PlatformAdminLoginPage() {
     setLoading(true);
 
     try {
-      const backendUrl =
-        process.env.NEXT_PUBLIC_API_URL ||
-        process.env.NEXT_PUBLIC_BACKEND_URL ||
-        "";
-
-      const response = await fetch(`${backendUrl}/api/admin/login`, {
+      // ✅ Use frontend proxy route (handles cookie setting server-side)
+      const response = await fetch("/api/auth/platform-login", {
         method: "POST",
         credentials: "include",
         headers: {
@@ -46,12 +42,8 @@ export default function PlatformAdminLoginPage() {
         return;
       }
 
-      if (data?.role !== "PLATFORM_ADMIN") {
-        setError("Only platform admins can access this portal");
-        return;
-      }
-
-      router.push("/schoolbase-admin");
+      // ✅ Use full-page redirect to ensure session cookie is sent
+      window.location.href = "/schoolbase-admin";
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "An unexpected error occurred"

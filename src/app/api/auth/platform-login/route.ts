@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { jwtVerify } from 'jose';
-import { getBackendUrl } from '@/lib/backend-url';
+
+function getBackendUrl() {
+  if (process.env.NODE_ENV === 'production') {
+    return 'https://api.schoolbase.live';
+  }
+  return process.env.BACKEND_URL || 'http://localhost:3006';
+}
 
 function secret() {
   return new TextEncoder().encode(
@@ -12,11 +18,11 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const BACKEND_URL = getBackendUrl();
-
-    console.log('=== ADMIN LOGIN API ROUTE (DEPRECATED - use /api/auth/school-login) ===');
-
-    // Proxy to new backend endpoint
-    const response = await fetch(`${BACKEND_URL}/api/auth/school-login`, {
+    
+    console.log('=== PLATFORM LOGIN API ROUTE ===');
+    
+    // Proxy to backend auth/platform-login
+    const response = await fetch(`${BACKEND_URL}/api/auth/platform-login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -26,6 +32,7 @@ export async function POST(request: NextRequest) {
     const data = await response.json();
 
     if (!response.ok) {
+      console.error('Platform login failed:', { status: response.status, data });
       return NextResponse.json(data, { status: response.status });
     }
 
@@ -35,12 +42,13 @@ export async function POST(request: NextRequest) {
       try {
         const decoded = await jwtVerify(data.token, secret());
         session = decoded.payload;
+        console.log('Platform admin login successful:', { role: session?.role, userId: session?.userId });
       } catch (e) {
         console.error('Token decode error:', e);
       }
     }
 
-    // Extract token and set as httpOnly cookie
+    // Set httpOnly session cookie
     const res = NextResponse.json({
       success: true,
       session,
@@ -58,9 +66,13 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    console.log('=== PLATFORM LOGIN SUCCESS ===');
     return res;
   } catch (error) {
-    console.error('Admin login error:', error);
-    return NextResponse.json({ error: 'Login failed' }, { status: 500 });
+    console.error('=== PLATFORM LOGIN ERROR ===', error);
+    return NextResponse.json({ 
+      error: 'Login failed',
+      debug: error instanceof Error ? error.message : String(error)
+    }, { status: 500 });
   }
 }

@@ -28,8 +28,8 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
       console.log('Email:', email);
       console.log('Password length:', password.length);
 
-      // ✅ Call local proxy route (sets cookie server-side)
-      const res = await fetch("/api/auth/login", {
+      // ✅ Call school login proxy route (for SCHOOL_ADMIN, STAFF, PARENT)
+      const res = await fetch("/api/auth/school-login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include", // ✅ CRITICAL: Allow cookies to be set

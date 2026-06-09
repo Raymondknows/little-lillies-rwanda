@@ -2,8 +2,8 @@ import { jwtVerify, SignJWT } from "jose";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const STAFF_COOKIE = "schoolbase_staff";
-const PARENT_COOKIE = "schoolbase_parent";
+// Unified session cookie for all user types (staff, teachers, parents, admins)
+const SESSION_COOKIE = "schoolbase_session";
 
 function secret() {
   return new TextEncoder().encode(
@@ -31,28 +31,27 @@ async function hasValidToken(cookie?: string) {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Clear invalid tokens to prevent infinite redirect loops
-  const staffCookie = request.cookies.get(STAFF_COOKIE)?.value;
-  const isValidStaffToken = staffCookie ? await hasValidToken(staffCookie) : false;
+  // Check for unified session cookie
+  const sessionCookie = request.cookies.get(SESSION_COOKIE)?.value;
+  const isValidToken = sessionCookie ? await hasValidToken(sessionCookie) : false;
 
   if (pathname.startsWith("/admin")) {
-    if (!isValidStaffToken) {
+    if (!isValidToken) {
       const login = new URL("/login", request.url);
       login.searchParams.set("next", pathname);
       const response = NextResponse.redirect(login);
-      // Clear the invalid cookie
-      response.cookies.delete(STAFF_COOKIE);
+      response.cookies.delete(SESSION_COOKIE);
       return response;
     }
   }
 
   if (pathname.startsWith("/teacher")) {
-    if (!isValidStaffToken) {
+    if (!isValidToken) {
       const login = new URL("/login", request.url);
       login.searchParams.set("next", pathname);
       const response = NextResponse.redirect(login);
       // Clear the invalid cookie
-      response.cookies.delete(STAFF_COOKIE);
+      response.cookies.delete(SESSION_COOKIE);
       return response;
     }
   }
@@ -61,7 +60,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/parent") &&
     !pathname.startsWith("/parent/login")
   ) {
-    const ok = await hasValidToken(request.cookies.get(PARENT_COOKIE)?.value);
+    const ok = await hasValidToken(request.cookies.get(SESSION_COOKIE)?.value);
     if (!ok) {
       return NextResponse.redirect(new URL("/parent/login", request.url));
     }
@@ -105,5 +104,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/parent/:path*"],
+  matcher: ["/admin/:path*", "/teacher/:path*", "/parent/:path*"],
 };

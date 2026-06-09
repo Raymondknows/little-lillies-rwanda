@@ -11,8 +11,10 @@ export async function staffLoginAction(formData: FormData) {
 
 export async function staffLogoutAction() {
   try {
-    // Clear the staff cookie immediately
+    // Clear the unified session cookie
     const cookieStore = await cookies();
+    cookieStore.delete('schoolbase_session');
+    // Also clear legacy cookies for backward compatibility
     cookieStore.delete('schoolbase_staff');
     cookieStore.delete('schoolbase_parent');
     

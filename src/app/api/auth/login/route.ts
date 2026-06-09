@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Extract token and set as httpOnly cookie
+    // Extract token and set as httpOnly cookie (unified session for all users)
     const res = NextResponse.json({
       success: true,
       session, // Include decoded session data for role-based routing
@@ -62,8 +62,8 @@ export async function POST(request: NextRequest) {
     });
     
     if (data.token) {
-      console.log('Setting schoolbase_staff cookie');
-      res.cookies.set('schoolbase_staff', data.token, {
+      console.log('Setting schoolbase_session cookie');
+      res.cookies.set('schoolbase_session', data.token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',

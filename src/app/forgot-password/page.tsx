@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { AppLogo } from "@/components/app-logo";
 import { Button } from "@/components/ui/button";
+import { getBackendUrl } from "@/lib/backend-url";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -17,10 +18,7 @@ export default function ForgotPasswordPage() {
     setLoading(true);
 
     try {
-      const backendUrl =
-        process.env.NEXT_PUBLIC_API_URL ||
-        process.env.NEXT_PUBLIC_BACKEND_URL ||
-        "";
+      const backendUrl = getBackendUrl();
 
       const response = await fetch(
         `${backendUrl}/api/admin/request-password-reset`,

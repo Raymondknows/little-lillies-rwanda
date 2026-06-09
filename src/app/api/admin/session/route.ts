@@ -10,14 +10,14 @@ function secret() {
 export async function GET() {
   try {
     const cookieStore = await cookies();
-    const staffToken = cookieStore.get('schoolbase_staff')?.value;
+    const sessionToken = cookieStore.get('schoolbase_session')?.value;
 
-    if (!staffToken) {
+    if (!sessionToken) {
       return Response.json({ session: null });
     }
 
     try {
-      const { payload } = await jwtVerify(staffToken, secret());
+      const { payload } = await jwtVerify(sessionToken, secret());
       return Response.json({ session: payload });
     } catch {
       return Response.json({ session: null });

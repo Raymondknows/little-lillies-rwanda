@@ -81,6 +81,36 @@ export default function AdminDashboardPage() {
           .sort((a: any, b: any) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
           .slice(0, 5);
         
+        // Fetch announcements data
+        let announcements = [];
+        try {
+          const announcementsRes = await fetch(`${backendUrl}/api/admin/announcements`, {
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+          });
+          if (announcementsRes.ok) {
+            const announcementsData = await announcementsRes.json();
+            announcements = announcementsData.announcements || [];
+          }
+        } catch (err) {
+          console.error('Error fetching announcements:', err);
+        }
+        
+        // Fetch recent payments data
+        let recentPayments = [];
+        try {
+          const paymentsRes = await fetch(`${backendUrl}/api/admin/payments/recent`, {
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+          });
+          if (paymentsRes.ok) {
+            const paymentsData = await paymentsRes.json();
+            recentPayments = paymentsData.payments || [];
+          }
+        } catch (err) {
+          console.error('Error fetching recent payments:', err);
+        }
+        
         // Set dashboard data
         setDashboardData({
           outstanding: feesData.outstanding || 0,
@@ -89,9 +119,10 @@ export default function AdminDashboardPage() {
           ).length || 0,
           pupilCount,
           classCount,
-          recentPayments: [], // No payment records endpoint yet
+          recentPayments,
           recentPupils,
           recentTeachers,
+          recentAnnouncements: announcements,
           currency: 'NGN',
         });
         setSchoolName(schoolNameToUse);

@@ -7,8 +7,7 @@ import { sendEmail, buildSignupVerificationEmail } from "@/lib/email";
 
 export type UserRole = "SCHOOL_ADMIN" | "TEACHER" | "PARENT" | "STUDENT" | "PLATFORM_ADMIN";
 
-const STAFF_COOKIE = "schoolbase_staff";
-const PARENT_COOKIE = "schoolbase_parent";
+const SESSION_COOKIE = "schoolbase_session"; // Unified session cookie for all user types
 
 function secret() {
   const key = process.env.SESSION_SECRET ?? "schoolbase-dev-secret-change-me";
@@ -35,7 +34,7 @@ export type ParentSession = {
 
 export async function getStaffSession(): Promise<StaffSession | null> {
   const jar = await cookies();
-  const token = jar.get(STAFF_COOKIE)?.value;
+  const token = jar.get(SESSION_COOKIE)?.value;
   if (!token) return null;
   try {
     const { payload } = await jwtVerify(token, secret());
@@ -47,7 +46,7 @@ export async function getStaffSession(): Promise<StaffSession | null> {
 
 export async function getPlatformAdminSession(): Promise<StaffSession | null> {
   const jar = await cookies();
-  const token = jar.get(STAFF_COOKIE)?.value;
+  const token = jar.get(SESSION_COOKIE)?.value;
   if (!token) return null;
   try {
     const { payload } = await jwtVerify(token, secret());
@@ -68,7 +67,7 @@ export async function requirePlatformAdminSession(): Promise<StaffSession> {
 
 export async function getParentSession(): Promise<ParentSession | null> {
   const jar = await cookies();
-  const token = jar.get(PARENT_COOKIE)?.value;
+  const token = jar.get(SESSION_COOKIE)?.value;
   if (!token) return null;
   try {
     const { payload } = await jwtVerify(token, secret());
@@ -80,12 +79,12 @@ export async function getParentSession(): Promise<ParentSession | null> {
 
 export async function destroyStaffSession() {
   const jar = await cookies();
-  jar.delete(STAFF_COOKIE);
+  jar.delete(SESSION_COOKIE);
 }
 
 export async function destroyParentSession() {
   const jar = await cookies();
-  jar.delete(PARENT_COOKIE);
+  jar.delete(SESSION_COOKIE);
 }
 
 export async function requireStaffSession(options?: { allowTrial?: boolean }) {

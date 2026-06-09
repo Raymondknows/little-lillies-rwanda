@@ -12,9 +12,9 @@ function secret() {
 export async function GET() {
   try {
     const cookieStore = await cookies();
-    const staffToken = cookieStore.get('schoolbase_staff')?.value;
+    const sessionToken = cookieStore.get('schoolbase_session')?.value;
 
-    if (!staffToken) {
+    if (!sessionToken) {
       console.error('[api/admin/school] No token found');
       return Response.json({ error: 'Not authenticated' }, { status: 401 });
     }
@@ -22,7 +22,7 @@ export async function GET() {
     // Verify token to extract schoolId
     let schoolId: string;
     try {
-      const { payload } = await jwtVerify(staffToken, secret());
+      const { payload } = await jwtVerify(sessionToken, secret());
       
       if (!payload || typeof payload !== 'object' || !('schoolId' in payload)) {
         console.error('[api/admin/school] Invalid token payload');

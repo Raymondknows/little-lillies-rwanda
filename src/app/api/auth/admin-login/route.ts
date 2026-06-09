@@ -19,10 +19,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(data, { status: response.status });
     }
 
-    // Extract token and set as httpOnly cookie
+    // Extract token and set as httpOnly cookie (unified for all users)
     const res = NextResponse.json(data);
     if (data.token) {
-      res.cookies.set('schoolbase_staff', data.token, {
+      res.cookies.set('schoolbase_session', data.token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',

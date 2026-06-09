@@ -8,43 +8,54 @@ import { Eye, EyeOff } from "lucide-react";
 
 export default function PlatformAdminLoginPage() {
   const router = useRouter();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
     setError("");
     setLoading(true);
 
     try {
-        const backendUrl = getBackendUrl();
+      const backendUrl =
+        process.env.NEXT_PUBLIC_API_URL ||
+        process.env.NEXT_PUBLIC_BACKEND_URL ||
+        "";
+
       const response = await fetch(`${backendUrl}/api/admin/login`, {
         method: "POST",
         credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          password,
+        }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || "Login failed");
+        setError(data?.error || "Login failed");
         return;
       }
 
-      // Check if user is platform admin
-      if (data.role !== "PLATFORM_ADMIN") {
+      if (data?.role !== "PLATFORM_ADMIN") {
         setError("Only platform admins can access this portal");
         return;
       }
 
-      // Redirect to dashboard
       router.push("/schoolbase-admin");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      setError(
+        err instanceof Error ? err.message : "An unexpected error occurred"
+      );
     } finally {
       setLoading(false);
     }
@@ -56,12 +67,21 @@ export default function PlatformAdminLoginPage() {
         <div className="mb-6 flex justify-center">
           <AppLogo href="/" size="lg" />
         </div>
-        <h1 className="text-center text-xl font-bold">SchoolBase Admin</h1>
-        <p className="mt-2 text-center text-sm text-muted">Platform admin portal</p>
 
-        <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+        <h1 className="text-center text-xl font-bold">
+          SchoolBase Admin
+        </h1>
+
+        <p className="mt-2 text-center text-sm text-muted">
+          Platform admin portal
+        </p>
+
+        <form
+          onSubmit={handleSubmit}
+          className="mt-8 space-y-4"
+        >
           {error && (
-            <div className="rounded-lg bg-error/10 p-3 text-error text-sm">
+            <div className="rounded-lg bg-error/10 p-3 text-sm text-error">
               {error}
             </div>
           )}
@@ -87,8 +107,9 @@ export default function PlatformAdminLoginPage() {
                 placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-lg border border-border px-3 py-2.5 text-sm pr-10"
+                className="w-full rounded-lg border border-border px-3 py-2.5 pr-10 text-sm"
               />
+
               <button
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
@@ -104,12 +125,19 @@ export default function PlatformAdminLoginPage() {
           </label>
 
           <div className="text-right text-sm">
-            <a href="/forgot-password" className="text-brand hover:underline">
+            <a
+              href="/forgot-password"
+              className="text-brand hover:underline"
+            >
               Forgot password?
             </a>
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={loading}
+          >
             {loading ? "Signing in..." : "Sign in"}
           </Button>
         </form>

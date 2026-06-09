@@ -5,6 +5,7 @@ import { useState, Suspense } from "react";
 import { AppLogo } from "@/components/app-logo";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
+import { getBackendUrl } from "@/lib/backend-url";
 
 function ResetPasswordContent() {
   const router = useRouter();

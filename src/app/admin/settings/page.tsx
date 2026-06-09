@@ -12,12 +12,16 @@ export default function SettingsPage() {
     const loadData = async () => {
       try {
         // Fetch school data from the API
-        const schoolRes = await fetch("/api/admin/school");
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3006";
+        const schoolRes = await fetch(`${backendUrl}/api/admin/school`, {
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+        });
         if (!schoolRes.ok) {
           throw new Error(`Failed to fetch school: ${schoolRes.status}`);
         }
         const schoolData = await schoolRes.json();
-        setSchool(schoolData);
+        setSchool(schoolData.school || schoolData);
         setLoading(false);
       } catch (err) {
         console.error("Error loading settings:", err);

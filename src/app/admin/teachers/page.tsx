@@ -14,7 +14,11 @@ export default function AdminTeachersPage() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await fetch("/api/admin/teachers/data");
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3006";
+        const response = await fetch(`${backendUrl}/api/admin/teachers/data`, {
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+        });
         if (!response.ok) {
           throw new Error(`Failed to fetch teachers data: ${response.status}`);
         }

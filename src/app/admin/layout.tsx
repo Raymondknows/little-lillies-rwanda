@@ -39,19 +39,33 @@ export default function AdminLayout({
   useEffect(() => {
     async function loadData() {
       try {
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3006';
+        
         // Fetch session
-        const sessionRes = await fetch('/api/admin/session');
+        const sessionRes = await fetch(`${backendUrl}/api/admin/verify`, {
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+        });
         const sessionData = await sessionRes.json();
         
-        if (!sessionData.session) {
+        if (!sessionData.authenticated) {
           router.push('/login');
           return;
         }
 
-        setSession(sessionData.session);
+        setSession({
+          id: sessionData.userId,
+          email: sessionData.email,
+          name: sessionData.name,
+          role: sessionData.role,
+        });
 
         // Fetch school
-        const schoolRes = await fetch('/api/admin/school');
+        const schoolRes = await fetch(`${backendUrl}/api/admin/school/${sessionData.schoolId}`, {
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        
         if (!schoolRes.ok) {
           setError('School not found');
           setLoading(false);
@@ -59,7 +73,7 @@ export default function AdminLayout({
         }
 
         const schoolData = await schoolRes.json();
-        setSchool(schoolData);
+        setSchool(schoolData.school);
         setLoading(false);
       } catch (err) {
         console.error('Error loading layout data:', err);
@@ -107,8 +121,16 @@ export default function AdminLayout({
         session={session}
         logoHref="/admin"
         logoutAction={async () => {
-          // Call logout API
-          await fetch('/api/auth/logout', { method: 'POST' });
+          try {
+            const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3006';
+            await fetch(`${backendUrl}/api/auth/logout`, {
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+            });
+          } catch (error) {
+            console.error('Logout failed:', error);
+          }
           router.push('/login');
         }}
       >

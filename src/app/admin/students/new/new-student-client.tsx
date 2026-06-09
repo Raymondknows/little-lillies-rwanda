@@ -50,7 +50,11 @@ export default function NewStudentClient() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const response = await fetch("/api/admin/students/data");
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3006";
+        const response = await fetch(`${backendUrl}/api/admin/students/data`, {
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+        });
         if (response.ok) {
           const data = await response.json();
           setClasses(data.classes || []);
@@ -113,8 +117,10 @@ export default function NewStudentClient() {
         formData.append("photo", photoFile);
       }
 
-      const response = await fetch("/api/admin/students", {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3006";
+      const response = await fetch(`${backendUrl}/api/admin/students`, {
         method: "POST",
+        credentials: 'include',
         body: formData,
       });
 

@@ -12,7 +12,11 @@ export default function StudentsPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const response = await fetch("/api/admin/students/data");
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3006";
+        const response = await fetch(`${backendUrl}/api/admin/students/data`, {
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+        });
         if (!response.ok) {
           throw new Error(`Failed to fetch: ${response.statusText}`);
         }

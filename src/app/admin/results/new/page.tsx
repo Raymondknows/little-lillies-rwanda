@@ -22,7 +22,11 @@ export default function NewAssessmentPage() {
   useEffect(() => {
     const fetchTerms = async () => {
       try {
-        const res = await fetch("/api/admin/terms");
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3006";
+        const res = await fetch(`${backendUrl}/api/admin/terms`, {
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+        });
         if (!res.ok) throw new Error("Failed to fetch terms");
         const data = await res.json();
         setTerms(data.terms || []);
@@ -47,8 +51,10 @@ export default function NewAssessmentPage() {
     const phase = formData.get("phase") as string;
 
     try {
-      const res = await fetch("/api/admin/assessments", {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3006";
+      const res = await fetch(`${backendUrl}/api/admin/assessments`, {
         method: "POST",
+        credentials: 'include',
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, termId, phase }),
       });

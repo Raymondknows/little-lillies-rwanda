@@ -11,8 +11,10 @@ export default function FeesPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const response = await fetch("/api/admin/fees/data", {
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3006";
+        const response = await fetch(`${backendUrl}/api/admin/fees/data`, {
           method: "GET",
+          credentials: 'include',
           headers: { "Content-Type": "application/json" },
         });
 

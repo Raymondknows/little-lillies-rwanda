@@ -98,7 +98,11 @@ export default function StudentEditClient({ studentId }: { studentId: string }) 
         }
 
         // Load classes
-        const classesResponse = await fetch("/api/admin/students/data");
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3006";
+        const classesResponse = await fetch(`${backendUrl}/api/admin/students/data`, {
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+        });
         if (classesResponse.ok) {
           const classesData = await classesResponse.json();
           setClasses(classesData.classes || []);

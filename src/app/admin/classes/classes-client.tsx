@@ -103,7 +103,11 @@ export default function ClassesPageClient({ classes: initialClasses }: { classes
     const fetchClasses = async () => {
       try {
         setLoading(true);
-        const response = await fetch("/api/admin/classes/data");
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3006";
+        const response = await fetch(`${backendUrl}/api/admin/classes/data`, {
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+        });
         if (!response.ok) throw new Error("Failed to fetch classes");
         const data = await response.json();
         setClasses(data.classes || []);

@@ -11,7 +11,12 @@ export function WhatsAppRetryButton({ disabled }: { disabled: boolean }) {
     setLoading(true);
     setMessage(null);
     try {
-      const response = await fetch("/api/whatsapp/retry", { method: "POST" });
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3006";
+      const response = await fetch(`${backendUrl}/api/whatsapp/retry`, {
+        method: "POST",
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
       const data = await response.json();
       if (!response.ok) {
         setMessage(data.error ?? `Retry failed (${response.status})`);

@@ -15,7 +15,11 @@ export default function AdminSubjectsPage() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await fetch("/api/admin/subjects/data");
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3006";
+        const response = await fetch(`${backendUrl}/api/admin/subjects/data`, {
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+        });
         if (!response.ok) {
           throw new Error(`Failed to fetch subjects data: ${response.status}`);
         }

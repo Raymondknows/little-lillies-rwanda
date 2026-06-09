@@ -15,15 +15,21 @@ export default function AdminDashboardPage() {
       try {
         // Fetch from the dashboard API
         const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3006";
-        const res = await fetch("/api/admin/dashboard");
+        const res = await fetch(`${backendUrl}/api/admin/dashboard`, {
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+        });
         const data = await res.json();
         
         // Fetch school info
-        const schoolRes = await fetch("/api/admin/school");
+        const schoolRes = await fetch(`${backendUrl}/api/admin/school`, {
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+        });
         const schoolData = await schoolRes.json();
         
         setDashboardData(data);
-        setSchool(schoolData);
+        setSchool(schoolData.school || schoolData);
         setLoading(false);
       } catch (err) {
         console.error("Error loading dashboard:", err);

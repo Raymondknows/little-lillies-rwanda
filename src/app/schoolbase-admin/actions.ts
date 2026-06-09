@@ -1,10 +1,29 @@
 "use server";
 
-// Server actions removed for Vercel compatibility
-// Use API routes instead
+import { redirect } from "next/navigation";
 
-export async function platformAdminLogoutAction(...args: any[]): Promise<any> {
-  throw new Error("Use POST /api/auth/logout instead");
+// Server actions for Vercel compatibility - use API routes
+
+export async function platformAdminLogoutAction(formData?: FormData): Promise<any> {
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3006"}/api/auth/logout`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      }
+    );
+
+    if (response.ok) {
+      redirect("/login");
+    }
+  } catch (error) {
+    console.error("Logout failed:", error);
+  }
+
+  // Fallback redirect if API fails
+  redirect("/login");
 }
 
 export async function sendPlatformCommunicationEmailAction(...args: any[]): Promise<any> {

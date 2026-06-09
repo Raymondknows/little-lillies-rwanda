@@ -224,27 +224,19 @@ export default function EmailCenterClient({
   );
 
   const fetchEmailLogs = async (page = currentPage, pageSize = itemsPerPage) => {
-    try {
-      const offset = (page - 1) * pageSize;
-      const response = await fetch(`/api/email-logs?limit=${pageSize}&offset=${offset}`, {
-        credentials: "same-origin",
-      });
-      if (!response.ok) {
-        const errorBody = await response.text();
-        throw new Error(`Failed to load email history (${response.status}): ${errorBody}`);
-      }
-      const data = await response.json();
-      setEmailLogs(data.logs ?? []);
-      setTotalCount(data.totalCount ?? 0);
-    } catch (err) {
-      console.error(err);
-      setError(err instanceof Error ? err.message : "Failed to load email history.");
-    }
+    // Email logs API to be implemented - placeholder for now
+    // TODO: Implement backend endpoint for fetching email logs
+    setEmailLogs([]);
+    setTotalCount(0);
   };
 
+  // Email logs are loaded as initialEmailLogs from server
   useEffect(() => {
-    fetchEmailLogs(currentPage, itemsPerPage);
-  }, [currentPage, itemsPerPage]);
+    if (initialEmailLogs && initialEmailLogs.length > 0) {
+      setEmailLogs(initialEmailLogs);
+      setTotalCount(initialEmailLogs.length);
+    }
+  }, [initialEmailLogs]);
 
   const emailTypeLabel = useMemo(
     () =>

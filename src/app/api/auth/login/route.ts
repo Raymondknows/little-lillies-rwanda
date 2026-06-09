@@ -12,7 +12,7 @@ function getBackendUrl() {
 
 function secret() {
   return new TextEncoder().encode(
-    process.env.SESSION_SECRET ?? 'your-secret-key',
+    process.env.SESSION_SECRET ?? 'schoolbase-dev-secret-change-me',
   );
 }
 
@@ -26,10 +26,11 @@ export async function POST(request: NextRequest) {
     console.log('Content-Type header:', request.headers.get('content-type'));
     console.log('Backend URL:', BACKEND_URL);
     
-    // Proxy to backend API
+    // Proxy to backend API - CRITICAL: Include credentials to capture Set-Cookie header
     const response = await fetch(`${BACKEND_URL}/api/admin/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include', // Allow backend to set cookies
       body: JSON.stringify(body),
     });
 

@@ -6,10 +6,11 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const BACKEND_URL = getBackendUrl();
 
-    // Proxy to backend API
-    const response = await fetch(`${BACKEND_URL}/api/auth/login`, {
+    // Proxy to backend API - CRITICAL: Include credentials to capture Set-Cookie
+    const response = await fetch(`${BACKEND_URL}/api/admin/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify(body),
     });
 

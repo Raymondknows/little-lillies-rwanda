@@ -115,9 +115,11 @@ export default function SupportRequestsClient({
     setBusy(true);
 
     try {
-      const response = await fetch("/schoolbase-admin/api/support/reply", {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3006';
+      const response = await fetch(`${backendUrl}/api/schoolbase-admin/support/reply`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include',
         body: JSON.stringify({
           requestId: selectedRequest.id,
           response: replyText,

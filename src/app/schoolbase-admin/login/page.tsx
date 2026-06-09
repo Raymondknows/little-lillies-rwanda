@@ -1,19 +1,46 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { AppLogo } from "@/components/app-logo";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function PlatformAdminLoginPage() {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // ✅ Check if already authenticated and redirect
+  useEffect(() => {
+    const checkAuth = async () => {
+      setMounted(true);
+      try {
+        const response = await fetch('/api/auth/verify', {
+          method: 'POST',
+          credentials: 'include',
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.user?.role === 'PLATFORM_ADMIN') {
+            // Already logged in as platform admin
+            router.push('/schoolbase-admin');
+          }
+        }
+      } catch (err) {
+        // Not authenticated, continue with login form
+      }
+    };
+    
+    checkAuth();
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -52,6 +79,11 @@ export default function PlatformAdminLoginPage() {
       setLoading(false);
     }
   };
+
+  // Don't render until we've checked auth status
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-10">

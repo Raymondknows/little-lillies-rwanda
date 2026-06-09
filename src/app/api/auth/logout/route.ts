@@ -3,12 +3,15 @@ import { NextResponse } from 'next/server';
 export async function POST() {
   const response = NextResponse.json({ success: true }, { status: 200 });
 
-  // Clear unified session cookie and legacy cookies for backward compatibility
+  // ✅ CRITICAL: Delete cookies with EXACT same options as when they were set
+  // This ensures the browser recognizes them as the same cookie
   response.cookies.set('schoolbase_session', '', {
-    maxAge: 0,
-    path: '/',
     httpOnly: true,
-    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    path: '/',
+    domain: process.env.NODE_ENV === 'production' ? '.schoolbase.live' : undefined,
+    maxAge: 0, // This tells browser to DELETE the cookie
   });
 
   // Also clear legacy cookies
@@ -25,11 +28,6 @@ export async function POST() {
     httpOnly: true,
     sameSite: 'lax',
   });
-
-  // Use header method for extra safety
-  response.headers.append('Set-Cookie', 'schoolbase_session=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax');
-  response.headers.append('Set-Cookie', 'schoolbase_staff=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax');
-  response.headers.append('Set-Cookie', 'schoolbase_parent=; Max-Age=0; Path=/; HttpOnly; SameSite=Lax');
 
   return response;
 }

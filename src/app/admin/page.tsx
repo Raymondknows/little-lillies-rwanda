@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { CreditCard, Users, Layers, TrendingUp, ArrowUpRight, Clock, ChevronLeft, ChevronRight, DollarSign, BookOpen, MessageSquare } from "lucide-react";
+import { CreditCard, Users, Layers, TrendingUp, ArrowUpRight, Clock, ChevronLeft, ChevronRight, DollarSign, BookOpen, MessageSquare, Plus } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 import { getBackendUrl } from "@/lib/backend-url";
 
 export default function AdminDashboardPage() {
   const [dashboardData, setDashboardData] = useState<any>(null);
-  const [schoolName, setSchoolName] = useState<string>('Your School');
+  const [schoolName, setSchoolName] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [cardScroll, setCardScroll] = useState(0);
 
@@ -58,10 +58,21 @@ export default function AdminDashboardPage() {
           verify: verifyData,
         });
 
-        // Extract school name
-        let schoolNameToUse = 'Your School';
-        if (verifyData.authenticated && verifyData.session?.schoolName) {
-          schoolNameToUse = verifyData.session.schoolName;
+        // Extract school name - fetch the full school object just like the sidebar does
+        let schoolNameToUse = '';
+        if (verifyData.authenticated && verifyData.session?.schoolId) {
+          try {
+            const schoolRes = await fetch(`${backendUrl}/api/admin/school/${verifyData.session.schoolId}`, {
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+            });
+            if (schoolRes.ok) {
+              const schoolData = await schoolRes.json();
+              schoolNameToUse = schoolData?.name || '';
+            }
+          } catch (err) {
+            console.error('Error fetching school:', err);
+          }
         }
 
         // Count active pupils
@@ -71,15 +82,15 @@ export default function AdminDashboardPage() {
         // Count classes
         const classCount = (classesData.classes || []).length;
         
-        // Get recent pupils (last 5 added)
+        // Get recent pupils (last 3 added)
         const recentPupils = pupils
           .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-          .slice(0, 5);
+          .slice(0, 3);
         
-        // Get recent teachers (last 5 added)
+        // Get recent teachers (last 3 added)
         const recentTeachers = (teachersData.teachers || [])
           .sort((a: any, b: any) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
-          .slice(0, 5);
+          .slice(0, 3);
         
         // Fetch announcements data
         let announcements = [];
@@ -180,17 +191,47 @@ export default function AdminDashboardPage() {
 
   return (
     <div>
-      <div className="mb-8">
+      <div className="mb-6">
         <h1 className="text-3xl font-bold text-foreground">
-          Good morning, {schoolName}
+          {schoolName ? `Good morning, ${schoolName}` : 'Dashboard'}
         </h1>
         <p className="mt-1 text-muted">
           Live dashboard — fees, results, and pupils from your database.
         </p>
       </div>
 
-      {/* Stats Cards - Desktop with Navigation */}
-      <div className="mb-10 hidden sm:block">
+      {/* Stats Cards with Quick Actions Overlay */}
+      <div className="mb-10 relative">
+        {/* Quick Actions - Positioned on top right */}
+        <div className="absolute top-0 right-0 flex gap-2 flex-wrap justify-end z-10">
+          <Link href="/admin/students/new">
+            <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand text-white text-xs font-medium hover:bg-brand/90 transition-colors shadow-sm hover:shadow-md">
+              <Plus className="h-3.5 w-3.5" />
+              <span>Student</span>
+            </button>
+          </Link>
+          <Link href="/admin/teachers/">
+            <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand text-white text-xs font-medium hover:bg-brand/90 transition-colors shadow-sm hover:shadow-md">
+              <Plus className="h-3.5 w-3.5" />
+              <span>Teacher</span>
+            </button>
+          </Link>
+          <Link href="/admin/fees/">
+            <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand text-white text-xs font-medium hover:bg-brand/90 transition-colors shadow-sm hover:shadow-md">
+              <Plus className="h-3.5 w-3.5" />
+              <span>Invoice</span>
+            </button>
+          </Link>
+          <Link href="/admin/website/">
+            <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand text-white text-xs font-medium hover:bg-brand/90 transition-colors shadow-sm hover:shadow-md">
+              <Plus className="h-3.5 w-3.5" />
+              <span>Announce</span>
+            </button>
+          </Link>
+        </div>
+
+        {/* Stats Cards */}
+      <div className="mb-10 hidden sm:block pt-12">
         <div className="relative flex items-center gap-4">
           {/* Left Navigation Arrow */}
           <button
@@ -257,11 +298,12 @@ export default function AdminDashboardPage() {
           );
         })}
       </div>
+      </div>
 
       {/* Grid of sections - Responsive: 1 col mobile, 2 col tablet, 2 col desktop */}
       <section className="grid gap-6 grid-cols-1 lg:grid-cols-2">
         {/* Recent Payments */}
-        <div className="rounded-xl border border-border bg-surface p-6 shadow-sm hover:shadow-md transition-shadow">
+        <div className="rounded-xl border border-border bg-surface p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col">
           <div className="flex items-center justify-between gap-3 mb-4">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
@@ -273,32 +315,26 @@ export default function AdminDashboardPage() {
               Latest
             </span>
           </div>
-          <ul className="mt-4 divide-y divide-border">
+          <ul className="mt-4 divide-y divide-border flex-1">
             {!dashboardData?.recentPayments || dashboardData.recentPayments.length === 0 ? (
               <li className="py-3 text-sm text-muted">No payments yet.</li>
             ) : (
-              dashboardData.recentPayments.slice(0, 5).map((p: any, idx: number) => (
-                <li key={idx} className="flex flex-col gap-1.5 py-3 first:pt-0 last:pb-0">
-                  <div className="flex items-center justify-between gap-3 text-sm">
-                    <span className="font-medium text-foreground truncate">{p.invoice?.pupil?.firstName} {p.invoice?.pupil?.lastName}</span>
-                    <span className="text-sm font-bold text-green-600 flex-shrink-0">{formatMoney(p.amount, dashboardData?.currency || "NGN")}</span>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
-                    <span>#{p.invoiceId}</span>
-                    <span className="hidden sm:inline">•</span>
-                    <span>{new Date(p.paidAt || Date.now()).toLocaleDateString("en-NG", { month: "short", day: "numeric" })}</span>
-                  </div>
+              dashboardData.recentPayments.slice(0, 3).map((p: any, idx: number) => (
+                <li key={idx} className="flex items-center justify-between gap-2 py-2.5 first:pt-0 last:pb-0">
+                  <span className="font-medium text-foreground text-sm truncate">{p.invoice?.pupil?.firstName} {p.invoice?.pupil?.lastName}</span>
+                  <span className="text-xs text-muted flex-shrink-0">{new Date(p.paidAt || Date.now()).toLocaleDateString("en-NG", { month: "short", day: "numeric" })}</span>
+                  <span className="text-sm font-bold text-green-600 flex-shrink-0 text-right min-w-fit">{formatMoney(p.amount, dashboardData?.currency || "NGN")}</span>
                 </li>
               ))
             )}
           </ul>
-          <Link href="/admin/fees" className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-brand hover:text-brand/80 transition">
+          <Link href="/admin/fees" className="mt-4 flex justify-end items-center gap-1 text-sm font-semibold text-brand hover:text-brand/80 transition">
             View all <ArrowUpRight className="h-3 w-3" />
           </Link>
         </div>
 
         {/* Latest Students */}
-        <div className="rounded-xl border border-border bg-surface p-6 shadow-sm hover:shadow-md transition-shadow">
+        <div className="rounded-xl border border-border bg-surface p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col">
           <div className="flex items-center justify-between gap-3 mb-4">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
@@ -310,33 +346,31 @@ export default function AdminDashboardPage() {
               New
             </span>
           </div>
-          <ul className="mt-4 divide-y divide-border">
+          <ul className="mt-4 divide-y divide-border flex-1">
             {!dashboardData?.recentPupils || dashboardData.recentPupils.length === 0 ? (
               <li className="py-3 text-sm text-muted">No new students yet.</li>
             ) : (
-              dashboardData.recentPupils.slice(0, 5).map((pupil: any, idx: number) => (
-                <li key={idx} className="flex flex-col gap-1.5 py-3 first:pt-0 last:pb-0">
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="font-medium text-foreground truncate">{pupil.firstName} {pupil.lastName}</span>
-                    <span className="text-xs text-muted flex-shrink-0">
-                      {new Date(pupil.createdAt || Date.now()).toLocaleDateString("en-NG", {
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted">{pupil.class?.name || "Unassigned"} {pupil.class?.arm ? `(${pupil.class.arm})` : ""}</p>
+              dashboardData.recentPupils.slice(0, 3).map((pupil: any, idx: number) => (
+                <li key={idx} className="flex items-center justify-between gap-2 py-2.5 first:pt-0 last:pb-0">
+                  <span className="font-medium text-foreground text-sm truncate">{pupil.firstName} {pupil.lastName}</span>
+                  <span className="text-xs text-muted flex-shrink-0">{pupil.class?.name || "Unassigned"} {pupil.class?.arm ? `(${pupil.class.arm})` : ""}</span>
+                  <span className="text-xs text-muted flex-shrink-0">
+                    {new Date(pupil.createdAt || Date.now()).toLocaleDateString("en-NG", {
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </span>
                 </li>
               ))
             )}
           </ul>
-          <Link href="/admin/students" className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-brand hover:text-brand/80 transition">
+          <Link href="/admin/students" className="mt-4 flex justify-end items-center gap-1 text-sm font-semibold text-brand hover:text-brand/80 transition">
             View all <ArrowUpRight className="h-3 w-3" />
           </Link>
         </div>
 
         {/* Latest Teachers */}
-        <div className="rounded-xl border border-border bg-surface p-6 shadow-sm hover:shadow-md transition-shadow">
+        <div className="rounded-xl border border-border bg-surface p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col">
           <div className="flex items-center justify-between gap-3 mb-4">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
@@ -348,33 +382,25 @@ export default function AdminDashboardPage() {
               New
             </span>
           </div>
-          <ul className="mt-4 divide-y divide-border">
+          <ul className="mt-4 divide-y divide-border flex-1">
             {!dashboardData?.recentTeachers || dashboardData.recentTeachers.length === 0 ? (
               <li className="py-3 text-sm text-muted">No recent teachers yet.</li>
             ) : (
-              dashboardData.recentTeachers.slice(0, 5).map((teacher: any, idx: number) => (
-                <li key={idx} className="flex flex-col gap-1.5 py-3 first:pt-0 last:pb-0">
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="font-medium text-foreground truncate">{teacher.name || "Unknown"}</span>
-                    <span className="text-xs text-muted flex-shrink-0">
-                      {new Date(teacher.createdAt || Date.now()).toLocaleDateString("en-NG", {
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted truncate">{teacher.email || "No email"}</p>
+              dashboardData.recentTeachers.slice(0, 3).map((teacher: any, idx: number) => (
+                <li key={idx} className="flex items-center justify-between gap-2 py-2.5 first:pt-0 last:pb-0">
+                  <span className="font-medium text-foreground text-sm truncate">{teacher.name || "Unknown"}</span>
+                  <span className="text-xs text-muted truncate flex-shrink-0">{teacher.email || "No email"}</span>
                 </li>
               ))
             )}
           </ul>
-          <Link href="/admin/teachers" className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-brand hover:text-brand/80 transition">
+          <Link href="/admin/teachers" className="mt-4 flex justify-end items-center gap-1 text-sm font-semibold text-brand hover:text-brand/80 transition">
             View all <ArrowUpRight className="h-3 w-3" />
           </Link>
         </div>
 
         {/* Latest Announcements */}
-        <div className="rounded-xl border border-border bg-surface p-6 shadow-sm hover:shadow-md transition-shadow">
+        <div className="rounded-xl border border-border bg-surface p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col">
           <div className="flex items-center justify-between gap-3 mb-4">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
@@ -386,27 +412,24 @@ export default function AdminDashboardPage() {
               New
             </span>
           </div>
-          <ul className="mt-4 divide-y divide-border">
+          <ul className="mt-4 divide-y divide-border flex-1">
             {!dashboardData?.recentAnnouncements || dashboardData.recentAnnouncements.length === 0 ? (
               <li className="py-3 text-sm text-muted">No announcements yet.</li>
             ) : (
-              dashboardData.recentAnnouncements.slice(0, 5).map((announcement: any, idx: number) => (
-                <li key={idx} className="flex flex-col gap-1.5 py-3 first:pt-0 last:pb-0">
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="font-medium text-foreground truncate">{announcement.title || "Untitled"}</span>
-                    <span className="text-xs text-muted flex-shrink-0">
-                      {new Date(announcement.publishedAt || announcement.createdAt || Date.now()).toLocaleDateString("en-NG", {
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </span>
-                  </div>
-                  <p className="text-xs line-clamp-2 text-muted">{announcement.body || "No content"}</p>
+              dashboardData.recentAnnouncements.slice(0, 3).map((announcement: any, idx: number) => (
+                <li key={idx} className="flex items-center justify-between gap-2 py-2.5 first:pt-0 last:pb-0">
+                  <span className="font-medium text-foreground text-sm truncate flex-1">{announcement.title || "Untitled"}</span>
+                  <span className="text-xs text-muted flex-shrink-0">
+                    {new Date(announcement.publishedAt || announcement.createdAt || Date.now()).toLocaleDateString("en-NG", {
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </span>
                 </li>
               ))
             )}
           </ul>
-          <Link href="/admin/website" className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-brand hover:text-brand/80 transition">
+          <Link href="/admin/website" className="mt-4 flex justify-end items-center gap-1 text-sm font-semibold text-brand hover:text-brand/80 transition">
             View all <ArrowUpRight className="h-3 w-3" />
           </Link>
         </div>

@@ -1,6 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Copy, Share2 } from "lucide-react";
+import { useState } from "react";
 
 interface VideoTutorialDetailsClientProps {
   video: {
@@ -12,54 +14,91 @@ interface VideoTutorialDetailsClientProps {
   };
 }
 
-import { useEffect, useState } from "react";
-
 export default function VideoTutorialDetailsClient({ video }: VideoTutorialDetailsClientProps) {
-  const [shareLink, setShareLink] = useState(`/video-tutorials/${video.id}`);
-
-  useEffect(() => {
-    setShareLink(window.location.href);
-  }, []);
+  const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
     if (typeof window === "undefined") return;
     navigator.clipboard.writeText(window.location.href);
-    alert("Link copied to clipboard!");
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleShare = async () => {
+    if (typeof window !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({
+          title: video.title,
+          text: video.description,
+          url: window.location.href,
+        });
+      } catch (error) {
+        if ((error as Error).name !== "AbortError") {
+          console.error("Error sharing:", error);
+        }
+      }
+    }
   };
 
   return (
-    <>
-      <div className="rounded-lg border border-border bg-surface p-6 mb-8">
-        <h2 className="text-xl font-semibold text-foreground mb-4">
+    <div className="space-y-6">
+      {/* Share Section */}
+      <div className="rounded-xl bg-gradient-to-br from-brand/5 to-transparent border border-brand/10 p-6">
+        <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+          <Share2 className="w-5 h-5 text-brand" />
           Share This Tutorial
-        </h2>
-        <div className="p-4 bg-background rounded-lg border border-border mb-4">
-          <p className="text-sm text-muted mb-2">Link:</p>
-          <code className="text-sm text-primary break-all">{shareLink}</code>
+        </h3>
+        
+        <div className="space-y-3">
+          {/* Share Link */}
+          <div className="flex gap-2">
+            <div className="flex-1 px-4 py-3 rounded-lg bg-white border border-slate-200 text-sm text-slate-700 truncate font-mono text-xs">
+              {typeof window !== "undefined" ? window.location.href : ""}
+            </div>
+            <button
+              onClick={handleCopy}
+              className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 flex-shrink-0 ${
+                copied
+                  ? "bg-green-500 text-white"
+                  : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+              }`}
+            >
+              <Copy className="w-4 h-4" />
+              {copied ? "Copied!" : "Copy"}
+            </button>
+          </div>
+
+          {typeof navigator !== "undefined" && typeof navigator.share === "function" && (
+            <button
+              onClick={handleShare}
+              className="w-full px-4 py-3 rounded-lg bg-brand text-white font-medium hover:bg-brand/90 transition-colors flex items-center justify-center gap-2"
+            >
+              <Share2 className="w-4 h-4" />
+              Share Tutorial
+            </button>
+          )}
         </div>
-        <Button onClick={handleCopy} className="inline-flex items-center justify-center rounded-lg bg-primary text-white px-4 py-2 font-medium hover:bg-primary/90 transition">
-          📋 Copy Link
-        </Button>
       </div>
 
-      <div className="rounded-lg border border-border bg-surface p-6">
-        <h2 className="text-xl font-semibold text-foreground mb-4">
-          About This Tutorial
-        </h2>
-        <p className="text-foreground leading-relaxed">{video.description}</p>
-
-        <div className="mt-6 p-4 bg-primary/5 rounded-lg border border-primary/20">
-          <p className="text-sm font-semibold text-foreground mb-2">
-            Ready to use SchoolBase?
+      {/* Meta Information */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="rounded-lg bg-slate-50 p-4 border border-slate-200">
+          <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">
+            Category
           </p>
-          <p className="text-sm text-muted mb-3">
-            Start using SchoolBase now and give your school the controls it needs.
+          <p className="text-base font-semibold text-slate-900">
+            {video.category}
           </p>
-          <Button href="/signup" className="px-5 py-3">
-            Get started
-          </Button>
+        </div>
+        <div className="rounded-lg bg-slate-50 p-4 border border-slate-200">
+          <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">
+            Type
+          </p>
+          <p className="text-base font-semibold text-slate-900">
+            Video Tutorial
+          </p>
         </div>
       </div>
-    </>
+    </div>
   );
 }

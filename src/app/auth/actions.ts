@@ -11,30 +11,14 @@ export async function staffLoginAction(formData: FormData) {
 
 export async function staffLogoutAction() {
   try {
-    // Clear the unified session cookie
+    // Delete the session cookie directly
     const cookieStore = await cookies();
     cookieStore.delete('schoolbase_session');
-    // Also clear legacy cookies for backward compatibility
-    cookieStore.delete('schoolbase_staff');
-    cookieStore.delete('schoolbase_parent');
-    
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3006';
-    
-    // Call backend logout (best effort, don't block on failure)
-    fetch(`${backendUrl}/api/auth/logout`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    }).catch(() => {
-      // Ignore backend logout errors
-    });
   } catch (error) {
     console.error('Logout error:', error);
   }
 
-  // Always redirect to login after logout attempt
+  // Redirect to login page
   redirect('/login');
 }
 
@@ -42,8 +26,30 @@ export async function parentLoginAction(formData: FormData) {
   throw new Error("Use the backend API instead: POST /api/auth/parent-login");
 }
 
+export async function platformAdminLogoutAction() {
+  try {
+    // Delete the session cookie directly
+    const cookieStore = await cookies();
+    cookieStore.delete('schoolbase_session');
+  } catch (error) {
+    console.error('Logout error:', error);
+  }
+
+  // Redirect to login page
+  redirect('/schoolbase-admin/login');
+}
+
 export async function parentLogoutAction() {
-  throw new Error("Use the backend API instead: POST /api/auth/logout");
+  try {
+    // Delete the session cookie directly
+    const cookieStore = await cookies();
+    cookieStore.delete('schoolbase_session');
+  } catch (error) {
+    console.error('Logout error:', error);
+  }
+
+  // Redirect to login page
+  redirect('/login');
 }
 
 export async function requestPasswordResetAction(formData: FormData) {

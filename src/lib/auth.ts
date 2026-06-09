@@ -46,7 +46,20 @@ export async function getStaffSession(): Promise<StaffSession | null> {
 }
 
 export async function getPlatformAdminSession(): Promise<StaffSession | null> {
-  return null;
+  const jar = await cookies();
+  const token = jar.get(STAFF_COOKIE)?.value;
+  if (!token) return null;
+  try {
+    const { payload } = await jwtVerify(token, secret());
+    const session = payload as unknown as StaffSession;
+    // Only return if role is PLATFORM_ADMIN
+    if (session.role === "PLATFORM_ADMIN") {
+      return session;
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 export async function requirePlatformAdminSession(): Promise<StaffSession> {

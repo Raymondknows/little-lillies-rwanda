@@ -1,8 +1,119 @@
-export default async function Page({ params }: { params?: Record<string, string> }) {
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { AppLogo } from "@/components/app-logo";
+import { Button } from "@/components/ui/button";
+import { Eye, EyeOff } from "lucide-react";
+
+export default function PlatformAdminLoginPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3006";
+      const response = await fetch(`${backendUrl}/api/admin/login`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || "Login failed");
+        return;
+      }
+
+      // Check if user is platform admin
+      if (data.role !== "PLATFORM_ADMIN") {
+        setError("Only platform admins can access this portal");
+        return;
+      }
+
+      // Redirect to dashboard
+      router.push("/schoolbase-admin");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-semibold">SchoolBase admin page</h1>
-      <p className="mt-2 text-sm text-muted">This page is stubbed and uses backend APIs for data.</p>
+    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
+      <div className="w-full max-w-md rounded-xl border border-border bg-surface p-8 shadow-sm">
+        <div className="mb-6 flex justify-center">
+          <AppLogo href="/" size="lg" />
+        </div>
+        <h1 className="text-center text-xl font-bold">SchoolBase Admin</h1>
+        <p className="mt-2 text-center text-sm text-muted">Platform admin portal</p>
+
+        <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+          {error && (
+            <div className="rounded-lg bg-error/10 p-3 text-error text-sm">
+              {error}
+            </div>
+          )}
+
+          <label className="block text-sm font-medium">
+            Email
+            <input
+              type="email"
+              required
+              placeholder="admin@schoolbase.live"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-border px-3 py-2.5 text-sm"
+            />
+          </label>
+
+          <label className="block text-sm font-medium">
+            Password
+            <div className="relative mt-1">
+              <input
+                type={showPassword ? "text" : "password"}
+                required
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-lg border border-border px-3 py-2.5 text-sm pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted hover:text-foreground"
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
+            </div>
+          </label>
+
+          <div className="text-right text-sm">
+            <a href="/forgot-password" className="text-brand hover:underline">
+              Forgot password?
+            </a>
+          </div>
+
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? "Signing in..." : "Sign in"}
+          </Button>
+        </form>
+      </div>
     </div>
   );
 }

@@ -1,14 +1,43 @@
+"use client";
+
+import { useState } from "react";
 import { AppLogo } from "@/components/app-logo";
 import { Button } from "@/components/ui/button";
-import { requestPasswordResetAction } from "@/app/auth/actions";
 
-interface ForgotPasswordPageProps {
-  searchParams?: Promise<{ sent?: string }>;
-}
+export default function ForgotPasswordPage() {
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [sent, setSent] = useState(false);
 
-export default async function ForgotPasswordPage({ searchParams }: ForgotPasswordPageProps) {
-  const resolved = searchParams ? await searchParams : undefined;
-  const sent = resolved?.sent === "1";
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3006";
+      const response = await fetch(`${backendUrl}/api/admin/request-password-reset`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || "Failed to send reset link");
+        return;
+      }
+
+      setSent(true);
+      setEmail("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
@@ -27,13 +56,36 @@ export default async function ForgotPasswordPage({ searchParams }: ForgotPasswor
         )}
 
         {!sent && (
-          <form action={requestPasswordResetAction} className="mt-8 space-y-4">
+          <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+            {error && (
+              <div className="rounded-lg bg-error/10 p-3 text-error text-sm">
+                {error}
+              </div>
+            )}
+
             <label className="block text-sm font-medium">
               Email
-              <input name="email" type="email" required placeholder="you@example.com" className="mt-1 w-full rounded-lg border border-border px-3 py-2.5 text-sm" />
+              <input
+                name="email"
+                type="email"
+                required
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-border px-3 py-2.5 text-sm"
+              />
             </label>
 
-            <Button type="submit" className="w-full">Send reset link</Button>
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Sending..." : "Send reset link"}
+            </Button>
+
+            <p className="text-center text-sm text-muted">
+              Remember your password?{" "}
+              <a href="/login" className="text-brand hover:underline">
+                Sign in
+              </a>
+            </p>
           </form>
         )}
       </div>

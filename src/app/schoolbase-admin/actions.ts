@@ -19,12 +19,14 @@ export async function platformAdminLogoutAction(formData?: FormData): Promise<an
     console.error("Logout failed:", error);
   }
 
-  // Always clear the platform admin cookie regardless of API response
+  // Clear all session cookies (schoolbase_session is the main one set during login)
   const cookieStore = await cookies();
-  cookieStore.delete('schoolbase_staff');
+  cookieStore.delete('schoolbase_session'); // ✅ CRITICAL: This is the JWT cookie set during login
+  cookieStore.delete('schoolbase_staff');   // Legacy fallback
+  cookieStore.delete('schoolbase_parent');  // Legacy fallback
 
   // Redirect to login immediately
-  redirect("/login");
+  redirect("/schoolbase-admin/login");
 }
 
 export async function sendPlatformCommunicationEmailAction(...args: any[]): Promise<any> {

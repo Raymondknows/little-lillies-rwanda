@@ -54,14 +54,14 @@ export default function AdminLayout({
         }
 
         setSession({
-          id: sessionData.userId,
-          email: sessionData.email,
-          name: sessionData.name,
-          role: sessionData.role,
+          id: sessionData.session.userId,
+          email: sessionData.session.email,
+          name: sessionData.session.name,
+          role: sessionData.session.role,
         });
 
         // Fetch school
-        const schoolRes = await fetch(`${backendUrl}/api/admin/school/${sessionData.schoolId}`, {
+        const schoolRes = await fetch(`${backendUrl}/api/admin/school/${sessionData.session.schoolId}`, {
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
         });
@@ -73,7 +73,7 @@ export default function AdminLayout({
         }
 
         const schoolData = await schoolRes.json();
-        setSchool(schoolData.school);
+        setSchool(schoolData);
         setLoading(false);
       } catch (err) {
         console.error('Error loading layout data:', err);

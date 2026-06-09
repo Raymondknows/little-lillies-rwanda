@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import SharedLayout from '@/components/shared-layout';
 import PendingSchoolModal from '@/components/pending-school-modal';
 import { SubscriptionAlert } from '@/components/subscription-alert';
+import { staffLogoutAction } from '@/app/auth/actions';
 
 const nav = [
   { href: "/admin", label: "Dashboard", icon: "LayoutDashboard" },
@@ -50,7 +51,10 @@ export default function AdminLayout({
         const sessionData = await sessionRes.json();
         
         if (!sessionData.authenticated) {
-          router.push('/login');
+          // Use window.location.href for full page reload with proper cookie handling
+          if (typeof window !== 'undefined') {
+            window.location.href = '/login';
+          }
           return;
         }
 
@@ -103,7 +107,11 @@ export default function AdminLayout({
         <div className="text-center">
           <p className="text-red-600 mb-4">{error || 'Failed to load admin area'}</p>
           <button 
-            onClick={() => router.push('/login')}
+            onClick={() => { 
+              if (typeof window !== 'undefined') {
+                window.location.href = '/login';
+              }
+            }}
             className="px-4 py-2 bg-brand text-white rounded hover:bg-brand/90"
           >
             Go to Login
@@ -121,27 +129,7 @@ export default function AdminLayout({
         school={school}
         session={session}
         logoHref="/admin"
-        logoutAction={async () => {
-          try {
-            const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3006';
-            await fetch(`${backendUrl}/api/auth/logout`, {
-              method: 'POST',
-              credentials: 'include',
-              headers: { 'Content-Type': 'application/json' },
-            });
-          } catch (error) {
-            console.error('Logout failed:', error);
-          }
-          // Clear the staff_session cookie - multiple formats to ensure it gets cleared
-          const cookieClear = 'staff_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax';
-          document.cookie = cookieClear;
-          // Also clear with different SameSite values just to be safe
-          document.cookie = 'staff_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=None; Secure';
-          // Use full page reload to ensure cookies are cleared and redirect happens server-side
-          setTimeout(() => {
-            window.location.href = '/login';
-          }, 100);
-        }}
+        logoutAction={staffLogoutAction}
       >
         <PendingSchoolModal schoolStatus={school.status} schoolName={school.name} />
         {children}

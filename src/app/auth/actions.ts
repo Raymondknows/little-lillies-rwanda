@@ -11,19 +11,23 @@ export async function staffLoginAction(formData: FormData) {
 
 export async function staffLogoutAction() {
   try {
+    // Clear the staff cookie immediately
+    const cookieStore = await cookies();
+    cookieStore.delete('schoolbase_staff');
+    cookieStore.delete('schoolbase_parent');
+    
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3006';
     
-    const res = await fetch(`${backendUrl}/api/auth/logout`, {
+    // Call backend logout (best effort, don't block on failure)
+    fetch(`${backendUrl}/api/auth/logout`, {
       method: 'POST',
       credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
       },
+    }).catch(() => {
+      // Ignore backend logout errors
     });
-
-    // Clear the staff cookie regardless of response
-    const cookieStore = await cookies();
-    cookieStore.delete('schoolbase_staff');
   } catch (error) {
     console.error('Logout error:', error);
   }

@@ -14,7 +14,14 @@ function secret() {
 async function hasValidToken(cookie?: string) {
   if (!cookie) return false;
   try {
-    await jwtVerify(cookie, secret());
+    const result = await jwtVerify(cookie, secret());
+    // Check if token is expired
+    if (result.payload.exp) {
+      const now = Math.floor(Date.now() / 1000);
+      if (result.payload.exp < now) {
+        return false; // Token is expired
+      }
+    }
     return true;
   } catch {
     return false;
@@ -24,21 +31,29 @@ async function hasValidToken(cookie?: string) {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Clear invalid tokens to prevent infinite redirect loops
+  const staffCookie = request.cookies.get(STAFF_COOKIE)?.value;
+  const isValidStaffToken = staffCookie ? await hasValidToken(staffCookie) : false;
+
   if (pathname.startsWith("/admin")) {
-    const ok = await hasValidToken(request.cookies.get(STAFF_COOKIE)?.value);
-    if (!ok) {
+    if (!isValidStaffToken) {
       const login = new URL("/login", request.url);
       login.searchParams.set("next", pathname);
-      return NextResponse.redirect(login);
+      const response = NextResponse.redirect(login);
+      // Clear the invalid cookie
+      response.cookies.delete(STAFF_COOKIE);
+      return response;
     }
   }
 
   if (pathname.startsWith("/teacher")) {
-    const ok = await hasValidToken(request.cookies.get(STAFF_COOKIE)?.value);
-    if (!ok) {
+    if (!isValidStaffToken) {
       const login = new URL("/login", request.url);
       login.searchParams.set("next", pathname);
-      return NextResponse.redirect(login);
+      const response = NextResponse.redirect(login);
+      // Clear the invalid cookie
+      response.cookies.delete(STAFF_COOKIE);
+      return response;
     }
   }
 

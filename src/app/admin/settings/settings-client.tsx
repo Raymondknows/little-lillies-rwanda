@@ -84,8 +84,10 @@ export default function SettingsPageClient({
     setIsSaving(true);
 
     try {
-      const response = await fetch(`/api/admin/settings`, {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3006';
+      const response = await fetch(`${backendUrl}/api/admin/settings`, {
         method: "POST",
+        credentials: 'include',
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: name.trim(),
@@ -154,12 +156,14 @@ export default function SettingsPageClient({
     }
 
     try {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3006';
       const formData = new FormData();
       formData.append("file", file);
       formData.append("type", type);
 
-      const response = await fetch(`/api/admin/settings/upload`, {
+      const response = await fetch(`${backendUrl}${backendUrl}/api/admin/settings/upload`, {
         method: "POST",
+        credentials: 'include',
         body: formData,
       });
 
@@ -203,7 +207,11 @@ export default function SettingsPageClient({
     let mounted = true;
     const loadConfig = async () => {
       try {
-        const response = await fetch(`/api/admin/settings`);
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3006';
+        const response = await fetch(`${backendUrl}/api/admin/settings`, {
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+        });
         if (!response.ok) {
           console.error(`Failed to fetch config: ${response.status}`);
           return;
@@ -232,7 +240,11 @@ export default function SettingsPageClient({
 
     const loadStatus = async () => {
       try {
-        const response = await fetch(`/api/admin/settings/status`);
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3006';
+        const response = await fetch(`${backendUrl}/api/admin/settings/status`, {
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+        });
         if (!response.ok) {
           console.error(`Failed to fetch status: ${response.status}`);
           return;

@@ -1,5 +1,10 @@
 "use client";
 
+import { getBackendUrl } from "@/lib/backend-url";
+
+
+
+
 import { useEffect, useState } from "react";
 import StudentsPageClient from "./students-client";
 
@@ -12,7 +17,7 @@ export default function StudentsPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3006";
+        const backendUrl = getBackendUrl();
         const response = await fetch(`${backendUrl}/api/admin/students/data`, {
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },

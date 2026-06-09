@@ -1,5 +1,10 @@
 "use client";
 
+import { getBackendUrl } from "@/lib/backend-url";
+
+
+
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
@@ -11,7 +16,7 @@ export function WhatsAppRetryButton({ disabled }: { disabled: boolean }) {
     setLoading(true);
     setMessage(null);
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3006";
+        const backendUrl = getBackendUrl();
       const response = await fetch(`${backendUrl}/api/whatsapp/retry`, {
         method: "POST",
         credentials: 'include',

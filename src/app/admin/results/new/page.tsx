@@ -1,5 +1,10 @@
 "use client";
 
+import { getBackendUrl } from "@/lib/backend-url";
+
+
+
+
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -22,7 +27,7 @@ export default function NewAssessmentPage() {
   useEffect(() => {
     const fetchTerms = async () => {
       try {
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3006";
+        const backendUrl = getBackendUrl();
         const res = await fetch(`${backendUrl}/api/admin/terms`, {
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
@@ -51,7 +56,7 @@ export default function NewAssessmentPage() {
     const phase = formData.get("phase") as string;
 
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3006";
+        const backendUrl = getBackendUrl();
       const res = await fetch(`${backendUrl}/api/admin/assessments`, {
         method: "POST",
         credentials: 'include',

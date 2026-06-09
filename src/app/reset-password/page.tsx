@@ -56,7 +56,7 @@ function ResetPasswordContent() {
     setLoading(true);
 
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3006";
+        const backendUrl = getBackendUrl();
       const response = await fetch(`${backendUrl}/api/admin/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

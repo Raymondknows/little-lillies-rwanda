@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { CreditCard, Users, Layers, TrendingUp, ArrowUpRight, Clock, ChevronLeft, ChevronRight, DollarSign, BookOpen, MessageSquare } from "lucide-react";
 import { formatMoney } from "@/lib/format";
+import { getBackendUrl } from "@/lib/backend-url";
 
 export default function AdminDashboardPage() {
   const [dashboardData, setDashboardData] = useState<any>(null);
@@ -14,40 +15,84 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3006";
+        const backendUrl = getBackendUrl();
         
-        // Fetch fees data (which includes outstanding fees)
-        const feesRes = await fetch(`${backendUrl}/api/admin/fees/data`, {
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-        });
-        const feesData = await feesRes.json();
-        
-        // Extract school name from fees data or fetch separately
-        let schoolNameToUse = 'Your School';
-        try {
-          const verifyRes = await fetch(`${backendUrl}/api/admin/verify`, {
+        // Fetch all data in parallel
+        const [feesRes, studentsRes, classesRes, teachersRes, verifyRes] = await Promise.all([
+          fetch(`${backendUrl}/api/admin/fees/data`, {
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+          }),
+          fetch(`${backendUrl}/api/admin/students/data`, {
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+          }),
+          fetch(`${backendUrl}/api/admin/classes/data`, {
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+          }),
+          fetch(`${backendUrl}/api/admin/teachers/data`, {
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+          }),
+          fetch(`${backendUrl}/api/admin/verify`, {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
-          });
-          const verifyData = await verifyRes.json();
-          if (verifyData.authenticated && verifyData.session?.schoolName) {
-            schoolNameToUse = verifyData.session.schoolName;
-          }
-        } catch (err) {
-          console.error('Failed to fetch school name:', err);
+          }),
+        ]);
+
+        const [feesData, studentsData, classesData, teachersData, verifyData] = await Promise.all([
+          feesRes.json(),
+          studentsRes.json(),
+          classesRes.json(),
+          teachersRes.json(),
+          verifyRes.json(),
+        ]);
+
+        console.log('Dashboard data:', {
+          fees: feesData,
+          students: studentsData,
+          classes: classesData,
+          teachers: teachersData,
+          verify: verifyData,
+        });
+
+        // Extract school name
+        let schoolNameToUse = 'Your School';
+        if (verifyData.authenticated && verifyData.session?.schoolName) {
+          schoolNameToUse = verifyData.session.schoolName;
         }
+
+        // Count active pupils
+        const pupils = studentsData.pupils || [];
+        const pupilCount = pupils.filter((p: any) => p.isActive).length;
         
-        // Set dashboard data with fees information
+        // Count classes
+        const classCount = (classesData.classes || []).length;
+        
+        // Get recent pupils (last 5 added)
+        const recentPupils = pupils
+          .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+          .slice(0, 5);
+        
+        // Get recent teachers (last 5 added)
+        const recentTeachers = (teachersData.teachers || [])
+          .sort((a: any, b: any) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
+          .slice(0, 5);
+        
+        // Set dashboard data
         setDashboardData({
           outstanding: feesData.outstanding || 0,
           attentionCount: feesData.invoices?.filter((inv: any) => 
             ['SENT', 'PART_PAID', 'OVERDUE'].includes(inv.status)
           ).length || 0,
-          pupilCount: 0,
-          classCount: 0,
-          recentPayments: [],
+          pupilCount,
+          classCount,
+          recentPayments: [], // No payment records endpoint yet
+          recentPupils,
+          recentTeachers,
+          currency: 'NGN',
         });
         setSchoolName(schoolNameToUse);
         setLoading(false);

@@ -6,6 +6,7 @@ import SharedLayout from '@/components/shared-layout';
 import PendingSchoolModal from '@/components/pending-school-modal';
 import { SubscriptionAlert } from '@/components/subscription-alert';
 import { staffLogoutAction } from '@/app/auth/actions';
+import { getBackendUrl } from '@/lib/backend-url';
 
 const nav = [
   { href: "/admin", label: "Dashboard", icon: "LayoutDashboard" },
@@ -40,7 +41,7 @@ export default function AdminLayout({
   useEffect(() => {
     async function loadData() {
       try {
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3006';
+        const backendUrl = getBackendUrl();
         
         // Fetch session
         const sessionRes = await fetch(`${backendUrl}/api/admin/verify`, {

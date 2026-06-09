@@ -1,5 +1,10 @@
 "use client";
 
+import { getBackendUrl } from "@/lib/backend-url";
+
+
+
+
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -98,7 +103,7 @@ export default function StudentEditClient({ studentId }: { studentId: string }) 
         }
 
         // Load classes
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3006";
+        const backendUrl = getBackendUrl();
         const classesResponse = await fetch(`${backendUrl}/api/admin/students/data`, {
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },

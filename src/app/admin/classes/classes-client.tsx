@@ -1,5 +1,10 @@
 "use client";
 
+import { getBackendUrl } from "@/lib/backend-url";
+
+
+
+
 import { useMemo, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -103,7 +108,7 @@ export default function ClassesPageClient({ classes: initialClasses }: { classes
     const fetchClasses = async () => {
       try {
         setLoading(true);
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3006";
+        const backendUrl = getBackendUrl();
         const response = await fetch(`${backendUrl}/api/admin/classes/data`, {
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },

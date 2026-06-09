@@ -1,5 +1,9 @@
 "use client";
 
+import { getBackendUrl } from "@/lib/backend-url";
+
+
+
 import { useEffect, useState } from "react";
 import FeesPageClient from "./fees-client";
 
@@ -11,7 +15,7 @@ export default function FeesPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3006";
+        const backendUrl = getBackendUrl();
         const response = await fetch(`${backendUrl}/api/admin/fees/data`, {
           method: "GET",
           credentials: 'include',

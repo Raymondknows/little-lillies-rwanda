@@ -16,7 +16,7 @@ export default function ForgotPasswordPage() {
     setLoading(true);
 
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3006";
+        const backendUrl = getBackendUrl();
       const response = await fetch(`${backendUrl}/api/admin/request-password-reset`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

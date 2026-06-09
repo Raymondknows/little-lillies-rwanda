@@ -1,5 +1,10 @@
 "use client";
 
+import { getBackendUrl } from "@/lib/backend-url";
+
+
+
+
 import SettingsPageClient from "./settings-client";
 import { useState, useEffect } from "react";
 
@@ -12,7 +17,7 @@ export default function SettingsPage() {
     const loadData = async () => {
       try {
         // Fetch school data from the API
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3006";
+        const backendUrl = getBackendUrl();
         const schoolRes = await fetch(`${backendUrl}/api/admin/school`, {
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },

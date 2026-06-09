@@ -1,13 +1,36 @@
 /**
  * Get the backend URL based on environment
- * - Production (Vercel): https://api.schoolbase.live
- * - Development: http://localhost:3006 (or process.env.BACKEND_URL)
+ * - Explicit env var: use NEXT_PUBLIC_BACKEND_URL
+ * - Client-side: detect from window.location.hostname
+ * - Server-side: use sensible defaults
  */
 export function getBackendUrl(): string {
-  // For production (Vercel), use api.schoolbase.live
+  // First, check if explicitly set in environment
+  if (process.env.NEXT_PUBLIC_BACKEND_URL) {
+    return process.env.NEXT_PUBLIC_BACKEND_URL;
+  }
+
+  // Client-side: detect from window.location
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    
+    if (host === 'localhost' || host === '127.0.0.1') {
+      return 'http://localhost:3006';
+    }
+    
+    if (host.includes('schoolbase.live')) {
+      return 'https://api.schoolbase.live';
+    }
+    
+    if (host.includes('vercel.app')) {
+      return 'https://api.schoolbase.live';
+    }
+  }
+
+  // Server-side or fallback: use NODE_ENV-based default
   if (process.env.NODE_ENV === 'production') {
     return 'https://api.schoolbase.live';
   }
-  // For development, use env var or localhost
-  return process.env.BACKEND_URL || 'http://localhost:3006';
+
+  return 'http://localhost:3006';
 }

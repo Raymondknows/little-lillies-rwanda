@@ -1,5 +1,10 @@
 "use client";
 
+import { getBackendUrl } from "@/lib/backend-url";
+
+
+
+
 import { useState, useEffect, type ChangeEvent, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -50,7 +55,7 @@ export default function NewStudentClient() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3006";
+        const backendUrl = getBackendUrl();
         const response = await fetch(`${backendUrl}/api/admin/students/data`, {
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
@@ -117,7 +122,7 @@ export default function NewStudentClient() {
         formData.append("photo", photoFile);
       }
 
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3006";
+        const backendUrl = getBackendUrl();
       const response = await fetch(`${backendUrl}/api/admin/students`, {
         method: "POST",
         credentials: 'include',

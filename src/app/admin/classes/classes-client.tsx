@@ -169,6 +169,97 @@ export default function ClassesPageClient({ classes: initialClasses }: { classes
     setIsOpen(true);
   };
 
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    try {
+      setLoading(true);
+      const backendUrl = getBackendUrl();
+
+      const payload = {
+        name: className,
+        phase: classPhase,
+        arm: classArm || undefined,
+      };
+
+      const url = selectedClass
+        ? `${backendUrl}/api/admin/classes/${selectedClass.id}`
+        : `${backendUrl}/api/admin/classes`;
+
+      const method = selectedClass ? 'PATCH' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save class');
+      }
+
+      // Refresh the classes list
+      const classesResponse = await fetch(`${backendUrl}/api/admin/classes/data`, {
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (classesResponse.ok) {
+        const data = await classesResponse.json();
+        setClasses(data.classes || []);
+      }
+
+      setIsOpen(false);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save class');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (classItem: any) => {
+    if (!confirm(`Are you sure you want to delete "${classItem.name}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const backendUrl = getBackendUrl();
+
+      const response = await fetch(`${backendUrl}/api/admin/classes/${classItem.id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete class');
+      }
+
+      // Refresh the classes list
+      const classesResponse = await fetch(`${backendUrl}/api/admin/classes/data`, {
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (classesResponse.ok) {
+        const data = await classesResponse.json();
+        setClasses(data.classes || []);
+      }
+
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete class');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <>
       {loading && (
@@ -357,13 +448,21 @@ export default function ClassesPageClient({ classes: initialClasses }: { classes
                         <td className="px-4 py-3 text-sm text-foreground font-medium">{classItem._count?.pupils ?? 0}</td>
                         <td className="px-4 py-3 text-sm text-foreground font-medium">{classItem._count?.subjectClasses ?? 0}</td>
                         <td className="px-4 py-3 text-right">
-                          <button
-                            onClick={() => openModal(classItem)}
-                            className="flex items-center gap-2 inline-flex px-3 py-1.5 rounded-lg border border-border bg-surface hover:bg-background text-sm font-medium transition-colors"
-                          >
-                            <Edit2 className="h-3.5 w-3.5" />
-                            Edit
-                          </button>
+                          <div className="flex items-center gap-2 justify-end">
+                            <button
+                              onClick={() => openModal(classItem)}
+                              className="flex items-center gap-2 inline-flex px-3 py-1.5 rounded-lg border border-border bg-surface hover:bg-background text-sm font-medium transition-colors"
+                            >
+                              <Edit2 className="h-3.5 w-3.5" />
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDelete(classItem)}
+                              className="inline-flex px-3 py-1.5 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 text-sm font-medium transition-colors"
+                            >
+                              Delete
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -441,10 +540,7 @@ export default function ClassesPageClient({ classes: initialClasses }: { classes
                 </div>
 
                 <form 
-                  onSubmit={async (e) => {
-                    e.preventDefault();
-                    alert("Classes management coming soon. Use API endpoint POST /api/admin/classes");
-                  }}
+                  onSubmit={handleSubmit}
                   className="space-y-5"
                 >
                   {selectedClass && <input type="hidden" name="id" value={selectedClass.id} />}
@@ -496,15 +592,33 @@ export default function ClassesPageClient({ classes: initialClasses }: { classes
                     />
                   </div>
 
-                  <div className="flex justify-end gap-3 pt-4 border-t border-border">
-                    <button
-                      type="button"
-                      onClick={() => setIsOpen(false)}
-                      className="px-4 py-2 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-background transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    <Button type="submit">{selectedClass ? "Save changes" : "Add class"}</Button>
+                  <div className="flex justify-between gap-3 pt-4 border-t border-border">
+                    <div>
+                      {selectedClass && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (confirm(`Delete "${selectedClass.name}"? This cannot be undone.`)) {
+                              handleDelete(selectedClass);
+                              setIsOpen(false);
+                            }
+                          }}
+                          className="px-4 py-2 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 text-sm font-medium transition-colors"
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setIsOpen(false)}
+                        className="px-4 py-2 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-background transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <Button type="submit">{selectedClass ? "Save changes" : "Add class"}</Button>
+                    </div>
                   </div>
                 </form>
               </div>

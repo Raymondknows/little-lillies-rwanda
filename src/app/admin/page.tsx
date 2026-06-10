@@ -193,7 +193,7 @@ export default function AdminDashboardPage() {
     <div>
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-foreground">
-          {schoolName ? `Good morning, ${schoolName}` : 'Dashboard'}
+          Good morning, {schoolName || 'Dashboard'}
         </h1>
         <p className="mt-1 text-muted">
           Live dashboard — fees, results, and pupils from your database.

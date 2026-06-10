@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { createSubject, updateSubject, deleteSubject } from "@/app/admin/actions";
 import { UserGuide } from "@/components/ui/user-guide";
+import { getBackendUrl } from "@/lib/backend-url";
 
 const SUBJECTS_GUIDE = {
   title: "Subjects Management",
@@ -65,9 +65,9 @@ const SUBJECTS_GUIDE = {
 };
 
 export default function SubjectsPageClient({
-  classes,
-  subjects,
-  subjectClasses,
+  classes: initialClasses,
+  subjects: initialSubjects,
+  subjectClasses: initialSubjectClasses,
   teacherSubjects,
 }: {
   classes: any[];
@@ -77,12 +77,16 @@ export default function SubjectsPageClient({
 }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [selectedSubject, setSelectedSubject] = useState<any | null>(null);
   const [subjectName, setSubjectName] = useState("");
   const [selectedClassIds, setSelectedClassIds] = useState<string[]>([]);
+  const [subjects, setSubjects] = useState(initialSubjects);
+  const [subjectClasses, setSubjectClasses] = useState(initialSubjectClasses);
 
   const activeSubjectCount = subjects.length;
-  const activeClassCount = classes.length;
+  const activeClassCount = initialClasses.length;
 
   const filteredSubjects = useMemo(() => {
     if (!searchQuery.trim()) return subjects;
@@ -118,6 +122,7 @@ export default function SubjectsPageClient({
       setSubjectName("");
       setSelectedClassIds([]);
     }
+    setError(null);
     setIsOpen(true);
   };
 
@@ -127,6 +132,130 @@ export default function SubjectsPageClient({
         ? current.filter((id) => id !== classId)
         : [...current, classId],
     );
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    try {
+      setLoading(true);
+      const backendUrl = getBackendUrl();
+
+      // Create or update subject
+      const subjectPayload = { name: subjectName };
+      const subjectUrl = selectedSubject
+        ? `${backendUrl}/api/admin/subjects/${selectedSubject.id}`
+        : `${backendUrl}/api/admin/subjects`;
+      const subjectMethod = selectedSubject ? 'PATCH' : 'POST';
+
+      const subjectResponse = await fetch(subjectUrl, {
+        method: subjectMethod,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(subjectPayload),
+        credentials: 'include',
+      });
+
+      if (!subjectResponse.ok) {
+        const errorData = await subjectResponse.json();
+        throw new Error(errorData.error || 'Failed to save subject');
+      }
+
+      const savedSubject = await subjectResponse.json();
+      const subjectId = savedSubject.id;
+
+      // Handle class assignments
+      if (selectedSubject) {
+        // Remove old assignments
+        const oldClassIds = subjectClasses
+          .filter((sc) => sc.subjectId === selectedSubject.id)
+          .map((sc) => sc.classId);
+
+        for (const classId of oldClassIds) {
+          if (!selectedClassIds.includes(classId)) {
+            await fetch(`${backendUrl}/api/admin/class-subjects/${classId}/${subjectId}`, {
+              method: 'DELETE',
+              credentials: 'include',
+            });
+          }
+        }
+
+        // Add new assignments
+        for (const classId of selectedClassIds) {
+          if (!oldClassIds.includes(classId)) {
+            await fetch(`${backendUrl}/api/admin/class-subjects/${classId}/${subjectId}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+            });
+          }
+        }
+      } else {
+        // Add all new class assignments
+        for (const classId of selectedClassIds) {
+          await fetch(`${backendUrl}/api/admin/class-subjects/${classId}/${subjectId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+          });
+        }
+      }
+
+      // Refresh data
+      const dataResponse = await fetch(`${backendUrl}/api/admin/subjects/data`, {
+        credentials: 'include',
+      });
+
+      if (dataResponse.ok) {
+        const data = await dataResponse.json();
+        setSubjects(data.subjects);
+        setSubjectClasses(data.subjectClasses);
+      }
+
+      setIsOpen(false);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save subject');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!selectedSubject) return;
+    if (!confirm(`Delete "${selectedSubject.name}"? This cannot be undone.`)) return;
+
+    try {
+      setLoading(true);
+      const backendUrl = getBackendUrl();
+
+      const response = await fetch(`${backendUrl}/api/admin/subjects/${selectedSubject.id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete subject');
+      }
+
+      // Refresh data
+      const dataResponse = await fetch(`${backendUrl}/api/admin/subjects/data`, {
+        credentials: 'include',
+      });
+
+      if (dataResponse.ok) {
+        const data = await dataResponse.json();
+        setSubjects(data.subjects);
+        setSubjectClasses(data.subjectClasses);
+      }
+
+      setIsOpen(false);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete subject');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const iconSubjectCount = (subject: any) =>
@@ -266,8 +395,12 @@ export default function SubjectsPageClient({
               </Button>
             </div>
 
-            <form action={selectedSubject ? updateSubject : createSubject} className="space-y-6">
-              {selectedSubject && <input type="hidden" name="id" value={selectedSubject.id} />}
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {error && (
+                <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+                  <p className="text-sm text-red-700">{error}</p>
+                </div>
+              )}
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="text-sm font-medium">
@@ -285,10 +418,10 @@ export default function SubjectsPageClient({
                 <div className="text-sm font-medium">
                   <span>Assign classes</span>
                   <div className="mt-1 grid gap-2 rounded-lg border border-border bg-background p-3">
-                    {classes.length === 0 ? (
+                    {initialClasses.length === 0 ? (
                       <p className="text-sm text-muted">No classes available</p>
                     ) : (
-                      classes.map((classItem) => {
+                      initialClasses.map((classItem) => {
                         const isSelected = selectedClassIds.includes(classItem.id);
                         return (
                           <label
@@ -334,26 +467,29 @@ export default function SubjectsPageClient({
                 </div>
               )}
 
-              <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
+              <div className="flex justify-between items-center">
+                <div>
+                  {selectedSubject && (
+                    <Button
+                      type="button"
+                      onClick={handleDelete}
+                      variant="destructive"
+                      disabled={loading}
+                    >
+                      Delete subject
+                    </Button>
+                  )}
+                </div>
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <Button type="button" variant="outline" onClick={() => setIsOpen(false)} disabled={loading}>
                     Cancel
                   </Button>
-                  <Button type="submit">{selectedSubject ? "Save changes" : "Add subject"}</Button>
+                  <Button type="submit" disabled={loading}>
+                    {loading ? "Saving..." : selectedSubject ? "Save changes" : "Add subject"}
+                  </Button>
                 </div>
               </div>
             </form>
-
-            {selectedSubject && (
-              <div className="mt-4 flex justify-end">
-                <form action={deleteSubject} className="inline">
-                  <input type="hidden" name="id" value={selectedSubject.id} />
-                  <Button type="submit" variant="destructive">
-                    Delete subject
-                  </Button>
-                </form>
-              </div>
-            )}
           </div>
         </div>
       )}

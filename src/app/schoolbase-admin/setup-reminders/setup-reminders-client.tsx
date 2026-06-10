@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { getBackendUrl } from "@/lib/backend-url";
 import { sendSetupCompletionRemindersAction, sendSetupCompletionReminder } from "@/app/schoolbase-admin/actions";
 import { Pagination } from "@/components/ui/pagination";
 
@@ -32,9 +33,10 @@ interface Props {
 }
 
 export default function SetupRemindersClient({
-  initialSchools,
-  initialEmailLogs,
+  initialSchools = [],
+  initialEmailLogs = [],
 }: Props) {
+  const [schools, setSchools] = useState<School[]>(initialSchools);
   const [emailLogs, setEmailLogs] = useState<EmailLog[]>(
     Array.isArray(initialEmailLogs) ? initialEmailLogs : []
   );
@@ -46,29 +48,35 @@ export default function SetupRemindersClient({
   const [filter, setFilter] = useState<"all" | "new">("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [pageLoading, setPageLoading] = useState(true);
 
-  // Load setup status for schools
+  // Load schools and email logs
   useEffect(() => {
-    const loadStatuses = async () => {
-      const statuses: Record<string, any> = {};
-      for (const school of initialSchools) {
-        try {
-          const response = await fetch(`/api/school/${school.id}/setup-status`, {
-            credentials: 'include'
-          });
-          if (response.ok) {
-            const data = await response.json();
-            statuses[school.id] = data;
-          }
-        } catch (err) {
-          console.error(`Failed to load setup status for ${school.id}:`, err);
-        }
+    const loadData = async () => {
+      try {
+        const backendUrl = getBackendUrl();
+        const [schoolsRes, logsRes] = await Promise.all([
+          fetch(`${backendUrl}/schoolbase-admin/api/schools?limit=500`, {
+            credentials: "include",
+          }),
+          fetch(`${backendUrl}/schoolbase-admin/api/email-logs?limit=500`, {
+            credentials: "include",
+          }),
+        ]);
+        
+        const schoolsData = await schoolsRes.json();
+        const logsData = await logsRes.json();
+        
+        setSchools(schoolsData.schools || []);
+        setEmailLogs(logsData.logs || []);
+        setPageLoading(false);
+      } catch (err) {
+        console.error("Error loading data:", err);
+        setPageLoading(false);
       }
-      setSetupStatuses(statuses);
     };
-
-    loadStatuses();
-  }, [initialSchools]);
+    loadData();
+  }, []);
 
   const handleBulkSend = async () => {
     try {
@@ -83,8 +91,9 @@ export default function SetupRemindersClient({
       );
 
       // Reload email logs
+      const backendUrl = getBackendUrl();
       const response = await fetch(
-        `/api/email-logs?emailType=SETUP_COMPLETION_REMINDER&limit=50`,
+        `${backendUrl}/schoolbase-admin/api/email-logs?emailType=SETUP_COMPLETION_REMINDER&limit=50`,
         { credentials: 'include' }
       );
       if (response.ok) {
@@ -111,8 +120,9 @@ export default function SetupRemindersClient({
       setSuccess("Email sent successfully");
 
       // Reload email logs
+      const backendUrl = getBackendUrl();
       const response = await fetch(
-        `/api/email-logs?emailType=SETUP_COMPLETION_REMINDER&limit=50`,
+        `${backendUrl}/schoolbase-admin/api/email-logs?emailType=SETUP_COMPLETION_REMINDER&limit=50`,
         { credentials: 'include' }
       );
       if (response.ok) {

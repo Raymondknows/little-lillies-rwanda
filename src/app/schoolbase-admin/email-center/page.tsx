@@ -1,4 +1,5 @@
-import { Suspense } from "react";
+"use client";
+
 import EmailCenterClient from "./email-center-client";
 
 export default function EmailCenterPage() {
@@ -9,9 +10,7 @@ export default function EmailCenterPage() {
         <p className="mt-1 text-muted">Send emails and manage communications with schools</p>
       </div>
 
-      <Suspense fallback={<div className="text-center py-8 text-muted">Loading email center...</div>}>
-        <EmailCenterClient initialSchools={[]} initialEmailLogs={[]} />
-      </Suspense>
+      <EmailCenterClient initialSchools={[]} initialEmailLogs={[]} />
     </div>
   );
 }

@@ -2,7 +2,20 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Pagination } from "@/components/ui/pagination";
+import { getBackendUrl } from "@/lib/backend-url";
 import { sendPlatformCommunicationEmailAction } from "@/app/schoolbase-admin/actions";
+
+interface EmailLog {
+  id: string;
+  schoolId?: string;
+  schoolName?: string;
+  recipientEmail: string;
+  recipientName?: string;
+  emailType: string;
+  subject: string;
+  sentAt: string;
+  status: string;
+}
 
 const EMAIL_TYPES = [
   { value: "PRODUCT_UPDATE", label: "Product update / feature announcement" },

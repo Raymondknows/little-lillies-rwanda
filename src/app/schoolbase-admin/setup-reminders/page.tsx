@@ -1,4 +1,5 @@
-import { Suspense } from "react";
+"use client";
+
 import SetupRemindersClient from "./setup-reminders-client";
 
 export default function SetupRemindersPage() {
@@ -9,9 +10,7 @@ export default function SetupRemindersPage() {
         <p className="mt-1 text-muted">Schools that haven't completed their setup process</p>
       </div>
 
-      <Suspense fallback={<div className="text-center py-8 text-muted">Loading setup reminders...</div>}>
-        <SetupRemindersClient initialSchools={[]} initialEmailLogs={[]} />
-      </Suspense>
+      <SetupRemindersClient initialSchools={[]} initialEmailLogs={[]} />
     </div>
   );
 }

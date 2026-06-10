@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { setSchoolPlanAction, approveSchoolSubscriptionAction, rejectSchoolSubscriptionAction } from "../actions";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import { getBackendUrl } from "@/lib/backend-url";
 import type { School } from "@prisma/client";
 
 const PLAN_CONFIG = {
@@ -29,14 +30,34 @@ const STATUS_CONFIG = {
 const ITEMS_PER_PAGE = 15;
 
 export default function SubscriptionsPageClient({
-  schools,
+  schools: initialSchools,
 }: {
   schools: School[];
 }) {
+  const [schools, setSchools] = useState<School[]>(initialSchools);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [planFilter, setPlanFilter] = useState("ALL");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    async function loadSchools() {
+      try {
+        const backendUrl = getBackendUrl();
+        const res = await fetch(`${backendUrl}/schoolbase-admin/api/schools?limit=500`, {
+          credentials: "include",
+        });
+        const data = await res.json();
+        setSchools(data.schools || []);
+        setLoading(false);
+      } catch (err) {
+        console.error("Error loading schools:", err);
+        setLoading(false);
+      }
+    }
+    loadSchools();
+  }, []);
   const [selectedPlans, setSelectedPlans] = useState<Record<string, string>>(
     schools.reduce((acc, school) => {
       if (school.status === "PENDING") {
@@ -92,6 +113,17 @@ export default function SubscriptionsPageClient({
     if (status === "ALL") return schools.length;
     return schools.filter((s) => s.status === status).length;
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand mx-auto"></div>
+          <p className="mt-3 text-muted">Loading subscriptions...</p>
+        </div>
+      </div>
+    );
+  }
 
   const totalPages = Math.ceil(filteredSchools.length / ITEMS_PER_PAGE);
   const paginatedSchools = filteredSchools.slice(

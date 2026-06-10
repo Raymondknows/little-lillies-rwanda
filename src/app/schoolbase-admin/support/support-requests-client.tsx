@@ -2,7 +2,7 @@
 
 import { getBackendUrl } from "@/lib/backend-url";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
@@ -66,9 +66,9 @@ function formatDate(date?: string) {
 }
 
 export default function SupportRequestsClient({
-  initialRequests,
+  initialRequests = [],
 }: {
-  initialRequests: PlatformSupportRequestRow[];
+  initialRequests?: PlatformSupportRequestRow[];
 }) {
   const [requests, setRequests] = useState<PlatformSupportRequestRow[]>(initialRequests);
   const [search, setSearch] = useState("");
@@ -79,6 +79,25 @@ export default function SupportRequestsClient({
   const [busy, setBusy] = useState(false);
   const [replyError, setReplyError] = useState<string | null>(null);
   const [replySuccess, setReplySuccess] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadRequests() {
+      try {
+        const backendUrl = getBackendUrl();
+        const res = await fetch(`${backendUrl}/schoolbase-admin/api/support`, {
+          credentials: "include",
+        });
+        const data = await res.json();
+        setRequests(data.supportRequests || []);
+        setLoading(false);
+      } catch (err) {
+        console.error("Error loading support requests:", err);
+        setLoading(false);
+      }
+    }
+    loadRequests();
+  }, []);
 
   const filtered = useMemo(
     () =>
@@ -105,6 +124,17 @@ export default function SupportRequestsClient({
     ? requests.find((request) => request.id === selectedRequestId) ?? null
     : null;
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand mx-auto"></div>
+          <p className="mt-3 text-muted">Loading support requests...</p>
+        </div>
+      </div>
+    );
+  }
+
   const handleReply = async () => {
     if (!selectedRequest) return;
     if (!replyText.trim()) {
@@ -118,7 +148,7 @@ export default function SupportRequestsClient({
 
     try {
       const backendUrl = getBackendUrl();
-      const response = await fetch(`${backendUrl}/api/schoolbase-admin/support/reply`, {
+      const response = await fetch(`${backendUrl}/schoolbase-admin/api/support/reply`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',

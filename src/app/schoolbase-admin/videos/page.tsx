@@ -1,4 +1,5 @@
-import { Suspense } from "react";
+"use client";
+
 import VideosClient from "./videos-client";
 
 export default function VideoLibraryPage() {
@@ -9,9 +10,7 @@ export default function VideoLibraryPage() {
         <p className="mt-1 text-muted">Training and educational videos for schools</p>
       </div>
 
-      <Suspense fallback={<div className="text-center py-8 text-muted">Loading video library...</div>}>
-        <VideosClient initialVideos={[]} />
-      </Suspense>
+      <VideosClient initialVideos={[]} />
     </div>
   );
 }

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Copy, Trash2, Edit2 } from "lucide-react";
+import { getBackendUrl } from "@/lib/backend-url";
 import {
   createVideoAction,
   updateVideoAction,
@@ -27,9 +28,9 @@ export default function VideosClient({
   const [videos, setVideos] = useState<Video[]>(initialVideos);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [pageLoading, setPageLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -37,6 +38,35 @@ export default function VideosClient({
     category: "Getting Started",
     featured: false,
   });
+
+  useEffect(() => {
+    async function loadVideos() {
+      try {
+        const backendUrl = getBackendUrl();
+        const res = await fetch(`${backendUrl}/schoolbase-admin/api/videos`, {
+          credentials: "include",
+        });
+        const data = await res.json();
+        setVideos(data.videos || []);
+        setPageLoading(false);
+      } catch (err) {
+        console.error("Error loading videos:", err);
+        setPageLoading(false);
+      }
+    }
+    loadVideos();
+  }, []);
+
+  if (pageLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand mx-auto"></div>
+          <p className="mt-3 text-muted">Loading video library...</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleReset = () => {
     setFormData({

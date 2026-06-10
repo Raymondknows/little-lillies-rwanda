@@ -2,13 +2,14 @@
 
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
+import { getBackendUrl } from "@/lib/backend-url";
 
 // Server actions for Vercel compatibility - use API routes
 
 export async function platformAdminLogoutAction(formData?: FormData): Promise<any> {
   try {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3006"}/api/auth/logout`,
+      `${getBackendUrl()}/api/auth/logout`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },

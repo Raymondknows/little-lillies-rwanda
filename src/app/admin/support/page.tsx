@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { getBackendUrl } from "@/lib/backend-url";
 import SupportRequestsClient from "./support-client";
 
 export type AdminSupportRequestRow = {
@@ -34,7 +35,7 @@ export default function SupportPage() {
   useEffect(() => {
     async function fetchRequests() {
       try {
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3006';
+        const backendUrl = getBackendUrl();
         const response = await fetch(`${backendUrl}/api/admin/support/data`, {
           credentials: 'include',
           headers: {

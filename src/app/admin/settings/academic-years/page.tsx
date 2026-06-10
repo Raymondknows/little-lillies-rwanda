@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
+import { getBackendUrl } from "@/lib/backend-url";
 
 interface AcademicYear {
   id: string;
@@ -28,7 +29,7 @@ export default function AcademicYearsPage() {
   const loadAcademicYears = async () => {
     try {
       setLoading(true);
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3006';
+      const backendUrl = getBackendUrl();
       const response = await fetch(`${backendUrl}/api/admin/academic-years`, {
         credentials: "include",
         headers: { 'Content-Type': 'application/json' },
@@ -52,7 +53,7 @@ export default function AcademicYearsPage() {
     setSaving(true);
 
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3006';
+      const backendUrl = getBackendUrl();
       const response = await fetch(`${backendUrl}/api/admin/academic-years`, {
         method: "POST",
         credentials: "include",
@@ -78,7 +79,7 @@ export default function AcademicYearsPage() {
     if (!confirm("Are you sure?")) return;
 
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3006';
+      const backendUrl = getBackendUrl();
       const response = await fetch(`${backendUrl}/api/admin/academic-years/${id}`, {
         method: "DELETE",
         credentials: "include",

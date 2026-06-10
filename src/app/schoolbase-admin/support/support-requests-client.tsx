@@ -1,5 +1,7 @@
 "use client";
 
+import { getBackendUrl } from "@/lib/backend-url";
+
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -115,7 +117,7 @@ export default function SupportRequestsClient({
     setBusy(true);
 
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3006';
+      const backendUrl = getBackendUrl();
       const response = await fetch(`${backendUrl}/api/schoolbase-admin/support/reply`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },

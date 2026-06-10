@@ -1,9 +1,10 @@
 import { Suspense } from "react";
+import { getBackendUrl } from "@/lib/backend-url";
 import SupportRequestsClient from "./support-requests-client";
 
 async function fetchSupportRequests() {
   try {
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3006';
+    const backendUrl = getBackendUrl();
     const response = await fetch(`${backendUrl}/api/schoolbase-admin/support`, {
       credentials: 'include',
       headers: {

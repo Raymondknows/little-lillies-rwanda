@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import VideoTutorialDetailsClient from "./video-tutorial-details-client";
 import { getBackendUrl } from "@/lib/backend-url";
+import { getEmbedUrl } from "@/lib/video-embed-url";
 import { VideoBreadcrumb } from "@/components/video-tutorials/video-breadcrumb";
 import { RelatedVideosCard } from "@/components/video-tutorials/related-videos-card";
 import { Calendar, Tag } from "lucide-react";
@@ -115,7 +116,7 @@ export default async function VideoTutorialPage(props: {
                     <iframe
                       width="100%"
                       height="100%"
-                      src={video.videoUrl}
+                      src={getEmbedUrl(video.videoUrl)}
                       title={video.title}
                       frameBorder="0"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

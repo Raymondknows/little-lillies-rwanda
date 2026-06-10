@@ -5,6 +5,8 @@
 
 import { getBackendUrl } from './backend-url';
 
+export type SchoolPhase = 'EARLY_YEARS' | 'PRIMARY' | 'SECONDARY';
+
 export interface TeacherProfile {
   id: string;
   name: string;

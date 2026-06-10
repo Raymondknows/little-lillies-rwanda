@@ -3,7 +3,7 @@
  * Handles school type detection and teacher-specific data fetching
  */
 
-export type SchoolPhase = 'EARLY_YEARS' | 'PRIMARY' | 'SECONDARY';
+import { getBackendUrl } from './backend-url';
 
 export interface TeacherProfile {
   id: string;
@@ -50,7 +50,7 @@ export interface TeacherDashboardData {
  * Get teacher dashboard data from backend
  */
 export async function getTeacherDashboard(): Promise<TeacherDashboardData> {
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3006';
+  const backendUrl = getBackendUrl();
   const response = await fetch(`${backendUrl}/api/teacher/dashboard`, {
     credentials: 'include',
     headers: {
@@ -69,7 +69,7 @@ export async function getTeacherDashboard(): Promise<TeacherDashboardData> {
  * Get teacher profile data from backend
  */
 export async function getTeacherProfile(): Promise<TeacherProfile> {
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3006';
+  const backendUrl = getBackendUrl();
   const response = await fetch(`${backendUrl}/api/teacher/profile`, {
     credentials: 'include',
     headers: {

@@ -1,5 +1,6 @@
 'use client';
 
+import { getBackendUrl } from '@/lib/backend-url';
 import { useState, useEffect } from 'react';
 import { AlertCircle, Save, Loader2 } from 'lucide-react';
 
@@ -42,7 +43,7 @@ export default function ResultsPage() {
   useEffect(() => {
     async function loadClasses() {
       try {
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3006';
+        const backendUrl = getBackendUrl();
         const res = await fetch(`${backendUrl}/api/teacher/classes`, {
           credentials: 'include',
         });
@@ -65,7 +66,7 @@ export default function ResultsPage() {
 
     async function loadData() {
       try {
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3006';
+        const backendUrl = getBackendUrl();
 
         const [assessRes, studentsRes] = await Promise.all([
           fetch(`${backendUrl}/api/teacher/assessments/${selectedClass}`, {
@@ -99,7 +100,7 @@ export default function ResultsPage() {
 
     async function loadResults() {
       try {
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3006';
+        const backendUrl = getBackendUrl();
         const res = await fetch(`${backendUrl}/api/teacher/results/${selectedClass}`, {
           credentials: 'include',
         });
@@ -145,7 +146,7 @@ export default function ResultsPage() {
     setSuccess(null);
 
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3006';
+      const backendUrl = getBackendUrl();
       const scores = Object.values(results);
 
       const res = await fetch(`${backendUrl}/api/teacher/results`, {

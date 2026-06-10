@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { AlertCircle, Mail, Shield, Calendar, Building2, LogOut } from 'lucide-react';
+import { getBackendUrl } from '@/lib/backend-url';
 
 interface TeacherProfile {
   id: string;
@@ -23,7 +24,7 @@ export default function ProfilePage() {
   useEffect(() => {
     async function loadProfile() {
       try {
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3006';
+        const backendUrl = getBackendUrl();
         const res = await fetch(`${backendUrl}/api/teacher/profile`, {
           credentials: 'include',
         });

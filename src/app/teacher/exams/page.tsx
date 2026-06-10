@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { AlertCircle, ClipboardCheck, Plus, Loader2 } from 'lucide-react';
+import { getBackendUrl } from '@/lib/backend-url';
 
 interface Class {
   id: string;
@@ -25,7 +26,7 @@ export default function ExamsPage() {
   useEffect(() => {
     async function loadClasses() {
       try {
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3006';
+        const backendUrl = getBackendUrl();
         const res = await fetch(`${backendUrl}/api/teacher/classes`, {
           credentials: 'include',
         });

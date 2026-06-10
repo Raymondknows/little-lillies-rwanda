@@ -1,5 +1,6 @@
 'use client';
 
+import { getBackendUrl } from '@/lib/backend-url';
 import { useState, useEffect } from 'react';
 import { AlertCircle, Plus, Loader2 } from 'lucide-react';
 
@@ -33,7 +34,7 @@ export default function AssessmentsPage() {
   useEffect(() => {
     async function loadClasses() {
       try {
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3006';
+        const backendUrl = getBackendUrl();
         const res = await fetch(`${backendUrl}/api/teacher/classes`, {
           credentials: 'include',
         });
@@ -59,7 +60,7 @@ export default function AssessmentsPage() {
 
     async function loadAssessments() {
       try {
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3006';
+        const backendUrl = getBackendUrl();
         const res = await fetch(`${backendUrl}/api/teacher/assessments/${selectedClass}`, {
           credentials: 'include',
         });
@@ -85,7 +86,7 @@ export default function AssessmentsPage() {
     setError(null);
 
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3006';
+      const backendUrl = getBackendUrl();
       const res = await fetch(`${backendUrl}/api/teacher/assessments`, {
         method: 'POST',
         credentials: 'include',

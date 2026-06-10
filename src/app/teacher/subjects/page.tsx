@@ -1,5 +1,7 @@
 'use client';
 
+import { getBackendUrl } from '@/lib/backend-url';
+
 import { useEffect, useState } from 'react';
 import { AlertCircle, BookOpen, Users } from 'lucide-react';
 
@@ -29,7 +31,7 @@ export default function SubjectsPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3006';
+        const backendUrl = getBackendUrl();
         const res = await fetch(`${backendUrl}/api/teacher/dashboard`, {
           credentials: 'include',
         });

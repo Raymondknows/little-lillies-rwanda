@@ -24,6 +24,12 @@ import {
   HelpCircle,
   MessageSquare,
   PenTool,
+  Building2,
+  Baby,
+  Eye,
+  ClipboardCheck,
+  TrendingUp,
+  Award,
 } from "lucide-react";
 import { WhatsAppIcon } from "@/components/ui/icons";
 
@@ -54,6 +60,12 @@ const icons: Record<string, any> = {
   HelpCircle,
   MessageSquare,
   PenTool,
+  Building2,
+  Baby,
+  Eye,
+  ClipboardCheck,
+  TrendingUp,
+  Award,
 };
 
 export default function Sidebar({

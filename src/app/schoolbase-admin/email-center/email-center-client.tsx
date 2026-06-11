@@ -237,19 +237,43 @@ export default function EmailCenterClient({
   );
 
   const fetchEmailLogs = async (page = currentPage, pageSize = itemsPerPage) => {
-    // Email logs API to be implemented - placeholder for now
-    // TODO: Implement backend endpoint for fetching email logs
-    setEmailLogs([]);
-    setTotalCount(0);
+    try {
+      const backendUrl = getBackendUrl();
+      const params = new URLSearchParams({
+        page: String(page),
+        limit: String(pageSize),
+      });
+      
+      if (selectedEmailType && selectedEmailType !== "ALL") {
+        params.append('emailType', selectedEmailType);
+      }
+
+      const response = await fetch(`${backendUrl}/schoolbase-admin/api/email-logs?${params}`, {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch email logs');
+      }
+
+      const data = await response.json();
+      setEmailLogs(data.logs || []);
+      setTotalCount(data.pagination?.total || 0);
+      setCurrentPage(page);
+    } catch (err) {
+      console.error('Error fetching email logs:', err);
+      setEmailLogs([]);
+      setTotalCount(0);
+    }
   };
 
-  // Email logs are loaded as initialEmailLogs from server
+  // Email logs are loaded as initialEmailLogs from server, fetch from API when available
   useEffect(() => {
-    if (initialEmailLogs && initialEmailLogs.length > 0) {
-      setEmailLogs(initialEmailLogs);
-      setTotalCount(initialEmailLogs.length);
-    }
-  }, [initialEmailLogs]);
+    fetchEmailLogs(1, itemsPerPage);
+  }, [selectedEmailType]);
 
   const emailTypeLabel = useMemo(
     () =>

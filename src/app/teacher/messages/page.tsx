@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { AlertCircle, MessageSquare } from 'lucide-react';
+import { getBackendUrl } from '@/lib/backend-url';
 
 interface Message {
   id: string;
@@ -10,6 +11,7 @@ interface Message {
   body: string;
   timestamp: string;
   read: boolean;
+  type?: string;
 }
 
 export default function MessagesPage() {
@@ -18,8 +20,31 @@ export default function MessagesPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // TODO: Implement messages API endpoint
-    setLoading(false);
+    async function fetchMessages() {
+      try {
+        const backendUrl = getBackendUrl();
+        const response = await fetch(`${backendUrl}/api/teacher/messages`, {
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch messages: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        setMessages(data.messages || []);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load messages');
+        console.error('Error fetching messages:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchMessages();
   }, []);
 
   return (
@@ -54,20 +79,25 @@ export default function MessagesPage() {
             {messages.map((msg) => (
               <div
                 key={msg.id}
-                className="px-6 py-4 hover:bg-gray-50 cursor-pointer transition" style={{
+                className="px-6 py-4 hover:bg-gray-50 cursor-pointer transition"
+                style={{
                   backgroundColor: !msg.read ? '#0A66C220' : ''
                 }}
               >
                 <div className="flex items-start justify-between">
-                  <div>
+                  <div className="flex-1">
                     <p className={`font-medium ${!msg.read ? 'font-bold' : ''} text-gray-900`}>
                       {msg.sender}
                     </p>
-                    <p className="text-gray-600">{msg.subject}</p>
-                    <p className="text-sm text-gray-500 mt-1">{msg.body.slice(0, 100)}...</p>
+                    <p className="text-gray-600 font-medium">{msg.subject}</p>
+                    <p className="text-sm text-gray-500 mt-1 line-clamp-2">{msg.body}</p>
                   </div>
-                  <span className="text-xs text-gray-600 flex-shrink-0">
-                    {new Date(msg.timestamp).toLocaleDateString()}
+                  <span className="text-xs text-gray-600 flex-shrink-0 ml-4">
+                    {new Date(msg.timestamp).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })}
                   </span>
                 </div>
               </div>

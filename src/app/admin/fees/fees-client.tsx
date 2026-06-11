@@ -100,16 +100,16 @@ export default function FeesPageClient({
   outstanding = 0,
   currency = "NGN",
   terms = [],
-  issueTermInvoicesAction = async () => {},
-  sendFeeRemindersAction = async () => {},
+  onIssueBills = async () => {},
+  onSendReminders = async () => {},
   recordPaymentAction = async () => {},
 }: {
   invoices?: any[];
   outstanding?: number;
   currency?: string;
   terms?: TermItem[];
-  issueTermInvoicesAction?: (formData: FormData) => Promise<void>;
-  sendFeeRemindersAction?: (formData: FormData) => Promise<void>;
+  onIssueBills?: (termId: string) => Promise<void>;
+  onSendReminders?: () => Promise<void>;
   recordPaymentAction?: (formData: FormData) => Promise<void>;
 }) {
   const searchParams = useSearchParams();
@@ -131,6 +131,33 @@ export default function FeesPageClient({
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("CASH");
   const [paymentReference, setPaymentReference] = useState("");
+  
+  // Issue bills and send reminders state
+  const [issuingBills, setIssuingBills] = useState(false);
+  const [sendingReminders, setSendingReminders] = useState(false);
+  const [selectedTermId, setSelectedTermId] = useState("");
+
+  const handleIssueBillsSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedTermId) return;
+    
+    setIssuingBills(true);
+    try {
+      await onIssueBills(selectedTermId);
+    } finally {
+      setIssuingBills(false);
+    }
+  };
+
+  const handleSendRemindersSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSendingReminders(true);
+    try {
+      await onSendReminders();
+    } finally {
+      setSendingReminders(false);
+    }
+  };
 
   const phaseOptions = getPhaseFilterOptions();
 
@@ -549,30 +576,28 @@ export default function FeesPageClient({
 
           {/* Buttons - Right */}
           <div className="flex flex-wrap gap-2">
-            <form action={issueTermInvoicesAction} className="flex gap-2">
+            <form onSubmit={handleIssueBillsSubmit} className="flex gap-2">
               <select
-                name="termId"
+                value={selectedTermId}
+                onChange={(e) => setSelectedTermId(e.target.value)}
                 required
-                defaultValue=""
                 className="rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-brand"
               >
-                <option value="" disabled>
-                  Select term
-                </option>
+                <option value="">Select term</option>
                 {terms.map((term) => (
                   <option key={term.id} value={term.id}>
                     {term.name}
                   </option>
                 ))}
               </select>
-              <Button type="submit" className="text-xs px-2.5 py-1.5 h-auto">
-                Issue Bills
+              <Button type="submit" disabled={issuingBills} className="text-xs px-2.5 py-1.5 h-auto">
+                {issuingBills ? "Issuing..." : "Issue Bills"}
               </Button>
             </form>
 
-            <form action={sendFeeRemindersAction}>
-              <Button type="submit" variant="secondary" className="text-xs px-2.5 py-1.5 h-auto">
-                Send Reminders
+            <form onSubmit={handleSendRemindersSubmit}>
+              <Button type="submit" disabled={sendingReminders} variant="secondary" className="text-xs px-2.5 py-1.5 h-auto">
+                {sendingReminders ? "Sending..." : "Send Reminders"}
               </Button>
             </form>
 

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { AlertCircle, CheckCircle2, Clock, Save, Loader2 } from 'lucide-react';
+import { getBackendUrl } from '@/lib/backend-url';
 
 interface Class {
   id: string;
@@ -47,9 +48,7 @@ export default function AttendancePage() {
   useEffect(() => {
     async function loadClasses() {
       try {
-        const backendUrl =
-          process.env.NEXT_PUBLIC_BACKEND_URL ||
-          'http://localhost:3006';
+        const backendUrl = getBackendUrl();
 
         const res = await fetch(
           `${backendUrl}/api/teacher/classes`,
@@ -84,9 +83,7 @@ export default function AttendancePage() {
       try {
         setError(null);
 
-        const backendUrl =
-          process.env.NEXT_PUBLIC_BACKEND_URL ||
-          'http://localhost:3006';
+        const backendUrl = getBackendUrl();
 
         const res = await fetch(
           `${backendUrl}/api/teacher/classes/${selectedClass}/students`,
@@ -139,9 +136,7 @@ export default function AttendancePage() {
     setSuccess(null);
 
     try {
-      const backendUrl =
-        process.env.NEXT_PUBLIC_BACKEND_URL ||
-        'http://localhost:3006';
+      const backendUrl = getBackendUrl();
 
       const res = await fetch(
         `${backendUrl}/api/teacher/attendance`,

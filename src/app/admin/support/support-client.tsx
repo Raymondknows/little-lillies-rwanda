@@ -3,6 +3,7 @@
 import { FormEvent, useMemo, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { getBackendUrl } from "@/lib/backend-url";
 
 export type SupportRequestRow = {
   id: string;
@@ -98,8 +99,10 @@ export default function SupportClient({
     setBusy(true);
 
     try {
-      const response = await fetch("/admin/api/support", {
+      const backendUrl = getBackendUrl();
+      const response = await fetch(`${backendUrl}/api/admin/support`, {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ subject, message, priority }),
       });
@@ -267,8 +270,10 @@ export default function SupportClient({
                               }
                               setReplyBusy(true);
                               try {
-                                const res = await fetch("/admin/api/support/reply", {
+                                const backendUrl = getBackendUrl();
+                                const res = await fetch(`${backendUrl}/api/admin/support/reply`, {
                                   method: "PATCH",
+                                  credentials: "include",
                                   headers: { "Content-Type": "application/json" },
                                   body: JSON.stringify({ requestId: request.id, response: replyMessage }),
                                 });

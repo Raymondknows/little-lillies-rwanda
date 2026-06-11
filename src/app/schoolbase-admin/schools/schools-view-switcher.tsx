@@ -117,28 +117,10 @@ export default function SchoolsViewSwitcher({ initialSchools }: { initialSchools
   }
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col gap-4 rounded-3xl border border-border bg-surface p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-        <div className="space-y-2">
-          <p className="text-sm font-semibold text-foreground">View mode</p>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant={view === "list" ? "secondary" : "ghost"}
-              onClick={() => setView("list")}
-            >
-              Table
-            </Button>
-            <Button
-              variant={view === "grid" ? "secondary" : "ghost"}
-              onClick={() => setView("grid")}
-            >
-              Grid
-            </Button>
-          </div>
-        </div>
-
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         {view === "grid" ? (
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center flex-1">
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
@@ -167,6 +149,29 @@ export default function SchoolsViewSwitcher({ initialSchools }: { initialSchools
             </select>
           </div>
         ) : null}
+
+        <div className="flex gap-2 ml-auto">
+          <button
+            onClick={() => setView("list")}
+            className={`inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-colors ${
+              view === "list"
+                ? "bg-brand text-white hover:bg-brand/90 shadow-sm hover:shadow-md"
+                : "bg-slate-100 text-foreground hover:bg-slate-200"
+            }`}
+          >
+            Table
+          </button>
+          <button
+            onClick={() => setView("grid")}
+            className={`inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-colors ${
+              view === "grid"
+                ? "bg-brand text-white hover:bg-brand/90 shadow-sm hover:shadow-md"
+                : "bg-slate-100 text-foreground hover:bg-slate-200"
+            }`}
+          >
+            Grid
+          </button>
+        </div>
       </div>
 
       {view === "list" ? (

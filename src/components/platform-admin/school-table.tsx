@@ -125,7 +125,7 @@ export function SchoolTable({ initialSchools }: { initialSchools: SchoolRow[] })
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [verificationFilter, setVerificationFilter] = useState("ALL");
   const [page, setPage] = useState(1);
-  const [pageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(10);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -236,6 +236,19 @@ export function SchoolTable({ initialSchools }: { initialSchools: SchoolRow[] })
             <option value="ALL">All verifications</option>
             <option value="VERIFIED">Verified only</option>
             <option value="UNVERIFIED">Unverified only</option>
+          </select>
+          <select
+            value={pageSize}
+            onChange={(event) => {
+              setPageSize(parseInt(event.target.value));
+              setPage(1);
+            }}
+            className="rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none"
+          >
+            <option value="10">10 per page</option>
+            <option value="20">20 per page</option>
+            <option value="50">50 per page</option>
+            <option value="100">100 per page</option>
           </select>
         </div>
       </div>

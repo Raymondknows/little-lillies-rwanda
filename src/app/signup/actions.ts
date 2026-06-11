@@ -39,8 +39,16 @@ export async function requestSignupOtpAction(formData: FormData) {
       throw new Error(data.error || data.message || "Failed to request OTP");
     }
 
-    // Redirect to OTP verification page
-    redirect(`/signup/verify-otp?email=${encodeURIComponent(String(adminEmail))}`);
+    // Redirect to OTP verification page with all form data
+    const params = new URLSearchParams({
+      email: String(adminEmail),
+      schoolName: String(schoolName),
+      slug: String(slug),
+      country: String(country),
+      adminName: String(adminName),
+      password: String(password),
+    });
+    redirect(`/signup/verify?${params.toString()}`);
   } catch (error) {
     throw new Error(error instanceof Error ? error.message : String(error));
   }

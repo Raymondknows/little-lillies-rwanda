@@ -4,12 +4,24 @@ import { verifySignupOtpAction } from "@/app/signup/actions";
 import Link from "next/link";
 
 interface VerifySignupPageProps {
-  searchParams?: Promise<{ email?: string }>;
+  searchParams?: Promise<{ 
+    email?: string;
+    schoolName?: string;
+    slug?: string;
+    country?: string;
+    adminName?: string;
+    password?: string;
+  }>;
 }
 
 export default async function VerifySignupPage({ searchParams }: VerifySignupPageProps) {
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const adminEmail = String(resolvedSearchParams?.email ?? "");
+  const schoolName = String(resolvedSearchParams?.schoolName ?? "");
+  const slug = String(resolvedSearchParams?.slug ?? "");
+  const country = String(resolvedSearchParams?.country ?? "");
+  const adminName = String(resolvedSearchParams?.adminName ?? "");
+  const password = String(resolvedSearchParams?.password ?? "");
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
@@ -24,7 +36,14 @@ export default async function VerifySignupPage({ searchParams }: VerifySignupPag
 
         <form action={verifySignupOtpAction} className="mt-8 space-y-4">
           {adminEmail ? (
-            <input name="adminEmail" type="hidden" value={adminEmail} />
+            <>
+              <input name="schoolName" type="hidden" value={schoolName} />
+              <input name="slug" type="hidden" value={slug} />
+              <input name="country" type="hidden" value={country} />
+              <input name="adminName" type="hidden" value={adminName} />
+              <input name="adminEmail" type="hidden" value={adminEmail} />
+              <input name="password" type="hidden" value={password} />
+            </>
           ) : (
             <div className="rounded-xl border border-yellow-300 bg-yellow-50 p-4 text-sm text-yellow-900">
               No signup email was provided in the verification link. Please go back to the <Link href="/signup" className="font-medium text-brand hover:underline">signup page</Link> and try again.

@@ -2,9 +2,16 @@
 
 import { getBackendUrl } from "@/lib/backend-url";
 import { useEffect, useState, useMemo } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Calendar, Users, CheckCircle, AlertCircle, Clock, Send, Loader } from "lucide-react";
+import { Calendar, Users, CheckCircle, AlertCircle, Clock, Send, TrendingUp, ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+
+interface ClassData {
+  id: string;
+  name: string;
+  phase: string;
+  arm?: string;
+}
 
 interface Pupil {
   pupilId: string;
@@ -24,11 +31,16 @@ interface AttendanceData {
   lateCount: number;
 }
 
-export default function AttendancePage() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+const PHASE_ORDER = ["EARLY_YEARS", "PRIMARY", "SECONDARY"];
+const PHASE_LABELS: { [key: string]: string } = {
+  EARLY_YEARS: "Early Years",
+  PRIMARY: "Primary",
+  SECONDARY: "Secondary",
+};
 
-  const [classes, setClasses] = useState<Array<{ id: string; name: string; arm?: string }>>([]);
+export default function AttendancePage() {
+  const [allClasses, setAllClasses] = useState<ClassData[]>([]);
+  const [selectedPhase, setSelectedPhase] = useState<string>("ALL");
   const [selectedClass, setSelectedClass] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split("T")[0]);
   const [attendanceData, setAttendanceData] = useState<AttendanceData | null>(null);
@@ -39,28 +51,46 @@ export default function AttendancePage() {
   const [success, setSuccess] = useState(false);
   const [modifications, setModifications] = useState<{ [key: string]: "PRESENT" | "ABSENT" | "LATE" }>({});
   const [notificationMode, setNotificationMode] = useState<"ALL" | "ABSENT" | "LATE">("ALL");
+  const [classesLoading, setClassesLoading] = useState(true);
 
   // Fetch classes on mount
   useEffect(() => {
     async function fetchClasses() {
       try {
         const backendUrl = getBackendUrl();
-        const response = await fetch(`${backendUrl}/api/admin/classes`, {
+        const response = await fetch(`${backendUrl}/api/admin/classes/data`, {
           credentials: "include",
         });
         if (response.ok) {
           const data = await response.json();
-          setClasses(data.classes || []);
-          if (data.classes?.length > 0) {
-            setSelectedClass(data.classes[0].id);
+          const sorted = (data.classes || []).sort((a: any, b: any) => {
+            const phaseOrder = PHASE_ORDER.indexOf(a.phase) - PHASE_ORDER.indexOf(b.phase);
+            if (phaseOrder !== 0) return phaseOrder;
+            return a.name.localeCompare(b.name);
+          });
+          setAllClasses(sorted);
+          if (sorted.length > 0) {
+            setSelectedClass(sorted[0].id);
+            setSelectedPhase(sorted[0].phase);
           }
+        } else {
+          setError("Failed to load classes");
         }
       } catch (err) {
         console.error("Failed to fetch classes:", err);
+        setError("Failed to load classes");
+      } finally {
+        setClassesLoading(false);
       }
     }
     fetchClasses();
   }, []);
+
+  // Filter classes by phase
+  const filteredClasses = useMemo(() => {
+    if (selectedPhase === "ALL") return allClasses;
+    return allClasses.filter((cls) => cls.phase === selectedPhase);
+  }, [allClasses, selectedPhase]);
 
   // Fetch attendance data when class or date changes
   useEffect(() => {
@@ -109,7 +139,6 @@ export default function AttendancePage() {
     try {
       const backendUrl = getBackendUrl();
 
-      // Build attendance array with original + modified statuses
       const attendanceArray = attendanceData.pupils.map((pupil) => ({
         pupilId: pupil.pupilId,
         status: modifications[pupil.pupilId] || pupil.status,
@@ -133,7 +162,6 @@ export default function AttendancePage() {
       setSuccess(true);
       setModifications({});
 
-      // Refresh attendance data
       const refreshResponse = await fetch(
         `${backendUrl}/api/admin/attendance/data?classId=${selectedClass}&date=${selectedDate}`,
         { credentials: "include" }
@@ -173,7 +201,6 @@ export default function AttendancePage() {
         throw new Error("Failed to send notifications");
       }
 
-      const result = await response.json();
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
@@ -199,91 +226,14 @@ export default function AttendancePage() {
     <div className="space-y-6 p-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Attendance Management</h1>
-        <p className="mt-1 text-muted">Track and manage student attendance</p>
+        <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
+          <Calendar className="h-8 w-8 text-brand" />
+          Attendance Management
+        </h1>
+        <p className="mt-1 text-muted">Track and manage student attendance by class and date</p>
       </div>
 
-      {/* Filters */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-2">Class</label>
-          <select
-            value={selectedClass}
-            onChange={(e) => setSelectedClass(e.target.value)}
-            className="w-full rounded-lg border border-border bg-surface px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-brand"
-          >
-            <option value="">Select a class</option>
-            {classes.map((cls) => (
-              <option key={cls.id} value={cls.id}>
-                {cls.name} {cls.arm || ""}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-foreground mb-2">Date</label>
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="w-full rounded-lg border border-border bg-surface px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-brand"
-          />
-        </div>
-
-        <div className="flex items-end">
-          <Button onClick={() => window.location.reload()} variant="secondary" className="w-full">
-            Refresh
-          </Button>
-        </div>
-      </div>
-
-      {/* Summary Stats */}
-      {attendanceData && (
-        <div className="grid gap-4 sm:grid-cols-4">
-          <div className="rounded-lg border border-border bg-surface p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted">Total Pupils</p>
-                <p className="text-2xl font-bold text-foreground">{stats.total}</p>
-              </div>
-              <Users className="h-8 w-8 text-muted" />
-            </div>
-          </div>
-
-          <div className="rounded-lg border border-border bg-surface p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted">Present</p>
-                <p className="text-2xl font-bold text-green-600">{stats.present}</p>
-              </div>
-              <CheckCircle className="h-8 w-8 text-green-600" />
-            </div>
-          </div>
-
-          <div className="rounded-lg border border-border bg-surface p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted">Absent</p>
-                <p className="text-2xl font-bold text-red-600">{stats.absent}</p>
-              </div>
-              <AlertCircle className="h-8 w-8 text-red-600" />
-            </div>
-          </div>
-
-          <div className="rounded-lg border border-border bg-surface p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted">Late</p>
-                <p className="text-2xl font-bold text-orange-600">{stats.late}</p>
-              </div>
-              <Clock className="h-8 w-8 text-orange-600" />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Messages */}
+      {/* Error/Success Messages */}
       {error && (
         <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-600">
           {error}
@@ -295,102 +245,265 @@ export default function AttendancePage() {
         </div>
       )}
 
-      {/* Attendance Grid */}
-      {loading ? (
-        <div className="text-center py-12 text-muted">Loading attendance...</div>
-      ) : attendanceData ? (
-        <div className="space-y-4">
-          <div className="rounded-lg border border-border overflow-hidden">
-            <div className="bg-surface p-4 border-b border-border">
-              <h2 className="font-semibold text-foreground">{attendanceData.className}</h2>
-              <p className="text-sm text-muted">{new Date(attendanceData.date).toLocaleDateString()}</p>
-            </div>
-
-            <div className="divide-y divide-border">
-              {attendanceData.pupils.map((pupil) => {
-                const currentStatus = modifications[pupil.pupilId] || pupil.status;
-                const isModified = modifications[pupil.pupilId] !== undefined;
-
-                return (
-                  <div
-                    key={pupil.pupilId}
-                    className="flex items-center justify-between p-4 hover:bg-surface/50 transition-colors"
-                  >
-                    <div className="flex-1">
-                      <p className="font-medium text-foreground">{pupil.name}</p>
-                      {pupil.guardians.length > 0 && (
-                        <p className="text-xs text-muted">{pupil.guardians[0].name}</p>
-                      )}
-                    </div>
-
-                    <button
-                      onClick={() => toggleStatus(pupil.pupilId)}
-                      className={`
-                        px-4 py-2 rounded-lg font-medium text-sm transition-colors cursor-pointer
-                        ${
-                          currentStatus === "PRESENT"
-                            ? "bg-green-100 text-green-700 hover:bg-green-200"
-                            : currentStatus === "ABSENT"
-                            ? "bg-red-100 text-red-700 hover:bg-red-200"
-                            : "bg-orange-100 text-orange-700 hover:bg-orange-200"
-                        }
-                        ${isModified ? "ring-2 ring-brand/50" : ""}
-                      `}
-                    >
-                      {currentStatus}
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-4 flex-wrap">
-            <Button
-              onClick={handleSaveAttendance}
-              disabled={!hasModifications || saving}
-              className="flex-1 sm:flex-initial"
+      {/* Phase Filters */}
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap gap-2">
+          <label className="text-sm font-medium text-muted">Phase:</label>
+          <button
+            onClick={() => setSelectedPhase("ALL")}
+            className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+              selectedPhase === "ALL"
+                ? "bg-brand text-white"
+                : "bg-background text-muted hover:bg-surface"
+            }`}
+          >
+            All Phases
+          </button>
+          {PHASE_ORDER.map((phase) => (
+            <button
+              key={phase}
+              onClick={() => setSelectedPhase(phase)}
+              className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                selectedPhase === phase
+                  ? "bg-brand text-white"
+                  : "bg-background text-muted hover:bg-surface"
+              }`}
             >
-              {saving ? "Saving..." : "Save Attendance"}
-            </Button>
+              {PHASE_LABELS[phase]}
+            </button>
+          ))}
+        </div>
+      </div>
 
-            <div className="flex gap-2 flex-1 sm:flex-initial">
+      {/* Class & Date Selector */}
+      {classesLoading ? (
+        <div className="rounded-lg border border-border bg-surface p-8 text-center">
+          <p className="text-muted">Loading classes...</p>
+        </div>
+      ) : (
+        <>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">Class</label>
               <select
-                value={notificationMode}
-                onChange={(e) => setNotificationMode(e.target.value as any)}
-                className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand"
+                value={selectedClass}
+                onChange={(e) => {
+                  setSelectedClass(e.target.value);
+                  const selected = allClasses.find((c) => c.id === e.target.value);
+                  if (selected) setSelectedPhase(selected.phase);
+                }}
+                className="w-full rounded-lg border border-border bg-surface px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-brand"
               >
-                <option value="ALL">Notify All</option>
-                <option value="ABSENT">Absent Only</option>
-                <option value="LATE">Late Only</option>
+                <option value="">Select a class</option>
+                {filteredClasses.map((cls) => (
+                  <option key={cls.id} value={cls.id}>
+                    {cls.name} {cls.arm || ""}
+                  </option>
+                ))}
               </select>
+            </div>
 
-              <Button
-                onClick={handleSendNotifications}
-                disabled={notifying}
-                variant="secondary"
-                className="flex-1 sm:flex-initial"
-              >
-                {notifying ? (
-                  <>
-                    <Loader className="h-4 w-4 mr-2 animate-spin" />
-                    Sending...
-                  </>
-                ) : (
-                  <>
-                    <Send className="h-4 w-4 mr-2" />
-                    Notify Parents
-                  </>
-                )}
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">Date</label>
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="w-full rounded-lg border border-border bg-surface px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-brand"
+              />
+            </div>
+
+            <div className="flex items-end">
+              <Button onClick={() => window.location.reload()} variant="secondary" className="w-full">
+                Refresh
               </Button>
             </div>
           </div>
-        </div>
-      ) : (
-        <div className="rounded-lg border border-border bg-surface p-8 text-center">
-          <p className="text-muted">Select a class and date to view attendance</p>
-        </div>
+
+          {/* Summary Cards */}
+          {attendanceData && (
+            <div className="hidden sm:grid grid-cols-4 gap-3">
+              <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50 flex flex-col">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
+                    <Users className="h-4 w-4 text-brand" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs text-muted">Total Pupils</p>
+                    <p className="mt-1 text-lg font-bold text-foreground">{stats.total}</p>
+                  </div>
+                  <ArrowUpRight className="h-3 w-3 text-muted opacity-0 transition-opacity group-hover:opacity-100 flex-shrink-0" />
+                </div>
+                <p className="mt-2 text-[11px] text-muted">All students</p>
+              </div>
+
+              <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50 flex flex-col">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
+                    <CheckCircle className="h-4 w-4 text-brand" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs text-muted">Present</p>
+                    <p className="mt-1 text-lg font-bold text-green-600">{stats.present}</p>
+                  </div>
+                  <ArrowUpRight className="h-3 w-3 text-muted opacity-0 transition-opacity group-hover:opacity-100 flex-shrink-0" />
+                </div>
+                <p className="mt-2 text-[11px] text-muted">{stats.total > 0 ? ((stats.present / stats.total) * 100).toFixed(0) : 0}% of class</p>
+              </div>
+
+              <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50 flex flex-col">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
+                    <AlertCircle className="h-4 w-4 text-brand" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs text-muted">Absent</p>
+                    <p className="mt-1 text-lg font-bold text-red-600">{stats.absent}</p>
+                  </div>
+                  <ArrowUpRight className="h-3 w-3 text-muted opacity-0 transition-opacity group-hover:opacity-100 flex-shrink-0" />
+                </div>
+                <p className="mt-2 text-[11px] text-muted">Not present</p>
+              </div>
+
+              <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50 flex flex-col">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
+                    <Clock className="h-4 w-4 text-brand" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs text-muted">Late</p>
+                    <p className="mt-1 text-lg font-bold text-orange-600">{stats.late}</p>
+                  </div>
+                  <ArrowUpRight className="h-3 w-3 text-muted opacity-0 transition-opacity group-hover:opacity-100 flex-shrink-0" />
+                </div>
+                <p className="mt-2 text-[11px] text-muted">Marked late</p>
+              </div>
+            </div>
+          )}
+
+          {/* Mobile Stats */}
+          {attendanceData && (
+            <div className="sm:hidden space-y-3">
+              <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
+                    <Users className="h-4 w-4 text-brand" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs text-muted">Total Pupils</p>
+                    <p className="mt-1 text-lg font-bold text-foreground">{stats.total}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
+                    <CheckCircle className="h-4 w-4 text-brand" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs text-muted">Present</p>
+                    <p className="mt-1 text-lg font-bold text-green-600">{stats.present}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
+                    <AlertCircle className="h-4 w-4 text-brand" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs text-muted">Absent</p>
+                    <p className="mt-1 text-lg font-bold text-red-600">{stats.absent}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Attendance Grid */}
+          {loading ? (
+            <div className="text-center py-12 text-muted">Loading attendance...</div>
+          ) : attendanceData?.pupils && attendanceData.pupils.length > 0 ? (
+            <>
+              <div className="rounded-lg border border-border overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-border bg-background">
+                        <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Student Name</th>
+                        <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {attendanceData.pupils.map((pupil) => {
+                        const status = modifications[pupil.pupilId] || pupil.status;
+                        const isModified = pupil.pupilId in modifications;
+                        const statusColor =
+                          status === "PRESENT"
+                            ? "bg-green-100 text-green-800"
+                            : status === "ABSENT"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-orange-100 text-orange-800";
+
+                        return (
+                          <tr
+                            key={pupil.pupilId}
+                            className={`hover:bg-surface/50 transition-colors ${isModified ? "ring-2 ring-brand/50" : ""}`}
+                          >
+                            <td className="px-6 py-4 text-sm font-medium text-foreground">{pupil.name}</td>
+                            <td className="px-6 py-4 text-sm">
+                              <button
+                                onClick={() => toggleStatus(pupil.pupilId)}
+                                className={`px-3 py-1 rounded-full text-xs font-semibold transition ${statusColor} cursor-pointer hover:opacity-80`}
+                              >
+                                {status}
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 flex-col sm:flex-row">
+                <Button
+                  onClick={handleSaveAttendance}
+                  disabled={!hasModifications || saving}
+                  className="flex-1"
+                >
+                  {saving ? "Saving..." : "Save Attendance"}
+                </Button>
+                <div className="flex gap-2 flex-1">
+                  <select
+                    value={notificationMode}
+                    onChange={(e) => setNotificationMode(e.target.value as "ALL" | "ABSENT" | "LATE")}
+                    className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground"
+                  >
+                    <option value="ALL">Notify All</option>
+                    <option value="ABSENT">Notify Absent Only</option>
+                    <option value="LATE">Notify Late Only</option>
+                  </select>
+                  <Button
+                    onClick={handleSendNotifications}
+                    disabled={notifying}
+                    variant="secondary"
+                    className="flex items-center gap-2"
+                  >
+                    <Send className="h-4 w-4" />
+                    {notifying ? "Sending..." : "Send Notifications"}
+                  </Button>
+                </div>
+              </div>
+            </>
+          ) : !loading && attendanceData ? (
+            <div className="rounded-lg border border-border bg-surface p-8 text-center">
+              <p className="text-muted">No pupils in this class</p>
+            </div>
+          ) : null}
+        </>
       )}
     </div>
   );

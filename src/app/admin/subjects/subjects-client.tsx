@@ -378,21 +378,16 @@ export default function SubjectsPageClient({
 
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-3xl rounded-3xl border border-border bg-surface p-6 shadow-2xl">
-            <div className="mb-6 flex items-start justify-between gap-4">
-              <div>
-                <h2 className="text-xl font-semibold text-foreground">
-                  {selectedSubject ? "Edit subject" : "Add new subject"}
-                </h2>
-                <p className="mt-2 text-sm text-muted">
-                  {selectedSubject
-                    ? "Update the subject name and the classes it belongs to."
-                    : "Create a new subject and assign it to one or more classes."}
-                </p>
-              </div>
-              <Button variant="outline" onClick={() => setIsOpen(false)}>
-                Close
-              </Button>
+          <div className="w-full max-w-2xl rounded-3xl border border-border bg-surface p-4 sm:p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold text-foreground">
+                {selectedSubject ? "Edit subject" : "Add new subject"}
+              </h2>
+              <p className="mt-2 text-sm text-muted">
+                {selectedSubject
+                  ? "Update the subject name and the classes it belongs to."
+                  : "Create a new subject and assign it to one or more classes."}
+              </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -467,7 +462,7 @@ export default function SubjectsPageClient({
                 </div>
               )}
 
-              <div className="flex justify-between items-center">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pt-4 border-t border-border">
                 <div>
                   {selectedSubject && (
                     <Button
@@ -475,16 +470,17 @@ export default function SubjectsPageClient({
                       onClick={handleDelete}
                       variant="destructive"
                       disabled={loading}
+                      className="w-full sm:w-auto"
                     >
                       Delete subject
                     </Button>
                   )}
                 </div>
-                <div className="flex flex-col gap-3 sm:flex-row">
-                  <Button type="button" variant="outline" onClick={() => setIsOpen(false)} disabled={loading}>
+                <div className="flex flex-col gap-2 sm:flex-row sm:gap-3 w-full sm:w-auto">
+                  <Button type="button" variant="outline" onClick={() => setIsOpen(false)} disabled={loading} className="w-full sm:w-auto">
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={loading}>
+                  <Button type="submit" disabled={loading} className="w-full sm:w-auto">
                     {loading ? "Saving..." : selectedSubject ? "Save changes" : "Add subject"}
                   </Button>
                 </div>

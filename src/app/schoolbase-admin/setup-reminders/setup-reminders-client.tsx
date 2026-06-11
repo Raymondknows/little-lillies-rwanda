@@ -59,16 +59,59 @@ export default function SetupRemindersClient({
           fetch(`${backendUrl}/schoolbase-admin/api/schools?limit=500`, {
             credentials: "include",
           }),
-          fetch(`${backendUrl}/schoolbase-admin/api/email-logs?limit=500`, {
+          fetch(`${backendUrl}/schoolbase-admin/api/email-logs?emailType=SETUP_COMPLETION_REMINDER&limit=500`, {
             credentials: "include",
           }),
         ]);
         
+        if (!schoolsRes.ok) {
+          console.error('Schools fetch failed:', schoolsRes.status, await schoolsRes.text());
+          setPageLoading(false);
+          return;
+        }
+        
         const schoolsData = await schoolsRes.json();
-        const logsData = await logsRes.json();
+        const logsData = logsRes.ok ? await logsRes.json() : { logs: [] };
         
         setSchools(schoolsData.schools || []);
         setEmailLogs(logsData.logs || []);
+        
+        // Load setup status for each school
+        if (schoolsData.schools && schoolsData.schools.length > 0) {
+          const statuses: Record<string, any> = {};
+          for (const school of schoolsData.schools) {
+            try {
+              const statusRes = await fetch(`${backendUrl}/api/admin/school/${school.id}/setup-status`, {
+                credentials: "include",
+              });
+              if (statusRes.ok) {
+                const statusData = await statusRes.json();
+                // Map backend field names to frontend field names
+                statuses[school.id] = {
+                  isComplete: statusData.isComplete,
+                  completionPercent: statusData.completionPercentage || 0,
+                  incompleteTasks: statusData.incompleteItems || [],
+                };
+              } else {
+                // Default status if endpoint fails
+                statuses[school.id] = {
+                  isComplete: false,
+                  completionPercent: 0,
+                  incompleteTasks: [],
+                };
+              }
+            } catch (err) {
+              console.error(`Failed to load setup status for school ${school.id}:`, err);
+              statuses[school.id] = {
+                isComplete: false,
+                completionPercent: 0,
+                incompleteTasks: [],
+              };
+            }
+          }
+          setSetupStatuses(statuses);
+        }
+        
         setPageLoading(false);
       } catch (err) {
         console.error("Error loading data:", err);
@@ -138,25 +181,25 @@ export default function SetupRemindersClient({
     }
   };
 
-  const displaySchools = useMemo(
-    () => initialSchools,
-    [initialSchools]
-  );
-
   const incompleteSchools = useMemo(
-    () => displaySchools.filter(school => {
+    () => schools.filter(school => {
       const status = setupStatuses[school.id];
       return status && !status.isComplete;
     }),
-    [displaySchools, setupStatuses]
+    [schools, setupStatuses]
+  );
+
+  const displaySchools = useMemo(
+    () => (filter === "all" ? schools : incompleteSchools),
+    [schools, incompleteSchools, filter]
   );
 
   const completeCount = useMemo(
-    () => displaySchools.filter(school => {
+    () => schools.filter(school => {
       const status = setupStatuses[school.id];
       return status && status.isComplete;
     }).length,
-    [displaySchools, setupStatuses]
+    [schools, setupStatuses]
   );
 
   const totalPages = Math.max(1, Math.ceil(displaySchools.length / itemsPerPage));
@@ -262,8 +305,8 @@ export default function SetupRemindersClient({
 
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
           <p className="text-sm text-muted">
-            Showing {paginatedSchools.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0}–
-            {Math.min(currentPage * itemsPerPage, displaySchools.length)} of {displaySchools.length} schools
+            Showing {pageLoading ? "..." : (paginatedSchools.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0)}–
+            {pageLoading ? "..." : Math.min(currentPage * itemsPerPage, displaySchools.length)} of {pageLoading ? "..." : displaySchools.length} schools
           </p>
           <label className="text-sm text-muted">
             Rows per page
@@ -336,7 +379,7 @@ export default function SetupRemindersClient({
                         </div>
                       </td>
                       <td className="px-4 py-4">
-                        {status.incompleteTasks.length === 0 ? (
+                        {(!status.incompleteTasks || status.incompleteTasks.length === 0) ? (
                           <span className="inline-flex rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-700">
                             ✓ Complete
                           </span>

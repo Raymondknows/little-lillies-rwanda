@@ -35,11 +35,45 @@ export async function sendPlatformCommunicationEmailAction(...args: any[]): Prom
 }
 
 export async function sendSetupCompletionRemindersAction(...args: any[]): Promise<any> {
-  throw new Error("Use POST /api/platform-admin/reminders instead");
+  try {
+    const backendUrl = getBackendUrl();
+    
+    const response = await fetch(`${backendUrl}/schoolbase-admin/api/reminders/send-bulk`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({}),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to send reminders (${response.status})`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    throw new Error(error instanceof Error ? error.message : 'Failed to send reminders');
+  }
 }
 
-export async function sendSetupCompletionReminder(...args: any[]): Promise<any> {
-  throw new Error("Use POST /api/platform-admin/reminders instead");
+export async function sendSetupCompletionReminder(schoolId: string): Promise<any> {
+  try {
+    const backendUrl = getBackendUrl();
+    
+    const response = await fetch(`${backendUrl}/schoolbase-admin/api/reminders/send-single`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ schoolId }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to send reminder (${response.status})`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    throw new Error(error instanceof Error ? error.message : 'Failed to send reminder');
+  }
 }
 
 export async function setSchoolPlanAction(...args: any[]): Promise<any> {
@@ -54,14 +88,64 @@ export async function rejectSchoolSubscriptionAction(...args: any[]): Promise<an
   throw new Error("Use POST /api/schoolbase-admin/subscriptions/reject instead");
 }
 
-export async function createVideoAction(...args: any[]): Promise<any> {
-  throw new Error("Use POST /api/schoolbase-admin/videos instead");
+export async function createVideoAction(data: any): Promise<any> {
+  try {
+    const backendUrl = getBackendUrl();
+    
+    const response = await fetch(`${backendUrl}/schoolbase-admin/api/videos`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to create video (${response.status})`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    throw new Error(error instanceof Error ? error.message : 'Failed to create video');
+  }
 }
 
-export async function updateVideoAction(...args: any[]): Promise<any> {
-  throw new Error("Use PATCH /api/schoolbase-admin/videos instead");
+export async function updateVideoAction(videoId: string, data: any): Promise<any> {
+  try {
+    const backendUrl = getBackendUrl();
+    
+    const response = await fetch(`${backendUrl}/schoolbase-admin/api/videos/${videoId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to update video (${response.status})`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    throw new Error(error instanceof Error ? error.message : 'Failed to update video');
+  }
 }
 
-export async function deleteVideoAction(...args: any[]): Promise<any> {
-  throw new Error("Use DELETE /api/schoolbase-admin/videos instead");
+export async function deleteVideoAction(videoId: string): Promise<any> {
+  try {
+    const backendUrl = getBackendUrl();
+    
+    const response = await fetch(`${backendUrl}/schoolbase-admin/api/videos/${videoId}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to delete video (${response.status})`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    throw new Error(error instanceof Error ? error.message : 'Failed to delete video');
+  }
 }

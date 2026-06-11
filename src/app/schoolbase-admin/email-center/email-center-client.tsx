@@ -256,7 +256,8 @@ export default function EmailCenterClient({
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch email logs');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to fetch email logs (${response.status})`);
       }
 
       const data = await response.json();

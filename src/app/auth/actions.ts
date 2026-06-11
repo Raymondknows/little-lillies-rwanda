@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
+import { getBackendUrl } from "@/lib/backend-url";
 
 // Server actions for authentication workflows
 
@@ -11,12 +12,24 @@ export async function staffLoginAction(formData: FormData) {
 
 export async function staffLogoutAction() {
   try {
-    // Delete the session cookie directly
-    const cookieStore = await cookies();
-    cookieStore.delete('schoolbase_session');
+    // ✅ CRITICAL: Call backend to clear server-side session
+    const response = await fetch(
+      `${getBackendUrl()}/api/auth/logout`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      }
+    );
   } catch (error) {
-    console.error('Logout error:', error);
+    console.error("Logout failed:", error);
   }
+
+  // Clear all session cookies
+  const cookieStore = await cookies();
+  cookieStore.delete('schoolbase_session');
+  cookieStore.delete('schoolbase_staff');
+  cookieStore.delete('schoolbase_parent');
 
   // Redirect to login page
   redirect('/login');
@@ -28,12 +41,24 @@ export async function parentLoginAction(formData: FormData) {
 
 export async function platformAdminLogoutAction() {
   try {
-    // Delete the session cookie directly
-    const cookieStore = await cookies();
-    cookieStore.delete('schoolbase_session');
+    // ✅ CRITICAL: Call backend to clear server-side session
+    const response = await fetch(
+      `${getBackendUrl()}/api/auth/logout`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      }
+    );
   } catch (error) {
-    console.error('Logout error:', error);
+    console.error("Logout failed:", error);
   }
+
+  // Clear all session cookies
+  const cookieStore = await cookies();
+  cookieStore.delete('schoolbase_session');
+  cookieStore.delete('schoolbase_staff');
+  cookieStore.delete('schoolbase_parent');
 
   // Redirect to login page
   redirect('/schoolbase-admin/login');
@@ -41,12 +66,24 @@ export async function platformAdminLogoutAction() {
 
 export async function parentLogoutAction() {
   try {
-    // Delete the session cookie directly
-    const cookieStore = await cookies();
-    cookieStore.delete('schoolbase_session');
+    // ✅ CRITICAL: Call backend to clear server-side session
+    const response = await fetch(
+      `${getBackendUrl()}/api/auth/logout`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      }
+    );
   } catch (error) {
-    console.error('Logout error:', error);
+    console.error("Logout failed:", error);
   }
+
+  // Clear all session cookies
+  const cookieStore = await cookies();
+  cookieStore.delete('schoolbase_session');
+  cookieStore.delete('schoolbase_staff');
+  cookieStore.delete('schoolbase_parent');
 
   // Redirect to login page
   redirect('/login');

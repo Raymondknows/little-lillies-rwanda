@@ -1,5 +1,5 @@
 export type InvoiceStatus = "PENDING" | "PAID" | "PARTIAL" | "OVERDUE" | "CANCELLED";
-export type ResultStatus = "DRAFT" | "PUBLISHED" | "ARCHIVED";
+export type ResultStatus = "DRAFT" | "APPROVED" | "PUBLISHED";
 
 export function formatMoney(amountMinor: number, currency = "NGN") {
   const value = amountMinor / 100;
@@ -40,8 +40,8 @@ export function invoiceStatusClass(status: InvoiceStatus): string {
 export function resultStatusLabel(status: ResultStatus): string {
   const map: Record<ResultStatus, string> = {
     DRAFT: "Draft",
+    APPROVED: "Ready to Publish",
     PUBLISHED: "Published",
-    ARCHIVED: "Archived",
   };
   return map[status] ?? status;
 }

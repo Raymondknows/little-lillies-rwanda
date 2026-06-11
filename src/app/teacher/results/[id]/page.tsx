@@ -95,7 +95,7 @@ export default function TeacherAssessmentDetailPage({
             isPublished ? "success" : assessment.status === "APPROVED" ? "brand" : "default"
           }
         >
-          {resultStatusLabel(assessment.status)}
+          {resultStatusLabel(assessment.status as any)}
         </Badge>
       </div>
 

@@ -129,54 +129,52 @@ export default function TeacherResultsPageClient({ assessments }: { assessments:
           />
         </div>
 
-        {/* Phase Tabs */}
-        <div className="mb-6 flex flex-wrap gap-2">
-          <span className="text-sm font-medium text-muted self-center">Phase:</span>
-          {PHASE_ORDER.map((phase) => {
-            const count = getPhaseStats(phase);
-            const config = PHASE_CONFIG[phase as keyof typeof PHASE_CONFIG];
-            const isActive = activePhase === phase;
+        {/* Phase Tabs and Status Dropdown */}
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          {/* Phase Tabs */}
+          <div className="flex flex-wrap gap-2">
+            <span className="text-sm font-medium text-muted self-center">Phase:</span>
+            {PHASE_ORDER.map((phase) => {
+              const count = getPhaseStats(phase);
+              const config = PHASE_CONFIG[phase as keyof typeof PHASE_CONFIG];
+              const isActive = activePhase === phase;
 
-            return (
-              <button
-                key={phase}
-                onClick={() => handlePhaseChange(phase)}
-                className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
-                  isActive
-                    ? "bg-brand text-white"
-                    : "bg-background text-muted hover:bg-surface"
-                }`}
-              >
-                {config.label}
-                <span className="ml-1 inline-block">({count})</span>
-              </button>
-            );
-          })}
-        </div>
+              return (
+                <button
+                  key={phase}
+                  onClick={() => handlePhaseChange(phase)}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                    isActive
+                      ? "bg-brand text-white"
+                      : "bg-background text-muted hover:bg-surface"
+                  }`}
+                >
+                  {config.label}
+                  <span className="ml-1 inline-block">({count})</span>
+                </button>
+              );
+            })}
+          </div>
 
-        {/* Status Tabs */}
-        <div className="mb-6 flex flex-wrap gap-2">
-          <span className="text-sm font-medium text-muted self-center">Status:</span>
-          {STATUS_ORDER.map((status) => {
-            const count = getStatusStats(status);
-            const config = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG];
-            const isActive = activeStatus === status;
-
-            return (
-              <button
-                key={status}
-                onClick={() => handleStatusChange(status)}
-                className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
-                  isActive
-                    ? "bg-brand text-white"
-                    : "bg-background text-muted hover:bg-surface"
-                }`}
-              >
-                {config.label}
-                <span className="ml-1 inline-block">({count})</span>
-              </button>
-            );
-          })}
+          {/* Status Dropdown */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-muted">Status:</span>
+            <select
+              value={activeStatus}
+              onChange={(e) => handleStatusChange(e.target.value)}
+              className="rounded-lg border border-border bg-surface px-3 py-1 text-xs font-medium text-foreground hover:bg-background focus:outline-none focus:ring-2 focus:ring-brand transition"
+            >
+              {STATUS_ORDER.map((status) => {
+                const count = getStatusStats(status);
+                const config = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG];
+                return (
+                  <option key={status} value={status}>
+                    {config.label} ({count})
+                  </option>
+                );
+              })}
+            </select>
+          </div>
         </div>
 
         {/* Results Info */}
@@ -205,6 +203,7 @@ export default function TeacherResultsPageClient({ assessments }: { assessments:
                 <tbody>
                   {paginatedAssessments.map((a) => {
                     const isPublished = a.status === "PUBLISHED";
+                    const isDraft = a.status === "DRAFT";
                     const statusConfig = STATUS_CONFIG[a.status as keyof typeof STATUS_CONFIG];
                     const StatusIcon = statusConfig.icon;
 
@@ -230,13 +229,23 @@ export default function TeacherResultsPageClient({ assessments }: { assessments:
                           </Badge>
                         </td>
                         <td className="px-3 py-2 sm:px-4">
-                          <Link
-                            href={`/teacher/results/${a.id}`}
-                            className="bg-brand text-white hover:bg-brand-dark text-xs sm:text-sm font-medium flex items-center gap-1 px-3 py-1.5 rounded-lg transition inline-flex"
-                          >
-                            {isPublished ? "View Results" : "Manage Results"}
-                            <ChevronRight className="w-3 h-3" />
-                          </Link>
+                          <div className="flex gap-2 flex-wrap">
+                            <Link
+                              href={`/teacher/results/${a.id}`}
+                              className="bg-brand text-white hover:bg-brand-dark text-xs sm:text-sm font-medium flex items-center gap-1 px-3 py-1.5 rounded-lg transition inline-flex"
+                            >
+                              {isPublished ? "View Results" : isDraft ? "Enter Scores" : "Continue Entry"}
+                              <ChevronRight className="w-3 h-3" />
+                            </Link>
+                            {!isPublished && (
+                              <Link
+                                href={`/teacher/results/${a.id}/subjects`}
+                                className="border border-brand text-brand hover:bg-brand/5 text-xs sm:text-sm font-medium flex items-center gap-1 px-3 py-1.5 rounded-lg transition inline-flex"
+                              >
+                                By Subject
+                              </Link>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );
@@ -249,21 +258,21 @@ export default function TeacherResultsPageClient({ assessments }: { assessments:
             <div className="sm:hidden space-y-2">
               {paginatedAssessments.map((a) => {
                 const isPublished = a.status === "PUBLISHED";
+                const isDraft = a.status === "DRAFT";
                 const statusConfig = STATUS_CONFIG[a.status as keyof typeof STATUS_CONFIG];
                 const StatusIcon = statusConfig.icon;
 
                 return (
-                  <Link
+                  <div
                     key={a.id}
-                    href={`/teacher/results/${a.id}`}
-                    className="block rounded-lg border border-border bg-surface px-4 py-2 hover:bg-background/50 transition-colors"
+                    className="rounded-lg border border-border bg-surface overflow-hidden"
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1 min-w-0">
+                    <Link
+                      href={`/teacher/results/${a.id}`}
+                      className="block px-4 py-3 hover:bg-background/50 transition-colors"
+                    >
+                      <div className="flex items-center justify-between mb-2">
                         <p className="font-medium text-sm truncate">{a.name}</p>
-                        <p className="text-xs text-muted mt-1">{a.term?.name || "—"}</p>
-                      </div>
-                      <div className="flex-shrink-0 text-right ml-2">
                         <Badge
                           variant={
                             isPublished ? "success" : a.status === "APPROVED" ? "brand" : "default"
@@ -273,8 +282,25 @@ export default function TeacherResultsPageClient({ assessments }: { assessments:
                           {resultStatusLabel(a.status)}
                         </Badge>
                       </div>
+                      <p className="text-xs text-muted">{a.term?.name || "—"}</p>
+                    </Link>
+                    <div className="border-t border-border px-4 py-2 bg-background/50 flex gap-2">
+                      <Link
+                        href={`/teacher/results/${a.id}`}
+                        className="flex-1 bg-brand text-white hover:bg-brand-dark text-xs font-medium py-1.5 rounded text-center transition"
+                      >
+                        {isPublished ? "View" : isDraft ? "Enter" : "Continue"}
+                      </Link>
+                      {!isPublished && (
+                        <Link
+                          href={`/teacher/results/${a.id}/subjects`}
+                          className="flex-1 border border-brand text-brand hover:bg-brand/5 text-xs font-medium py-1.5 rounded text-center transition"
+                        >
+                          By Subject
+                        </Link>
+                      )}
                     </div>
-                  </Link>
+                  </div>
                 );
               })}
             </div>

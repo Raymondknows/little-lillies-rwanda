@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { BookOpen } from "lucide-react";
 
 interface Pupil {
   id: string;
@@ -15,6 +16,11 @@ interface ScoreEntry {
   examScore: number | null;
 }
 
+interface Subject {
+  id: string;
+  name: string;
+}
+
 export function AssessmentScores({
   assessmentId,
   pupils,
@@ -24,6 +30,9 @@ export function AssessmentScores({
   pupils: Pupil[];
   existingResults: Record<string, any>;
 }) {
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [selectedSubject, setSelectedSubject] = useState<string>("");
+  const [loadingSubjects, setLoadingSubjects] = useState(true);
   const [scores, setScores] = useState<Record<string, ScoreEntry>>(() => {
     const initial: Record<string, ScoreEntry> = {};
     pupils.forEach((pupil) => {
@@ -37,6 +46,30 @@ export function AssessmentScores({
     });
     return initial;
   });
+
+  // Load available subjects
+  useEffect(() => {
+    const fetchSubjects = async () => {
+      try {
+        setLoadingSubjects(true);
+        const res = await fetch("/api/admin/subjects");
+        if (res.ok) {
+          const data = await res.json();
+          setSubjects(data.subjects || []);
+          // Auto-select first subject if available
+          if (data.subjects?.length > 0) {
+            setSelectedSubject(data.subjects[0].name);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load subjects:", err);
+      } finally {
+        setLoadingSubjects(false);
+      }
+    };
+
+    fetchSubjects();
+  }, []);
 
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -70,6 +103,7 @@ export function AssessmentScores({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           assessmentId,
+          subject: selectedSubject || null,
           entries: entries.map((e) => ({
             ...e,
             totalScore:
@@ -109,6 +143,37 @@ export function AssessmentScores({
           {message.text}
         </div>
       )}
+
+      {/* Subject Selector */}
+      <div className="rounded-lg border border-border bg-surface p-4">
+        <label className="block text-sm font-medium text-foreground mb-2">
+          <div className="flex items-center gap-2 mb-3">
+            <BookOpen className="w-4 h-4" />
+            <span>Subject (Optional)</span>
+          </div>
+        </label>
+        {loadingSubjects ? (
+          <div className="text-sm text-muted animate-pulse">Loading subjects...</div>
+        ) : subjects.length > 0 ? (
+          <select
+            value={selectedSubject}
+            onChange={(e) => setSelectedSubject(e.target.value)}
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">-- No Subject (General Assessment) --</option>
+            {subjects.map((subject) => (
+              <option key={subject.id} value={subject.name}>
+                {subject.name}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <p className="text-sm text-muted">No subjects available</p>
+        )}
+        {selectedSubject && (
+          <p className="text-xs text-muted mt-2">Scores will be saved for: <strong>{selectedSubject}</strong></p>
+        )}
+      </div>
 
       <div className="overflow-x-auto rounded-lg border border-border bg-surface">
         <table className="w-full text-left text-xs sm:text-sm">

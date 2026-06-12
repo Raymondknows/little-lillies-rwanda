@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState, use } from "react";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, PenSquare, FileText } from "lucide-react";
 import { resultStatusLabel } from "@/lib/format";
 
 interface AssessmentResult {
@@ -15,6 +16,7 @@ interface AssessmentResult {
   examScore: number | null;
   totalScore: number | null;
   grade: string | null;
+  subject?: string;
 }
 
 interface Assessment {
@@ -23,6 +25,7 @@ interface Assessment {
   phase: string;
   status: string;
   results: AssessmentResult[];
+  subjects?: string[];
 }
 
 export default function TeacherAssessmentDetailPage({
@@ -89,14 +92,44 @@ export default function TeacherAssessmentDetailPage({
         <div>
           <h1 className="text-2xl font-bold text-foreground">{assessment.name}</h1>
           <p className="text-sm text-muted mt-1">Phase: {assessment.phase}</p>
+          {assessment.subjects && assessment.subjects.length > 0 && (
+            <div className="mt-2">
+              <Badge variant="outline" className="bg-brand/5 text-brand border-brand/30">
+                Subject-based scoring enabled
+              </Badge>
+            </div>
+          )}
         </div>
-        <Badge
-          variant={
-            isPublished ? "success" : assessment.status === "APPROVED" ? "brand" : "default"
-          }
-        >
-          {resultStatusLabel(assessment.status as any)}
-        </Badge>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Badge
+            variant={
+              isPublished ? "success" : assessment.status === "APPROVED" ? "brand" : "default"
+            }
+          >
+            {resultStatusLabel(assessment.status as "DRAFT" | "APPROVED" | "PUBLISHED")}
+          </Badge>
+          {assessment.status === "DRAFT" && (
+            <>
+              <Link href={`/teacher/results/${id}/subjects`}>
+                <Button className="gap-2">
+                  <PenSquare className="w-4 h-4" />
+                  Enter Scores by Subject
+                </Button>
+              </Link>
+              <Link href={`/teacher/results/${id}/subjects`}>
+                <Button variant="outline" className="gap-2">
+                  Select Subject
+                </Button>
+              </Link>
+            </>
+          )}
+          <Link href={`/teacher/results/${id}/reports`}>
+            <Button variant="outline" className="gap-2">
+              <FileText className="w-4 h-4" />
+              View Reports
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {error && (
@@ -113,6 +146,24 @@ export default function TeacherAssessmentDetailPage({
           </p>
         </div>
       )}
+
+      {/* Subject Context Header */}
+      <div className="mb-6 rounded-lg border border-border bg-surface p-4">
+        <h3 className="text-sm font-semibold text-foreground mb-3">Subjects in this assessment</h3>
+        {assessment.subjects && assessment.subjects.length > 0 ? (
+          <div className="flex flex-wrap gap-2">
+            {assessment.subjects.map((subject) => (
+              <Badge key={subject} variant="secondary" className="bg-brand/10 text-brand border-brand/30">
+                {subject}
+              </Badge>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted">
+            Subject-based entry available via "Enter Scores by Subject" flow
+          </p>
+        )}
+      </div>
 
       {/* Results Table */}
       <div className="rounded-lg border border-border bg-surface overflow-hidden">
@@ -167,7 +218,7 @@ export default function TeacherAssessmentDetailPage({
 
       {/* Statistics */}
       {hasResults && (
-        <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="mt-6 grid grid-cols-2 sm:grid-cols-5 gap-4">
           <div className="rounded-lg border border-border bg-surface p-4">
             <p className="text-xs text-muted font-medium">Total Students</p>
             <p className="text-2xl font-bold text-foreground mt-1">{assessment.results.length}</p>
@@ -197,6 +248,12 @@ export default function TeacherAssessmentDetailPage({
                 : "—"}
             </p>
           </div>
+          {assessment.subjects && assessment.subjects.length > 0 && (
+            <div className="rounded-lg border border-border bg-surface p-4">
+              <p className="text-xs text-muted font-medium">Subjects Covered</p>
+              <p className="text-2xl font-bold text-foreground mt-1">{assessment.subjects.length}</p>
+            </div>
+          )}
         </div>
       )}
     </div>

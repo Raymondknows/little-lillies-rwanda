@@ -19,6 +19,7 @@
     "@prisma/client": "^6.19.3",
     "@schoolbase/database": "file:../packages/database",
     "bcryptjs": "^3.0.2",
+    "date-fns": "^4.4.0",
     "jose": "^6.0.11",
     "lucide-react": "^0.511.0",
     "next": "16.2.6",

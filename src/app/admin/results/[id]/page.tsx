@@ -5,8 +5,13 @@ import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Table2, ChevronRight } from "lucide-react";
+import { Table2, ChevronRight, AlertCircle } from "lucide-react";
 import { AssessmentScores } from "@/components/admin/assessment-scores";
+import { AssessmentSetupWizard } from "@/components/admin/assessment-setup-wizard";
+import { AssessmentActionsPanel } from "@/components/admin/assessment-actions-panel";
+import { ClassStatistics } from "@/components/admin/class-statistics";
+import { AuditTrail } from "@/components/admin/audit-trail";
+import { AdminReportsTab } from "@/components/admin/admin-reports-tab";
 
 interface Assessment {
   id: string;
@@ -39,6 +44,14 @@ export default function AssessmentDetailPage({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview");
+  const [showSetupWizard, setShowSetupWizard] = useState(false);
+  const [schoolId, setSchoolId] = useState("");
+
+  useEffect(() => {
+    const school = localStorage.getItem("schoolId");
+    if (school) setSchoolId(school);
+  }, []);
 
   useEffect(() => {
     const fetchAssessment = async () => {
@@ -148,7 +161,7 @@ export default function AssessmentDetailPage({
   );
 
   return (
-    <div className="mx-auto max-w-6xl px-3 py-4">
+    <div className="mx-auto max-w-7xl px-3 py-4">
       <Link href="/admin/results" className="text-sm font-medium text-brand hover:underline">
         ← Results
       </Link>
@@ -173,7 +186,145 @@ export default function AssessmentDetailPage({
         </div>
       )}
 
-      {assessment.status === "DRAFT" && pupils.length > 0 && (
+      {/* Setup Wizard Modal */}
+      {showSetupWizard && (
+        <div className="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
+          <AssessmentSetupWizard
+            assessmentId={id}
+            onSetupComplete={() => {
+              setShowSetupWizard(false);
+              window.location.reload();
+            }}
+            onCancel={() => setShowSetupWizard(false)}
+          />
+        </div>
+      )}
+
+      {/* Tab Navigation */}
+      <div className="mt-6 border-b border-gray-200">
+        <div className="flex gap-4 overflow-x-auto">
+          <button
+            onClick={() => setActiveTab("overview")}
+            className={`px-4 py-3 font-medium text-sm border-b-2 transition ${
+              activeTab === "overview"
+                ? "border-blue-500 text-blue-600"
+                : "border-transparent text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            Overview
+          </button>
+          <button
+            onClick={() => setActiveTab("scores")}
+            className={`px-4 py-3 font-medium text-sm border-b-2 transition ${
+              activeTab === "scores"
+                ? "border-blue-500 text-blue-600"
+                : "border-transparent text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            Scores
+          </button>
+          <button
+            onClick={() => setActiveTab("statistics")}
+            className={`px-4 py-3 font-medium text-sm border-b-2 transition ${
+              activeTab === "statistics"
+                ? "border-blue-500 text-blue-600"
+                : "border-transparent text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            Statistics
+          </button>
+          <button
+            onClick={() => setActiveTab("audit")}
+            className={`px-4 py-3 font-medium text-sm border-b-2 transition ${
+              activeTab === "audit"
+                ? "border-blue-500 text-blue-600"
+                : "border-transparent text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            Audit Trail
+          </button>
+          <button
+            onClick={() => setActiveTab("reports")}
+            className={`px-4 py-3 font-medium text-sm border-b-2 transition ${
+              activeTab === "reports"
+                ? "border-blue-500 text-blue-600"
+                : "border-transparent text-gray-600 hover:text-gray-900"
+            }`}
+          >
+            Reports
+          </button>
+        </div>
+      </div>
+
+      {/* Overview Tab */}
+      {activeTab === "overview" && (
+        <div className="mt-6 space-y-6">
+          {/* Setup Wizard Prompt */}
+          {assessment.status === "DRAFT" && !showSetupWizard && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-amber-900">Assessment Not Configured</h3>
+                  <p className="text-sm text-amber-800 mt-1">
+                    Define the grading structure (CA/Test/Exam weights) before proceeding.
+                  </p>
+                  <Button
+                    onClick={() => setShowSetupWizard(true)}
+                    className="mt-3"
+                  >
+                    Configure Assessment
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Assessment Actions Panel */}
+          <div>
+            <h2 className="text-lg font-semibold mb-4">Assessment Management</h2>
+            <AssessmentActionsPanel
+              assessmentId={id}
+              status={assessment.status}
+              schoolId={schoolId}
+              onStatusChange={(newStatus) => {
+                setAssessment({ ...assessment, status: newStatus });
+              }}
+            />
+          </div>
+
+          {/* Quick Actions */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Link href={`/admin/results/${id}/broadsheet`}>
+              <Button className="w-full" variant="outline">
+                <Table2 className="mr-2 h-4 w-4" />
+                View Broadsheet
+              </Button>
+            </Link>
+            <Link href={`/admin/results/${id}/report`}>
+              <Button className="w-full" variant="outline">
+                View Report Cards
+              </Button>
+            </Link>
+            <Button className="w-full" variant="outline" disabled>
+              Download Results
+            </Button>
+          </div>
+
+          {assessment.status === "PUBLISHED" && (
+            <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+              <p className="text-sm text-green-700 font-medium">✓ Published to Parents</p>
+              <p className="text-sm text-green-600 mt-1">
+                Results were published on{" "}
+                {new Date(assessment.publishedAt || "").toLocaleDateString()}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Scores Tab */}
+      {activeTab === "scores" && assessment.status === "DRAFT" && pupils.length > 0 && (
         <div className="mt-6 space-y-4">
           <div>
             <h2 className="text-lg font-semibold">Enter Assessment Scores</h2>
@@ -187,53 +338,16 @@ export default function AssessmentDetailPage({
         </div>
       )}
 
-      {assessment.status === "PUBLISHED" && (
-        <div className="mt-6 rounded-lg border border-green-200 bg-green-50 p-4">
-          <p className="text-sm text-green-700 font-medium">✓ Published to Parents</p>
-          <p className="text-sm text-green-600 mt-1">
-            Results were published on{" "}
-            {new Date(assessment.publishedAt || "").toLocaleDateString()}
+      {activeTab === "scores" && assessment.status !== "DRAFT" && (
+        <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-8 text-center">
+          <p className="text-gray-600">
+            Scores cannot be edited after leaving draft status
           </p>
         </div>
       )}
 
-      {/* Management Actions */}
-      <div className="mt-6 flex flex-wrap gap-3 border-t border-border pt-4">
-        {assessment.status === "DRAFT" && (
-          <Button
-            onClick={handleApprove}
-            disabled={actionLoading || pupils.length === 0}
-            variant="secondary"
-          >
-            {actionLoading ? "Approving..." : "Mark Ready to Publish"}
-          </Button>
-        )}
-
-        {assessment.status === "APPROVED" && (
-          <>
-            <Button onClick={handlePublish} disabled={actionLoading}>
-              {actionLoading ? "Publishing..." : "Publish to Parents"}
-            </Button>
-            <Button
-              onClick={handleReturnDraft}
-              disabled={actionLoading}
-              variant="secondary"
-            >
-              {actionLoading ? "Returning..." : "Return to Draft"}
-            </Button>
-          </>
-        )}
-
-        <Link href={`/admin/results/${id}/broadsheet`}>
-          <Button variant="secondary">
-            <Table2 className="mr-2 h-4 w-4" />
-            View Broadsheet
-          </Button>
-        </Link>
-      </div>
-
-      {/* Results Summary */}
-      {pupils.length > 0 && (
+      {/* Results Summary Table */}
+      {activeTab === "scores" && pupils.length > 0 && (
         <div className="mt-6">
           <h2 className="text-lg font-semibold mb-3">Scores Entered</h2>
           <div className="overflow-x-auto rounded-lg border border-border bg-surface">
@@ -245,6 +359,7 @@ export default function AssessmentDetailPage({
                   <th className="px-3 py-2 font-medium text-center sm:px-4">Test</th>
                   <th className="px-3 py-2 font-medium text-center sm:px-4">Exam</th>
                   <th className="px-3 py-2 font-medium text-center sm:px-4">Total</th>
+                  <th className="px-3 py-2 font-medium text-center sm:px-4">Grade</th>
                 </tr>
               </thead>
               <tbody>
@@ -259,12 +374,47 @@ export default function AssessmentDetailPage({
                       <td className="px-3 py-2 text-center font-semibold sm:px-4">
                         {result?.totalScore ?? "—"}
                       </td>
+                      <td className="px-3 py-2 text-center sm:px-4">
+                        {result?.grade ? (
+                          <Badge>{result.grade}</Badge>
+                        ) : (
+                          "—"
+                        )}
+                      </td>
                     </tr>
                   );
                 })}
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {/* Statistics Tab */}
+      {activeTab === "statistics" && (
+        <div className="mt-6">
+          <h2 className="text-lg font-semibold mb-4">Class Statistics</h2>
+          <ClassStatistics assessmentId={id} schoolId={schoolId} />
+        </div>
+      )}
+
+      {/* Audit Trail Tab */}
+      {activeTab === "audit" && (
+        <div className="mt-6">
+          <h2 className="text-lg font-semibold mb-4">Action Timeline</h2>
+          <AuditTrail assessmentId={id} />
+        </div>
+      )}
+
+      {/* Reports Tab */}
+      {activeTab === "reports" && (
+        <div className="mt-6">
+          <h2 className="text-lg font-semibold mb-4">Student Report Cards</h2>
+          <AdminReportsTab 
+            assessmentId={id} 
+            pupils={pupils} 
+            status={assessment.status}
+          />
         </div>
       )}
     </div>

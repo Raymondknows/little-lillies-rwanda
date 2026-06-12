@@ -72,7 +72,12 @@ export default function TeacherAnalyticsPage({
         const statsData = await statsRes.json();
 
         setAssessment(assessmentData.assessment);
-        setStatistics(statsData.statistics);
+        // Merge top-level stats with nested statistics object
+        setStatistics({
+          totalStudents: statsData.totalStudents || 0,
+          totalResults: statsData.totalResults || 0,
+          ...statsData.statistics,
+        });
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load analytics");
       } finally {
@@ -373,7 +378,7 @@ export default function TeacherAnalyticsPage({
           <div className="p-3 bg-background rounded">
             <p className="text-xs text-muted mb-1">Failed</p>
             <p className="text-2xl font-bold text-red-600">
-              {statistics.totalResults - statistics.passCount}
+              {Math.max(0, (statistics.totalResults || 0) - (statistics.passCount || 0))}
             </p>
           </div>
           <div className="p-3 bg-background rounded">

@@ -1,14 +1,12 @@
 "use client";
 
 import { getBackendUrl } from "@/lib/backend-url";
-
-
-
-
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { UserGuide } from "@/components/ui/user-guide";
+import { Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 
 const PHASE_OPTIONS = [
   { value: "EARLY_YEARS", label: "Early Years" },
@@ -16,33 +14,107 @@ const PHASE_OPTIONS = [
   { value: "SECONDARY", label: "Secondary" },
 ];
 
+const CREATE_ASSESSMENT_GUIDE = {
+  title: "Create Assessment",
+  overview:
+    "Create a new assessment to collect and manage student results. Follow the workflow: create → configure components → enter scores → approve → publish.",
+  steps: [
+    "Enter a clear assessment name (e.g., 'Q1 Exam 2026', 'Mid-Term Test')",
+    "Select the academic term for this assessment",
+    "Choose the phase (Early Years, Primary, or Secondary)",
+    "After creation, configure scoring components (CA, Test, Exam, etc.)",
+    "Enter student marks for each component",
+    "Review and approve the assessment before publishing",
+    "Publish to notify parents instantly",
+  ],
+  commonTasks: [
+    {
+      title: "Use clear naming conventions",
+      description:
+        "Include the term and year in the assessment name for easy tracking. Example: 'Q1 Exam 2026' or 'Mid-Term Test January 2026'",
+    },
+    {
+      title: "Select the correct phase",
+      description:
+        "Ensure you select the phase that matches the classes where this assessment will be used. Each phase may have different student groups.",
+    },
+    {
+      title: "Understand the workflow",
+      description:
+        "Assessments start in Draft status. You must configure components and enter scores before approval. Once published, results cannot be edited.",
+    },
+    {
+      title: "Configure components after creation",
+      description:
+        "After creating the assessment, you'll be guided to configure scoring components like CA (Continuous Assessment), Test, and Exam with their weights.",
+    },
+  ],
+  faqs: [
+    {
+      question: "Can I edit the assessment name after creation?",
+      answer:
+        "Assessment names can be edited while in Draft status. Once approved or published, the name is locked for audit purposes.",
+    },
+    {
+      question: "What happens after I create the assessment?",
+      answer:
+        "You'll be taken to the assessment details page where you configure the scoring components before entering student marks.",
+    },
+    {
+      question: "Can I change the phase after creation?",
+      answer:
+        "Phase cannot be changed after creation. Create a new assessment if you selected the wrong phase.",
+    },
+    {
+      question: "What's the difference between phases?",
+      answer:
+        "Phases organize assessments by student groups: Early Years (Nursery/Reception), Primary (Classes 1-6), and Secondary (Forms 1-6).",
+    },
+  ],
+  videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ",
+};
+
 export default function NewAssessmentPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [terms, setTerms] = useState<any[]>([]);
+  const [currentAcademicYear, setCurrentAcademicYear] = useState<any>(null);
   const [termsLoading, setTermsLoading] = useState(true);
+  const [formData, setFormData] = useState({
+    name: "",
+    termId: "",
+    phase: "",
+  });
 
-  // Fetch terms on mount
+  // Fetch academic years and terms on mount
   useEffect(() => {
-    const fetchTerms = async () => {
+    const fetchData = async () => {
       try {
         const backendUrl = getBackendUrl();
-        const res = await fetch(`${backendUrl}/api/admin/terms`, {
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
+        const res = await fetch(`${backendUrl}/api/admin/academic-years`, {
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
         });
-        if (!res.ok) throw new Error("Failed to fetch terms");
+        if (!res.ok) throw new Error("Failed to fetch academic years");
         const data = await res.json();
-        setTerms(data.terms || []);
+        
+        // Find current academic year
+        const current = data.academicYears?.find((ay: any) => ay.isCurrent);
+        setCurrentAcademicYear(current);
+        
+        // Set terms from current academic year
+        if (current && current.terms) {
+          setTerms(current.terms);
+        }
       } catch (err) {
-        console.error("Error fetching terms:", err);
+        console.error("Error fetching academic data:", err);
         setTerms([]);
       } finally {
         setTermsLoading(false);
       }
     };
-    fetchTerms();
+    fetchData();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -50,23 +122,18 @@ export default function NewAssessmentPage() {
     setError(null);
     setLoading(true);
 
-    const formData = new FormData(e.currentTarget);
-    const name = formData.get("name") as string;
-    const termId = formData.get("termId") as string;
-    const phase = formData.get("phase") as string;
-
     try {
-        const backendUrl = getBackendUrl();
+      const backendUrl = getBackendUrl();
       const res = await fetch(`${backendUrl}/api/admin/assessments`, {
         method: "POST",
-        credentials: 'include',
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, termId, phase }),
+        body: JSON.stringify(formData),
       });
 
       if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || "Failed to create assessment");
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to create assessment");
       }
 
       const assessment = await res.json();
@@ -78,88 +145,260 @@ export default function NewAssessmentPage() {
     }
   };
 
-  return (
-    <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 lg:px-8">
-      <Link href="/admin/results" className="text-sm text-brand hover:underline">
-        ← Back to results
-      </Link>
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
-      <div className="mt-4 rounded-3xl border border-border bg-surface p-6 shadow-sm">
-        <div className="mb-6">
-          <p className="text-sm text-muted">Create a new assessment</p>
-          <h1 className="mt-2 text-3xl font-bold text-foreground">Create assessment</h1>
+  const isFormValid = formData.name && formData.termId && formData.phase;
+
+  return (
+    <>
+      {/* Sticky Header */}
+      <div className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur-sm">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Create Assessment</h1>
+            <p className="mt-0.5 text-sm text-muted">
+              Set up a new assessment to collect and manage student results
+            </p>
+          </div>
+          <Link href="/admin/results">
+            <Button variant="secondary">Back to Results</Button>
+          </Link>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-4 py-6 lg:grid-cols-3 sm:px-6 lg:px-8">
+        {/* Form Column */}
+        <div className="lg:col-span-2">
+          <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
+            {termsLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="mr-2 h-5 w-5 animate-spin text-brand" />
+                <p className="text-muted">Loading academic year and terms...</p>
+              </div>
+            ) : !currentAcademicYear ? (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+                <div className="flex gap-3">
+                  <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h3 className="font-semibold text-amber-900">No Active Academic Year</h3>
+                    <p className="text-sm text-amber-800 mt-1">
+                      You need to set up an academic year first, then create terms (Q1, Q2, Q3, etc.) before you can create assessments.
+                    </p>
+                    <p className="text-xs text-amber-700 mt-2">
+                      Academic years organize your school calendar into terms. Each assessment must belong to a specific term.
+                    </p>
+                    <Link href="/admin/settings">
+                      <Button className="mt-3" type="button">
+                        Set Up Academic Year
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            ) : terms.length === 0 ? (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+                <div className="flex gap-3">
+                  <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h3 className="font-semibold text-amber-900">No Terms in Current Academic Year</h3>
+                    <p className="text-sm text-amber-800 mt-1">
+                      Academic Year: <span className="font-medium">{currentAcademicYear?.name}</span>
+                    </p>
+                    <p className="text-sm text-amber-800 mt-2">
+                      Create terms (Q1, Q2, Q3, etc.) before creating assessments.
+                    </p>
+                    <Link href="/admin/settings">
+                      <Button className="mt-3" type="button">
+                        Create Terms for {currentAcademicYear?.name}
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Academic Year Info */}
+                <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+                  <p className="text-xs font-medium text-blue-700 uppercase tracking-wide">Active Academic Year</p>
+                  <p className="text-lg font-semibold text-blue-900 mt-1">{currentAcademicYear?.name}</p>
+                  <p className="text-xs text-blue-700 mt-2">
+                    All assessments created here will be for this academic year. 
+                    {currentAcademicYear?.isCurrent && " This is your current active year."}
+                  </p>
+                </div>
+
+                {/* Error Alert */}
+                {error && (
+                  <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+                    <div className="flex gap-3">
+                      <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                      <p className="text-sm text-red-700">{error}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Assessment Name */}
+                <div>
+                  <label htmlFor="name" className="block text-sm font-medium text-foreground">
+                    Assessment Name *
+                  </label>
+                  <p className="mt-1 text-xs text-muted">
+                    Use a clear naming convention including the term and year.
+                  </p>
+                  <input
+                    id="name"
+                    type="text"
+                    name="name"
+                    placeholder="e.g., Q1 Exam 2026, Mid-Term Test"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    required
+                    className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-brand transition"
+                  />
+                </div>
+
+                {/* Term Selection */}
+                <div>
+                  <label htmlFor="termId" className="block text-sm font-medium text-foreground">
+                    Academic Term *
+                  </label>
+                  <p className="mt-1 text-xs text-muted">
+                    Select the term this assessment belongs to.
+                  </p>
+                  <select
+                    id="termId"
+                    name="termId"
+                    value={formData.termId}
+                    onChange={handleInputChange}
+                    required
+                    className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand transition"
+                  >
+                    <option value="">Select a term...</option>
+                    {terms.map((term) => (
+                      <option key={term.id} value={term.id}>
+                        {term.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Phase Selection */}
+                <div>
+                  <label htmlFor="phase" className="block text-sm font-medium text-foreground">
+                    Phase *
+                  </label>
+                  <p className="mt-1 text-xs text-muted">
+                    Choose the phase level for this assessment.
+                  </p>
+                  <select
+                    id="phase"
+                    name="phase"
+                    value={formData.phase}
+                    onChange={handleInputChange}
+                    required
+                    className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand transition"
+                  >
+                    <option value="">Select a phase...</option>
+                    {PHASE_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Form Actions */}
+                <div className="flex gap-3 pt-4 border-t border-border">
+                  <Button
+                    type="submit"
+                    disabled={loading || !isFormValid}
+                    className="flex-1"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Creating...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="mr-2 h-4 w-4" />
+                        Create Assessment
+                      </>
+                    )}
+                  </Button>
+                  <Link href="/admin/results" className="flex-1">
+                    <Button type="button" variant="secondary" className="w-full">
+                      Cancel
+                    </Button>
+                  </Link>
+                </div>
+              </form>
+            )}
+          </div>
         </div>
 
-        {termsLoading ? (
-          <div className="text-center text-muted">Loading terms...</div>
-        ) : terms.length === 0 ? (
-          <div className="rounded-2xl border border-warning bg-warning/10 p-5 text-sm text-warning">
-            No terms found. Please set up an academic year and terms first.
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-              <div className="rounded-lg border border-red-200 bg-red-50 p-3">
-                <p className="text-sm text-red-700">{error}</p>
+        {/* Sidebar - Help & Guide */}
+        <div className="lg:col-span-1">
+          <div className="rounded-xl border border-border bg-gradient-to-br from-blue-50 to-blue-50/50 p-6 shadow-sm">
+            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-brand" />
+              How It Works
+            </h3>
+            <div className="mt-4 space-y-4 text-xs text-muted">
+              <div className="bg-white/50 rounded-lg p-3 border border-blue-100">
+                <p className="font-medium text-foreground mb-2">System Structure</p>
+                <div className="space-y-2 text-xs">
+                  <div className="flex gap-2">
+                    <span className="text-blue-600 font-bold">1.</span>
+                    <span><strong>Academic Year</strong><br/><span className="text-muted">{currentAcademicYear?.name || 'Not set'}</span></span>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="text-blue-600 font-bold">2.</span>
+                    <span><strong>Terms</strong><br/><span className="text-muted">Q1, Q2, Q3 (select below)</span></span>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="text-blue-600 font-bold">3.</span>
+                    <span><strong>Assessments</strong><br/><span className="text-muted">Creating now (this form)</span></span>
+                  </div>
+                </div>
               </div>
-            )}
 
-            <div>
-              <label className="text-sm font-medium">Assessment name *</label>
-              <input
-                type="text"
-                name="name"
-                placeholder="e.g., Q1 Exam 2026, Mid-Term Test"
-                required
-                className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
-              />
+              <div>
+                <p className="font-medium text-foreground mb-1">After Creation</p>
+                <p>
+                  You'll configure scoring components (CA, Test, Exam) and enter student marks.
+                </p>
+              </div>
+              <div>
+                <p className="font-medium text-foreground mb-1">Status Workflow</p>
+                <p>
+                  Draft → Configure → Enter Scores → Approve → Publish to parents
+                </p>
+              </div>
+              <div className="pt-2 border-t border-border/50">
+                <p className="font-medium text-foreground mb-2">Best Practices</p>
+                <ul className="space-y-1">
+                  <li>• Use consistent naming (include year)</li>
+                  <li>• Select the correct phase</li>
+                  <li>• Configure before entering scores</li>
+                  <li>• Review before publishing</li>
+                </ul>
+              </div>
             </div>
+          </div>
 
-            <div>
-              <label className="text-sm font-medium">Term *</label>
-              <select
-                name="termId"
-                required
-                className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
-              >
-                <option value="">Select a term</option>
-                {terms.map((term) => (
-                  <option key={term.id} value={term.id}>
-                    {term.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium">Phase *</label>
-              <select
-                name="phase"
-                required
-                className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
-              >
-                <option value="">Select a phase</option>
-                {PHASE_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex gap-3 pt-4">
-              <Button type="submit" disabled={loading}>
-                {loading ? "Creating..." : "Create assessment"}
-              </Button>
-              <Link href="/admin/results">
-                <Button variant="secondary" type="button">
-                  Cancel
-                </Button>
-              </Link>
-            </div>
-          </form>
-        )}
+          {/* Learning Guide */}
+          <div className="mt-6">
+            <UserGuide guide={CREATE_ASSESSMENT_GUIDE} />
+          </div>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

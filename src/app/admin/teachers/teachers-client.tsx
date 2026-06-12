@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
-import { createTeacher, updateTeacher, addTeacherClass, removeTeacherClass, addTeacherSubject, removeTeacherSubject } from "@/app/admin/actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { UserGuide } from "@/components/ui/user-guide";
+import { getBackendUrl } from "@/lib/backend-url";
 import { X, Plus } from "lucide-react";
 
 const TEACHER_GUIDE = {
@@ -241,15 +241,64 @@ export default function TeachersPageClient({
             <form 
               onSubmit={(e) => {
                 e.preventDefault();
-                const formData = new FormData(e.currentTarget);
+                const form = e.currentTarget as HTMLFormElement;
                 startTransition(async () => {
                   try {
-                    await createTeacher(formData);
-                    // If this runs, the stub threw an error before reaching here
+                    const nameInput = form.querySelector('input[name="name"]') as HTMLInputElement | null;
+                    const emailInput = form.querySelector('input[name="email"]') as HTMLInputElement | null;
+                    const passwordInput = form.querySelector('input[name="password"]') as HTMLInputElement | null;
+                    const classSelect = form.querySelector('select[name="classIds"]') as HTMLSelectElement | null;
+                    const subjectSelect = form.querySelector('select[name="subjectIds"]') as HTMLSelectElement | null;
+
+                    if (!nameInput || !emailInput || !passwordInput) {
+                      throw new Error('Form fields not found. Please try again.');
+                    }
+
+                    const name = nameInput.value.trim();
+                    const email = emailInput.value.trim();
+                    const password = passwordInput.value.trim();
+
+                    if (!name) throw new Error('Name is required');
+                    if (!email) throw new Error('Email is required');
+                    if (!password) throw new Error('Password is required');
+
+                    const classIds = classSelect ? Array.from(classSelect.options)
+                      .filter(o => o.selected)
+                      .map(o => o.value) : [];
+                    
+                    const subjectIds = subjectSelect ? Array.from(subjectSelect.options)
+                      .filter(o => o.selected)
+                      .map(o => o.value) : [];
+
+                    const backendUrl = getBackendUrl();
+                    console.log('Creating teacher:', { name, email, classIds, subjectIds });
+
+                    const response = await fetch(`${backendUrl}/api/admin/teachers`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      credentials: "include",
+                      body: JSON.stringify({
+                        name,
+                        email,
+                        password,
+                        classIds,
+                        subjectIds,
+                      }),
+                    });
+
+                    if (!response.ok) {
+                      const error = await response.json();
+                      console.error('Backend error:', error);
+                      throw new Error(error.error || `Server error: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    console.log('Teacher created:', data);
                     setIsOpen(false);
                     setErrorMessage(null);
                     window.location.reload();
                   } catch (error: unknown) {
+                    console.error('Error:', error);
                     if (error instanceof Error) {
                       setErrorMessage(error.message);
                       setShowErrorModal(true);
@@ -351,7 +400,86 @@ export default function TeachersPageClient({
               </Button>
             </div>
 
-            <form action={updateTeacher} className="space-y-4">
+            <form 
+              onSubmit={(e) => {
+                e.preventDefault();
+                const form = e.currentTarget as HTMLFormElement;
+                startTransition(async () => {
+                  try {
+                    const idInput = form.querySelector('input[name="id"]') as HTMLInputElement | null;
+                    const nameInput = form.querySelector('input[name="name"]') as HTMLInputElement | null;
+                    const emailInput = form.querySelector('input[name="email"]') as HTMLInputElement | null;
+                    const passwordInput = form.querySelector('input[name="password"]') as HTMLInputElement | null;
+                    const classSelect = form.querySelector('select[name="classIds"]') as HTMLSelectElement | null;
+                    const subjectSelect = form.querySelector('select[name="subjectIds"]') as HTMLSelectElement | null;
+
+                    if (!idInput || !nameInput || !emailInput) {
+                      throw new Error('Form fields not found. Please try again.');
+                    }
+
+                    const id = idInput.value.trim();
+                    const name = nameInput.value.trim();
+                    const email = emailInput.value.trim();
+                    const password = passwordInput?.value.trim() || '';
+
+                    if (!id) throw new Error('Teacher ID is missing');
+                    if (!name) throw new Error('Name is required');
+                    if (!email) throw new Error('Email is required');
+
+                    const classIds = classSelect ? Array.from(classSelect.options)
+                      .filter(o => o.selected)
+                      .map(o => o.value) : [];
+                    
+                    const subjectIds = subjectSelect ? Array.from(subjectSelect.options)
+                      .filter(o => o.selected)
+                      .map(o => o.value) : [];
+
+                    const backendUrl = getBackendUrl();
+                    console.log('Updating teacher:', { id, name, email, classIds, subjectIds });
+
+                    const body: any = {
+                      name,
+                      email,
+                      classIds,
+                      subjectIds,
+                    };
+
+                    if (password) {
+                      body.password = password;
+                    }
+
+                    const response = await fetch(`${backendUrl}/api/admin/teachers/${id}`, {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json" },
+                      credentials: "include",
+                      body: JSON.stringify(body),
+                    });
+
+                    if (!response.ok) {
+                      const error = await response.json();
+                      console.error('Backend error:', error);
+                      throw new Error(error.error || `Server error: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    console.log('Teacher updated:', data);
+                    setSelectedTeacher(null);
+                    setErrorMessage(null);
+                    window.location.reload();
+                  } catch (error: unknown) {
+                    console.error('Error:', error);
+                    if (error instanceof Error) {
+                      setErrorMessage(error.message);
+                      setShowErrorModal(true);
+                    } else {
+                      setErrorMessage("An unexpected error occurred. Please try again.");
+                      setShowErrorModal(true);
+                    }
+                  }
+                });
+              }} 
+              className="space-y-4"
+            >
               <input type="hidden" name="id" value={selectedTeacher.id} />
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="text-sm font-medium">

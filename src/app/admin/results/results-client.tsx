@@ -193,54 +193,57 @@ export default function ResultsPageClient({ assessments }: { assessments: any[] 
         />
       </div>
 
-      {/* Phase Tabs */}
-      <div className="mb-6 flex flex-wrap gap-2">
-        <span className="text-sm font-medium text-muted self-center">Phase:</span>
-        {PHASE_ORDER.map((phase) => {
-          const count = getPhaseStats(phase);
-          const config = PHASE_CONFIG[phase as keyof typeof PHASE_CONFIG];
-          const isActive = activePhase === phase;
+      {/* Filters - Phase Tabs and Status Dropdown */}
+      <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        {/* Phase Tabs */}
+        <div className="flex flex-wrap gap-2 items-center">
+          <span className="text-sm font-medium text-muted min-w-fit">Phase:</span>
+          <div className="flex flex-wrap gap-2">
+            {PHASE_ORDER.map((phase) => {
+              const count = getPhaseStats(phase);
+              const config = PHASE_CONFIG[phase as keyof typeof PHASE_CONFIG];
+              const isActive = activePhase === phase;
 
-          return (
-            <button
-              key={phase}
-              onClick={() => handlePhaseChange(phase)}
-              className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
-                isActive
-                  ? "bg-brand text-white"
-                  : "bg-background text-muted hover:bg-surface"
-              }`}
-            >
-              {config.label}
-              <span className="ml-1 inline-block">({count})</span>
-            </button>
-          );
-        })}
-      </div>
+              return (
+                <button
+                  key={phase}
+                  onClick={() => handlePhaseChange(phase)}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                    isActive
+                      ? "bg-brand text-white"
+                      : "bg-background text-muted hover:bg-surface"
+                  }`}
+                >
+                  {config.label}
+                  <span className="ml-1 inline-block">({count})</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
-      {/* Status Tabs */}
-      <div className="mb-6 flex flex-wrap gap-2">
-        <span className="text-sm font-medium text-muted self-center">Status:</span>
-        {STATUS_ORDER.map((status) => {
-          const count = getStatusStats(status);
-          const config = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG];
-          const isActive = activeStatus === status;
-
-          return (
-            <button
-              key={status}
-              onClick={() => handleStatusChange(status)}
-              className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
-                isActive
-                  ? "bg-brand text-white"
-                  : "bg-background text-muted hover:bg-surface"
-              }`}
-            >
-              {config.label}
-              <span className="ml-1 inline-block">({count})</span>
-            </button>
-          );
-        })}
+        {/* Status Dropdown */}
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium text-muted">Status:</label>
+          <select
+            value={activeStatus}
+            onChange={(e) => {
+              setActiveStatus(e.target.value);
+              handleFilterChange();
+            }}
+            className="rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground hover:bg-background focus:outline-none focus:ring-2 focus:ring-brand transition"
+          >
+            {STATUS_ORDER.map((status) => {
+              const count = getStatusStats(status);
+              const config = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG];
+              return (
+                <option key={status} value={status}>
+                  {config.label} ({count})
+                </option>
+              );
+            })}
+          </select>
+        </div>
       </div>
 
       {/* Results Info */}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import TeacherResultsPageClient from "./results-client";
+import TeacherResultsEnhancedClient from "./enhanced-results-client";
 
 export default function ResultsPage() {
   const [assessments, setAssessments] = useState([]);
@@ -46,5 +46,5 @@ export default function ResultsPage() {
     );
   }
 
-  return <TeacherResultsPageClient assessments={assessments} />;
+  return <TeacherResultsEnhancedClient assessments={assessments} />;
 }

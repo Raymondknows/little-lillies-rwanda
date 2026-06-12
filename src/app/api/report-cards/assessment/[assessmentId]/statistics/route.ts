@@ -9,9 +9,6 @@ export async function GET(
     const { assessmentId } = await params;
     const backendUrl = getBackendUrl();
     
-    // Get x-school-id from request headers
-    const schoolId = request.headers.get('x-school-id');
-    
     const response = await fetch(
       `${backendUrl}/api/report-cards/assessment/${assessmentId}/statistics`,
       {
@@ -19,10 +16,6 @@ export async function GET(
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          // Forward x-school-id header
-          ...(schoolId && {
-            'x-school-id': schoolId,
-          }),
           // Forward cookies from the request
           ...(request.headers.get('cookie') && {
             cookie: request.headers.get('cookie') || '',

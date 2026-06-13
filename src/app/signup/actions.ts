@@ -1,5 +1,6 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 /**
@@ -19,7 +20,13 @@ export async function requestSignupOtpAction(formData: FormData) {
       throw new Error("Missing required fields");
     }
 
-    const response = await fetch("/api/signup/request-otp", {
+    // Build absolute URL for server action
+    const headersList = await headers();
+    const protocol = headersList.get("x-forwarded-proto") || "https";
+    const host = headersList.get("x-forwarded-host") || headersList.get("host") || "localhost:3000";
+    const apiUrl = `${protocol}://${host}/api/signup/request-otp`;
+
+    const response = await fetch(apiUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -50,6 +57,10 @@ export async function requestSignupOtpAction(formData: FormData) {
     });
     redirect(`/signup/verify?${params.toString()}`);
   } catch (error) {
+    // Re-throw Next.js redirect errors
+    if (error instanceof Error && (error.message === 'NEXT_REDIRECT' || (error as any).digest?.includes('NEXT_REDIRECT'))) {
+      throw error;
+    }
     throw new Error(error instanceof Error ? error.message : String(error));
   }
 }
@@ -71,7 +82,13 @@ export async function verifySignupOtpAction(formData: FormData) {
       throw new Error("OTP is required");
     }
 
-    const response = await fetch("/api/signup/verify-otp", {
+    // Build absolute URL for server action
+    const headersList = await headers();
+    const protocol = headersList.get("x-forwarded-proto") || "https";
+    const host = headersList.get("x-forwarded-host") || headersList.get("host") || "localhost:3000";
+    const apiUrl = `${protocol}://${host}/api/signup/verify-otp`;
+
+    const response = await fetch(apiUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -92,9 +109,13 @@ export async function verifySignupOtpAction(formData: FormData) {
       throw new Error(data.error || data.message || "Failed to verify OTP");
     }
 
-    // Redirect to login with success message
-    redirect("/login?signup=success");
+    // Redirect to success page which shows the success modal
+    redirect("/signup/success");
   } catch (error) {
+    // Re-throw Next.js redirect errors
+    if (error instanceof Error && (error.message === 'NEXT_REDIRECT' || (error as any).digest?.includes('NEXT_REDIRECT'))) {
+      throw error;
+    }
     throw new Error(error instanceof Error ? error.message : String(error));
   }
 }

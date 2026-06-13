@@ -31,7 +31,7 @@ export default function SharedLayout({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const pathname = usePathname();
-  const hideSidebar = pathname?.startsWith("/schoolbase-admin/login");
+  const hideSidebar = pathname?.startsWith("/schoolbase-admin-login");
 
   if (hideSidebar) {
     return (

@@ -23,6 +23,11 @@ export default async function PlatformAdminLayout({
 }) {
   const session = await getPlatformAdminSession();
 
+  // Redirect to login if not authenticated or not a platform admin
+  if (!session) {
+    redirect("/schoolbase-admin-login");
+  }
+
   return (
     <SharedLayout
       navItems={nav}

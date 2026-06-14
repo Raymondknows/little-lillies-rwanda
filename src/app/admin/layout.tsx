@@ -5,7 +5,6 @@ import { useEffect, useState } from 'react';
 import SharedLayout from '@/components/shared-layout';
 import PendingSchoolModal from '@/components/pending-school-modal';
 import { SubscriptionAlert } from '@/components/subscription-alert';
-import { staffLogoutAction } from '@/app/auth/actions';
 import { getBackendUrl } from '@/lib/backend-url';
 
 const nav = [
@@ -130,7 +129,7 @@ export default function AdminLayout({
         school={school}
         session={session}
         logoHref="/admin"
-        logoutAction={staffLogoutAction}
+        logoutRedirectUrl="/login"
       >
         <PendingSchoolModal schoolStatus={school.status} schoolName={school.name} />
         {children}

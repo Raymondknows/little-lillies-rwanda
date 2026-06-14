@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { getStaffSession } from "@/lib/auth";
 import { getCurrentSchool } from "@/lib/school";
-import { staffLogoutAction } from "@/app/auth/actions";
 import SharedLayout from "@/components/shared-layout";
 import { getTeacherNavigation } from "@/lib/teacher-utils";
 
@@ -46,7 +45,7 @@ export default async function TeacherLayout({
       school={school}
       session={session}
       logoHref="/teacher"
-      logoutAction={staffLogoutAction}
+      logoutRedirectUrl="/login"
     >
       {children}
     </SharedLayout>

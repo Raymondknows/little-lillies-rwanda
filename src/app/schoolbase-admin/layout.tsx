@@ -3,7 +3,6 @@ export const dynamic = "force-dynamic";
 import { redirect } from "next/navigation";
 import SharedLayout from "@/components/shared-layout";
 import { getPlatformAdminSession } from "@/lib/auth";
-import { platformAdminLogoutAction } from "@/app/schoolbase-admin/actions";
 
 const nav = [
   { href: "/schoolbase-admin", label: "Overview", icon: "LayoutDashboard" },
@@ -34,7 +33,7 @@ export default async function PlatformAdminLayout({
       school={{ name: "SchoolBase Platform", city: "Africa", country: "All" }}
       session={session}
       logoHref="/schoolbase-admin"
-      logoutAction={platformAdminLogoutAction}
+      logoutRedirectUrl="/schoolbase-admin-login"
     >
       {children}
     </SharedLayout>

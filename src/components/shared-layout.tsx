@@ -19,14 +19,14 @@ export default function SharedLayout({
   school,
   session,
   logoHref = "/",
-  logoutAction,
+  logoutRedirectUrl = "/login",
 }: {
   children: ReactNode;
   navItems: NavItem[];
   school?: { name?: string | null; city?: string | null; country?: string | null } | null;
   session?: { name?: string } | null;
   logoHref?: string;
-  logoutAction?: any;
+  logoutRedirectUrl?: string;
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -49,7 +49,7 @@ export default function SharedLayout({
         school={school}
         session={session}
         logoHref={logoHref}
-        logoutAction={logoutAction}
+        logoutRedirectUrl={logoutRedirectUrl}
       />
 
       {/* Mobile Menu Overlay */}
@@ -71,7 +71,7 @@ export default function SharedLayout({
           school={school}
           session={session}
           logoHref={logoHref}
-          logoutAction={logoutAction}
+          logoutRedirectUrl={logoutRedirectUrl}
           isMobile
           onClose={() => setMobileMenuOpen(false)}
         />

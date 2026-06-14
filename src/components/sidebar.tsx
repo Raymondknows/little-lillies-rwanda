@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AppLogo } from "@/components/app-logo";
 import { Button } from "@/components/ui/button";
+import { LogoutButton } from "@/components/logout-button";
 import {
   LayoutDashboard,
   BookOpen,
@@ -73,7 +74,7 @@ export default function Sidebar({
   school,
   session,
   logoHref = "/",
-  logoutAction,
+  logoutRedirectUrl = "/login",
   isMobile = false,
   onClose,
 }: {
@@ -81,7 +82,7 @@ export default function Sidebar({
   school?: { name?: string | null; city?: string | null; country?: string | null } | null;
   session?: { name?: string } | null;
   logoHref?: string;
-  logoutAction?: any;
+  logoutRedirectUrl?: string;
   isMobile?: boolean;
   onClose?: () => void;
 }) {
@@ -135,11 +136,7 @@ export default function Sidebar({
       </nav>
 
       <div className="border-t border-border px-3 py-3 space-y-2 flex-shrink-0">
-        <form action={logoutAction}>
-          <Button type="submit" variant="ghost" className="w-full justify-start gap-2 text-sm">
-            Sign out
-          </Button>
-        </form>
+        <LogoutButton redirectUrl={logoutRedirectUrl} />
         <Link 
           href="/demo" 
           onClick={handleNavClick}

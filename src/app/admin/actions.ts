@@ -1,11 +1,82 @@
 "use server";
 
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+
 // Server actions removed for Vercel compatibility
 // All backend operations must use API routes (e.g., POST /api/admin/...)
 // This file is kept for build compatibility but contains no functional code
 
+/**
+ * Record a payment against an invoice
+ * Server action that calls the frontend API route which proxies to the backend
+ */
+export async function recordPaymentAction(formData: FormData) {
+  try {
+    const invoiceId = formData.get("invoiceId") as string;
+    const amount = formData.get("amount") as string;
+    const method = formData.get("method") as string;
+    const reference = formData.get("reference") as string;
+
+    console.log("[recordPaymentAction] invoiceId:", invoiceId, "amount:", amount, "method:", method);
+
+    if (!invoiceId || !amount || !method) {
+      throw new Error("Missing required fields");
+    }
+
+    // Build absolute URL from headers (same pattern as signup actions)
+    const headersList = await headers();
+    const protocol = headersList.get("x-forwarded-proto") || "https";
+    const host = headersList.get("x-forwarded-host") || headersList.get("host") || "localhost:3000";
+    const apiUrl = `${protocol}://${host}/api/admin/fees/payments/record`;
+
+    console.log("[recordPaymentAction] apiUrl:", apiUrl);
+
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      credentials: "include", // Automatically send cookies
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        invoiceId,
+        amount,
+        method,
+        reference: reference || null,
+      }),
+    });
+
+    console.log("[recordPaymentAction] Response status:", response.status);
+
+    if (!response.ok) {
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch (e) {
+        const text = await response.text();
+        console.error("[recordPaymentAction] Failed to parse error response:", text);
+        throw new Error(`Server error: ${response.status} ${response.statusText}`);
+      }
+      console.error("[recordPaymentAction] Error response:", errorData);
+      throw new Error(errorData.error || "Failed to record payment");
+    }
+
+    const result = await response.json();
+    console.log("[recordPaymentAction] Success:", result);
+
+    // Redirect with success flag using redirect()
+    redirect(`/admin/fees?paymentRecorded=1`);
+  } catch (error) {
+    // Re-throw Next.js redirect errors
+    if (error instanceof Error && (error.message === 'NEXT_REDIRECT' || (error as any).digest?.includes('NEXT_REDIRECT'))) {
+      throw error;
+    }
+    const message = error instanceof Error ? error.message : "Failed to record payment";
+    console.error("[recordPaymentAction] Error:", message);
+    throw new Error(message);
+  }
+}
+
 export async function recordPayment(formData: FormData) {
-  throw new Error("Use POST /api/admin/payments instead");
+  throw new Error("Use recordPaymentAction instead");
 }
 
 export async function createFeeScheduleAction() {

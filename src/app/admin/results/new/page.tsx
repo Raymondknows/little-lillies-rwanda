@@ -224,10 +224,10 @@ export default function NewAssessmentPage() {
             ) : (
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Academic Year Info */}
-                <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-                  <p className="text-xs font-medium text-blue-700 uppercase tracking-wide">Active Academic Year</p>
-                  <p className="text-lg font-semibold text-blue-900 mt-1">{currentAcademicYear?.name}</p>
-                  <p className="text-xs text-blue-700 mt-2">
+                <div className="rounded-lg border border-brand/20 bg-brand/5 p-4">
+                  <p className="text-xs font-medium text-brand uppercase tracking-wide">Active Academic Year</p>
+                  <p className="text-lg font-semibold text-brand mt-1">{currentAcademicYear?.name}</p>
+                  <p className="text-xs text-brand mt-2">
                     All assessments created here will be for this academic year. 
                     {currentAcademicYear?.isCurrent && " This is your current active year."}
                   </p>
@@ -345,25 +345,25 @@ export default function NewAssessmentPage() {
 
         {/* Sidebar - Help & Guide */}
         <div className="lg:col-span-1">
-          <div className="rounded-xl border border-border bg-gradient-to-br from-blue-50 to-blue-50/50 p-6 shadow-sm">
+          <div className="rounded-xl border border-border bg-gradient-to-br from-brand/5 to-brand/5 p-6 shadow-sm">
             <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-brand" />
               How It Works
             </h3>
             <div className="mt-4 space-y-4 text-xs text-muted">
-              <div className="bg-white/50 rounded-lg p-3 border border-blue-100">
+              <div className="bg-white/50 rounded-lg p-3 border border-brand/20">
                 <p className="font-medium text-foreground mb-2">System Structure</p>
                 <div className="space-y-2 text-xs">
                   <div className="flex gap-2">
-                    <span className="text-blue-600 font-bold">1.</span>
+                    <span className="text-brand font-bold">1.</span>
                     <span><strong>Academic Year</strong><br/><span className="text-muted">{currentAcademicYear?.name || 'Not set'}</span></span>
                   </div>
                   <div className="flex gap-2">
-                    <span className="text-blue-600 font-bold">2.</span>
+                    <span className="text-brand font-bold">2.</span>
                     <span><strong>Terms</strong><br/><span className="text-muted">Q1, Q2, Q3 (select below)</span></span>
                   </div>
                   <div className="flex gap-2">
-                    <span className="text-blue-600 font-bold">3.</span>
+                    <span className="text-brand font-bold">3.</span>
                     <span><strong>Assessments</strong><br/><span className="text-muted">Creating now (this form)</span></span>
                   </div>
                 </div>

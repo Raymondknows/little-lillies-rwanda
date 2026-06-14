@@ -1,20 +1,25 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AppLogo } from "@/components/app-logo";
 import { ErrorModal } from "@/components/ui/error-modal";
+import { CheckCircle2 } from "lucide-react";
 
 export default function SignupSuccessPage() {
   const router = useRouter();
-  const [showModal, setShowModal] = useState(true);
+  const [showModal, setShowModal] = useState(false);
 
-  const handleDone = () => {
-    setShowModal(false);
-    // Redirect to login after a brief delay
-    setTimeout(() => {
-      router.push("/login?signup=success");
-    }, 300);
+  useEffect(() => {
+    // Small delay to ensure page is mounted before showing modal
+    const timer = setTimeout(() => {
+      setShowModal(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleLoginNow = () => {
+    router.push("/login");
   };
 
   return (
@@ -24,19 +29,29 @@ export default function SignupSuccessPage() {
           <AppLogo href="/" size="lg" />
         </div>
         <div className="text-center">
-          <h1 className="text-xl font-bold">Setting up your account...</h1>
+          <div className="flex justify-center mb-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand/20">
+              <CheckCircle2 className="h-8 w-8 text-brand" />
+            </div>
+          </div>
+          <h1 className="text-xl font-bold text-foreground">Account Created!</h1>
           <p className="mt-2 text-sm text-muted">
-            Redirecting you to login...
+            Your school account is ready. Click the button below to log in.
           </p>
         </div>
       </div>
 
       <ErrorModal
         isOpen={showModal}
-        onClose={handleDone}
+        onClose={() => {}} // Don't close on backdrop click
         title="School Created Successfully!"
-        message="Your school account has been created and is ready to use. You'll now be able to log in with your email and password."
+        message="Your school account has been created and is ready to use. Please log in with your email and password to get started."
         type="success"
+        onSuccessAction={handleLoginNow}
+        action={{
+          label: "Back to Signup",
+          onClick: () => router.push("/signup"),
+        }}
       />
     </div>
   );

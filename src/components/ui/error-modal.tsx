@@ -16,6 +16,7 @@ interface ErrorModalProps {
     label: string;
     onClick: () => void;
   };
+  onSuccessAction?: () => void; // For success modal primary button
 }
 
 export function ErrorModal({
@@ -26,6 +27,7 @@ export function ErrorModal({
   details,
   type = "error",
   action,
+  onSuccessAction,
 }: ErrorModalProps) {
   const [showDetails, setShowDetails] = useState(false);
 
@@ -40,13 +42,13 @@ export function ErrorModal({
   const isSuccess = type === "success";
   const defaultTitle = isSuccess ? "Success!" : "Something went wrong";
   const Icon = isSuccess ? CheckCircle2 : AlertCircle;
-  const iconBgColor = isSuccess ? "bg-success/20" : "bg-error/20";
-  const iconColor = isSuccess ? "text-success" : "text-error";
-  const headerBgColor = isSuccess ? "from-success/10 to-success/5" : "from-brand/10 to-brand/5";
-  const buttonBgColor = isSuccess ? "bg-success hover:bg-success/90" : "bg-brand hover:bg-brand-hover";
+  const iconBgColor = isSuccess ? "bg-brand/20" : "bg-error/20";
+  const iconColor = isSuccess ? "text-brand" : "text-error";
+  const headerBgColor = isSuccess ? "from-brand/10 to-brand/5" : "from-brand/10 to-brand/5";
+  const buttonBgColor = isSuccess ? "bg-brand hover:bg-brand-hover" : "bg-brand hover:bg-brand-hover";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 px-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
       <div className="w-full max-w-md rounded-xl border border-border bg-surface shadow-lg">
         {/* Header */}
         <div className={`border-b border-border bg-gradient-to-r ${headerBgColor} px-6 py-4`}>
@@ -96,10 +98,15 @@ export function ErrorModal({
           )}
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => {
+              if (isSuccess && onSuccessAction) {
+                onSuccessAction();
+              }
+              onClose();
+            }}
             className={`flex-1 rounded-lg ${buttonBgColor} px-4 py-2.5 text-sm font-medium text-white transition-colors`}
           >
-            {isSuccess ? "Done" : "Try again"}
+            {isSuccess ? "Login Now" : "Try again"}
           </button>
         </div>
       </div>

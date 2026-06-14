@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Pagination } from "@/components/ui/pagination";
 import { UserGuide, type PageHelpGuide } from "@/components/ui/user-guide";
+import { getBackendUrl } from "@/lib/backend-url";
 import type { PaymentMethod } from "@prisma/client";
 import {
   formatMoney,
@@ -28,7 +29,7 @@ import { ArrowUpRight, TrendingUp, CheckCircle, AlertCircle, Clock } from "lucid
 
 const STATUS_CONFIG = {
   DRAFT: { label: "Draft", color: "bg-gray-100 text-gray-800" },
-  SENT: { label: "Sent", color: "bg-blue-100 text-blue-800" },
+  SENT: { label: "Sent", color: "bg-brand/10 text-brand" },
   PART_PAID: { label: "Part Paid", color: "bg-yellow-100 text-yellow-800" },
   PAID: { label: "Paid", color: "bg-green-100 text-green-800" },
   OVERDUE: { label: "Overdue", color: "bg-red-100 text-red-800" },
@@ -102,7 +103,6 @@ export default function FeesPageClient({
   terms = [],
   onIssueBills = async () => {},
   onSendReminders = async () => {},
-  recordPaymentAction = async () => {},
 }: {
   invoices?: any[];
   outstanding?: number;
@@ -110,7 +110,6 @@ export default function FeesPageClient({
   terms?: TermItem[];
   onIssueBills?: (termId: string) => Promise<void>;
   onSendReminders?: () => Promise<void>;
-  recordPaymentAction?: (formData: FormData) => Promise<void>;
 }) {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -131,6 +130,7 @@ export default function FeesPageClient({
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("CASH");
   const [paymentReference, setPaymentReference] = useState("");
+  const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
   
   // Issue bills and send reminders state
   const [issuingBills, setIssuingBills] = useState(false);
@@ -367,7 +367,60 @@ export default function FeesPageClient({
               </div>
             </div>
 
-            <form action={recordPaymentAction} className="space-y-4">
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                
+                // Prevent double submission
+                if (isSubmittingPayment) return;
+
+                // Validate form
+                if (!paymentAmount || !paymentMethod) {
+                  alert("Please fill in all required fields");
+                  return;
+                }
+
+                setIsSubmittingPayment(true);
+
+                try {
+                  const backendUrl = getBackendUrl();
+                  const response = await fetch(`${backendUrl}/api/admin/fees/payments/record`, {
+                    method: "POST",
+                    credentials: "include",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      invoiceId: selectedInvoice.id,
+                      amount: paymentAmount,
+                      method: paymentMethod,
+                      reference: paymentReference || null,
+                    }),
+                  });
+
+                  if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || "Failed to record payment");
+                  }
+
+                  const result = await response.json();
+                  console.log("Payment recorded:", result);
+                  
+                  // Show success and refresh/redirect
+                  setSelectedInvoice(null);
+                  setPaymentAmount("");
+                  setPaymentMethod("CASH");
+                  setPaymentReference("");
+                  
+                  // Redirect with success flag
+                  router.push(`/admin/fees?paymentRecorded=1`);
+                } catch (error) {
+                  setIsSubmittingPayment(false);
+                  const message = error instanceof Error ? error.message : "Failed to record payment";
+                  console.error("Error recording payment:", message);
+                  alert(message);
+                }
+              }}
+              className="space-y-4"
+            >
               <input type="hidden" name="invoiceId" value={selectedInvoice.id} />
 
               <div>
@@ -381,7 +434,8 @@ export default function FeesPageClient({
                   onChange={(e) => setPaymentAmount(e.target.value)}
                   step="0.01"
                   required
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
+                  disabled={isSubmittingPayment}
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -393,7 +447,8 @@ export default function FeesPageClient({
                   name="method"
                   value={paymentMethod}
                   onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
+                  disabled={isSubmittingPayment}
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {PAYMENT_METHODS.map((method) => (
                     <option key={method} value={method}>
@@ -413,7 +468,8 @@ export default function FeesPageClient({
                   value={paymentReference}
                   onChange={(e) => setPaymentReference(e.target.value)}
                   placeholder="Receipt number, bank reference, etc."
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
+                  disabled={isSubmittingPayment}
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -421,15 +477,17 @@ export default function FeesPageClient({
                 <button
                   type="button"
                   onClick={() => setSelectedInvoice(null)}
-                  className="flex-1 rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:bg-background"
+                  disabled={isSubmittingPayment}
+                  className="flex-1 rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white transition hover:bg-brand/90"
+                  disabled={isSubmittingPayment}
+                  className="flex-1 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white transition hover:bg-brand/90 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Record Payment
+                  {isSubmittingPayment ? "Recording..." : "Record Payment"}
                 </button>
               </div>
             </form>

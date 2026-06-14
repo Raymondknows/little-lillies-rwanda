@@ -35,6 +35,11 @@ export default function SignupPage() {
 
       await requestSignupOtpAction(formDataObj);
     } catch (err) {
+      // Don't show error for redirect - let Next.js handle the navigation
+      if (err instanceof Error && (err.message === 'NEXT_REDIRECT' || (err as any).digest?.includes('NEXT_REDIRECT'))) {
+        return; // Let the redirect happen silently
+      }
+
       const errorMessage = err instanceof Error ? err.message : String(err);
       setError({
         message: errorMessage,

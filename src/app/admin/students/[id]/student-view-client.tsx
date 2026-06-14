@@ -75,7 +75,7 @@ export default function StudentViewClient({ studentId }: { studentId: string }) 
                 }`}>
                   {student.status === "ACTIVE" ? "Active" : "Inactive"}
                 </div>
-                <div className="rounded-lg bg-blue-100 p-3 text-center text-sm font-medium text-blue-800">
+                <div className="rounded-lg bg-brand/10 p-3 text-center text-sm font-medium text-brand">
                   {student.class?.name || "No Class"}
                 </div>
               </div>

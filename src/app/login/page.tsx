@@ -57,7 +57,7 @@ export default async function LoginPage({
         ) : null}
 
         <p className="mt-2 text-center text-sm text-muted">
-          Sign in to manage your school or platform.
+          Sign in to manage your school.
         </p>
 
         {/* Form automatically routes based on user role */}

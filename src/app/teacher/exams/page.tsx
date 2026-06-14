@@ -47,8 +47,8 @@ export default function ExamsPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 mx-auto" style={{ borderColor: '#0A66C2', borderBottomColor: '#0A66C2', borderTopColor: 'transparent', borderLeftColor: 'transparent', borderRightColor: 'transparent', borderWidth: '2px' }}></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand mx-auto"></div>
+          <p className="mt-4 text-muted">Loading...</p>
         </div>
       </div>
     );
@@ -57,8 +57,8 @@ export default function ExamsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Exams</h1>
-        <p className="mt-1 text-gray-600">Create and manage exams for your classes</p>
+        <h1 className="text-3xl font-bold text-foreground">Exams</h1>
+        <p className="mt-1 text-muted">Create and manage exams for your classes</p>
       </div>
 
       {error && (
@@ -69,14 +69,12 @@ export default function ExamsPage() {
       )}
 
       {/* Select Class */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <label className="block text-sm font-medium text-gray-700 mb-2">Select Class</label>
+      <div className="bg-surface rounded-lg border border-border p-6">
+        <label className="block text-sm font-medium text-foreground mb-2">Select Class</label>
         <select
           value={selectedClass}
           onChange={(e) => setSelectedClass(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:border-transparent" style={{
-            boxShadow: 'var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) #0A66C2 !important'
-          }}
+          className="w-full px-3 py-2 border border-border rounded-lg text-foreground focus:ring-2 focus:ring-brand focus:border-transparent bg-surface"
         >
           <option value="">Choose a class...</option>
           {classes.map((cls) => (
@@ -88,8 +86,8 @@ export default function ExamsPage() {
       </div>
 
       {/* Create Exam Button */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <button className="w-full px-6 py-3 text-white rounded-lg font-medium flex items-center justify-center gap-2" style={{ backgroundColor: '#0A66C2' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#084C99'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#0A66C2'}>
+      <div className="bg-surface rounded-lg border border-border p-6">
+        <button className="w-full px-6 py-3 text-white rounded-lg font-medium flex items-center justify-center gap-2 bg-brand hover:bg-brand/90 transition-colors">
           <Plus className="h-5 w-5" />
           Create New Exam
         </button>
@@ -97,20 +95,20 @@ export default function ExamsPage() {
 
       {/* Exams List */}
       {exams.length > 0 ? (
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-            <h2 className="font-semibold text-gray-900">Exams</h2>
+        <div className="bg-surface rounded-lg border border-border overflow-hidden shadow-sm">
+          <div className="px-6 py-4 border-b border-border bg-background">
+            <h2 className="font-semibold text-foreground">Exams</h2>
           </div>
 
-          <div className="divide-y divide-gray-200">
+          <div className="divide-y divide-border">
             {exams.map((exam) => (
-              <div key={exam.id} className="px-6 py-4 hover:bg-gray-50">
+              <div key={exam.id} className="px-6 py-4 hover:bg-background transition-colors">
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="font-semibold text-gray-900">{exam.title}</p>
-                    <p className="text-sm text-gray-600">{exam.totalMarks} marks</p>
+                    <p className="font-semibold text-foreground">{exam.title}</p>
+                    <p className="text-sm text-muted">{exam.totalMarks} marks</p>
                   </div>
-                  <span className="text-xs text-gray-600">
+                  <span className="text-xs text-muted">
                     {new Date(exam.date).toLocaleDateString()}
                   </span>
                 </div>
@@ -119,9 +117,9 @@ export default function ExamsPage() {
           </div>
         </div>
       ) : (
-        <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
-          <ClipboardCheck className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-          <p className="text-gray-600">No exams yet</p>
+        <div className="bg-background rounded-lg border border-border p-8 text-center">
+          <ClipboardCheck className="h-12 w-12 text-muted/50 mx-auto mb-3" />
+          <p className="text-muted">No exams yet</p>
         </div>
       )}
     </div>

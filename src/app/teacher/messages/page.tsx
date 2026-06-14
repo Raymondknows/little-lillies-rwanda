@@ -50,8 +50,8 @@ export default function MessagesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Messages</h1>
-        <p className="mt-1 text-gray-600">Communication with parents and school</p>
+        <h1 className="text-3xl font-bold text-foreground">Messages</h1>
+        <p className="mt-1 text-muted">Communication with parents and school</p>
       </div>
 
       {error && (
@@ -64,35 +64,32 @@ export default function MessagesPage() {
       {loading ? (
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 mx-auto" style={{ borderColor: '#0A66C2', borderBottomColor: '#0A66C2', borderTopColor: 'transparent', borderLeftColor: 'transparent', borderRightColor: 'transparent', borderWidth: '2px' }}></div>
-            <p className="mt-4 text-gray-600">Loading messages...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand mx-auto"></div>
+            <p className="mt-4 text-muted">Loading messages...</p>
           </div>
         </div>
       ) : messages.length === 0 ? (
-        <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
-          <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-          <p className="text-gray-600">No messages yet</p>
+        <div className="bg-surface rounded-lg border border-border p-8 text-center">
+          <MessageSquare className="h-12 w-12 text-muted/50 mx-auto mb-3" />
+          <p className="text-muted">No messages yet</p>
         </div>
       ) : (
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="divide-y divide-gray-200">
+        <div className="bg-surface rounded-lg border border-border overflow-hidden shadow-sm">
+          <div className="divide-y divide-border">
             {messages.map((msg) => (
               <div
                 key={msg.id}
-                className="px-6 py-4 hover:bg-gray-50 cursor-pointer transition"
-                style={{
-                  backgroundColor: !msg.read ? '#0A66C220' : ''
-                }}
+                className={`px-6 py-4 hover:bg-background cursor-pointer transition ${!msg.read ? 'bg-brand/10' : ''}`}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <p className={`font-medium ${!msg.read ? 'font-bold' : ''} text-gray-900`}>
+                    <p className={`font-medium ${!msg.read ? 'font-bold' : ''} text-foreground`}>
                       {msg.sender}
                     </p>
-                    <p className="text-gray-600 font-medium">{msg.subject}</p>
-                    <p className="text-sm text-gray-500 mt-1 line-clamp-2">{msg.body}</p>
+                    <p className="text-muted font-medium">{msg.subject}</p>
+                    <p className="text-sm text-muted mt-1 line-clamp-2">{msg.body}</p>
                   </div>
-                  <span className="text-xs text-gray-600 flex-shrink-0 ml-4">
+                  <span className="text-xs text-muted flex-shrink-0 ml-4">
                     {new Date(msg.timestamp).toLocaleDateString('en-US', {
                       month: 'short',
                       day: 'numeric',

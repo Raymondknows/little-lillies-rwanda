@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
 
-export async function POST() {
-  const response = NextResponse.json({ success: true }, { status: 200 });
+export async function POST(request: Request) {
+  const url = new URL(request.url);
+  const redirectUrl = url.searchParams.get('redirectUrl') || '/login';
+
+  const response = NextResponse.redirect(new URL(redirectUrl, request.url), {
+    status: 302,
+  });
 
   // ✅ CRITICAL: Delete cookies with EXACT same options as when they were set
   // This ensures the browser recognizes them as the same cookie

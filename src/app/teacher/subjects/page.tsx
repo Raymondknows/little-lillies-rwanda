@@ -65,8 +65,8 @@ export default function SubjectsPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand mx-auto"></div>
+          <p className="mt-4 text-muted">Loading...</p>
         </div>
       </div>
     );
@@ -75,8 +75,8 @@ export default function SubjectsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">My Subjects</h1>
-        <p className="mt-1 text-gray-600">Manage your assigned subjects and classes</p>
+        <h1 className="text-3xl font-bold text-foreground">My Subjects</h1>
+        <p className="mt-1 text-muted">Manage your assigned subjects and classes</p>
       </div>
 
       {error && (
@@ -95,42 +95,42 @@ export default function SubjectsPage() {
               onClick={() => setSelectedSubject(subject)}
               className={`p-6 rounded-lg border-2 cursor-pointer transition ${
                 selectedSubject?.id === subject.id
-                  ? 'border-blue-600 bg-blue-50'
-                  : 'border-gray-200 bg-white hover:border-blue-300'
+                  ? 'border-brand bg-brand/5'
+                  : 'border-border bg-surface hover:border-brand/50'
               }`}
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="font-semibold text-gray-900">{subject.name}</p>
+                  <p className="font-semibold text-foreground">{subject.name}</p>
                 </div>
-                <BookOpen className="h-5 w-5 text-blue-600" />
+                <BookOpen className="h-5 w-5 text-brand" />
               </div>
             </div>
           ))}
         </div>
       ) : (
-        <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
-          <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-          <p className="text-gray-600">No subjects assigned yet</p>
+        <div className="bg-surface rounded-lg border border-border p-8 text-center">
+          <BookOpen className="h-12 w-12 text-muted/50 mx-auto mb-3" />
+          <p className="text-muted">No subjects assigned yet</p>
         </div>
       )}
 
       {/* Selected Subject Details */}
       {selectedSubject && (
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-            <h2 className="font-semibold text-gray-900">Classes for {selectedSubject.name}</h2>
+        <div className="bg-surface rounded-lg border border-border overflow-hidden shadow-sm">
+          <div className="px-6 py-4 border-b border-border bg-background">
+            <h2 className="font-semibold text-foreground">Classes for {selectedSubject.name}</h2>
           </div>
 
-          <div className="divide-y divide-gray-200">
+          <div className="divide-y divide-border">
             {teacherSubjects
               .find((ts) => ts.subject.id === selectedSubject.id)
               ?.classes.map((cls) => (
-                <div key={cls.id} className="px-6 py-4 hover:bg-gray-50 cursor-pointer">
+                <div key={cls.id} className="px-6 py-4 hover:bg-background transition-colors cursor-pointer">
                   <div className="flex items-start justify-between">
                     <div>
-                      <p className="font-semibold text-gray-900">{cls.name}</p>
-                      <p className="text-sm text-gray-600 flex items-center gap-1 mt-1">
+                      <p className="font-semibold text-foreground">{cls.name}</p>
+                      <p className="text-sm text-muted flex items-center gap-1 mt-1">
                         <Users className="h-4 w-4" />
                         {cls.studentCount} students
                       </p>
@@ -139,7 +139,7 @@ export default function SubjectsPage() {
                 </div>
               )) || (
               <div className="px-6 py-8 text-center">
-                <p className="text-gray-600">No classes found</p>
+                <p className="text-muted">No classes found</p>
               </div>
             )}
           </div>

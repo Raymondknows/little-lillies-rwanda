@@ -7,6 +7,7 @@ import {
   ClipboardList,
   Bell,
   AlertCircle,
+  ArrowUpRight,
 } from 'lucide-react';
 import { getTeacherDashboard, type TeacherDashboardData, detectSchoolPhase } from '@/lib/teacher-utils';
 
@@ -35,8 +36,8 @@ export default function TeacherDashboardPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 mx-auto" style={{ borderColor: '#0A66C2', borderBottomColor: '#0A66C2', borderTopColor: 'transparent', borderLeftColor: 'transparent', borderRightColor: 'transparent', borderWidth: '2px' }}></div>
-          <p className="mt-4 text-gray-600">Loading dashboard...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand mx-auto"></div>
+          <p className="mt-4 text-muted">Loading your dashboard...</p>
         </div>
       </div>
     );
@@ -62,7 +63,7 @@ export default function TeacherDashboardPage() {
     return (
       <div className="p-6">
         <div className="text-center">
-          <p className="text-gray-600">No data available</p>
+          <p className="text-muted">No data available</p>
         </div>
       </div>
     );
@@ -73,149 +74,132 @@ export default function TeacherDashboardPage() {
   const pendingAttendanceCount = data.classes.length;
   const announcementCount = 0; // Can be fetched from backend
 
+  const statCards = [
+    {
+      label: "Pending result entries",
+      value: String(pendingAssessmentCount),
+      sub: "Awaiting submission",
+      icon: FileText,
+      color: "bg-blue-100",
+      iconColor: "text-blue-600",
+    },
+    {
+      label: "Attendance registers today",
+      value: String(pendingAttendanceCount),
+      sub: "Classes to mark",
+      icon: ClipboardList,
+      color: "bg-purple-100",
+      iconColor: "text-purple-600",
+    },
+    {
+      label: "Current announcements",
+      value: String(announcementCount),
+      sub: "New messages",
+      icon: Bell,
+      color: "bg-yellow-100",
+      iconColor: "text-yellow-600",
+    },
+  ];
+
   return (
-    <div className="space-y-6">
-      <div className="space-y-4">
-        {/* Header Section */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-sm font-medium uppercase tracking-[0.2em] text-gray-500">Teacher workspace</p>
-            <h1 className="mt-2 text-3xl font-semibold text-gray-900">{data.teacher.name}</h1>
-            <p className="mt-2 max-w-2xl text-sm text-gray-600">
-              Your teaching workspace is scoped to assigned classes, subjects, and the tasks you need to finish today.
-            </p>
-          </div>
-          <Link
-            href="/teacher/results"
-            className="inline-flex items-center justify-center px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-900 rounded-lg font-medium transition w-full sm:w-auto"
-          >
-            View Results
-          </Link>
+    <div>
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-foreground">Welcome, {data.teacher.name}</h1>
+        <p className="mt-1 text-muted">Your teaching workspace for {data.school?.name}</p>
+      </div>
+
+      {/* Stats Cards - Desktop */}
+      <div className="mb-10 hidden sm:block">
+        <div className="grid grid-cols-3 gap-4">
+          {statCards.map((stat, idx) => {
+            const IconComponent = stat.icon;
+            return (
+              <div key={idx} className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50 flex flex-col">
+                <div className="flex items-start gap-3">
+                  <div className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg ${stat.color} shadow-sm`}>
+                    <IconComponent className={`h-4 w-4 ${stat.iconColor}`} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs text-muted">{stat.label}</p>
+                    <p className="mt-1 text-lg font-bold text-foreground">{stat.value}</p>
+                  </div>
+                  <ArrowUpRight className="h-3 w-3 text-muted opacity-0 transition-opacity group-hover:opacity-100 flex-shrink-0" />
+                </div>
+                <p className="mt-2 text-[11px] text-muted">{stat.sub}</p>
+              </div>
+            );
+          })}
         </div>
+      </div>
 
-        {/* Stats Cards */}
-        <div className="grid gap-4 sm:grid-cols-3">
-          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-start justify-between">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-50 shadow-sm ring-1 ring-gray-200">
-                <FileText className="h-5 w-5" style={{ color: '#0A66C2' }} />
+      {/* Stats Cards - Mobile */}
+      <div className="sm:hidden mb-10">
+        {statCards.map((stat, idx) => {
+          const IconComponent = stat.icon;
+          return (
+            <div key={idx} className="block mb-3">
+              <div className="group rounded-lg border border-border bg-surface p-5 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50 flex items-start gap-4">
+                <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg ${stat.color} shadow-sm`}>
+                  <IconComponent className={`h-5 w-5 ${stat.iconColor}`} />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm text-muted font-medium">{stat.label}</p>
+                  <p className="mt-1.5 text-xl font-bold text-foreground">{stat.value}</p>
+                  <p className="mt-1 text-xs text-muted">{stat.sub}</p>
+                </div>
+                <ArrowUpRight className="h-4 w-4 text-muted opacity-0 transition-opacity group-hover:opacity-100 flex-shrink-0 mt-1" />
               </div>
             </div>
-            <p className="mt-4 text-sm text-gray-600">Pending result entries</p>
-            <p className="mt-1 text-xl font-bold text-gray-900">{pendingAssessmentCount}</p>
-          </div>
+          );
+        })}
+      </div>
 
-          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-start justify-between">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-50 shadow-sm ring-1 ring-gray-200">
-                <ClipboardList className="h-5 w-5" style={{ color: '#0A66C2' }} />
-              </div>
-            </div>
-            <p className="mt-4 text-sm text-gray-600">Attendance registers today</p>
-            <p className="mt-1 text-xl font-bold text-gray-900">{pendingAttendanceCount}</p>
-          </div>
-
-          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-start justify-between">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-50 shadow-sm ring-1 ring-gray-200">
-                <Bell className="h-5 w-5" style={{ color: '#0A66C2' }} />
-              </div>
-            </div>
-            <p className="mt-4 text-sm text-gray-600">Current announcements</p>
-            <p className="mt-1 text-xl font-bold text-gray-900">{announcementCount}</p>
-          </div>
-        </div>
-
-        {/* Quick Actions Grid */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Link
-            href="/teacher/attendance"
-            className="rounded-lg border border-gray-200 bg-white p-4 hover:bg-gray-50 transition-colors group"
-          >
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg" style={{ backgroundColor: '#0A66C220' }}>
-                <ClipboardList className="h-5 w-5" style={{ color: '#0A66C2' }} />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-900">Mark Attendance</p>
-              </div>
-            </div>
-          </Link>
-
-          <Link
-            href="/teacher/class"
-            className="rounded-lg border border-gray-200 bg-white p-4 hover:bg-gray-50 transition-colors group"
-          >
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-50">
-                <FileText className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-900">View Classes</p>
-              </div>
-            </div>
-          </Link>
-
-          <Link
-            href="/teacher/assessments"
-            className="rounded-lg border border-gray-200 bg-white p-4 hover:bg-gray-50 transition-colors group"
-          >
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-50">
-                <FileText className="h-5 w-5 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-900">Assessments</p>
-              </div>
-            </div>
-          </Link>
-
-          <Link
-            href="/teacher/profile"
-            className="rounded-lg border border-gray-200 bg-white p-4 hover:bg-gray-50 transition-colors group"
-          >
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-50">
-                <Bell className="h-5 w-5 text-orange-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-900">Profile</p>
-              </div>
-            </div>
-          </Link>
-        </div>
+      {/* Quick Actions */}
+      <div className="mb-10 grid grid-cols-1 md:grid-cols-2 gap-3">
+        <Link href="/teacher/attendance">
+          <button className="w-full inline-flex items-center justify-center px-4 py-3 bg-brand text-white rounded-lg hover:bg-brand/90 transition-colors font-medium shadow-sm hover:shadow-md">
+            <ClipboardList className="h-4 w-4 mr-2" />
+            Mark Attendance
+          </button>
+        </Link>
+        <Link href="/teacher/class">
+          <button className="w-full inline-flex items-center justify-center px-4 py-3 bg-brand text-white rounded-lg hover:bg-brand/90 transition-colors font-medium shadow-sm hover:shadow-md">
+            <FileText className="h-4 w-4 mr-2" />
+            View Classes
+          </button>
+        </Link>
       </div>
 
       {/* Your Classes Section */}
       <div className="space-y-4">
         <div>
-          <h2 className="text-3xl font-bold text-gray-900">Your Classes</h2>
-          <p className="mt-2 text-sm text-gray-600">Manage and view your assigned classes.</p>
+          <h2 className="text-2xl font-bold text-foreground">Your Classes</h2>
+          <p className="mt-1 text-muted">Manage and view your assigned classes.</p>
         </div>
 
-        <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+        <div className="overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
           {/* Desktop Table */}
           <table className="hidden sm:table w-full text-left text-sm">
-            <thead className="border-b border-gray-200 bg-gray-50 text-gray-700">
+            <thead className="border-b border-border bg-background text-foreground">
               <tr>
-                <th className="px-6 py-3 font-medium">Class</th>
-                <th className="px-6 py-3 font-medium">Phase</th>
-                <th className="px-6 py-3 font-medium">Students</th>
-                <th className="px-6 py-3 font-medium">Actions</th>
+                <th className="px-6 py-3 font-semibold">Class</th>
+                <th className="px-6 py-3 font-semibold">Phase</th>
+                <th className="px-6 py-3 font-semibold">Students</th>
+                <th className="px-6 py-3 font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody>
               {data.classes.map((cls) => (
-                <tr key={cls.id} className="border-t border-gray-200 hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 font-medium text-gray-900">{cls.name}</td>
-                  <td className="px-6 py-4 text-gray-600">{cls.phase}</td>
-                  <td className="px-6 py-4 text-gray-600">{cls.studentCount}</td>
+                <tr key={cls.id} className="border-t border-border hover:bg-background transition-colors">
+                  <td className="px-6 py-4 font-medium text-foreground">{cls.name}</td>
+                  <td className="px-6 py-4 text-muted">{cls.phase}</td>
+                  <td className="px-6 py-4 text-muted">{cls.studentCount}</td>
                   <td className="px-6 py-4">
                     <Link
                       href={`/teacher/class?id=${cls.id}`}
-                      className="text-white px-4 py-2 text-xs font-medium rounded-lg transition inline-block" style={{ backgroundColor: '#0A66C2' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#084C99'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#0A66C2'}
+                      className="inline-flex items-center px-3 py-1 text-xs font-medium rounded transition-colors bg-brand text-white hover:bg-brand/90"
                     >
-                      View Class
+                      View
                     </Link>
                   </td>
                 </tr>
@@ -224,22 +208,22 @@ export default function TeacherDashboardPage() {
           </table>
 
           {/* Mobile Card */}
-          <div className="sm:hidden divide-y divide-gray-200">
+          <div className="sm:hidden divide-y divide-border">
             {data.classes.map((cls) => (
               <Link
                 key={cls.id}
                 href={`/teacher/class?id=${cls.id}`}
-                className="block p-4 hover:bg-gray-50 transition-colors"
+                className="block p-4 hover:bg-background transition-colors"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm text-gray-900">{cls.name}</p>
-                    <p className="text-xs text-gray-600 mt-1">
+                    <p className="font-medium text-sm text-foreground">{cls.name}</p>
+                    <p className="text-xs text-muted mt-1">
                       {cls.phase} • {cls.studentCount} students
                     </p>
                   </div>
                   <div className="flex-shrink-0 text-right ml-2">
-                    <p className="text-xs font-medium" style={{ color: '#0A66C2' }}>View</p>
+                    <p className="text-xs font-medium text-brand">View</p>
                   </div>
                 </div>
               </Link>
@@ -248,7 +232,7 @@ export default function TeacherDashboardPage() {
 
           {data.classes.length === 0 && (
             <div className="px-6 py-8 text-center">
-              <p className="text-gray-600">No classes assigned yet</p>
+              <p className="text-muted">No classes assigned yet</p>
             </div>
           )}
         </div>

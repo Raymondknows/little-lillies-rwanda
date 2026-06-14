@@ -113,8 +113,8 @@ export default function AssessmentsPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 mx-auto" style={{ borderColor: '#0A66C2', borderBottomColor: '#0A66C2', borderTopColor: 'transparent', borderLeftColor: 'transparent', borderRightColor: 'transparent', borderWidth: '2px' }}></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand mx-auto"></div>
+          <p className="mt-4 text-muted">Loading...</p>
         </div>
       </div>
     );
@@ -123,8 +123,8 @@ export default function AssessmentsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Assessments</h1>
-        <p className="mt-1 text-gray-600">Create and manage class assessments</p>
+        <h1 className="text-3xl font-bold text-foreground">Assessments</h1>
+        <p className="mt-1 text-muted">Create and manage class assessments</p>
       </div>
 
       {error && (
@@ -135,14 +135,12 @@ export default function AssessmentsPage() {
       )}
 
       {/* Select Class */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <label className="block text-sm font-medium text-gray-700 mb-2">Select Class</label>
+      <div className="bg-surface rounded-lg border border-border p-6">
+        <label className="block text-sm font-medium text-foreground mb-2">Select Class</label>
         <select
           value={selectedClass}
           onChange={(e) => setSelectedClass(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:border-transparent" style={{
-            boxShadow: 'var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) #0A66C2 !important'
-          }}
+          className="w-full px-3 py-2 border border-border rounded-lg text-foreground focus:ring-2 focus:ring-brand focus:border-transparent bg-surface"
         >
           <option value="">Choose a class...</option>
           {classes.map((cls) => (
@@ -155,16 +153,16 @@ export default function AssessmentsPage() {
 
       {/* Create Assessment Form */}
       {selectedClass && (
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Create New Assessment</h2>
+        <div className="bg-surface rounded-lg border border-border p-6">
+          <h2 className="text-lg font-semibold text-foreground mb-4">Create New Assessment</h2>
           <form onSubmit={handleCreate} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+              <label className="block text-sm font-medium text-foreground mb-2">Title</label>
               <input
                 type="text"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border rounded-lg text-foreground focus:ring-2 focus:ring-brand focus:border-transparent bg-surface"
                 placeholder="e.g., Class Test 1"
                 required
               />
@@ -172,11 +170,11 @@ export default function AssessmentsPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
+                <label className="block text-sm font-medium text-foreground mb-2">Type</label>
                 <select
                   value={formData.type}
                   onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border rounded-lg text-foreground focus:ring-2 focus:ring-brand focus:border-transparent bg-surface"
                 >
                   <option value="CLASS_TEST">Class Test</option>
                   <option value="ASSIGNMENT">Assignment</option>
@@ -186,13 +184,13 @@ export default function AssessmentsPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Total Score</label>
+                <label className="block text-sm font-medium text-foreground mb-2">Total Score</label>
                 <input
                   type="number"
                   min="1"
                   value={formData.totalScore}
                   onChange={(e) => setFormData({ ...formData, totalScore: parseInt(e.target.value) })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border rounded-lg text-foreground focus:ring-2 focus:ring-brand focus:border-transparent bg-surface"
                 />
               </div>
             </div>
@@ -200,7 +198,7 @@ export default function AssessmentsPage() {
             <button
               type="submit"
               disabled={creating}
-              className="w-full px-6 py-2 text-white rounded-lg font-medium disabled:opacity-50 flex items-center justify-center gap-2" style={{ backgroundColor: '#0A66C2' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#084C99'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#0A66C2'}
+              className="w-full px-6 py-2 text-white rounded-lg font-medium disabled:opacity-50 flex items-center justify-center gap-2 bg-brand hover:bg-brand/90 transition-colors"
             >
               {creating ? (
                 <>
@@ -220,24 +218,24 @@ export default function AssessmentsPage() {
 
       {/* Assessments List */}
       {assessments.length > 0 && (
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
-            <h2 className="font-semibold text-gray-900">
+        <div className="bg-surface rounded-lg border border-border overflow-hidden shadow-sm">
+          <div className="px-6 py-4 border-b border-border bg-background">
+            <h2 className="font-semibold text-foreground">
               {assessments.length} Assessment{assessments.length !== 1 ? 's' : ''}
             </h2>
           </div>
 
-          <div className="divide-y divide-gray-200">
+          <div className="divide-y divide-border">
             {assessments.map((assessment) => (
-              <div key={assessment.id} className="px-6 py-4 hover:bg-gray-50">
+              <div key={assessment.id} className="px-6 py-4 hover:bg-background transition-colors">
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="font-semibold text-gray-900">{assessment.title}</p>
-                    <p className="text-sm text-gray-600">
+                    <p className="font-semibold text-foreground">{assessment.title}</p>
+                    <p className="text-sm text-muted">
                       {assessment.type} • {assessment.totalScore} points
                     </p>
                   </div>
-                  <span className="text-xs text-gray-600">
+                  <span className="text-xs text-muted">
                     {new Date(assessment.createdAt).toLocaleDateString()}
                   </span>
                 </div>
@@ -248,8 +246,8 @@ export default function AssessmentsPage() {
       )}
 
       {selectedClass && assessments.length === 0 && (
-        <div className="bg-gray-50 rounded-lg border border-gray-200 p-8 text-center">
-          <p className="text-gray-600">No assessments yet. Create one above.</p>
+        <div className="bg-background rounded-lg border border-border p-8 text-center">
+          <p className="text-muted">No assessments yet. Create one above.</p>
         </div>
       )}
     </div>

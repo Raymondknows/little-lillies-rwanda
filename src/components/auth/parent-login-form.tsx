@@ -56,39 +56,39 @@ export function ParentLoginForm() {
       onSubmit={handleSubmit}
     >
       {error && (
-        <p className="rounded-lg bg-error/10 px-3 py-2 text-sm text-error">
+        <p className="rounded-lg bg-error/10 px-4 py-3 text-sm text-error border border-error/20">
           {error}
         </p>
       )}
-      <label className="block text-sm font-medium">
+      <label className="block text-sm font-medium text-foreground">
         School slug (optional)
         <input
           name="schoolSlug"
           type="text"
           placeholder="greenfield"
-          className="mt-1 w-full rounded-lg border border-border px-3 py-2.5 text-sm"
+          className="mt-2 w-full rounded-lg border border-border bg-surface px-4 py-2.5 text-sm placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand"
         />
       </label>
-      <label className="block text-sm font-medium">
+      <label className="block text-sm font-medium text-foreground">
         Phone (WhatsApp)
         <input
           name="phone"
           type="tel"
           required
           placeholder="+2348098765432"
-          className="mt-1 w-full rounded-lg border border-border px-3 py-2.5 text-sm"
+          className="mt-2 w-full rounded-lg border border-border bg-surface px-4 py-2.5 text-sm placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand"
         />
       </label>
-      <label className="block text-sm font-medium">
+      <label className="block text-sm font-medium text-foreground">
         Child admission no.
         <input
           name="admissionNo"
           required
           placeholder="GFA-2041"
-          className="mt-1 w-full rounded-lg border border-border px-3 py-2.5 text-sm"
+          className="mt-2 w-full rounded-lg border border-border bg-surface px-4 py-2.5 text-sm placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand"
         />
       </label>
-      <Button type="submit" className="w-full" disabled={pending}>
+      <Button type="submit" className="w-full mt-6" disabled={pending}>
         {pending ? "Signing in…" : "View my child"}
       </Button>
     </form>

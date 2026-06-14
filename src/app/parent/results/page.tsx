@@ -2,28 +2,32 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { GraduationCap, ChevronRight } from "lucide-react";
+import { GraduationCap, ChevronRight, AlertCircle, Download, ArrowUpRight } from "lucide-react";
+import { formatMoney } from "@/lib/format";
+import { getBackendUrl } from "@/lib/backend-url";
 
-interface Assessment {
-  id: string;
-  name: string;
-  status: string;
-  term: { name: string };
-  publishedAt?: string;
+interface Result {
+  subject: string;
+  caScore?: number;
+  testScore?: number;
+  examScore?: number;
+  totalScore?: number;
+  grade?: string;
+  position?: number;
 }
 
 interface Child {
   id: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   admissionNo: string;
-  assessments: Assessment[];
 }
 
 export default function ParentResultsPage() {
   const [children, setChildren] = useState<Child[]>([]);
   const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
+  const [results, setResults] = useState<Result[]>([]);
+  const [selectedTerm, setSelectedTerm] = useState<string>('latest');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,7 +35,11 @@ export default function ParentResultsPage() {
     const fetchChildren = async () => {
       try {
         setLoading(true);
-        const response = await fetch("/api/parent/children");
+        const backendUrl = getBackendUrl();
+        const response = await fetch(`${backendUrl}/api/parent/children`, {
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+        });
         if (!response.ok) throw new Error("Failed to fetch children");
         const data = await response.json();
         setChildren(data.children || []);
@@ -50,19 +58,52 @@ export default function ParentResultsPage() {
     fetchChildren();
   }, []);
 
+  // Fetch results when child changes
+  useEffect(() => {
+    if (!selectedChildId) return;
+
+    async function fetchResults() {
+      try {
+        const backendUrl = getBackendUrl();
+        const response = await fetch(
+          `${backendUrl}/api/parent/results?childId=${selectedChildId}&termId=${selectedTerm}`,
+          {
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+          }
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setResults(data.results || []);
+        }
+      } catch (err) {
+        console.error('Error fetching results:', err);
+      }
+    }
+
+    fetchResults();
+  }, [selectedChildId, selectedTerm]);
+
   if (loading) {
     return (
-      <div className="min-h-screen p-4 md:p-6">
-        <div className="text-center text-muted">Loading results...</div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand mx-auto"></div>
+          <p className="mt-4 text-muted">Loading results...</p>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen p-4 md:p-6">
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-          <p className="text-sm text-red-700">Error: {error}</p>
+      <div>
+        <div className="rounded-lg border border-error bg-error/10 p-4 flex gap-3">
+          <AlertCircle className="h-5 w-5 text-error flex-shrink-0 mt-0.5" />
+          <div>
+            <h3 className="font-semibold text-error">Error</h3>
+            <p className="text-sm text-error/80 mt-1">{error}</p>
+          </div>
         </div>
       </div>
     );
@@ -70,9 +111,9 @@ export default function ParentResultsPage() {
 
   if (children.length === 0) {
     return (
-      <div className="min-h-screen p-4 md:p-6">
-        <div className="rounded-lg border border-border bg-surface p-12 text-center">
-          <GraduationCap className="w-12 h-12 text-muted mx-auto mb-3 opacity-50" />
+      <div>
+        <div className="rounded-xl border border-border bg-surface p-12 text-center shadow-sm">
+          <GraduationCap className="h-12 w-12 text-muted mx-auto mb-3" />
           <p className="text-muted">No children linked to this account</p>
         </div>
       </div>
@@ -80,90 +121,114 @@ export default function ParentResultsPage() {
   }
 
   const selectedChild = children.find((c) => c.id === selectedChildId);
-  const publishedAssessments = selectedChild?.assessments?.filter(
-    (a) => a.status === "PUBLISHED"
-  ) || [];
 
   return (
-    <div className="min-h-screen p-4 md:p-6">
-      <div className="mx-auto max-w-6xl">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold">Results & Report Cards</h1>
-          <p className="text-muted mt-2">View your child's academic performance</p>
-        </div>
+    <div>
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-foreground">Academic Results</h1>
+        <p className="mt-1 text-muted">View your child's grades and performance</p>
+      </div>
 
-        {/* Child Selector */}
-        {children.length > 1 && (
-          <div className="mb-8 rounded-lg border border-border bg-surface p-4">
-            <p className="text-sm font-medium mb-3">Select Child:</p>
-            <div className="flex flex-wrap gap-2">
-              {children.map((child) => (
-                <button
-                  key={child.id}
-                  onClick={() => setSelectedChildId(child.id)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    selectedChild?.id === child.id
-                      ? "bg-brand text-white"
-                      : "border border-border bg-background hover:bg-background/80"
-                  }`}
-                >
-                  {child.name}
-                </button>
-              ))}
+      {/* Child & Term Selector */}
+      {children.length > 0 && (
+        <div className="rounded-xl border border-border bg-surface p-6 mb-8 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100">
+              <GraduationCap className="h-5 w-5 text-green-600" />
+            </div>
+            <h2 className="font-semibold text-foreground">Results Filter</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-semibold text-foreground mb-3">
+                Select Child:
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {children.map((child) => (
+                  <button
+                    key={child.id}
+                    onClick={() => setSelectedChildId(child.id)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      selectedChild?.id === child.id
+                        ? "bg-brand text-white shadow-sm"
+                        : "bg-background text-foreground border border-border hover:border-brand/50"
+                    }`}
+                  >
+                    {child.firstName} {child.lastName}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-foreground mb-3">
+                Select Term:
+              </label>
+              <select
+                value={selectedTerm}
+                onChange={(e) => setSelectedTerm(e.target.value)}
+                className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-surface text-foreground focus:outline-none focus:ring-2 focus:ring-brand"
+              >
+                <option value="latest">Latest Term</option>
+                <option value="q1">Q1</option>
+                <option value="q2">Q2</option>
+                <option value="q3">Q3</option>
+              </select>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {selectedChild && (
-          <>
-            {/* Child Info Card */}
-            <div className="mb-8 rounded-lg border border-border bg-surface p-6">
-              <h2 className="text-xl font-bold">{selectedChild.name}</h2>
-              <p className="text-sm text-muted">Admission No: {selectedChild.admissionNo}</p>
+      {selectedChild && (
+        <>
+          {/* Results Table */}
+          {results.length === 0 ? (
+            <div className="rounded-xl border border-border bg-surface p-12 text-center shadow-sm">
+              <GraduationCap className="h-12 w-12 text-muted mx-auto mb-3" />
+              <p className="text-muted">No results available yet for this term</p>
             </div>
-
-            {/* Assessments List */}
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Published Assessments</h3>
-
-              {publishedAssessments.length === 0 ? (
-                <div className="rounded-lg border border-border bg-surface p-12 text-center">
-                  <p className="text-muted">No published assessment results available yet</p>
+          ) : (
+            <div className="rounded-xl border border-border bg-surface overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center gap-3 p-6 border-b border-border bg-background">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100">
+                  <GraduationCap className="h-5 w-5 text-green-600" />
                 </div>
-              ) : (
-                <div className="grid gap-4">
-                  {publishedAssessments.map((assessment) => (
-                    <Link
-                      key={assessment.id}
-                      href={`/parent/results/${assessment.id}/${selectedChild.id}`}
-                    >
-                      <div className="rounded-lg border border-border bg-surface p-6 hover:border-brand hover:shadow-md transition-all">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-foreground">{assessment.name}</h4>
-                            <p className="text-sm text-muted mt-1">{assessment.term.name}</p>
-                            {assessment.publishedAt && (
-                              <p className="text-xs text-muted mt-2">
-                                Published:{" "}
-                                {new Date(assessment.publishedAt).toLocaleDateString()}
-                              </p>
-                            )}
-                          </div>
-                          <div className="ml-4 flex items-center gap-3">
-                            <Badge variant="success">Published</Badge>
-                            <ChevronRight className="w-5 h-5 text-muted" />
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
+                <h2 className="font-semibold text-foreground">Results for {selectedChild?.firstName} {selectedChild?.lastName}</h2>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border bg-background">
+                      <th className="px-6 py-3 text-left font-semibold text-foreground">Subject</th>
+                      <th className="px-6 py-3 text-center font-semibold text-foreground">CA</th>
+                      <th className="px-6 py-3 text-center font-semibold text-foreground">Test</th>
+                      <th className="px-6 py-3 text-center font-semibold text-foreground">Exam</th>
+                      <th className="px-6 py-3 text-center font-semibold text-foreground">Total</th>
+                      <th className="px-6 py-3 text-center font-semibold text-foreground">Grade</th>
+                      <th className="px-6 py-3 text-center font-semibold text-foreground">Position</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {results.map((result, idx) => (
+                      <tr key={idx} className="border-b border-border hover:bg-background/50 transition">
+                        <td className="px-6 py-3 font-medium text-foreground">{result.subject}</td>
+                        <td className="px-6 py-3 text-center text-foreground">{result.caScore || '-'}</td>
+                        <td className="px-6 py-3 text-center text-foreground">{result.testScore || '-'}</td>
+                        <td className="px-6 py-3 text-center text-foreground">{result.examScore || '-'}</td>
+                        <td className="px-6 py-3 text-center font-bold text-brand">
+                          {result.totalScore || '-'}
+                        </td>
+                        <td className="px-6 py-3 text-center font-bold text-foreground">{result.grade || '-'}</td>
+                        <td className="px-6 py-3 text-center text-foreground">{result.position || '-'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </>
-        )}
-      </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

@@ -61,7 +61,7 @@ export async function platformAdminLogoutAction() {
   cookieStore.delete('schoolbase_parent');
 
   // Redirect to login page
-  redirect('/schoolbase-admin-login');
+  redirect('/login');
 }
 
 export async function parentLogoutAction() {

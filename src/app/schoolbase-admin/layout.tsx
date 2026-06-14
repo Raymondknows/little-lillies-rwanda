@@ -24,7 +24,7 @@ export default async function PlatformAdminLayout({
 
   // Redirect to login if not authenticated or not a platform admin
   if (!session) {
-    redirect("/schoolbase-admin-login");
+    redirect("/login");
   }
 
   return (
@@ -33,7 +33,7 @@ export default async function PlatformAdminLayout({
       school={{ name: "SchoolBase Platform", city: "Africa", country: "All" }}
       session={session}
       logoHref="/schoolbase-admin"
-      logoutRedirectUrl="/schoolbase-admin-login"
+      logoutRedirectUrl="/login"
     >
       {children}
     </SharedLayout>

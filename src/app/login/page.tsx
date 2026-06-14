@@ -2,17 +2,20 @@ import { redirect } from "next/navigation";
 import { CheckCircle2 } from "lucide-react";
 import { AppLogo } from "@/components/app-logo";
 import { LoginForm } from "@/components/auth/login-form";
-import { getStaffSession } from "@/lib/auth";
+import { getStaffSession, getPlatformAdminSession } from "@/lib/auth";
 
 export default async function LoginPage({
   searchParams,
 }: {
   searchParams: Promise<{ next?: string; signup?: string; reset?: string }>;
 }) {
-  const session = await getStaffSession();
+  // Check both staff and platform admin sessions
+  const staffSession = await getStaffSession();
+  const platformSession = await getPlatformAdminSession();
 
-  // ✅ FIX: correct admin landing route
-  if (session) redirect("/admin");
+  // Redirect if already logged in
+  if (staffSession) redirect("/admin");
+  if (platformSession) redirect("/schoolbase-admin");
 
   const { next, signup, reset } = await searchParams;
 
@@ -24,7 +27,7 @@ export default async function LoginPage({
         </div>
 
         <h1 className="text-center text-xl font-bold text-foreground">
-          Staff sign in
+          Sign in to SchoolBase
         </h1>
 
         {reset === "success" ? (
@@ -46,7 +49,7 @@ export default async function LoginPage({
               <div>
                 <p className="font-semibold">Welcome to SchoolBase!</p>
                 <p className="mt-1 text-sm text-green-900/90">
-                  Your school has been registered successfully. Sign in with your new admin credentials to continue.
+                  Your school has been registered successfully. Sign in with your admin credentials to continue.
                 </p>
               </div>
             </div>
@@ -54,10 +57,10 @@ export default async function LoginPage({
         ) : null}
 
         <p className="mt-2 text-center text-sm text-muted">
-          Sign in to manage fees, students, and results.
+          Sign in to manage your school or platform.
         </p>
 
-        {/* ✅ FIX: redirect goes to actual route */}
+        {/* Form automatically routes based on user role */}
         <LoginForm redirectTo="/admin" />
 
         <div className="mt-4 space-y-2 text-center text-sm">

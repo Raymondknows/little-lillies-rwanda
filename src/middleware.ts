@@ -36,9 +36,9 @@ export async function middleware(request: NextRequest) {
   const isValidToken = sessionCookie ? await hasValidToken(sessionCookie) : false;
 
   // Protect platform admin routes
-  if (pathname.startsWith("/schoolbase-admin") && !pathname.startsWith("/schoolbase-admin-login")) {
+  if (pathname.startsWith("/schoolbase-admin")) {
     if (!isValidToken) {
-      const response = NextResponse.redirect(new URL("/schoolbase-admin-login", request.url));
+      const response = NextResponse.redirect(new URL("/login", request.url));
       response.cookies.delete(SESSION_COOKIE);
       return response;
     }

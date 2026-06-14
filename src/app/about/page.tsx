@@ -24,7 +24,7 @@ export default function AboutPage() {
             Our Mission
           </h1>
           <p className="mt-6 max-w-2xl text-lg text-muted leading-relaxed">
-            We're building the most intuitive school management platform in Africa.
+            To become the most intuitive school management platform in Africa.
             Every day, thousands of school owners trust SchoolBase to manage fees,
             communicate with parents, and run their schools efficiently.
           </p>

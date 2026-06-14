@@ -27,7 +27,7 @@ export async function platformAdminLogoutAction(formData?: FormData): Promise<an
   cookieStore.delete('schoolbase_parent');  // Legacy fallback
 
   // Redirect to login immediately
-  redirect("/schoolbase-admin-login");
+  redirect("/login");
 }
 
 export async function sendPlatformCommunicationEmailAction(...args: any[]): Promise<any> {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { AlertCircle, CheckCircle2, Clock, Save, Loader2, Users, TrendingUp, Maximize2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Clock, Save, Loader2, Users } from 'lucide-react';
 import { getBackendUrl } from '@/lib/backend-url';
 
 interface Class {
@@ -13,7 +13,7 @@ interface Class {
 interface Student {
   id: string;
   name: string;
-  admissionNumber: string;
+  admissionNo: string;
   email: string;
 }
 
@@ -45,7 +45,7 @@ export default function AttendancePage() {
     const query = searchQuery.toLowerCase();
     return students.filter((s) => 
       s.name.toLowerCase().includes(query) ||
-      s.admissionNumber.toLowerCase().includes(query)
+      (s.admissionNo || '').toLowerCase().includes(query)
     );
   }, [students, searchQuery]);
 
@@ -159,7 +159,7 @@ export default function AttendancePage() {
       {/* Page Header */}
       <div>
         <h1 className="text-3xl font-bold text-foreground">Attendance Register</h1>
-        <p className="mt-2 text-muted">Mark and track student attendance efficiently</p>
+        <p className="mt-1 text-muted">Mark and track student attendance by class and date</p>
       </div>
 
       {/* Status Messages */}
@@ -183,47 +183,124 @@ export default function AttendancePage() {
         </div>
       )}
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <StatCard
-          label="Total Students"
-          value={total}
-          percentage={Math.round((total / total) * 100) || 0}
-          icon={<Users className="h-5 w-5 text-brand" />}
-        />
-        <StatCard
-          label="Present"
-          value={present}
-          percentage={total > 0 ? Math.round((present / total) * 100) : 0}
-          icon={<CheckCircle2 className="h-5 w-5 text-emerald-600" />}
-        />
-        <StatCard
-          label="Absent"
-          value={absent}
-          percentage={total > 0 ? Math.round((absent / total) * 100) : 0}
-          icon={<AlertCircle className="h-5 w-5 text-red-600" />}
-        />
-        <StatCard
-          label="Late"
-          value={late}
-          percentage={total > 0 ? Math.round((late / total) * 100) : 0}
-          icon={<Clock className="h-5 w-5 text-amber-600" />}
-        />
-        <StatCard
-          label="Excused"
-          value={excused}
-          percentage={total > 0 ? Math.round((excused / total) * 100) : 0}
-          icon={<Maximize2 className="h-5 w-5 text-blue-600" />}
-        />
+      {/* Summary Cards - Desktop */}
+      <div className="hidden sm:grid grid-cols-4 gap-3">
+        <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md h-full cursor-pointer hover:border-brand/50 flex flex-col">
+          <div className="flex items-start gap-3">
+            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
+              <Users className="h-4 w-4 text-brand" />
+            </div>
+            <div className="flex-1">
+              <p className="text-xs text-muted">Total Students</p>
+              <p className="mt-1 text-lg font-bold text-foreground">{total}</p>
+            </div>
+          </div>
+          <p className="mt-2 text-[11px] text-muted">In this class</p>
+        </div>
+
+        <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md h-full cursor-pointer hover:border-brand/50 flex flex-col">
+          <div className="flex items-start gap-3">
+            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
+              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+            </div>
+            <div className="flex-1">
+              <p className="text-xs text-muted">Present</p>
+              <p className="mt-1 text-lg font-bold text-foreground">{present}</p>
+            </div>
+          </div>
+          <p className="mt-2 text-[11px] text-muted">{total > 0 ? Math.round((present / total) * 100) : 0}% present</p>
+        </div>
+
+        <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md h-full cursor-pointer hover:border-brand/50 flex flex-col">
+          <div className="flex items-start gap-3">
+            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
+              <AlertCircle className="h-4 w-4 text-red-600" />
+            </div>
+            <div className="flex-1">
+              <p className="text-xs text-muted">Absent</p>
+              <p className="mt-1 text-lg font-bold text-foreground">{absent}</p>
+            </div>
+          </div>
+          <p className="mt-2 text-[11px] text-muted">{total > 0 ? Math.round((absent / total) * 100) : 0}% absent</p>
+        </div>
+
+        <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md h-full cursor-pointer hover:border-brand/50 flex flex-col">
+          <div className="flex items-start gap-3">
+            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
+              <Clock className="h-4 w-4 text-amber-600" />
+            </div>
+            <div className="flex-1">
+              <p className="text-xs text-muted">Late</p>
+              <p className="mt-1 text-lg font-bold text-foreground">{late}</p>
+            </div>
+          </div>
+          <p className="mt-2 text-[11px] text-muted">{total > 0 ? Math.round((late / total) * 100) : 0}% late</p>
+        </div>
       </div>
 
-      {/* Filters Section */}
-      <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-        <div className="grid gap-4 md:grid-cols-4 mb-4">
+      {/* Summary Cards - Mobile */}
+      <div className="sm:hidden space-y-3">
+        <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50">
+          <div className="flex items-start gap-3">
+            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
+              <Users className="h-4 w-4 text-brand" />
+            </div>
+            <div className="flex-1">
+              <p className="text-xs text-muted">Total Students</p>
+              <p className="mt-1 text-lg font-bold text-foreground">{total}</p>
+            </div>
+          </div>
+          <p className="mt-2 text-[11px] text-muted">In this class</p>
+        </div>
+
+        <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50">
+          <div className="flex items-start gap-3">
+            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
+              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+            </div>
+            <div className="flex-1">
+              <p className="text-xs text-muted">Present</p>
+              <p className="mt-1 text-lg font-bold text-foreground">{present}</p>
+            </div>
+          </div>
+          <p className="mt-2 text-[11px] text-muted">{total > 0 ? Math.round((present / total) * 100) : 0}% present</p>
+        </div>
+
+        <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50">
+          <div className="flex items-start gap-3">
+            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
+              <AlertCircle className="h-4 w-4 text-red-600" />
+            </div>
+            <div className="flex-1">
+              <p className="text-xs text-muted">Absent</p>
+              <p className="mt-1 text-lg font-bold text-foreground">{absent}</p>
+            </div>
+          </div>
+          <p className="mt-2 text-[11px] text-muted">{total > 0 ? Math.round((absent / total) * 100) : 0}% absent</p>
+        </div>
+
+        <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50">
+          <div className="flex items-start gap-3">
+            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
+              <Clock className="h-4 w-4 text-amber-600" />
+            </div>
+            <div className="flex-1">
+              <p className="text-xs text-muted">Late</p>
+              <p className="mt-1 text-lg font-bold text-foreground">{late}</p>
+            </div>
+          </div>
+          <p className="mt-2 text-[11px] text-muted">{total > 0 ? Math.round((late / total) * 100) : 0}% late</p>
+        </div>
+      </div>
+
+      {/* Actions & Search Bar */}
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        {/* Filters - Left */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-2 flex-1">
           <div>
             <label className="text-xs font-semibold text-muted uppercase tracking-wider">Class</label>
             <select
-              className="w-full mt-2 rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none"
+              className="w-full mt-2 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none"
               value={selectedClass}
               onChange={(e) => {
                 setSelectedClass(e.target.value);
@@ -243,211 +320,181 @@ export default function AttendancePage() {
             <label className="text-xs font-semibold text-muted uppercase tracking-wider">Date</label>
             <input
               type="date"
-              className="w-full mt-2 rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none"
+              className="w-full mt-2 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none"
               value={date}
               onChange={(e) => setDate(e.target.value)}
             />
           </div>
-
-          <div>
-            <label className="text-xs font-semibold text-muted uppercase tracking-wider">Search</label>
-            <input
-              type="text"
-              placeholder="Search students..."
-              className="w-full mt-2 rounded-lg border border-border bg-background px-3 py-2.5 text-sm placeholder-muted focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none"
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setCurrentPage(1);
-              }}
-            />
-          </div>
-
-          <div className="flex items-end">
-            <button
-              onClick={handleSave}
-              disabled={saving || !selectedClass}
-              className="w-full rounded-lg bg-brand text-white px-4 py-2.5 font-semibold text-sm hover:bg-brand/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 shadow-sm"
-            >
-              {saving ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4" />
-                  Save Attendance
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Students Table */}
-      <div className="rounded-xl border border-border bg-surface shadow-sm overflow-hidden">
-        <div className="px-6 py-5 border-b border-border bg-background">
-          <div className="flex justify-between items-center">
-            <div>
-              <h2 className="font-bold text-foreground">Register</h2>
-              <p className="text-xs text-muted mt-1">
-                {filteredStudents.length} student(s) • Page {currentPage} of {totalPages}
-              </p>
-            </div>
-            <div className="text-xs text-muted">
-              Items per page:
-              <select
-                value={itemsPerPage}
-                onChange={(e) => {
-                  setItemsPerPage(Number(e.target.value));
-                  setCurrentPage(1);
-                }}
-                className="ml-2 rounded border border-border bg-background px-2 py-1 text-xs"
-              >
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-              </select>
-            </div>
-          </div>
         </div>
 
-        {filteredStudents.length === 0 ? (
-          <div className="px-6 py-16 text-center">
-            <Users className="h-12 w-12 text-muted/30 mx-auto mb-4" />
-            <p className="text-muted">No students found</p>
-          </div>
-        ) : (
-          <>
-            {/* Desktop Table View */}
-            <div className="hidden sm:block overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-background border-b border-border">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-bold text-muted uppercase tracking-wider">Student</th>
-                    <th className="px-6 py-3 text-left text-xs font-bold text-muted uppercase tracking-wider">Admission #</th>
-                    <th className="px-6 py-3 text-center text-xs font-bold text-muted uppercase tracking-wider">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {paginatedStudents.map((student) => (
-                    <tr key={student.id} className="hover:bg-background/50 transition-colors">
-                      <td className="px-6 py-4 text-sm font-medium text-foreground">{student.name}</td>
-                      <td className="px-6 py-4 text-sm text-muted">{student.admissionNumber}</td>
-                      <td className="px-6 py-4">
-                        <div className="flex justify-center gap-2">
-                          {(['PRESENT', 'ABSENT', 'LATE', 'EXCUSED'] as const).map((status) => (
-                            <button
-                              key={status}
-                              onClick={() => handleStatusChange(student.id, status)}
-                              className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
-                                attendance[student.id]?.status === status
-                                  ? {
-                                      PRESENT: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-                                      ABSENT: 'bg-red-100 text-red-700 border-red-200',
-                                      LATE: 'bg-amber-100 text-amber-700 border-amber-200',
-                                      EXCUSED: 'bg-blue-100 text-blue-700 border-blue-200',
-                                    }[status]
-                                  : 'bg-background text-muted border-border hover:border-brand/50'
-                              }`}
-                            >
-                              {status}
-                            </button>
-                          ))}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+        {/* Search & Save Button - Right */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-2 flex-1 sm:flex-1">
+          <input
+            type="text"
+            placeholder="Search by name or admission..."
+            className="flex-1 rounded-lg border border-border bg-surface px-4 py-2 text-sm text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-brand"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1);
+            }}
+          />
 
-            {/* Mobile Card View */}
-            <div className="sm:hidden divide-y divide-border">
-              {paginatedStudents.map((student) => (
-                <div key={student.id} className="px-6 py-4 space-y-3">
-                  <div>
-                    <p className="font-semibold text-foreground">{student.name}</p>
-                    <p className="text-xs text-muted mt-1">{student.admissionNumber}</p>
-                  </div>
-                  <div className="flex gap-2 flex-wrap">
-                    {(['PRESENT', 'ABSENT', 'LATE', 'EXCUSED'] as const).map((status) => (
-                      <button
-                        key={status}
-                        onClick={() => handleStatusChange(student.id, status)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
-                          attendance[student.id]?.status === status
-                            ? {
-                                PRESENT: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-                                ABSENT: 'bg-red-100 text-red-700 border-red-200',
-                                LATE: 'bg-amber-100 text-amber-700 border-amber-200',
-                                EXCUSED: 'bg-blue-100 text-blue-700 border-blue-200',
-                              }[status]
-                            : 'bg-background text-muted border-border'
-                        }`}
-                      >
-                        {status}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="px-6 py-4 border-t border-border flex justify-between items-center bg-background">
-                <button
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
-                  className="px-4 py-2 rounded-lg border border-border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-background transition-colors"
-                >
-                  Previous
-                </button>
-                <span className="text-sm text-muted">
-                  Page {currentPage} of {totalPages}
-                </span>
-                <button
-                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                  disabled={currentPage === totalPages}
-                  className="px-4 py-2 rounded-lg border border-border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-background transition-colors"
-                >
-                  Next
-                </button>
-              </div>
+          <button
+            onClick={handleSave}
+            disabled={saving || !selectedClass}
+            className="rounded-lg bg-brand text-white px-4 py-2 font-semibold text-sm hover:bg-brand/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 shadow-sm whitespace-nowrap"
+          >
+            {saving ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4" />
+                Save Attendance
+              </>
             )}
-          </>
-        )}
+          </button>
+        </div>
       </div>
-    </div>
-  );
-}
 
-function StatCard({
-  label,
-  value,
-  percentage,
-  icon,
-}: {
-  label: string;
-  value: number;
-  percentage: number;
-  icon: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-lg border border-border bg-surface p-4 shadow-sm hover:shadow-md transition-shadow">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-xs text-muted uppercase tracking-wider font-semibold">{label}</p>
-          <p className="text-2xl font-bold text-foreground mt-2">{value}</p>
-          <p className="text-xs text-muted mt-1">{percentage}% rate</p>
-        </div>
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand/10">
-          {icon}
-        </div>
+      {/* Results Info */}
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm text-muted">
+          Showing {paginatedStudents.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0}–
+          {Math.min(currentPage * itemsPerPage, filteredStudents.length)} of {filteredStudents.length} student{filteredStudents.length !== 1 ? "s" : ""}
+          {searchQuery && ` matching "${searchQuery}"`}
+        </p>
+        <label className="text-sm text-muted whitespace-nowrap">
+          Rows per page
+          <select
+            value={itemsPerPage}
+            onChange={(e) => {
+              setItemsPerPage(Number(e.target.value));
+              setCurrentPage(1);
+            }}
+            className="ml-2 rounded-lg border border-border bg-background px-2 py-1 text-sm text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
+          >
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+          </select>
+        </label>
       </div>
+
+      {/* Table */}
+      {filteredStudents.length === 0 ? (
+        <div className="rounded-lg border border-border bg-surface px-4 py-8 text-center sm:px-6 sm:py-12">
+          <Users className="h-12 w-12 text-muted/30 mx-auto mb-4" />
+          <p className="text-sm text-muted">No students found</p>
+        </div>
+      ) : (
+        <>
+          {/* Desktop Table */}
+          <div className="hidden sm:block overflow-x-auto rounded-lg border border-border bg-surface mb-6">
+            <table className="w-full text-left text-sm">
+              <thead className="border-b border-border bg-background text-muted">
+                <tr>
+                  <th className="px-4 py-2 font-medium">Student</th>
+                  <th className="px-4 py-2 font-medium">Admission #</th>
+                  <th className="px-4 py-2 font-medium">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedStudents.map((student) => (
+                  <tr key={student.id} className="border-t border-border hover:bg-background/50 transition-colors">
+                    <td className="px-4 py-2 font-medium text-foreground">{student.name}</td>
+                    <td className="px-4 py-2 text-muted">{student.admissionNo || '—'}</td>
+                    <td className="px-4 py-2">
+                      <div className="flex gap-1.5 flex-wrap">
+                        {(['PRESENT', 'ABSENT', 'LATE', 'EXCUSED'] as const).map((status) => (
+                          <button
+                            key={status}
+                            onClick={() => handleStatusChange(student.id, status)}
+                            className={`px-2 py-1 rounded text-xs font-semibold border transition-all ${
+                              attendance[student.id]?.status === status
+                                ? {
+                                    PRESENT: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+                                    ABSENT: 'bg-red-100 text-red-700 border-red-200',
+                                    LATE: 'bg-amber-100 text-amber-700 border-amber-200',
+                                    EXCUSED: 'bg-blue-100 text-blue-700 border-blue-200',
+                                  }[status]
+                                : 'bg-background text-muted border-border hover:border-brand/50'
+                            }`}
+                          >
+                            {status}
+                          </button>
+                        ))}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile Cards */}
+          <div className="sm:hidden space-y-2 mb-6">
+            {paginatedStudents.map((student) => (
+              <div
+                key={student.id}
+                className="rounded-lg border border-border bg-surface px-3 py-2 hover:bg-background/50 transition-colors"
+              >
+                <div className="mb-2">
+                  <p className="font-medium text-sm">{student.name}</p>
+                  <p className="text-xs text-muted mt-1">{student.admissionNo || '—'}</p>
+                </div>
+                <div className="flex gap-1.5 flex-wrap">
+                  {(['PRESENT', 'ABSENT', 'LATE', 'EXCUSED'] as const).map((status) => (
+                    <button
+                      key={status}
+                      onClick={() => handleStatusChange(student.id, status)}
+                      className={`px-2 py-1 rounded text-xs font-semibold border transition-all ${
+                        attendance[student.id]?.status === status
+                          ? {
+                              PRESENT: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+                              ABSENT: 'bg-red-100 text-red-700 border-red-200',
+                              LATE: 'bg-amber-100 text-amber-700 border-amber-200',
+                              EXCUSED: 'bg-blue-100 text-blue-700 border-blue-200',
+                            }[status]
+                          : 'bg-background text-muted border-border'
+                      }`}
+                    >
+                      {status}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex justify-between items-center">
+              <button
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="px-4 py-2 rounded-lg border border-border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-background transition-colors"
+              >
+                Previous
+              </button>
+              <span className="text-sm text-muted">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages}
+                className="px-4 py-2 rounded-lg border border-border text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-background transition-colors"
+              >
+                Next
+              </button>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

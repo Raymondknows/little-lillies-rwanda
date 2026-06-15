@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { AlertCircle, Users, BookOpen, TrendingUp, CheckCircle } from 'lucide-react';
+import { AlertCircle, Users, BookOpen, TrendingUp, CheckCircle, Grid3X3, List } from 'lucide-react';
 import { getBackendUrl } from '@/lib/backend-url';
 
 interface Class {
@@ -16,10 +16,12 @@ interface Class {
 interface Student {
   id: string;
   name: string;
-  admissionNumber: string;
+  admissionNo: string;
   email: string;
   status?: string;
 }
+
+type ViewMode = 'grid' | 'list';
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100] as const;
 const DEFAULT_ITEMS_PER_PAGE = 20;
@@ -36,6 +38,7 @@ export default function ClassPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(DEFAULT_ITEMS_PER_PAGE);
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
 
   useEffect(() => {
     async function loadClasses() {
@@ -101,7 +104,7 @@ export default function ClassPage() {
     const query = searchQuery.toLowerCase();
     return students.filter((student) => {
       const fullName = student.name.toLowerCase();
-      const admNo = (student.admissionNumber || '').toLowerCase();
+      const admNo = (student.admissionNo || '').toLowerCase();
       const emailStr = (student.email || '').toLowerCase();
       
       return fullName.includes(query) || admNo.includes(query) || emailStr.includes(query);
@@ -155,85 +158,75 @@ export default function ClassPage() {
         </div>
       )}
 
-      {/* Class Selection */}
-      {classes.length > 1 && (
-        <div className="bg-surface rounded-lg border border-border p-6">
-          <label className="block text-sm font-medium text-foreground mb-3">Select Class</label>
-          <select
-            value={selectedClass?.id || ''}
-            onChange={(e) => {
-              const cls = classes.find((c) => c.id === e.target.value);
-              setSelectedClass(cls || null);
-            }}
-            className="w-full px-4 py-2.5 border border-border rounded-lg text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
-          >
-            {classes.map((cls) => (
-              <option key={cls.id} value={cls.id}>
-                {cls.name}
-                {cls.arm ? ` - ${cls.arm}` : ''}
-                {cls.studentCount ? ` (${cls.studentCount})` : ''}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
+      {/* Class Selection & Info */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        {classes.length > 1 && (
+          <div className="flex-1 max-w-xs">
+            <label className="block text-xs font-medium text-muted mb-2">Select Class</label>
+            <select
+              value={selectedClass?.id || ''}
+              onChange={(e) => {
+                const cls = classes.find((c) => c.id === e.target.value);
+                setSelectedClass(cls || null);
+              }}
+              className="w-full px-3 py-2 border border-border rounded-lg text-sm text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
+            >
+              {classes.map((cls) => (
+                <option key={cls.id} value={cls.id}>
+                  {cls.name}
+                  {cls.arm ? ` - ${cls.arm}` : ''}
+                  {cls.studentCount ? ` (${cls.studentCount})` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+        
+        {selectedClass && (
+          <div>
+            <h2 className="text-lg font-bold text-foreground">{selectedClass.name}</h2>
+            {selectedClass.arm && <p className="text-xs text-muted">{selectedClass.arm}{selectedClass.phase && ` • ${selectedClass.phase}`}</p>}
+          </div>
+        )}
+      </div>
 
-      {/* Class Overview Card */}
+      {/* Summary Stats - Compact Row */}
       {selectedClass && (
-        <div className="rounded-lg border border-border bg-gradient-to-br from-brand/5 to-brand/2 p-6">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h2 className="text-2xl font-bold text-foreground">{selectedClass.name}</h2>
-              {selectedClass.arm && <p className="text-sm text-muted mt-1">Arm: {selectedClass.arm}</p>}
-              {selectedClass.phase && <p className="text-sm text-muted">Phase: {selectedClass.phase}</p>}
-            </div>
-            <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-brand/10 ring-1 ring-brand/20">
-              <BookOpen className="h-6 w-6 text-brand" />
+        <div className="hidden sm:grid grid-cols-3 gap-2">
+          <div className="rounded-lg border border-border bg-surface p-3 shadow-sm">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded bg-brand/10 ring-1 ring-brand/20">
+                <Users className="h-3.5 w-3.5 text-brand" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-muted">Total</p>
+                <p className="text-sm font-bold text-foreground">{stats.total}</p>
+              </div>
             </div>
           </div>
-        </div>
-      )}
 
-      {/* Summary Stats */}
-      {selectedClass && (
-        <div className="hidden sm:grid grid-cols-3 gap-3">
-          <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50 flex flex-col">
-            <div className="flex items-start gap-3">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
-                <Users className="h-4 w-4 text-brand" />
+          <div className="rounded-lg border border-border bg-surface p-3 shadow-sm">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded bg-brand/10 ring-1 ring-brand/20">
+                <CheckCircle className="h-3.5 w-3.5 text-brand" />
               </div>
-              <div className="flex-1">
-                <p className="text-xs text-muted">Total Students</p>
-                <p className="mt-1 text-lg font-bold text-foreground">{stats.total}</p>
-              </div>
-            </div>
-            <p className="mt-2 text-[11px] text-muted">In this class</p>
-          </div>
-
-          <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50 flex flex-col">
-            <div className="flex items-start gap-3">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
-                <CheckCircle className="h-4 w-4 text-brand" />
-              </div>
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <p className="text-xs text-muted">Active</p>
-                <p className="mt-1 text-lg font-bold text-foreground">{stats.active}</p>
+                <p className="text-sm font-bold text-foreground">{stats.active}</p>
               </div>
             </div>
-            <p className="mt-2 text-[11px] text-muted">Enrolled students</p>
           </div>
 
-          <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50 flex flex-col">
-            <div className="flex items-start gap-3">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
-                <TrendingUp className="h-4 w-4 text-brand" />
+          <div className="rounded-lg border border-border bg-surface p-3 shadow-sm">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded bg-brand/10 ring-1 ring-brand/20">
+                <TrendingUp className="h-3.5 w-3.5 text-brand" />
               </div>
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <p className="text-xs text-muted">Inactive</p>
-                <p className="mt-1 text-lg font-bold text-foreground">{stats.inactive}</p>
+                <p className="text-sm font-bold text-foreground">{stats.inactive}</p>
               </div>
             </div>
-            <p className="mt-2 text-[11px] text-muted">Withdrawn or on leave</p>
           </div>
         </div>
       )}
@@ -241,7 +234,7 @@ export default function ClassPage() {
       {/* Search and Controls */}
       {selectedClass && students.length > 0 && (
         <>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-2">
             <input
               type="text"
               placeholder="Search by name, admission number, or email..."
@@ -250,23 +243,40 @@ export default function ClassPage() {
                 setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              className="flex-1 rounded-lg border border-border bg-surface px-4 py-2 text-sm text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-brand"
+              className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-brand"
             />
-          </div>
 
-          {/* Results Info */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-sm">
-            <p className="text-muted">
-              Showing {paginatedStudents.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0}–
-              {Math.min(currentPage * itemsPerPage, filteredStudents.length)} of {filteredStudents.length} student{filteredStudents.length !== 1 ? 's' : ''}
-              {searchQuery && ` matching "${searchQuery}"`}
-            </p>
-            <label className="text-muted whitespace-nowrap">
-              Rows per page
+            <div className="flex gap-1.5">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-xs font-medium transition ${
+                  viewMode === 'grid'
+                    ? 'bg-brand text-white'
+                    : 'bg-background text-muted hover:bg-surface border border-border'
+                }`}
+              >
+                <Grid3X3 className="h-3.5 w-3.5" />
+                Grid
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-xs font-medium transition ${
+                  viewMode === 'list'
+                    ? 'bg-brand text-white'
+                    : 'bg-background text-muted hover:bg-surface border border-border'
+                }`}
+              >
+                <List className="h-3.5 w-3.5" />
+                List
+              </button>
+            </div>
+
+            <label className="text-muted whitespace-nowrap text-xs">
+              <span className="hidden sm:inline">Show</span>
               <select
                 value={itemsPerPage}
                 onChange={handlePageSizeChange}
-                className="ml-2 rounded-lg border border-border bg-background px-2 py-1 text-sm text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
+                className="ml-1.5 rounded-lg border border-border bg-background px-2 py-1.5 text-xs text-foreground focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/20"
               >
                 {PAGE_SIZE_OPTIONS.map((size) => (
                   <option key={size} value={size}>
@@ -277,8 +287,50 @@ export default function ClassPage() {
             </label>
           </div>
 
-          {/* Desktop Table */}
-          <div className="hidden sm:block overflow-x-auto rounded-lg border border-border bg-surface">
+          {/* Results Info */}
+          <div className="flex items-center justify-between text-xs text-muted">
+            <p>
+              Showing {paginatedStudents.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0}–
+              {Math.min(currentPage * itemsPerPage, filteredStudents.length)} of {filteredStudents.length}
+              {searchQuery && ` matching "${searchQuery}"`}
+            </p>
+          </div>
+
+          {/* Grid View */}
+          {viewMode === 'grid' && (
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+              {paginatedStudents.map((student) => (
+                <div
+                  key={student.id}
+                  className="rounded-lg border border-border bg-surface p-6 hover:shadow-md hover:border-brand/50 transition-all"
+                >
+                  <div className="flex items-start gap-3 mb-4">
+                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-brand/10 ring-1 ring-brand/20">
+                      <Users className="h-5 w-5 text-brand" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-foreground text-sm truncate">{student.name}</h3>
+                      <p className="text-xs text-muted mt-1 truncate">Admission: {student.admissionNo || '—'}</p>
+                    </div>
+                  </div>
+                  <div className="space-y-2 mb-4 text-xs text-muted">
+                    <p className="truncate">Email: {student.email || '—'}</p>
+                  </div>
+                  <span className={`inline-flex px-3 py-1 text-xs font-medium rounded-full w-full justify-center ${
+                    student.status === 'INACTIVE'
+                      ? 'bg-red-50 text-red-700'
+                      : 'bg-green-50 text-green-700'
+                  }`}>
+                    {student.status === 'INACTIVE' ? 'Inactive' : 'Active'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* List View - Desktop Table */}
+          {viewMode === 'list' && (
+            <div className="hidden sm:block overflow-x-auto rounded-lg border border-border bg-surface">
             <table className="w-full text-left text-sm">
               <thead className="border-b border-border bg-background text-muted">
                 <tr>
@@ -292,7 +344,7 @@ export default function ClassPage() {
                 {paginatedStudents.map((student) => (
                   <tr key={student.id} className="border-t border-border hover:bg-background/50 transition-colors">
                     <td className="px-4 py-3 font-medium text-foreground">{student.name}</td>
-                    <td className="px-4 py-3 text-muted text-sm">{student.admissionNumber || '—'}</td>
+                    <td className="px-4 py-3 text-muted text-sm">{student.admissionNo || '—'}</td>
                     <td className="px-4 py-3 text-muted text-sm">{student.email || '—'}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
@@ -307,10 +359,12 @@ export default function ClassPage() {
                 ))}
               </tbody>
             </table>
-          </div>
+            </div>
+          )}
 
-          {/* Mobile List */}
-          <div className="sm:hidden space-y-2">
+          {/* List View - Mobile Cards */}
+          {viewMode === 'list' && (
+            <div className="sm:hidden space-y-2">
             {paginatedStudents.map((student) => (
               <div
                 key={student.id}
@@ -327,12 +381,13 @@ export default function ClassPage() {
                   </span>
                 </div>
                 <div className="space-y-1 text-xs text-muted">
-                  <p>Admission: {student.admissionNumber || '—'}</p>
+                  <p>Admission: {student.admissionNo || '—'}</p>
                   <p>Email: {student.email || '—'}</p>
                 </div>
               </div>
             ))}
-          </div>
+            </div>
+          )}
 
           {/* Pagination */}
           {totalPages > 1 && (

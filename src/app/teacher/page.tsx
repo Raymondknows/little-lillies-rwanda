@@ -8,6 +8,9 @@ import {
   Bell,
   AlertCircle,
   ArrowUpRight,
+  BookOpen,
+  Gauge,
+  Clipboard,
 } from 'lucide-react';
 import { getTeacherDashboard, type TeacherDashboardData, detectSchoolPhase } from '@/lib/teacher-utils';
 
@@ -155,19 +158,34 @@ export default function TeacherDashboardPage() {
       </div>
 
       {/* Quick Actions */}
-      <div className="mb-10 grid grid-cols-1 md:grid-cols-2 gap-3">
-        <Link href="/teacher/attendance">
-          <button className="w-full inline-flex items-center justify-center px-4 py-3 bg-brand text-white rounded-lg hover:bg-brand/90 transition-colors font-medium shadow-sm hover:shadow-md">
-            <ClipboardList className="h-4 w-4 mr-2" />
-            Mark Attendance
-          </button>
-        </Link>
-        <Link href="/teacher/class">
-          <button className="w-full inline-flex items-center justify-center px-4 py-3 bg-brand text-white rounded-lg hover:bg-brand/90 transition-colors font-medium shadow-sm hover:shadow-md">
-            <FileText className="h-4 w-4 mr-2" />
-            View Classes
-          </button>
-        </Link>
+      <div className="mb-10">
+        <h3 className="text-sm font-semibold text-foreground mb-3">Quick Actions</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <Link href="/teacher/attendance">
+            <button className="w-full inline-flex items-center justify-center px-4 py-3 bg-brand text-white rounded-lg hover:bg-brand/90 transition-colors font-medium shadow-sm hover:shadow-md">
+              <ClipboardList className="h-4 w-4 mr-2" />
+              Attendance
+            </button>
+          </Link>
+          <Link href="/teacher/results">
+            <button className="w-full inline-flex items-center justify-center px-4 py-3 bg-brand text-white rounded-lg hover:bg-brand/90 transition-colors font-medium shadow-sm hover:shadow-md">
+              <FileText className="h-4 w-4 mr-2" />
+              Results
+            </button>
+          </Link>
+          <Link href="/teacher/subjects">
+            <button className="w-full inline-flex items-center justify-center px-4 py-3 bg-brand text-white rounded-lg hover:bg-brand/90 transition-colors font-medium shadow-sm hover:shadow-md">
+              <BookOpen className="h-4 w-4 mr-2" />
+              Subjects
+            </button>
+          </Link>
+          <Link href="/teacher/class">
+            <button className="w-full inline-flex items-center justify-center px-4 py-3 bg-brand text-white rounded-lg hover:bg-brand/90 transition-colors font-medium shadow-sm hover:shadow-md">
+              <Gauge className="h-4 w-4 mr-2" />
+              Classes
+            </button>
+          </Link>
+        </div>
       </div>
 
       {/* Your Classes Section */}

@@ -104,6 +104,7 @@ export function getTeacherNavigation(phase: SchoolPhase) {
   const baseNav = [
     { href: '/teacher', label: 'Dashboard', icon: 'LayoutDashboard' },
     { href: '/teacher/students', label: 'Students', icon: 'Users' },
+    { href: '/teacher/subjects', label: 'Subjects', icon: 'BookOpen' },
     { href: '/teacher/attendance', label: 'Attendance', icon: 'ClipboardList' },
     { href: '/teacher/messages', label: 'Messages', icon: 'MessageSquare' },
     { href: '/teacher/profile', label: 'Profile', icon: 'UserCircle' },
@@ -123,7 +124,6 @@ export function getTeacherNavigation(phase: SchoolPhase) {
       { href: '/teacher/comments', label: 'Comments', icon: 'PenTool' },
     ],
     SECONDARY: [
-      { href: '/teacher/subjects', label: 'Subjects', icon: 'BookOpen' },
       { href: '/teacher/results', label: 'Results', icon: 'FileText' },
       { href: '/teacher/exams', label: 'Exams', icon: 'ClipboardCheck' },
     ],
@@ -144,6 +144,7 @@ export function getTeacherMobileNav(phase: SchoolPhase) {
     EARLY_YEARS: [
       { href: '/teacher', label: '🏠 Home' },
       { href: '/teacher/students', label: '👥 Students' },
+      { href: '/teacher/subjects', label: '📚 Subjects' },
       { href: '/teacher/children', label: '👶 Children' },
       { href: '/teacher/attendance', label: '✅ Attendance' },
       { href: '/teacher/results', label: '📊 Results' },
@@ -154,10 +155,10 @@ export function getTeacherMobileNav(phase: SchoolPhase) {
     PRIMARY: [
       { href: '/teacher', label: '🏠 Home' },
       { href: '/teacher/students', label: '👥 Students' },
+      { href: '/teacher/subjects', label: '📚 Subjects' },
       { href: '/teacher/class', label: '🏫 Class' },
       { href: '/teacher/attendance', label: '✅ Attendance' },
       { href: '/teacher/results', label: '📊 Results' },
-      { href: '/teacher/assessments', label: '📈 Assessments' },
       { href: '/teacher/profile', label: '👤 Profile' },
       { href: '/teacher/school', label: '🏢 School' },
     ],

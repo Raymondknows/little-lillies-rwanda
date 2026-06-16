@@ -31,6 +31,7 @@ import {
   ClipboardCheck,
   TrendingUp,
   Award,
+  Megaphone,
 } from "lucide-react";
 import { WhatsAppIcon } from "@/components/ui/icons";
 
@@ -67,6 +68,7 @@ const icons: Record<string, any> = {
   ClipboardCheck,
   TrendingUp,
   Award,
+  Megaphone,
 };
 
 export default function Sidebar({

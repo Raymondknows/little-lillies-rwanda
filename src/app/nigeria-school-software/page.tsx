@@ -175,32 +175,44 @@ export default function NigeriaPage() {
       {/* Pricing */}
       <div className="mx-auto max-w-6xl px-4 py-12">
         <h2 className="text-2xl font-bold text-foreground mb-8">Nigeria Pricing</h2>
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-3">
           {[
             {
-              name: "Small School (100-300 students)",
+              name: "Starter",
               price: "₦35,000",
+              desc: "Up to 150 pupils",
               features: [
-                "Up to 300 students",
-                "Unlimited classes",
-                "Unlimited assessments",
-                "Paystack payments",
-                "WhatsApp notifications",
-                "Email support",
+                "✓ Fees & receipts",
+                "✓ WhatsApp & SMS",
+                "✓ Results & reports",
+                "✓ School website",
+                "✓ Parent app",
               ],
             },
             {
-              name: "Medium School (300-1,000 students)",
+              name: "Standard",
               price: "₦45,000",
+              desc: "Up to 600 pupils",
               features: [
-                "Up to 1,000 students",
-                "Multiple school campuses (optional)",
-                "Advanced reporting",
-                "Priority support",
-                "Custom branding",
-                "API access",
+                "✓ Fees & receipts",
+                "✓ WhatsApp & SMS",
+                "✓ Results & reports",
+                "✓ School website",
+                "✓ Parent app",
               ],
               highlighted: true,
+            },
+            {
+              name: "Group",
+              price: "Talk to us",
+              desc: "Multiple campuses",
+              features: [
+                "✓ Fees & receipts",
+                "✓ WhatsApp & SMS",
+                "✓ Results & reports",
+                "✓ School website",
+                "✓ Parent app",
+              ],
             },
           ].map((tier, i) => (
             <div
@@ -234,25 +246,17 @@ export default function NigeriaPage() {
           ))}
         </div>
 
-        <div className="mt-8 p-6 rounded-lg border border-border bg-white">
+        <div className="mt-8 p-8 rounded-lg border-2 border-brand bg-brand/5">
+          <h3 className="text-lg font-semibold text-foreground mb-3">Need Custom Features?</h3>
           <p className="text-sm text-muted mb-4">
-            <strong>Optional Upgrades:</strong>
+            Custom domain, bulk data import, video training, or other custom requirements? Our team can help.
           </p>
-          <div className="grid gap-4 md:grid-cols-2">
-            {[
-              { name: "Custom Domain", price: "₦10,000", freq: "one-time setup" },
-              { name: "Custom Domain Hosting", price: "₦5,000", freq: "/month" },
-              { name: "Video Tutorials (Custom)", price: "₦50,000", freq: "one-time" },
-              { name: "Data Import (Bulk)", price: "₦5,000", freq: "one-time" },
-            ].map((item, i) => (
-              <div key={i} className="p-4 border border-border rounded">
-                <div className="font-medium text-foreground">{item.name}</div>
-                <div className="text-brand font-bold mt-1">
-                  {item.price} <span className="text-sm text-muted">({item.freq})</span>
-                </div>
-              </div>
-            ))}
-          </div>
+          <Link
+            href="/contact"
+            className="inline-block mt-4 px-6 py-2 rounded-lg bg-brand text-white font-medium hover:bg-brand/90 transition"
+          >
+            Contact Our Team
+          </Link>
         </div>
       </div>
 

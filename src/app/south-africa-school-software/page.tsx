@@ -205,26 +205,26 @@ export default function SouthAfricaSchoolsPage() {
           <div className="grid md:grid-cols-3 gap-8">
             {[
               {
-                name: 'Small',
-                students: 'Up to 200 students',
-                price: 'R299',
-                period: '/month',
-                features: ['All features', 'Unlimited staff', 'WhatsApp integration', 'Email support', 'Mobile app']
+                name: 'Starter',
+                students: 'Up to 150 pupils',
+                price: 'R3,500',
+                period: '/ term',
+                features: ['Fees & receipts', 'WhatsApp & SMS', 'Results & reports', 'School website', 'Parent app']
               },
               {
-                name: 'Medium',
-                students: 'Up to 500 students',
-                price: 'R699',
-                period: '/month',
+                name: 'Standard',
+                students: 'Up to 600 pupils',
+                price: 'R4,500',
+                period: '/ term',
                 popular: true,
-                features: ['All features', 'Multiple campuses', 'Advanced reports', 'Priority support', 'Custom fields', 'API access']
+                features: ['Fees & receipts', 'WhatsApp & SMS', 'Results & reports', 'School website', 'Parent app']
               },
               {
-                name: 'Large',
-                students: '500+ students',
-                price: 'Custom',
+                name: 'Group',
+                students: 'Multiple campuses',
+                price: 'Talk to us',
                 period: 'quote',
-                features: ['Everything', 'Dedicated support', 'Custom workflows', 'Integration', 'Training included', 'SLA guarantee']
+                features: ['Fees & receipts', 'WhatsApp & SMS', 'Results & reports', 'School website', 'Parent app']
               },
             ].map((plan, idx) => (
               <div key={idx} className={`rounded-lg border-2 overflow-hidden ${plan.popular ? 'border-[#0A66C2] bg-gradient-to-b from-blue-50 to-white shadow-lg' : 'border-slate-200 bg-white'}`}>

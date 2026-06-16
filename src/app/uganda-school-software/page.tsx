@@ -175,49 +175,61 @@ export default function UgandaPage() {
       {/* Pricing */}
       <div className="mx-auto max-w-6xl px-4 py-12">
         <h2 className="text-2xl font-bold text-foreground mb-8">Uganda Pricing</h2>
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-3">
           {[
             {
-              name: "Small School (100-300 students)",
-              price: "UGX 150,000",
+              name: "Starter",
+              price: "UGX 35,000,000",
+              desc: "Up to 150 pupils",
               features: [
-                "Up to 300 students",
-                "Unlimited classes",
-                "Unlimited assessments",
-                "MTN Mobile Money",
-                "SMS notifications",
-                "WhatsApp support",
+                "✓ Fees & receipts",
+                "✓ WhatsApp & SMS",
+                "✓ Results & reports",
+                "✓ School website",
+                "✓ Parent app",
               ],
             },
             {
-              name: "Medium School (300-1,000 students)",
-              price: "UGX 250,000",
+              name: "Standard",
+              price: "UGX 45,000,000",
+              desc: "Up to 600 pupils",
               features: [
-                "Up to 1,000 students",
-                "Multi-campus support",
-                "Advanced reporting",
-                "Priority support",
-                "Custom branding",
-                "Video training included",
+                "✓ Fees & receipts",
+                "✓ WhatsApp & SMS",
+                "✓ Results & reports",
+                "✓ School website",
+                "✓ Parent app",
               ],
               highlighted: true,
+            },
+            {
+              name: "Group",
+              price: "Talk to us",
+              desc: "Multiple campuses",
+              features: [
+                "✓ Fees & receipts",
+                "✓ WhatsApp & SMS",
+                "✓ Results & reports",
+                "✓ School website",
+                "✓ Parent app",
+              ],
             },
           ].map((tier, i) => (
             <div
               key={i}
-              className={`rounded-lg border-2 p-8 ${
+              className={`rounded-lg border p-8 ${
                 tier.highlighted
-                  ? "border-brand bg-brand/5"
+                  ? "border-brand bg-brand/5 ring-2 ring-brand"
                   : "border-border bg-white"
               }`}
             >
-              <h3 className="font-bold text-lg text-foreground">{tier.name}</h3>
-              <div className="text-3xl font-bold text-brand my-4">{tier.price}</div>
-              <p className="text-sm text-muted mb-6">/month, billed monthly. No setup fee.</p>
-              <ul className="space-y-2 mb-8">
-                {tier.features.map((feature, j) => (
-                  <li key={j} className="text-sm text-foreground">
-                    ✅ {feature}
+              <h3 className="text-xl font-semibold text-foreground">{tier.name}</h3>
+              <p className="mt-2 text-3xl font-bold text-brand">{tier.price}</p>
+              <p className="text-sm text-muted">{tier.desc}</p>
+              <ul className="mt-6 space-y-3">
+                {tier.features.map((feat, j) => (
+                  <li key={j} className="flex items-center gap-2 text-sm">
+                    <span className="text-foreground">{feat}</span>
                   </li>
                 ))}
               </ul>
@@ -234,25 +246,17 @@ export default function UgandaPage() {
           ))}
         </div>
 
-        <div className="mt-8 p-6 rounded-lg border border-border bg-white">
+        <div className="mt-8 p-8 rounded-lg border-2 border-brand bg-brand/5">
+          <h3 className="text-lg font-semibold text-foreground mb-3">Need Custom Features?</h3>
           <p className="text-sm text-muted mb-4">
-            <strong>Optional Upgrades:</strong>
+            Custom domain, bulk data import, video training, or other custom requirements? Our team can help.
           </p>
-          <div className="grid gap-4 md:grid-cols-2">
-            {[
-              { name: "Custom Domain", price: "UGX 50,000", freq: "one-time setup" },
-              { name: "Custom Domain Hosting", price: "UGX 10,000", freq: "/month" },
-              { name: "Video Tutorials (Custom)", price: "UGX 200,000", freq: "one-time" },
-              { name: "Data Import (Bulk)", price: "UGX 30,000", freq: "one-time" },
-            ].map((item, i) => (
-              <div key={i} className="p-4 border border-border rounded">
-                <div className="font-medium text-foreground">{item.name}</div>
-                <div className="text-brand font-bold mt-1">
-                  {item.price} <span className="text-sm text-muted">({item.freq})</span>
-                </div>
-              </div>
-            ))}
-          </div>
+          <Link
+            href="/contact"
+            className="inline-block mt-4 px-6 py-2 rounded-lg bg-brand text-white font-medium hover:bg-brand/90 transition"
+          >
+            Contact Our Team
+          </Link>
         </div>
       </div>
 

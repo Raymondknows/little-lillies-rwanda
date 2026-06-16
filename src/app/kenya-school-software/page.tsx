@@ -175,54 +175,88 @@ export default function KenyaPage() {
       {/* Pricing */}
       <div className="mx-auto max-w-6xl px-4 py-12">
         <h2 className="text-2xl font-bold text-foreground mb-8">Kenya Pricing</h2>
-        <div className="rounded-lg border-2 border-brand bg-brand/5 p-8">
-          <div className="max-w-2xl">
-            <div className="flex justify-between items-center mb-4">
-              <span className="text-lg font-semibold text-foreground">Standard School</span>
-              <span className="text-3xl font-bold text-brand">KES 4,000</span>
+        <div className="grid gap-6 md:grid-cols-3">
+          {[
+            {
+              name: "Starter",
+              price: "KES 35,000",
+              desc: "Up to 150 pupils",
+              features: [
+                "✓ Fees & receipts",
+                "✓ WhatsApp & SMS",
+                "✓ Results & reports",
+                "✓ School website",
+                "✓ Parent app",
+              ],
+            },
+            {
+              name: "Standard",
+              price: "KES 45,000",
+              desc: "Up to 600 pupils",
+              features: [
+                "✓ Fees & receipts",
+                "✓ WhatsApp & SMS",
+                "✓ Results & reports",
+                "✓ School website",
+                "✓ Parent app",
+              ],
+              highlighted: true,
+            },
+            {
+              name: "Group",
+              price: "Talk to us",
+              desc: "Multiple campuses",
+              features: [
+                "✓ Fees & receipts",
+                "✓ WhatsApp & SMS",
+                "✓ Results & reports",
+                "✓ School website",
+                "✓ Parent app",
+              ],
+            },
+          ].map((tier, i) => (
+            <div
+              key={i}
+              className={`rounded-lg border p-8 ${
+                tier.highlighted
+                  ? "border-brand bg-brand/5 ring-2 ring-brand"
+                  : "border-border bg-white"
+              }`}
+            >
+              <h3 className="text-xl font-semibold text-foreground">{tier.name}</h3>
+              <p className="mt-2 text-3xl font-bold text-brand">{tier.price}</p>
+              <p className="text-sm text-muted">{tier.desc}</p>
+              <ul className="mt-6 space-y-3">
+                {tier.features.map((feat, j) => (
+                  <li key={j} className="flex items-center gap-2 text-sm">
+                    <span className="text-foreground">{feat}</span>
+                  </li>
+                ))}
+              </ul>
+              <button
+                className={`mt-6 w-full rounded-lg py-2 font-medium transition ${
+                  tier.highlighted
+                    ? "bg-brand text-white hover:bg-brand/90"
+                    : "border border-brand text-brand hover:bg-brand/5"
+                }`}
+              >
+                Start Free Trial
+              </button>
             </div>
-            <p className="text-muted text-sm mb-6">/month, billed monthly. No setup fee. Equivalent ~KES 3,500-5,000 depending on school size.</p>
-            <ul className="space-y-2 text-sm mb-8">
-              {[
-                "✅ Up to 1,000 students",
-                "✅ Unlimited assessments & results",
-                "✅ M-Pesa payments included",
-                "✅ SMS notifications included",
-                "✅ WhatsApp notifications",
-                "✅ Mobile app access",
-                "✅ Email & WhatsApp support",
-                "✅ 30-day free trial",
-              ].map((item, i) => (
-                <p key={i} className="text-foreground">
-                  {item}
-                </p>
-              ))}
-            </ul>
-            <button className="w-full rounded-lg bg-brand text-white px-6 py-3 font-medium hover:bg-brand/90">
-              Start Free Trial
-            </button>
-          </div>
+          ))}
         </div>
 
-        <div className="mt-8 p-6 rounded-lg border border-border bg-white">
+        <div className="mt-8 p-8 rounded-lg border-2 border-brand bg-brand/5">
+          <h3 className="text-lg font-semibold text-foreground mb-3">Need Custom Features?</h3>
           <p className="text-sm text-muted mb-4">
-            <strong>Optional Upgrades:</strong>
+            Custom domain, bulk data import, video training, or other custom requirements? Our team can help.
           </p>
-          <div className="grid gap-4 md:grid-cols-2">
-            {[
-              { name: "Custom Domain", price: "KES 10,000", freq: "one-time setup" },
-              { name: "Custom Domain Hosting", price: "KES 2,000", freq: "/month" },
-              { name: "Video Tutorials (Custom)", price: "KES 30,000", freq: "one-time" },
-              { name: "Data Import (Bulk)", price: "KES 5,000", freq: "one-time" },
-            ].map((item, i) => (
-              <div key={i} className="p-4 border border-border rounded">
-                <div className="font-medium text-foreground">{item.name}</div>
-                <div className="text-brand font-bold mt-1">
-                  {item.price} <span className="text-sm text-muted">({item.freq})</span>
-                </div>
-              </div>
-            ))}
-          </div>
+          <Link
+            href="/contact"
+            className="inline-block mt-4 px-6 py-2 rounded-lg bg-brand text-white font-medium hover:bg-brand/90 transition"
+          >
+            Contact Our Team
+          </Link>
         </div>
       </div>
 

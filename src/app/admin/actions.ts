@@ -124,7 +124,50 @@ export async function saveAttendance() {
 }
 
 export async function createAnnouncement(formData: FormData) {
-  throw new Error("Use POST /api/admin/announcements instead");
+  try {
+    const title = formData.get("title") as string;
+    const body = formData.get("body") as string;
+    const publish = formData.get("publish") === "on";
+
+    if (!title || !body) {
+      throw new Error("Title and body are required");
+    }
+
+    // Build absolute URL from headers (same pattern as other actions)
+    const headersList = await headers();
+    const protocol = headersList.get("x-forwarded-proto") || "https";
+    const host = headersList.get("x-forwarded-host") || headersList.get("host") || "localhost:3000";
+    const apiUrl = `${protocol}://${host}/api/admin/announcements`;
+
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title, body, publish }),
+    });
+
+    if (!response.ok) {
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch (e) {
+        const text = await response.text();
+        throw new Error(`Server error: ${response.status} ${response.statusText}`);
+      }
+      throw new Error(errorData.error || "Failed to create announcement");
+    }
+
+    // Redirect with success flag
+    redirect(`/admin/website?created=1`);
+  } catch (error) {
+    // Re-throw Next.js redirect errors
+    if (error instanceof Error && error.message === 'NEXT_REDIRECT') {
+      throw error;
+    }
+    const message = error instanceof Error ? error.message : "Failed to create announcement";
+    console.error("[createAnnouncement] Error:", message);
+    throw new Error(message);
+  }
 }
 
 export async function saveTeacherAssignments(formData: FormData) {

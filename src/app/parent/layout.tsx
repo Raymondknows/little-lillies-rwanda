@@ -11,7 +11,7 @@ const nav = [
   { href: "/parent/results", label: "Results", icon: "BarChart3" },
   { href: "/parent/invoices", label: "Invoices", icon: "FileText" },
   { href: "/parent/payments", label: "Payments", icon: "CreditCard" },
-  { href: "/parent/announcements", label: "Announcements", icon: "Bell" },
+  { href: "/parent/publications", label: "Publications", icon: "BookOpen" },
   { href: "/parent/school", label: "School Info", icon: "Globe" },
 ];
 

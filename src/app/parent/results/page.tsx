@@ -1,19 +1,25 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
-import { GraduationCap, ChevronRight, AlertCircle, Download, ArrowUpRight } from "lucide-react";
-import { formatMoney } from "@/lib/format";
+import { GraduationCap, AlertCircle, ChevronRight, Filter } from "lucide-react";
 import { getBackendUrl } from "@/lib/backend-url";
+import Link from "next/link";
 
 interface Result {
+  id: string;
   subject: string;
+  assessmentId: string;
   caScore?: number;
   testScore?: number;
   examScore?: number;
   totalScore?: number;
   grade?: string;
-  position?: number;
+}
+
+interface Term {
+  id: string;
+  name: string;
+  sortOrder?: number;
 }
 
 interface Child {
@@ -23,14 +29,26 @@ interface Child {
   admissionNo: string;
 }
 
+interface Assessment {
+  id: string;
+  name: string;
+  status: string;
+  term?: Term;
+  createdAt?: string;
+  results: Result[];
+}
+
 export default function ParentResultsPage() {
   const [children, setChildren] = useState<Child[]>([]);
+  const [terms, setTerms] = useState<Term[]>([]);
   const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
   const [results, setResults] = useState<Result[]>([]);
-  const [selectedTerm, setSelectedTerm] = useState<string>('latest');
+  const [selectedTerm, setSelectedTerm] = useState<Term | null>(null);
+  const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Fetch children on mount
   useEffect(() => {
     const fetchChildren = async () => {
       try {
@@ -58,15 +76,36 @@ export default function ParentResultsPage() {
     fetchChildren();
   }, []);
 
-  // Fetch results when child changes
+  // Fetch terms
+  useEffect(() => {
+    const fetchTerms = async () => {
+      try {
+        const backendUrl = getBackendUrl();
+        const response = await fetch(`${backendUrl}/api/parent/terms`, {
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        if (!response.ok) throw new Error("Failed to fetch terms");
+        const data = await response.json();
+        setTerms(data.terms || []);
+      } catch (err) {
+        console.error('Error fetching terms:', err);
+      }
+    };
+
+    fetchTerms();
+  }, []);
+
+  // Fetch results when child or term changes
   useEffect(() => {
     if (!selectedChildId) return;
 
     async function fetchResults() {
       try {
         const backendUrl = getBackendUrl();
+        const termParam = selectedTerm ? `&termId=${selectedTerm.id}` : '';
         const response = await fetch(
-          `${backendUrl}/api/parent/results?childId=${selectedChildId}&termId=${selectedTerm}`,
+          `${backendUrl}/api/parent/results?childId=${selectedChildId}${termParam}`,
           {
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
@@ -75,6 +114,10 @@ export default function ParentResultsPage() {
         if (response.ok) {
           const data = await response.json();
           setResults(data.results || []);
+          setAssessments(data.assessments || []);
+          if (data.term && !selectedTerm) {
+            setSelectedTerm(data.term);
+          }
         }
       } catch (err) {
         console.error('Error fetching results:', err);
@@ -88,8 +131,8 @@ export default function ParentResultsPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand mx-auto"></div>
-          <p className="mt-4 text-muted">Loading results...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-slate-600">Loading results...</p>
         </div>
       </div>
     );
@@ -97,13 +140,11 @@ export default function ParentResultsPage() {
 
   if (error) {
     return (
-      <div>
-        <div className="rounded-lg border border-error bg-error/10 p-4 flex gap-3">
-          <AlertCircle className="h-5 w-5 text-error flex-shrink-0 mt-0.5" />
-          <div>
-            <h3 className="font-semibold text-error">Error</h3>
-            <p className="text-sm text-error/80 mt-1">{error}</p>
-          </div>
+      <div className="rounded-lg border border-red-300 bg-red-50 p-4 flex gap-3">
+        <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+        <div>
+          <h3 className="font-semibold text-red-900">Error</h3>
+          <p className="text-sm text-red-700 mt-1">{error}</p>
         </div>
       </div>
     );
@@ -111,11 +152,9 @@ export default function ParentResultsPage() {
 
   if (children.length === 0) {
     return (
-      <div>
-        <div className="rounded-xl border border-border bg-surface p-12 text-center shadow-sm">
-          <GraduationCap className="h-12 w-12 text-muted mx-auto mb-3" />
-          <p className="text-muted">No children linked to this account</p>
-        </div>
+      <div className="rounded-lg border border-slate-200 bg-slate-50 p-12 text-center">
+        <GraduationCap className="h-12 w-12 text-slate-400 mx-auto mb-3" />
+        <p className="text-slate-600">No children linked to this account</p>
       </div>
     );
   }
@@ -123,36 +162,40 @@ export default function ParentResultsPage() {
   const selectedChild = children.find((c) => c.id === selectedChildId);
 
   return (
-    <div>
+    <div className="space-y-6 pb-8">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground">Academic Results</h1>
-        <p className="mt-1 text-muted">View your child's grades and performance</p>
+      <div className="border-b border-slate-200 pb-6">
+        <h1 className="text-4xl font-bold text-slate-900">Academic Results</h1>
+        <p className="mt-1 text-sm text-slate-600">View your child's grades and assessment performance</p>
       </div>
 
-      {/* Child & Term Selector */}
+      {/* Filters */}
       {children.length > 0 && (
-        <div className="rounded-xl border border-border bg-surface p-6 mb-8 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100">
-              <GraduationCap className="h-5 w-5 text-green-600" />
-            </div>
-            <h2 className="font-semibold text-foreground">Results Filter</h2>
+        <div className="rounded-lg border border-slate-200 bg-white p-6 hover:shadow-sm transition-shadow">
+          <div className="flex items-center gap-3 mb-4">
+            <Filter className="h-5 w-5 text-slate-600" />
+            <h2 className="font-semibold text-slate-900">Filter Results</h2>
           </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Child Selection */}
             <div>
-              <label className="block text-sm font-semibold text-foreground mb-3">
+              <label className="block text-sm font-semibold text-slate-900 mb-3">
                 Select Child:
               </label>
               <div className="flex flex-wrap gap-2">
                 {children.map((child) => (
                   <button
                     key={child.id}
-                    onClick={() => setSelectedChildId(child.id)}
+                    onClick={() => {
+                      setSelectedChildId(child.id);
+                      setSelectedTerm(null);
+                      setResults([]);
+                    }}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                       selectedChild?.id === child.id
-                        ? "bg-brand text-white shadow-sm"
-                        : "bg-background text-foreground border border-border hover:border-brand/50"
+                        ? "bg-blue-600 text-white shadow-sm"
+                        : "bg-slate-100 text-slate-900 border border-slate-200 hover:border-slate-300"
                     }`}
                   >
                     {child.firstName} {child.lastName}
@@ -160,66 +203,97 @@ export default function ParentResultsPage() {
                 ))}
               </div>
             </div>
+
+            {/* Term Selection */}
             <div>
-              <label className="block text-sm font-semibold text-foreground mb-3">
+              <label className="block text-sm font-semibold text-slate-900 mb-3">
                 Select Term:
               </label>
               <select
-                value={selectedTerm}
-                onChange={(e) => setSelectedTerm(e.target.value)}
-                className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-surface text-foreground focus:outline-none focus:ring-2 focus:ring-brand"
+                value={selectedTerm?.id || ''}
+                onChange={(e) => {
+                  const termId = e.target.value;
+                  if (termId === '') {
+                    setSelectedTerm(null);
+                  } else {
+                    const term = terms.find(t => t.id === termId);
+                    setSelectedTerm(term || null);
+                  }
+                }}
+                className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="latest">Latest Term</option>
-                <option value="q1">Q1</option>
-                <option value="q2">Q2</option>
-                <option value="q3">Q3</option>
+                <option value="">Latest Term</option>
+                {terms.map((term) => (
+                  <option key={term.id} value={term.id}>
+                    {term.name}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
         </div>
       )}
 
+      {/* Results Section */}
       {selectedChild && (
         <>
-          {/* Results Table */}
           {results.length === 0 ? (
-            <div className="rounded-xl border border-border bg-surface p-12 text-center shadow-sm">
-              <GraduationCap className="h-12 w-12 text-muted mx-auto mb-3" />
-              <p className="text-muted">No results available yet for this term</p>
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-12 text-center">
+              <GraduationCap className="h-12 w-12 text-slate-400 mx-auto mb-3" />
+              <p className="text-slate-600">
+                {selectedTerm 
+                  ? `No results available for ${selectedTerm.name}`
+                  : 'No results available yet'
+                }
+              </p>
             </div>
           ) : (
-            <div className="rounded-xl border border-border bg-surface overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-3 p-6 border-b border-border bg-background">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100">
-                  <GraduationCap className="h-5 w-5 text-green-600" />
+            <div className="rounded-lg border border-slate-200 bg-white overflow-hidden hover:shadow-sm transition-shadow">
+              {/* Table Header */}
+              <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-200 bg-slate-50">
+                <GraduationCap className="h-5 w-5 text-slate-600" />
+                <div>
+                  <h2 className="font-semibold text-slate-900">
+                    Results for {selectedChild.firstName} {selectedChild.lastName}
+                  </h2>
+                  {selectedTerm && (
+                    <p className="text-xs text-slate-600 mt-1">{selectedTerm.name}</p>
+                  )}
                 </div>
-                <h2 className="font-semibold text-foreground">Results for {selectedChild?.firstName} {selectedChild?.lastName}</h2>
               </div>
+
+              {/* Results Table */}
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-border bg-background">
-                      <th className="px-6 py-3 text-left font-semibold text-foreground">Subject</th>
-                      <th className="px-6 py-3 text-center font-semibold text-foreground">CA</th>
-                      <th className="px-6 py-3 text-center font-semibold text-foreground">Test</th>
-                      <th className="px-6 py-3 text-center font-semibold text-foreground">Exam</th>
-                      <th className="px-6 py-3 text-center font-semibold text-foreground">Total</th>
-                      <th className="px-6 py-3 text-center font-semibold text-foreground">Grade</th>
-                      <th className="px-6 py-3 text-center font-semibold text-foreground">Position</th>
+                    <tr className="border-b border-slate-200 bg-slate-50">
+                      <th className="px-6 py-3 text-left font-semibold text-slate-900">Subject/Assessment</th>
+                      <th className="px-6 py-3 text-center font-semibold text-slate-900">CA</th>
+                      <th className="px-6 py-3 text-center font-semibold text-slate-900">Test</th>
+                      <th className="px-6 py-3 text-center font-semibold text-slate-900">Exam</th>
+                      <th className="px-6 py-3 text-center font-semibold text-slate-900">Total</th>
+                      <th className="px-6 py-3 text-center font-semibold text-slate-900">Grade</th>
                     </tr>
                   </thead>
                   <tbody>
                     {results.map((result, idx) => (
-                      <tr key={idx} className="border-b border-border hover:bg-background/50 transition">
-                        <td className="px-6 py-3 font-medium text-foreground">{result.subject}</td>
-                        <td className="px-6 py-3 text-center text-foreground">{result.caScore || '-'}</td>
-                        <td className="px-6 py-3 text-center text-foreground">{result.testScore || '-'}</td>
-                        <td className="px-6 py-3 text-center text-foreground">{result.examScore || '-'}</td>
-                        <td className="px-6 py-3 text-center font-bold text-brand">
-                          {result.totalScore || '-'}
+                      <tr key={idx} className="border-b border-slate-200 hover:bg-slate-50 transition">
+                        <td className="px-6 py-3 font-medium text-slate-900">{result.subject}</td>
+                        <td className="px-6 py-3 text-center text-slate-600">
+                          {result.caScore !== undefined && result.caScore !== null ? result.caScore : '—'}
                         </td>
-                        <td className="px-6 py-3 text-center font-bold text-foreground">{result.grade || '-'}</td>
-                        <td className="px-6 py-3 text-center text-foreground">{result.position || '-'}</td>
+                        <td className="px-6 py-3 text-center text-slate-600">
+                          {result.testScore !== undefined && result.testScore !== null ? result.testScore : '—'}
+                        </td>
+                        <td className="px-6 py-3 text-center text-slate-600">
+                          {result.examScore !== undefined && result.examScore !== null ? result.examScore : '—'}
+                        </td>
+                        <td className="px-6 py-3 text-center font-bold text-blue-600">
+                          {result.totalScore !== undefined && result.totalScore !== null ? result.totalScore : '—'}
+                        </td>
+                        <td className="px-6 py-3 text-center font-bold text-slate-900">
+                          {result.grade || '—'}
+                        </td>
                       </tr>
                     ))}
                   </tbody>

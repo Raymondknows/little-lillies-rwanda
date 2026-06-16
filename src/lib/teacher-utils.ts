@@ -106,7 +106,7 @@ export function getTeacherNavigation(phase: SchoolPhase) {
     { href: '/teacher/students', label: 'Students', icon: 'Users' },
     { href: '/teacher/subjects', label: 'Subjects', icon: 'BookOpen' },
     { href: '/teacher/attendance', label: 'Attendance', icon: 'ClipboardList' },
-    { href: '/teacher/messages', label: 'Messages', icon: 'MessageSquare' },
+    { href: '/teacher/announcements', label: 'Announcements', icon: 'Megaphone' },
     { href: '/teacher/profile', label: 'Profile', icon: 'UserCircle' },
     { href: '/teacher/school', label: 'School', icon: 'Building2' },
   ];
@@ -148,7 +148,7 @@ export function getTeacherMobileNav(phase: SchoolPhase) {
       { href: '/teacher/children', label: '👶 Children' },
       { href: '/teacher/attendance', label: '✅ Attendance' },
       { href: '/teacher/results', label: '📊 Results' },
-      { href: '/teacher/messages', label: '💬 Messages' },
+      { href: '/teacher/announcements', label: '📢 Announcements' },
       { href: '/teacher/profile', label: '👤 Profile' },
       { href: '/teacher/school', label: '🏫 School' },
     ],

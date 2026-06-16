@@ -19,7 +19,6 @@ const nav = [
   { href: "/admin/analytics", label: "Analytics", icon: "BarChart3" },
   { href: "/admin/attendance", label: "Attendance", icon: "ClipboardList" },
   { href: "/admin/whatsapp", label: "WhatsApp", icon: "WhatsApp" },
-  { href: "/admin/notifications", label: "Notifications", icon: "Bell" },
   { href: "/admin/support", label: "Support", icon: "HelpCircle" },
   { href: "/admin/website", label: "Website", icon: "Globe" },
   { href: "/admin/subscribe", label: "Subscription", icon: "CreditCard" },

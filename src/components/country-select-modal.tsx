@@ -52,11 +52,21 @@ export function CountrySelectModal() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ country: selected }),
       });
-      if (!res.ok) throw new Error("failed");
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        const errorMessage = errorData.error || `HTTP ${res.status}`;
+        throw new Error(`Failed to set country: ${errorMessage}`);
+      }
+      
       setOpen(false);
       window.location.reload();
     } catch (err) {
-      console.error(err);
+      console.error("Country selection error:", {
+        error: err instanceof Error ? err.message : String(err),
+        selected,
+        timestamp: new Date().toISOString(),
+      });
       setLoading(false);
     }
   }, [selected]);

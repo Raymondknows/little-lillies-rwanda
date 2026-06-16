@@ -7,14 +7,13 @@ import { getBackendUrl } from "@/lib/backend-url";
 interface Announcement {
   id: string;
   title: string;
-  content: string;
-  category?: string;
+  body: string;
+  publishedAt?: string;
   createdAt: string;
 }
 
 export default function AnnouncementsPage() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [filter, setFilter] = useState<string>("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -56,19 +55,6 @@ export default function AnnouncementsPage() {
     );
   }
 
-  const categories = ["all", ...new Set(announcements.map(a => a.category || "General"))];
-  const filtered = filter === "all" 
-    ? announcements 
-    : announcements.filter(a => (a.category || "General") === filter);
-
-  const categoryColors: Record<string, string> = {
-    "Academic": "border-brand bg-brand/10 text-brand",
-    "Fees": "border-error bg-error/10 text-error",
-    "Holiday": "border-success bg-success/10 text-success",
-    "Event": "border-brand bg-brand/10 text-brand",
-    "General": "border-border bg-background text-muted",
-  };
-
   return (
     <div>
       <div className="mb-8">
@@ -86,37 +72,15 @@ export default function AnnouncementsPage() {
         </div>
       )}
 
-      {/* Category Filter */}
-      {categories.length > 1 && (
-        <div className="mb-8">
-          <p className="text-sm font-semibold text-foreground mb-3">Filter by Category:</p>
-          <div className="flex flex-wrap gap-2">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setFilter(cat)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  filter === cat
-                    ? "bg-brand text-white shadow-sm"
-                    : "bg-background text-foreground border border-border hover:border-brand/50"
-                }`}
-              >
-                {cat.charAt(0).toUpperCase() + cat.slice(1)}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Announcements List */}
-      {filtered.length === 0 ? (
+      {announcements.length === 0 ? (
         <div className="rounded-lg border border-border bg-surface p-12 text-center">
           <Bell className="h-12 w-12 text-muted mx-auto mb-3" />
           <p className="text-muted">No announcements yet</p>
         </div>
       ) : (
         <div className="space-y-4">
-          {filtered.map((announcement) => (
+          {announcements.map((announcement) => (
             <div
               key={announcement.id}
               className="rounded-lg border border-border bg-surface p-6 hover:shadow-md transition-shadow"
@@ -125,17 +89,12 @@ export default function AnnouncementsPage() {
                 <div>
                   <h3 className="text-lg font-bold text-foreground">{announcement.title}</h3>
                   <p className="text-xs text-muted/70 mt-1">
-                    {new Date(announcement.createdAt).toLocaleDateString()}
+                    {new Date(announcement.publishedAt || announcement.createdAt).toLocaleDateString()}
                   </p>
                 </div>
-                {announcement.category && (
-                  <span className={`rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-wider font-medium whitespace-nowrap ml-2 ${categoryColors[announcement.category] || categoryColors["General"]}`}>
-                    {announcement.category}
-                  </span>
-                )}
               </div>
               <p className="text-foreground leading-relaxed text-sm">
-                {announcement.content}
+                {announcement.body}
               </p>
             </div>
           ))}

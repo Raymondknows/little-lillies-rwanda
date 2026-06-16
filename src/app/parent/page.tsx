@@ -119,7 +119,7 @@ export default function ParentDashboardPage() {
       value: String(dashboardData?.announcements?.length || 0),
       sub: "School updates and notices",
       icon: Bell,
-      href: "/parent/announcements",
+      href: "/parent/publications",
       color: "bg-purple-100",
       iconColor: "text-purple-600",
     },
@@ -355,7 +355,7 @@ export default function ParentDashboardPage() {
               </li>
             ))}
           </ul>
-          <Link href="/parent/announcements" className="mt-4 flex justify-end items-center gap-1 text-sm font-semibold text-brand hover:text-brand/80 transition">
+          <Link href="/parent/publications" className="mt-4 flex justify-end items-center gap-1 text-sm font-semibold text-brand hover:text-brand/80 transition">
             View all <ArrowUpRight className="h-3 w-3" />
           </Link>
         </div>

@@ -1,0 +1,249 @@
+"use client";
+
+import { useEffect, useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import { TrendingUp, Search, ChevronLeft, ChevronRight, Download } from "lucide-react";
+
+interface TopPerformer {
+  name: string;
+  score: number;
+}
+
+interface AnalyticsData {
+  schoolAnalytics: {
+    topPerformers: TopPerformer[];
+  };
+}
+
+const PAGE_SIZE_OPTIONS = [10, 20, 50] as const;
+
+export default function TopPerformersPage() {
+  const router = useRouter();
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [itemsPerPage, setItemsPerPage] = useState(20);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch("/api/admin/analytics/data");
+        if (!response.ok) {
+          throw new Error(`Failed to fetch analytics: ${response.status}`);
+        }
+        const data = await response.json();
+        setAnalytics(data);
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching analytics:", err);
+        setError(err instanceof Error ? err.message : "Failed to load analytics");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAnalytics();
+  }, []);
+
+  const filteredPerformers = useMemo(() => {
+    if (!analytics?.schoolAnalytics?.topPerformers) return [];
+    let filtered = [...analytics.schoolAnalytics.topPerformers];
+
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(p => p.name.toLowerCase().includes(query));
+    }
+
+    return filtered.sort((a, b) => (b.score || 0) - (a.score || 0));
+  }, [analytics, searchQuery]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredPerformers.length / itemsPerPage));
+  const paginatedPerformers = filteredPerformers.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+    setCurrentPage(1);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+          <p className="mt-4 text-slate-600">Loading top performers...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-lg border border-red-300 bg-red-50 p-4 flex gap-3">
+        <div>
+          <h3 className="font-semibold text-red-900">Error</h3>
+          <p className="text-sm text-red-700 mt-1">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!analytics) {
+    return (
+      <div className="rounded-lg border border-slate-200 bg-slate-50 p-12 text-center">
+        <p className="text-slate-600">No analytics data available</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 pb-8">
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-slate-200 pb-6">
+        <div>
+          <button onClick={() => router.back()} className="flex items-center gap-2 font-medium text-sm mb-2" style={{ color: '#0A66C2' }}>
+            <ChevronLeft className="w-4 h-4" />
+            Back
+          </button>
+          <h1 className="text-4xl font-bold text-slate-900">Top Performers</h1>
+          <p className="mt-1 text-sm text-slate-600">Students with the highest scores across assessments</p>
+        </div>
+      </div>
+
+      {/* Search and Controls */}
+      <div className="rounded-lg border border-slate-200 bg-white p-6">
+        <div className="flex gap-4 items-end">
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-slate-900 mb-2">Search Students</label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search by student name..."
+                value={searchQuery}
+                onChange={handleSearchChange}
+                className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-900 mb-2">Rows per page</label>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value) as typeof PAGE_SIZE_OPTIONS[number]);
+                setCurrentPage(1);
+              }}
+              className="px-4 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-green-500"
+            >
+              {PAGE_SIZE_OPTIONS.map(size => (
+                <option key={size} value={size}>{size} per page</option>
+              ))}
+            </select>
+          </div>
+          <button className="flex items-center gap-2 px-4 py-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition">
+            <Download className="w-4 h-4" />
+            Export
+          </button>
+        </div>
+      </div>
+
+      {/* Top Performers List */}
+      <div className="rounded-lg border border-slate-200 bg-white p-6">
+        <div className="space-y-3">
+          {paginatedPerformers.length > 0 ? (
+            paginatedPerformers.map((performer, idx) => {
+              const actualIndex = (currentPage - 1) * itemsPerPage + idx + 1;
+              const medalEmoji = actualIndex === 1 ? '🥇' : actualIndex === 2 ? '🥈' : actualIndex === 3 ? '🥉' : '🏅';
+              
+              return (
+                <div
+                  key={idx}
+                  className="flex items-center justify-between p-4 border border-green-100 rounded-lg bg-gradient-to-r from-green-50 to-transparent hover:bg-gradient-to-r hover:from-green-100 hover:to-transparent transition"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-green-200 flex items-center justify-center text-lg font-bold text-green-700 flex-shrink-0">
+                      {medalEmoji}
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">#{actualIndex} {performer.name}</p>
+                      <p className="text-xs text-slate-600 mt-1">Top performer in academic excellence</p>
+                    </div>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-2xl font-bold text-green-600">{performer.score?.toFixed(1) || '—'}</p>
+                    <p className="text-xs text-slate-600">Score</p>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <div className="text-center py-12">
+              <TrendingUp className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+              <p className="text-slate-600">No top performers found</p>
+            </div>
+          )}
+        </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="mt-6 pt-6 border-t border-slate-200 flex items-center justify-between">
+            <p className="text-sm text-slate-600">
+              Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredPerformers.length)} of {filteredPerformers.length}
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="px-4 py-2 border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+              <div className="flex items-center gap-2">
+                {Array.from({ length: Math.min(totalPages, 5) }).map((_, i) => {
+                  const pageNum = i + 1;
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
+                        currentPage === pageNum
+                          ? 'bg-green-600 text-white'
+                          : 'border border-slate-200 text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+                {totalPages > 5 && (
+                  <>
+                    <span className="text-slate-600">...</span>
+                    <button
+                      onClick={() => setCurrentPage(totalPages)}
+                      className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors border border-slate-200 text-slate-600 hover:text-slate-900`}
+                    >
+                      {totalPages}
+                    </button>
+                  </>
+                )}
+              </div>
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="px-4 py-2 border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:text-slate-900 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

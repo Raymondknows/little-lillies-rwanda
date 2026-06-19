@@ -18,6 +18,17 @@ export type SchoolRow = {
   createdAt: string;
 };
 
+// Helper function to get the next plan tier
+function getNextPlan(currentPlan: string): string {
+  const planProgression: Record<string, string> = {
+    'FREE': 'STARTER',
+    'STARTER': 'GROWTH',
+    'GROWTH': 'ENTERPRISE',
+    'ENTERPRISE': 'ENTERPRISE'
+  };
+  return planProgression[currentPlan] || currentPlan;
+}
+
 function ActionMenu({
   school,
   performAction,
@@ -84,10 +95,10 @@ function ActionMenu({
                 </button>
                 <button
                   className="flex w-full items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-surface"
-                  onClick={() => { setOpen(false); performAction(school.id, "upgrade", { plan: "GROWTH" }); }}
-                  disabled={busy || school.plan === "GROWTH" || school.plan === "ENTERPRISE"}
+                  onClick={() => { setOpen(false); performAction(school.id, "upgrade"); }}
+                  disabled={busy || school.plan === "ENTERPRISE"}
                 >
-                  Upgrade
+                  Upgrade to {getNextPlan(school.plan)}
                 </button>
                 <button
                   className="flex w-full items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-surface"
@@ -161,6 +172,7 @@ export function SchoolTable({ initialSchools }: { initialSchools: SchoolRow[] })
       const response = await fetch("/schoolbase-admin/api/schools", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ schoolId, action, ...payload }),
       });
       const result = await response.json();
@@ -186,6 +198,7 @@ export function SchoolTable({ initialSchools }: { initialSchools: SchoolRow[] })
       const response = await fetch("/schoolbase-admin/api/impersonate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ schoolId }),
       });
       const result = await response.json();

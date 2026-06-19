@@ -11,6 +11,7 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
   const [notice, setNotice] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [pending, setPending] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -44,6 +45,17 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
 
       // ✅ FIX: Correct backend response handling
       if (!res.ok) {
+        const errorData = data as any;
+        
+        // Special handling for unverified accounts - show message with action
+        if (errorData.needsVerification && errorData.email) {
+          console.log('Account needs verification, showing verification prompt');
+          setPendingEmail(errorData.email);
+          setError(`Your email has a pending verification. We've sent a verification code to your inbox.`);
+          setPending(false);
+          return;
+        }
+        
         setError(data.error || "Login failed");
         setPending(false);
         return;
@@ -86,9 +98,18 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
   return (
     <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
       {error && (
-        <p className="rounded-lg bg-error/10 px-3 py-2 text-sm text-error">
-          {error}
-        </p>
+        <div className="rounded-lg bg-error/10 px-3 py-2 text-sm text-error">
+          <p className="mb-2">{error}</p>
+          {pendingEmail && (
+            <button
+              type="button"
+              onClick={() => router.push(`/signup/verify?email=${encodeURIComponent(pendingEmail)}&needsVerification=true`)}
+              className="inline-flex items-center text-xs font-medium text-error underline hover:no-underline"
+            >
+              Enter verification code →
+            </button>
+          )}
+        </div>
       )}
 
       {notice && (

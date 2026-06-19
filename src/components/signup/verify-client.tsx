@@ -1,18 +1,21 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { AppLogo } from "@/components/app-logo";
 import { Button } from "@/components/ui/button";
 import { ErrorModal } from "@/components/ui/error-modal";
 import { verifySignupOtpAction } from "@/app/signup/actions";
+import { getBackendUrl } from "@/lib/backend-url";
 import Link from "next/link";
 
 export function VerifySignupClient() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<{ message: string; details?: string } | null>(null);
   const [otp, setOtp] = useState("");
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   const adminEmail = searchParams.get("email") || "";
   const schoolName = searchParams.get("schoolName") || "";
@@ -20,12 +23,61 @@ export function VerifySignupClient() {
   const country = searchParams.get("country") || "";
   const adminName = searchParams.get("adminName") || "";
   const password = searchParams.get("password") || "";
+  const needsVerification = searchParams.get("needsVerification") === "true";
 
   useEffect(() => {
     // Auto-focus the OTP input
     const input = document.querySelector('input[name="otp"]') as HTMLInputElement;
     if (input) input.focus();
   }, []);
+
+  // Handle resend cooldown
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendCooldown]);
+
+  async function handleResendOtp() {
+    if (!adminEmail) return;
+    
+    setIsLoading(true);
+    setError(null);
+    setResendCooldown(60);
+
+    try {
+      const backendUrl = getBackendUrl();
+      const response = await fetch(`${backendUrl}/api/trial/request-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          schoolName: schoolName || "Your School",
+          slug: slug || "",
+          country: country || "",
+          adminName: adminName || "",
+          adminEmail: adminEmail,
+          password: password || "", // Required by endpoint
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to resend OTP");
+      }
+
+      setError({
+        message: `✓ Verification code resent to ${adminEmail}`,
+      });
+    } catch (err) {
+      setError({
+        message: "Failed to resend verification code",
+        details: err instanceof Error ? err.message : "Please try again",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -87,10 +139,32 @@ export function VerifySignupClient() {
         <div className="mb-6 flex justify-center">
           <AppLogo href="/" size="lg" />
         </div>
-        <h1 className="text-center text-xl font-bold">Verify your signup</h1>
-        <p className="mt-2 text-center text-sm text-muted">
-          Enter the 6-digit code we sent to <strong>{adminEmail}</strong>.
-        </p>
+        
+        {needsVerification ? (
+          <>
+            <h1 className="text-center text-xl font-bold">Verify your email</h1>
+            <p className="mt-2 text-center text-sm text-muted">
+              We sent a verification code to <strong>{adminEmail}</strong>. Enter it below to complete your signup.
+            </p>
+          </>
+        ) : (
+          <>
+            <h1 className="text-center text-xl font-bold">Verify your signup</h1>
+            <p className="mt-2 text-center text-sm text-muted">
+              Enter the 6-digit code we sent to <strong>{adminEmail}</strong>.
+            </p>
+          </>
+        )}
+
+        {error && (
+          <div className={`mt-4 rounded-lg px-4 py-3 text-sm ${
+            error.message.startsWith('✓')
+              ? 'border border-green-300 bg-green-50 text-green-900'
+              : 'border border-red-300 bg-red-50 text-red-900'
+          }`}>
+            {error.message}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-4">
           <input name="schoolName" type="hidden" value={schoolName} />
@@ -123,17 +197,31 @@ export function VerifySignupClient() {
           </Button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-muted">
-          If you did not receive a code, return to the{" "}
-          <Link href="/signup" className="font-medium text-brand hover:underline">
-            signup page
-          </Link>{" "}
-          and try again.
-        </p>
+        <div className="mt-6 space-y-3 border-t border-border pt-6">
+          <button
+            type="button"
+            onClick={handleResendOtp}
+            disabled={isLoading || resendCooldown > 0}
+            className="w-full rounded-lg border border-brand bg-brand/5 px-4 py-2.5 text-sm font-medium text-brand hover:bg-brand/10 disabled:bg-background disabled:text-muted"
+          >
+            {resendCooldown > 0
+              ? `Resend code in ${resendCooldown}s`
+              : "Didn't receive code? Resend"}
+          </button>
+
+          {!needsVerification && (
+            <p className="text-center text-sm text-muted">
+              Go back to{" "}
+              <Link href="/signup" className="font-medium text-brand hover:underline">
+                signup
+              </Link>
+            </p>
+          )}
+        </div>
       </div>
 
       <ErrorModal
-        isOpen={!!error}
+        isOpen={!!(error && error.message && error.message.startsWith('Failed'))}
         onClose={() => setError(null)}
         title="Verification Error"
         message={error?.message || ""}

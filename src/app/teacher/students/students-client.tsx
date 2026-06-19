@@ -201,7 +201,7 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
                 </thead>
                 <tbody>
                   {paginatedPupils.map((p) => {
-                    const guardian = p.guardians[0]?.guardian;
+                    const guardian = p.guardians?.[0]?.guardian;
                     const classLabel = p.class
                       ? `${p.class.name}${p.class.arm ? ` ${p.class.arm}` : ""}`
                       : "Unassigned";

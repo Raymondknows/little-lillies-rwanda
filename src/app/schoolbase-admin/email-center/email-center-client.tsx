@@ -311,8 +311,16 @@ export default function EmailCenterClient({
         throw new Error("Please select a school.");
       }
 
-      const formData = new FormData(event.currentTarget as HTMLFormElement);
-      const result = await sendPlatformCommunicationEmailAction(formData);
+      const emailData = {
+        targetType: selectedTarget as 'school' | 'segment',
+        selectedSchoolId: selectedTarget === 'school' ? selectedSchoolId : undefined,
+        selectedSegment: selectedTarget === 'segment' ? selectedSegment : undefined,
+        emailType: selectedEmailType,
+        subject,
+        body,
+      };
+
+      const result = await sendPlatformCommunicationEmailAction(emailData);
 
       const message = `Sent ${result.sentCount} email(s). ${result.skippedCount} skipped.`;
       setSuccessModalMessage(message);

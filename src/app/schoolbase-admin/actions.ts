@@ -31,7 +31,34 @@ export async function platformAdminLogoutAction(formData?: FormData): Promise<an
 }
 
 export async function sendPlatformCommunicationEmailAction(...args: any[]): Promise<any> {
-  throw new Error("Use POST /api/platform-admin/emails instead");
+  try {
+    const backendUrl = getBackendUrl();
+    
+    const emailData = args[0] as {
+      targetType: 'school' | 'segment';
+      selectedSchoolId?: string;
+      selectedSegment?: string;
+      emailType: string;
+      subject: string;
+      body: string;
+    };
+
+    const response = await fetch(`${backendUrl}/schoolbase-admin/api/emails/send`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(emailData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `Failed to send email (${response.status})`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    throw new Error(error instanceof Error ? error.message : 'Failed to send platform email');
+  }
 }
 
 export async function sendSetupCompletionRemindersAction(...args: any[]): Promise<any> {

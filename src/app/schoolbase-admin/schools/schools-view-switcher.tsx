@@ -4,7 +4,6 @@ import { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { SchoolTable, type SchoolRow } from "@/components/platform-admin/school-table";
-import { getBackendUrl } from "@/lib/backend-url";
 
 function getInitials(name: string) {
   return name
@@ -47,13 +46,12 @@ export default function SchoolsViewSwitcher({ initialSchools }: { initialSchools
   useEffect(() => {
     async function loadSchools() {
       try {
-        const backendUrl = getBackendUrl();
         let allSchools: SchoolRow[] = [];
         let page = 1;
         let hasMore = true;
 
         while (hasMore) {
-          const res = await fetch(`${backendUrl}/schoolbase-admin/api/schools?page=${page}&limit=100`, {
+          const res = await fetch(`/schoolbase-admin/api/schools?page=${page}&limit=100`, {
             credentials: "include",
             headers: { "Content-Type": "application/json" },
           });

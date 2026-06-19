@@ -302,7 +302,7 @@ export function SchoolTable({ initialSchools }: { initialSchools: SchoolRow[] })
                   </div>
                 </td>
                 <td className="px-4 py-4 text-foreground">{school.country}</td>
-                <td className="px-4 py-4 text-muted">{school.phone ?? "—"}</td>
+                <td className="px-4 py-4 text-muted">{school.phone || school.email || "—"}</td>
                 <td className="px-4 py-4 font-semibold text-foreground">{school.plan}</td>
                 <td className="px-4 py-4">
                   <span className={`inline-flex rounded-full px-3 py-1 text-[11px] font-semibold ${

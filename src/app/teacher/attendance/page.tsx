@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { AlertCircle, CheckCircle2, Clock, Save, Loader2, Users } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { AlertCircle, CheckCircle2, Clock, Save, Loader2, Users, BarChart3 } from 'lucide-react';
 import { getBackendUrl } from '@/lib/backend-url';
 
 interface Class {
@@ -12,9 +13,14 @@ interface Class {
 
 interface Student {
   id: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   admissionNo: string;
-  email: string;
+  email?: string;
+  photoUrl?: string;
+  class?: any;
+  guardians?: any[];
+  status?: string;
 }
 
 interface AttendanceRecord {
@@ -23,6 +29,7 @@ interface AttendanceRecord {
 }
 
 export default function AttendancePage() {
+  const router = useRouter();
   const [classes, setClasses] = useState<Class[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [selectedClass, setSelectedClass] = useState<string>('');
@@ -43,10 +50,11 @@ export default function AttendancePage() {
   const filteredStudents = useMemo(() => {
     if (!searchQuery.trim()) return students;
     const query = searchQuery.toLowerCase();
-    return students.filter((s) => 
-      s.name.toLowerCase().includes(query) ||
-      (s.admissionNo || '').toLowerCase().includes(query)
-    );
+    return students.filter((s) => {
+      const fullName = `${s.firstName} ${s.lastName}`.toLowerCase();
+      const admNo = (s.admissionNo || '').toLowerCase();
+      return fullName.includes(query) || admNo.includes(query);
+    });
   }, [students, searchQuery]);
 
   const totalPages = Math.max(1, Math.ceil(filteredStudents.length / itemsPerPage));
@@ -157,9 +165,18 @@ export default function AttendancePage() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Attendance Register</h1>
-        <p className="mt-1 text-muted">Mark and track student attendance by class and date</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Attendance Register</h1>
+          <p className="mt-1 text-muted">Mark and track student attendance by class and date</p>
+        </div>
+        <button
+          onClick={() => router.push('/teacher/attendance/summary')}
+          className="flex items-center gap-2 rounded-lg bg-brand text-white px-4 py-2 text-sm font-medium hover:bg-brand/90 transition"
+        >
+          <BarChart3 className="h-4 w-4" />
+          View Summary
+        </button>
       </div>
 
       {/* Status Messages */}
@@ -404,9 +421,13 @@ export default function AttendancePage() {
                 </tr>
               </thead>
               <tbody>
-                {paginatedStudents.map((student) => (
+                {paginatedStudents.map((student) => {
+                  const studentName = student.firstName && student.lastName 
+                    ? `${student.firstName} ${student.lastName}` 
+                    : `Student ${student.admissionNo || student.id}`;
+                  return (
                   <tr key={student.id} className="border-t border-border hover:bg-background/50 transition-colors">
-                    <td className="px-4 py-2 font-medium text-foreground">{student.name}</td>
+                    <td className="px-4 py-2 font-medium text-foreground">{studentName}</td>
                     <td className="px-4 py-2 text-muted">{student.admissionNo || '—'}</td>
                     <td className="px-4 py-2">
                       <div className="flex gap-1.5 flex-wrap">
@@ -431,20 +452,25 @@ export default function AttendancePage() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
 
           {/* Mobile Cards */}
           <div className="sm:hidden space-y-2 mb-6">
-            {paginatedStudents.map((student) => (
+            {paginatedStudents.map((student) => {
+              const studentName = student.firstName && student.lastName 
+                ? `${student.firstName} ${student.lastName}` 
+                : `Student ${student.admissionNo || student.id}`;
+              return (
               <div
                 key={student.id}
                 className="rounded-lg border border-border bg-surface px-3 py-2 hover:bg-background/50 transition-colors"
               >
                 <div className="mb-2">
-                  <p className="font-medium text-sm">{student.name}</p>
+                  <p className="font-medium text-sm">{studentName}</p>
                   <p className="text-xs text-muted mt-1">{student.admissionNo || '—'}</p>
                 </div>
                 <div className="flex gap-1.5 flex-wrap">
@@ -468,7 +494,8 @@ export default function AttendancePage() {
                   ))}
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Pagination */}

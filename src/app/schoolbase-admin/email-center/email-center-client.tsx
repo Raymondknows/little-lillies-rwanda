@@ -42,10 +42,7 @@ What’s included:
 • Streamlined student records and admissions workflows.
 • Better WhatsApp communication tools for parents and staff.
 
-Open SchoolBase to try the improved experience.
-
-Best regards,
-SchoolBase`,
+Open SchoolBase to try the improved experience.`,
   },
   PRICE_UPDATE: {
     subject: "Important update: SchoolBase pricing and plan improvements",
@@ -60,10 +57,7 @@ Key points:
 
 This change is intended to help your school capture more value from SchoolBase while keeping costs predictable.
 
-If you have questions or want a price review for your current plan, reply directly to this email.
-
-Best regards,
-SchoolBase`,
+If you have questions or want a price review for your current plan, reply directly to this email.`,
   },
   SUPPORT_UPDATE: {
     subject: "Support update: your SchoolBase request is being handled",
@@ -73,10 +67,7 @@ This is an update on your SchoolBase support request. Our team is reviewing the 
 
 We are tracking your request against the full SchoolBase experience, including ${PLATFORM_FEATURES}, so you can continue operating smoothly while we resolve it.
 
-If there are any additional details, reply directly to this email.
-
-Best regards,
-SchoolBase`,
+If there are any additional details, reply directly to this email.`,
   },
   ONBOARDING_GUIDANCE: {
     subject: "Onboarding guidance: get your school live with SchoolBase",
@@ -90,10 +81,7 @@ Key next steps:
 • Publish fee schedules and share the parent portal login.
 • Activate WhatsApp communication for parents and staff updates.
 
-Reply to this email if you want us to book a short onboarding call for your team.
-
-Best regards,
-SchoolBase`,
+Reply to this email if you want us to book a short onboarding call for your team.`,
   },
   BEST_PRACTICE_TIP: {
     subject: "Best practice tips: keep parents informed and collect fees faster",
@@ -105,10 +93,7 @@ Here are three best practices for schools using SchoolBase across Admissions, St
 2) Use automated fee reminders and payment tracking to reduce late payments.
 3) Review attendance and results reports each day to support student interventions.
 
-These actions drive better communication, stronger finances, and better outcomes.
-
-Best regards,
-SchoolBase`,
+These actions drive better communication, stronger finances, and better outcomes.`,
   },
   MANUAL_ANNOUNCEMENT: {
     subject: "Important announcement from SchoolBase operations",
@@ -118,10 +103,7 @@ We have an important update for your school. This message covers core SchoolBase
 
 [Add announcement details here]
 
-Please review and share this with your administrative team. If you need support implementing this change, reply to this email.
-
-Best regards,
-SchoolBase`,
+Please review and share this with your administrative team. If you need support implementing this change, reply to this email.`,
   },
   POLICY_UPDATE: {
     subject: "Compliance update: new SchoolBase policy and data requirements",
@@ -134,10 +116,7 @@ Please note the following changes:
 • New controls for access across admissions, fees, and results.
 • Revised reporting requirements for audits and WhatsApp communication logs.
 
-If you have any questions, our compliance team is available to assist.
-
-Best regards,
-SchoolBase`,
+If you have any questions, our compliance team is available to assist.`,
   },
   ACCOUNT_SECURITY: {
     subject: "Security notice: protect your SchoolBase accounts",
@@ -148,10 +127,7 @@ Your security is our top priority. Please review these recommended actions for a
 • Enable two-factor authentication if available.
 • Report any unexpected login activity immediately.
 
-If you need help securing your account, reply to this email and our team will assist.
-
-Best regards,
-SchoolBase Security`,
+If you need help securing your account, reply to this email and our team will assist.`,
   },
 };
 

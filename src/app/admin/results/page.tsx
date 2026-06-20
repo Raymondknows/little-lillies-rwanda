@@ -2,33 +2,14 @@
 
 import { useEffect, useState } from "react";
 import ResultsPageClient from "./results-client";
+import { useAssessmentData } from "@/lib/hooks/useAssessmentData";
 
 export default function ResultsPage() {
-  const [assessments, setAssessments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data, loading, error } = useAssessmentData({
+    endpoint: "/api/admin/results/data",
+  });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch("/api/admin/results/data");
-        if (!response.ok) {
-          throw new Error(`Failed to fetch results data: ${response.status}`);
-        }
-        const data = await response.json();
-        setAssessments(data.assessments || []);
-        setError(null);
-      } catch (err) {
-        console.error("Error fetching results data:", err);
-        setError(err instanceof Error ? err.message : "Failed to load data");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
+  const assessments = data?.assessments || [];
 
   if (loading) {
     return (

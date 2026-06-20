@@ -11,6 +11,9 @@ export async function requestSignupOtpAction(formData: FormData) {
   try {
     const schoolName = formData.get("schoolName");
     const slug = formData.get("slug");
+    const tagline = formData.get("tagline");
+    const address = formData.get("address");
+    const phone = formData.get("phone");
     const country = formData.get("country");
     const adminName = formData.get("adminName");
     const adminEmail = formData.get("adminEmail");
@@ -33,6 +36,9 @@ export async function requestSignupOtpAction(formData: FormData) {
       body: JSON.stringify({
         schoolName,
         slug,
+        tagline,
+        address,
+        phone,
         country,
         adminName,
         adminEmail,
@@ -51,6 +57,9 @@ export async function requestSignupOtpAction(formData: FormData) {
       email: String(adminEmail),
       schoolName: String(schoolName),
       slug: String(slug),
+      tagline: String(tagline ?? ""),
+      address: String(address ?? ""),
+      phone: String(phone ?? ""),
       country: String(country),
       adminName: String(adminName),
       password: String(password),
@@ -72,6 +81,9 @@ export async function verifySignupOtpAction(formData: FormData) {
   try {
     const schoolName = formData.get("schoolName");
     const slug = formData.get("slug");
+    const tagline = formData.get("tagline");
+    const address = formData.get("address");
+    const phone = formData.get("phone");
     const country = formData.get("country");
     const adminName = formData.get("adminName");
     const adminEmail = formData.get("adminEmail");
@@ -95,6 +107,9 @@ export async function verifySignupOtpAction(formData: FormData) {
       body: JSON.stringify({
         schoolName,
         slug,
+        tagline,
+        address,
+        phone,
         country,
         adminName,
         adminEmail,

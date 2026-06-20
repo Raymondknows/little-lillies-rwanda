@@ -20,6 +20,9 @@ export function VerifySignupClient() {
   const adminEmail = searchParams.get("email") || "";
   const schoolName = searchParams.get("schoolName") || "";
   const slug = searchParams.get("slug") || "";
+  const tagline = searchParams.get("tagline") || "";
+  const address = searchParams.get("address") || "";
+  const phone = searchParams.get("phone") || "";
   const country = searchParams.get("country") || "";
   const adminName = searchParams.get("adminName") || "";
   const password = searchParams.get("password") || "";
@@ -54,6 +57,9 @@ export function VerifySignupClient() {
         body: JSON.stringify({
           schoolName: schoolName || "Your School",
           slug: slug || "",
+          tagline: tagline || "",
+          address: address || "",
+          phone: phone || "",
           country: country || "",
           adminName: adminName || "",
           adminEmail: adminEmail,
@@ -88,6 +94,9 @@ export function VerifySignupClient() {
       const formDataObj = new FormData();
       formDataObj.append("schoolName", schoolName);
       formDataObj.append("slug", slug);
+      formDataObj.append("tagline", tagline);
+      formDataObj.append("address", address);
+      formDataObj.append("phone", phone);
       formDataObj.append("country", country);
       formDataObj.append("adminName", adminName);
       formDataObj.append("adminEmail", adminEmail);
@@ -169,6 +178,9 @@ export function VerifySignupClient() {
         <form onSubmit={handleSubmit} className="mt-8 space-y-4">
           <input name="schoolName" type="hidden" value={schoolName} />
           <input name="slug" type="hidden" value={slug} />
+          <input name="tagline" type="hidden" value={tagline} />
+          <input name="address" type="hidden" value={address} />
+          <input name="phone" type="hidden" value={phone} />
           <input name="country" type="hidden" value={country} />
           <input name="adminName" type="hidden" value={adminName} />
           <input name="adminEmail" type="hidden" value={adminEmail} />

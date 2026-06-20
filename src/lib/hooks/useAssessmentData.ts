@@ -30,9 +30,16 @@ export function useAssessmentData({
         setLoading(true);
         setError(null);
 
-        const response = await fetch(endpoint);
+        const response = await fetch(endpoint, {
+          credentials: "include",
+        });
         if (!response.ok) {
-          throw new Error(`Failed to fetch data: ${response.status}`);
+          const errorText = await response.text().catch(() => "");
+          throw new Error(
+            errorText
+              ? `Failed to fetch data: ${response.status} ${errorText}`
+              : `Failed to fetch data: ${response.status}`,
+          );
         }
 
         const result = await response.json();

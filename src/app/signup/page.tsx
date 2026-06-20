@@ -49,13 +49,26 @@ export default function SignupPage() {
       }
 
       const errorMessage = err instanceof Error ? err.message : String(err);
+      const isServerRenderError =
+        errorMessage.includes("Server Components render") ||
+        errorMessage.includes("digest") ||
+        errorMessage.includes("NEXT_REDIRECT");
+
       setError({
-        message: errorMessage,
-        details: errorMessage.includes("Email already registered")
+        message: isServerRenderError
+          ? "We couldn’t complete your signup right now"
+          : errorMessage.includes("Email already registered")
           ? "This email address has already been used to create a school account. Please use a different email or contact support."
           : errorMessage.includes("Invalid email")
           ? "Please enter a valid email address."
           : errorMessage,
+        details: isServerRenderError
+          ? "Please review the form and try again. If the problem continues, contact SchoolBase support."
+          : errorMessage.includes("Email already registered")
+          ? "Use a different admin email or recover the existing account if that school already exists."
+          : errorMessage.includes("Invalid email")
+          ? "The email format looks incorrect. Please enter a valid email address."
+          : undefined,
       });
       setIsLoading(false);
     }
@@ -225,7 +238,7 @@ export default function SignupPage() {
       <ErrorModal
         isOpen={!!error}
         onClose={() => setError(null)}
-        title="Signup Error"
+        title="Unable to Create School"
         message={error?.message || ""}
         details={error?.details}
         type="error"

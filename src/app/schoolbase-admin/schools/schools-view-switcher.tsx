@@ -4,6 +4,7 @@ import { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { SchoolTable, type SchoolRow } from "@/components/platform-admin/school-table";
+import { resolveSchoolAssetUrl } from "@/lib/asset-urls";
 
 function getInitials(name: string) {
   return name
@@ -190,7 +191,11 @@ export default function SchoolsViewSwitcher({ initialSchools }: { initialSchools
                 <div className="flex items-start gap-4">
                   <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-3xl bg-brand/10 text-3xl font-semibold text-brand shadow-sm">
                     {school.logoUrl ? (
-                      <img src={school.logoUrl} alt={`${school.name} logo`} className="h-full w-full object-cover" />
+                      <img
+                        src={resolveSchoolAssetUrl(school.logoUrl) || school.logoUrl}
+                        alt={`${school.name} logo`}
+                        className="h-full w-full object-cover"
+                      />
                     ) : (
                       <span>{getInitials(school.name)}</span>
                     )}
@@ -205,7 +210,7 @@ export default function SchoolsViewSwitcher({ initialSchools }: { initialSchools
                         {(school as any).isVerified ? "✓ Verified" : "Unverified"}
                       </span>
                     </div>
-                    <p className="mt-2 text-sm text-muted line-clamp-2">{school.email || school.phone || school.country}</p>
+                    <p className="mt-2 text-sm text-muted line-clamp-2">{school.email || school.country}</p>
                   </div>
                 </div>
 

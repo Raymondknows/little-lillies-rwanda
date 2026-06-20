@@ -3,6 +3,7 @@
 import { useMemo, useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
+import { resolveSchoolAssetUrl } from "@/lib/asset-urls";
 
 export type SchoolRow = {
   id: string;
@@ -292,8 +293,16 @@ export function SchoolTable({ initialSchools }: { initialSchools: SchoolRow[] })
               <tr key={school.id} className="hover:bg-brand/5 transition-colors">
                 <td className="px-4 py-4">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand/10 text-sm font-semibold text-brand">
-                      {school.name.slice(0, 2).toUpperCase()}
+                    <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-2xl bg-brand/10 text-sm font-semibold text-brand">
+                      {school.logoUrl ? (
+                        <img
+                          src={resolveSchoolAssetUrl(school.logoUrl) || school.logoUrl}
+                          alt={`${school.name} logo`}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <span>{school.name.slice(0, 2).toUpperCase()}</span>
+                      )}
                     </div>
                     <div>
                       <div className="font-semibold text-foreground">{school.name}</div>
@@ -302,7 +311,7 @@ export function SchoolTable({ initialSchools }: { initialSchools: SchoolRow[] })
                   </div>
                 </td>
                 <td className="px-4 py-4 text-foreground">{school.country}</td>
-                <td className="px-4 py-4 text-muted">{school.phone || school.email || "—"}</td>
+                <td className="px-4 py-4 text-muted">{school.phone || "—"}</td>
                 <td className="px-4 py-4 font-semibold text-foreground">{school.plan}</td>
                 <td className="px-4 py-4">
                   <span className={`inline-flex rounded-full px-3 py-1 text-[11px] font-semibold ${

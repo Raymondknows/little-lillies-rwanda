@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, use } from "react";
+import { Fragment, useEffect, useState, use } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, Save, AlertCircle, CheckCircle } from "lucide-react";
@@ -18,6 +18,8 @@ interface AssessmentResult {
   pupilId: string;
   pupilName: string;
   admissionNo: string;
+  classId: string | null;
+  className: string | null;
   caScore: number | null;
   testScore: number | null;
   examScore: number | null;
@@ -42,10 +44,13 @@ interface Assessment {
 }
 
 const DEFAULT_COMPONENTS: AssessmentComponent[] = [
-  { id: "ca", name: "Continuous Assessment", maxScore: 20, weight: 20, sortOrder: 1 },
+  { id: "ca", name: "CA", maxScore: 20, weight: 20, sortOrder: 1 },
   { id: "test", name: "Test", maxScore: 20, weight: 20, sortOrder: 2 },
   { id: "exam", name: "Examination", maxScore: 60, weight: 60, sortOrder: 3 },
 ];
+
+const getComponentDisplayName = (component: AssessmentComponent) =>
+  component.id === "ca" ? "CA" : component.name;
 
 export default function TeacherSubjectScoresPage({
   params,
@@ -256,6 +261,22 @@ export default function TeacherSubjectScoresPage({
   }
 
   const isPublished = assessment.status === "PUBLISHED";
+  const phaseLabel = assessment.phase.replace(/_/g, " ");
+
+  const groupedResults = Array.from(
+    results.reduce((groups, result) => {
+      const classKey = result.classId || result.className || "unassigned";
+      const currentGroup = groups.get(classKey) ?? {
+        classId: result.classId,
+        className: result.className || "Class not assigned",
+        results: [] as AssessmentResult[],
+      };
+
+      currentGroup.results.push(result);
+      groups.set(classKey, currentGroup);
+      return groups;
+    }, new Map<string, { classId: string | null; className: string; results: AssessmentResult[] }>())
+  ).sort((a, b) => a[1].className.localeCompare(b[1].className));
 
   return (
     <div className="mx-auto max-w-6xl px-3 py-4">
@@ -271,6 +292,7 @@ export default function TeacherSubjectScoresPage({
         <div>
           <h1 className="text-2xl font-bold text-foreground">{assessment.name}</h1>
           <p className="text-sm text-muted mt-1">Subject: {subjectName}</p>
+          <p className="text-xs text-muted mt-1">Phase: {phaseLabel}</p>
         </div>
         <Badge variant="secondary" className="bg-brand/10 text-brand border-brand/30">
           West African Standard
@@ -286,7 +308,7 @@ export default function TeacherSubjectScoresPage({
               variant="secondary"
               className="bg-brand/10 text-brand border-brand/30"
             >
-              {component.name} ({component.maxScore})
+              {getComponentDisplayName(component)} ({component.maxScore})
             </Badge>
           ))}
         </div>
@@ -345,7 +367,7 @@ export default function TeacherSubjectScoresPage({
                         key={component.id}
                         className="px-4 py-3 text-center text-sm font-semibold text-foreground"
                       >
-                        {component.name} ({component.maxScore})
+                        {getComponentDisplayName(component)} ({component.maxScore})
                       </th>
                     ))}
                     <th className="px-4 py-3 text-center text-sm font-semibold text-foreground">
@@ -354,58 +376,82 @@ export default function TeacherSubjectScoresPage({
                   </tr>
                 </thead>
                 <tbody>
-                  {results.map((result) => {
-                    const entry = scores[result.pupilId];
-                    const total = calculateTotal(
-                      entry?.caScore ?? null,
-                      entry?.testScore ?? null,
-                      entry?.examScore ?? null
-                    );
-
-                    return (
+                  {groupedResults.map(([classKey, group], groupIndex) => (
+                    <Fragment key={`class-${classKey}`}>
                       <tr
-                        key={result.pupilId}
-                        className="border-b border-border hover:bg-surface/50"
+                        className={
+                          groupIndex === 0
+                          ? "border-y-2 border-border bg-background"
+                          : "border-y-4 border-brand/40 bg-brand/5"
+                        }
                       >
-                        <td className="px-4 py-3 text-sm font-medium text-foreground">
-                          {result.pupilName}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-muted">
-                          {result.admissionNo}
-                        </td>
-                        {components.map((component, index) => {
-                          const field = ["caScore", "testScore", "examScore"][index] as
-                            | "caScore"
-                            | "testScore"
-                            | "examScore";
-
-                          return (
-                            <td key={component.id} className="px-4 py-3 text-center">
-                              <input
-                                type="number"
-                                min="0"
-                                max={component.maxScore}
-                                step="0.1"
-                                value={entry?.[field] ?? ""}
-                                onChange={(e) =>
-                                  handleScoreChange(
-                                    result.pupilId,
-                                    field,
-                                    e.target.value
-                                  )
-                                }
-                                disabled={isPublished}
-                                className="w-16 px-2 py-1 rounded border border-border text-center text-sm focus:outline-none focus:ring-2 focus:ring-brand"
-                              />
-                            </td>
-                          );
-                        })}
-                        <td className="px-4 py-3 text-center font-semibold text-foreground">
-                          {total || "-"}
+                        <td
+                          colSpan={2 + components.length + 1}
+                        className="px-4 py-3"
+                        >
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs font-semibold uppercase tracking-[0.18em] text-brand">
+                            Phase: {phaseLabel}
+                            {group.className && group.className !== 'Class not assigned' ? ` · Class: ${group.className}` : ''}
+                          </span>
+                          <div className="h-px flex-1 bg-brand/40" />
+                          <span className="text-[10px] font-medium normal-case tracking-normal text-muted whitespace-nowrap">
+                            {group.results.length} student{group.results.length === 1 ? "" : "s"}
+                          </span>
+                        </div>
                         </td>
                       </tr>
-                    );
-                  })}
+                      {group.results.map((result) => {
+                        const entry = scores[result.pupilId];
+                        const total = calculateTotal(
+                          entry?.caScore ?? null,
+                          entry?.testScore ?? null,
+                          entry?.examScore ?? null
+                        );
+
+                        return (
+                          <tr
+                            key={result.pupilId}
+                            className="border-b border-border hover:bg-surface/50"
+                          >
+                            <td className="px-4 py-3 text-sm font-medium text-foreground">
+                              {result.pupilName}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-muted">
+                              {result.admissionNo}
+                            </td>
+                            {components.map((component, index) => {
+                              const field = ["caScore", "testScore", "examScore"][index] as
+                                | "caScore"
+                                | "testScore"
+                                | "examScore";
+
+                              return (
+                                <td key={component.id} className="px-4 py-3 text-center border border-border">
+                                  <input
+                                    type="text"
+                                    inputMode="decimal"
+                                    pattern="[0-9]*([.,][0-9]+)?"
+                                    min="0"
+                                    max={component.maxScore}
+                                    value={entry?.[field] ?? ""}
+                                    onChange={(e) =>
+                                      handleScoreChange(result.pupilId, field, e.target.value)
+                                    }
+                                    disabled={isPublished}
+                                    className="w-16 px-2 py-1 rounded border border-border bg-background text-center text-sm focus:outline-none focus:ring-2 focus:ring-brand"
+                                  />
+                                </td>
+                              );
+                            })}
+                            <td className="px-4 py-3 text-center font-semibold text-foreground">
+                              {total || "-"}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </Fragment>
+                  ))}
                 </tbody>
               </table>
             </div>

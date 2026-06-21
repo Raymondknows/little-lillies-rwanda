@@ -32,8 +32,9 @@ export function ClassStatistics({ assessmentId, schoolId }: ClassStatisticsProps
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!schoolId) return;
     fetchStatistics();
-  }, [assessmentId]);
+  }, [assessmentId, schoolId]);
 
   const fetchStatistics = async () => {
     setLoading(true);

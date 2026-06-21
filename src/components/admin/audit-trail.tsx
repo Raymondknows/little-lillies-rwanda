@@ -17,6 +17,7 @@ interface AuditEntry {
 
 interface AuditTrailProps {
   assessmentId: string;
+  schoolId?: string | null;
 }
 
 const actionColors: Record<string, { bg: string; text: string; icon: string }> = {
@@ -30,14 +31,18 @@ const actionColors: Record<string, { bg: string; text: string; icon: string }> =
   UNPUBLISHED: { bg: 'bg-gray-50', text: 'text-gray-700', icon: '↩️' },
 };
 
-export function AuditTrail({ assessmentId }: AuditTrailProps) {
+export function AuditTrail({ assessmentId, schoolId }: AuditTrailProps) {
   const [audits, setAudits] = useState<AuditEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [schoolId, setSchoolId] = useState<string | null>(null);
+  const [schoolIdState, setSchoolIdState] = useState<string | null>(schoolId ?? null);
 
   useEffect(() => {
-    // First, try to get schoolId from session, then localStorage
+    if (schoolId) {
+      setSchoolIdState(schoolId);
+      return;
+    }
+
     const initializeSchoolId = async () => {
       try {
         const response = await fetch('/api/admin/session');
@@ -45,7 +50,7 @@ export function AuditTrail({ assessmentId }: AuditTrailProps) {
           const sessionData = await response.json();
           const sid = sessionData.session?.schoolId;
           if (sid) {
-            setSchoolId(sid);
+            setSchoolIdState(sid);
             return;
           }
         }
@@ -53,24 +58,23 @@ export function AuditTrail({ assessmentId }: AuditTrailProps) {
         console.debug('Session fetch failed, falling back to localStorage');
       }
 
-      // Fallback to localStorage
       const localSchoolId = localStorage.getItem('schoolId');
       if (localSchoolId) {
-        setSchoolId(localSchoolId);
+        setSchoolIdState(localSchoolId);
       }
     };
 
     initializeSchoolId();
-  }, []);
+  }, [schoolId]);
 
   useEffect(() => {
-    if (schoolId) {
+    if (schoolIdState) {
       loadAuditTrail();
     }
-  }, [assessmentId, schoolId]);
+  }, [assessmentId, schoolIdState]);
 
   const loadAuditTrail = async () => {
-    if (!schoolId) return;
+    if (!schoolIdState) return;
 
     try {
       setLoading(true);
@@ -81,7 +85,7 @@ export function AuditTrail({ assessmentId }: AuditTrailProps) {
       
       const response = await fetch(url, {
         headers: {
-          'x-school-id': schoolId,
+          'x-school-id': schoolIdState,
         },
       });
 

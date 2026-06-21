@@ -14,6 +14,19 @@ export function getBackendUrl(): string {
     return process.env.NEXT_PUBLIC_BACKEND_URL;
   }
 
+  // Allow server-side BACKEND_URL fallback if only backend env is defined.
+  if (process.env.BACKEND_URL) {
+    return process.env.BACKEND_URL;
+  }
+
+  if (process.env.API_URL) {
+    return process.env.API_URL;
+  }
+
+  if (process.env.BACKEND_API_URL) {
+    return process.env.BACKEND_API_URL;
+  }
+
   // Client-side: detect from window.location
   if (typeof window !== 'undefined') {
     const host = window.location.hostname;

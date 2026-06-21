@@ -16,8 +16,10 @@ import { AdminReportsTab } from "@/components/admin/admin-reports-tab";
 interface Assessment {
   id: string;
   name: string;
+  schoolId: string;
   phase: string;
   status: string;
+  componentData?: string | null;
   publishedAt?: string;
   term: {
     name: string;
@@ -33,6 +35,14 @@ interface Assessment {
   _count: { results: number };
 }
 
+interface PhasePupil {
+  id: string;
+  name: string;
+  admissionNo?: string;
+  photoUrl?: string;
+  className?: string;
+}
+
 export default function AssessmentDetailPage({
   params,
 }: {
@@ -46,12 +56,7 @@ export default function AssessmentDetailPage({
   const [actionLoading, setActionLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const [showSetupWizard, setShowSetupWizard] = useState(false);
-  const [schoolId, setSchoolId] = useState("");
-
-  useEffect(() => {
-    const school = localStorage.getItem("schoolId");
-    if (school) setSchoolId(school);
-  }, []);
+  const [phasePupils, setPhasePupils] = useState<PhasePupil[]>([]);
 
   useEffect(() => {
     const fetchAssessment = async () => {
@@ -70,6 +75,43 @@ export default function AssessmentDetailPage({
 
     fetchAssessment();
   }, [id]);
+
+  useEffect(() => {
+    if (!assessment?.phase) return;
+
+    const fetchPhasePupils = async () => {
+      try {
+        const response = await fetch('/api/admin/students/data', {
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          setPhasePupils([]);
+          return;
+        }
+
+        const data = await response.json();
+        const pupils = Array.isArray(data.pupils) ? data.pupils : [];
+
+        setPhasePupils(
+          pupils
+            .filter((pupil: any) => pupil?.class?.phase === assessment.phase)
+            .map((pupil: any) => ({
+              id: pupil.id,
+              name: `${pupil.firstName || ''} ${pupil.lastName || ''}`.trim() || pupil.name || 'Student',
+              admissionNo: pupil.admissionNo,
+              photoUrl: pupil.photoUrl,
+              className: pupil.class ? `${pupil.class.name}${pupil.class.arm ? ` ${pupil.class.arm}` : ''}` : undefined,
+            }))
+        );
+      } catch (err) {
+        console.error('Failed to load phase pupils:', err);
+        setPhasePupils([]);
+      }
+    };
+
+    fetchPhasePupils();
+  }, [assessment?.phase]);
 
   const handleApprove = async () => {
     if (!assessment) return;
@@ -152,6 +194,7 @@ export default function AssessmentDetailPage({
   const pupils = Array.from(
     new Map(assessment.results.map((r) => [r.pupil.id, r.pupil])).values()
   );
+  const reportPupils = phasePupils.length > 0 ? phasePupils : pupils;
   const existingResults = assessment.results.reduce(
     (acc, r) => {
       acc[r.pupilId] = r;
@@ -159,6 +202,7 @@ export default function AssessmentDetailPage({
     },
     {} as Record<string, any>
   );
+  const isConfigured = Boolean(assessment.componentData);
 
   return (
     <div className="mx-auto max-w-7xl px-3 py-4">
@@ -286,28 +330,34 @@ export default function AssessmentDetailPage({
             <AssessmentActionsPanel
               assessmentId={id}
               status={assessment.status}
-              schoolId={schoolId}
+              schoolId={assessment.schoolId}
+              isConfigured={isConfigured}
               onStatusChange={(newStatus) => {
                 setAssessment({ ...assessment, status: newStatus });
               }}
             />
           </div>
 
+          {!isConfigured && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+              <p className="text-sm font-medium text-amber-900">Assessment not configured yet.</p>
+              <p className="mt-1 text-sm text-amber-800">
+                Configure CA, Test, and Exam weights first. Result calculation, locking, unlocking, and publishing are disabled for now.
+              </p>
+            </div>
+          )}
+
           {/* Quick Actions */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Link href={`/admin/results/${id}/broadsheet`}>
-              <Button className="w-full" variant="outline">
-                <Table2 className="mr-2 h-4 w-4" />
-                View Broadsheet
-              </Button>
-            </Link>
-            <Link href={`/admin/results/${id}/report`}>
-              <Button className="w-full" variant="outline">
-                View Report Cards
-              </Button>
-            </Link>
-            <Button className="w-full" variant="outline" disabled>
-              Download Results
+          <div className="flex flex-wrap gap-2">
+            <Button href={`/admin/results/${id}/broadsheet`} variant="outline" className="h-10 whitespace-nowrap px-4">
+              <Table2 className="h-4 w-4" />
+              View Broadsheet
+            </Button>
+            <Button href={`/admin/results/${id}/report`} variant="outline" className="h-10 whitespace-nowrap px-4">
+              View Report Cards
+            </Button>
+            <Button className="h-10 whitespace-nowrap px-4 opacity-60 cursor-not-allowed" variant="outline" disabled title="Locked for now">
+              Download Results (Locked)
             </Button>
           </div>
 
@@ -324,7 +374,7 @@ export default function AssessmentDetailPage({
       )}
 
       {/* Scores Tab */}
-      {activeTab === "scores" && assessment.status === "DRAFT" && pupils.length > 0 && (
+      {activeTab === "scores" && assessment.status === "DRAFT" && phasePupils.length > 0 && (
         <div className="mt-6 space-y-4">
           <div>
             <h2 className="text-lg font-semibold">Enter Assessment Scores</h2>
@@ -332,7 +382,7 @@ export default function AssessmentDetailPage({
           </div>
           <AssessmentScores
             assessmentId={id}
-            pupils={pupils}
+            pupils={phasePupils}
             existingResults={existingResults}
           />
         </div>
@@ -347,7 +397,7 @@ export default function AssessmentDetailPage({
       )}
 
       {/* Results Summary Table */}
-      {activeTab === "scores" && pupils.length > 0 && (
+      {activeTab === "scores" && phasePupils.length > 0 && (
         <div className="mt-6">
           <h2 className="text-lg font-semibold mb-3">Scores Entered</h2>
           <div className="overflow-x-auto rounded-lg border border-border bg-surface">
@@ -363,7 +413,7 @@ export default function AssessmentDetailPage({
                 </tr>
               </thead>
               <tbody>
-                {pupils.map((pupil) => {
+                {phasePupils.map((pupil) => {
                   const result = existingResults[pupil.id];
                   return (
                     <tr key={pupil.id} className="border-t border-border hover:bg-background/50">
@@ -394,7 +444,7 @@ export default function AssessmentDetailPage({
       {activeTab === "statistics" && (
         <div className="mt-6">
           <h2 className="text-lg font-semibold mb-4">Class Statistics</h2>
-          <ClassStatistics assessmentId={id} schoolId={schoolId} />
+          <ClassStatistics assessmentId={id} schoolId={assessment.schoolId} />
         </div>
       )}
 
@@ -411,7 +461,7 @@ export default function AssessmentDetailPage({
         <div className="mt-6">
           <AdminReportsTab 
             assessmentId={id} 
-            pupils={pupils} 
+            pupils={reportPupils} 
             status={assessment.status}
           />
         </div>

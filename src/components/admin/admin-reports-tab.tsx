@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Download, FileText, User } from "lucide-react";
 import { ReportCardViewer } from "./report-card-viewer";
 import { resolveFileUrl } from "@/lib/api-client";
-import { getBackendUrl } from "@/lib/backend-url";
 
 interface Pupil {
   id: string;
@@ -40,6 +39,18 @@ export function AdminReportsTab({ assessmentId, pupils, status }: ReportsTabProp
   const [downloading, setDownloading] = useState(false);
   const [loadingPupilDetails, setLoadingPupilDetails] = useState(false);
 
+  useEffect(() => {
+    if (pupils.length === 0) {
+      setSelectedPupilId(null);
+      setSelectedPupilDetails(null);
+      return;
+    }
+
+    if (!selectedPupilId || !pupils.some((pupil) => pupil.id === selectedPupilId)) {
+      setSelectedPupilId(pupils[0].id);
+    }
+  }, [pupils, selectedPupilId]);
+
   // Fetch full student details with photo when selected pupil changes
   useEffect(() => {
     if (!selectedPupilId) return;
@@ -47,8 +58,7 @@ export function AdminReportsTab({ assessmentId, pupils, status }: ReportsTabProp
     const fetchPupilDetails = async () => {
       setLoadingPupilDetails(true);
       try {
-        const backendUrl = getBackendUrl();
-        const response = await fetch(`${backendUrl}/api/admin/students/${selectedPupilId}`, {
+        const response = await fetch(`/api/admin/students/${selectedPupilId}`, {
           credentials: 'include',
         });
 
@@ -125,7 +135,7 @@ export function AdminReportsTab({ assessmentId, pupils, status }: ReportsTabProp
     return (
       <div className="rounded-lg border border-border bg-surface p-12 text-center">
         <FileText className="w-12 h-12 text-muted mx-auto mb-3 opacity-50" />
-        <p className="text-muted">No students in this assessment</p>
+        <p className="text-muted">No students found for this assessment phase</p>
       </div>
     );
   }

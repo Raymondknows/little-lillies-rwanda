@@ -5,6 +5,7 @@ import { useEffect, useState, use } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, Save, AlertCircle } from "lucide-react";
+import { getBackendUrl } from "@/lib/backend-url";
 
 interface ScoreEntry {
   pupilId: string;
@@ -19,10 +20,19 @@ interface Pupil {
   admissionNo: string;
 }
 
+interface AssessmentComponent {
+  id: string;
+  name: string;
+  maxScore: number;
+  weight: number;
+  sortOrder?: number;
+}
+
 interface Assessment {
   id: string;
   name: string;
   status: string;
+  components?: AssessmentComponent[];
   results: Array<{
     pupilId: string;
     caScore: number | null;
@@ -32,6 +42,12 @@ interface Assessment {
     pupil: { id: string; name: string };
   }>;
 }
+
+const DEFAULT_COMPONENTS: AssessmentComponent[] = [
+  { id: "ca", name: "Continuous Assessment", maxScore: 20, weight: 20, sortOrder: 1 },
+  { id: "test", name: "Test", maxScore: 20, weight: 20, sortOrder: 2 },
+  { id: "exam", name: "Examination", maxScore: 60, weight: 60, sortOrder: 3 },
+];
 
 export default function TeacherScoreEntryPage({
   params,
@@ -56,7 +72,6 @@ export default function TeacherScoreEntryPage({
         const data = await response.json();
         setAssessment(data.assessment);
 
-        // Extract unique pupils and initialize scores
         const uniquePupils: Record<string, Pupil> = {};
         const initialScores: Record<string, ScoreEntry> = {};
 
@@ -90,7 +105,11 @@ export default function TeacherScoreEntryPage({
     fetchAssessment();
   }, [id]);
 
-  const handleScoreChange = (pupilId: string, field: "caScore" | "testScore" | "examScore", value: string) => {
+  const handleScoreChange = (
+    pupilId: string,
+    field: "caScore" | "testScore" | "examScore",
+    value: string
+  ) => {
     setScores((prev) => ({
       ...prev,
       [pupilId]: {
@@ -100,9 +119,25 @@ export default function TeacherScoreEntryPage({
     }));
   };
 
-  const calculateTotal = (caScore: number | null, testScore: number | null, examScore: number | null) => {
-    if (caScore === null || testScore === null || examScore === null) return null;
-    return (caScore * 0.2 + testScore * 0.3 + examScore * 0.5).toFixed(1);
+  const components = (assessment?.components && assessment.components.length > 0
+    ? [...assessment.components]
+    : DEFAULT_COMPONENTS
+  ).sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+
+  const calculateTotal = (
+    caScore: number | null,
+    testScore: number | null,
+    examScore: number | null
+  ) => {
+    const values = [caScore, testScore, examScore];
+    if (values.some((score) => score === null)) return null;
+
+    return components
+      .reduce((total, component, index) => {
+        const score = values[index] ?? 0;
+        return total + (score / component.maxScore) * component.weight;
+      }, 0)
+      .toFixed(1);
   };
 
   const handleSave = async () => {
@@ -112,27 +147,31 @@ export default function TeacherScoreEntryPage({
 
     try {
       const entries = Object.values(scores).filter(
-        (s) => s.caScore !== null || s.testScore !== null || s.examScore !== null
+        (entry) => entry.caScore !== null || entry.testScore !== null || entry.examScore !== null
       );
 
-      const res = await fetch("/api/admin/results", {
+      const backendUrl = getBackendUrl();
+      const res = await fetch(`${backendUrl}/api/teacher/results`, {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           assessmentId: id,
-          entries: entries.map((e) => ({
-            ...e,
-            totalScore:
-              e.caScore && e.testScore && e.examScore
-                ? parseFloat((e.caScore * 0.2 + e.testScore * 0.3 + e.examScore * 0.5).toFixed(1))
-                : null,
+          entries: entries.map((entry) => ({
+            ...entry,
+            totalScore: parseFloat(calculateTotal(entry.caScore, entry.testScore, entry.examScore) || "0"),
           })),
         }),
       });
 
       if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || "Failed to save scores");
+        const errorText = await res.text();
+        try {
+          const error = JSON.parse(errorText);
+          throw new Error(error.error || "Failed to save scores");
+        } catch {
+          throw new Error(errorText || "Failed to save scores");
+        }
       }
 
       setMessage({ type: "success", text: "Scores saved successfully" });
@@ -191,9 +230,20 @@ export default function TeacherScoreEntryPage({
           <h1 className="text-2xl font-bold">{assessment.name}</h1>
           <p className="text-sm text-muted mt-1">Enter scores for your students</p>
         </div>
-        <Badge variant={isDraft ? "default" : "secondary"}>
+        <Badge variant={isDraft ? "default" : "secondary"} className="bg-brand/10 text-brand border-brand/30">
           {isDraft ? "Draft - Editing Allowed" : "Status: " + assessment.status}
         </Badge>
+      </div>
+
+      <div className="mb-6 rounded-lg border border-border bg-surface p-4">
+        <h3 className="text-sm font-semibold text-foreground mb-3">Scoring Standard</h3>
+        <div className="flex flex-wrap gap-2">
+          {components.map((component) => (
+            <Badge key={component.id} variant="secondary" className="bg-brand/10 text-brand border-brand/30">
+              {component.name} ({component.maxScore})
+            </Badge>
+          ))}
+        </div>
       </div>
 
       {!isDraft && (
@@ -232,59 +282,44 @@ export default function TeacherScoreEntryPage({
                 <tr>
                   <th className="px-4 py-3 text-left font-semibold">Student Name</th>
                   <th className="px-4 py-3 text-center font-semibold">Admission No</th>
-                  <th className="px-4 py-3 text-center font-semibold">CA (20%)</th>
-                  <th className="px-4 py-3 text-center font-semibold">Test (30%)</th>
-                  <th className="px-4 py-3 text-center font-semibold">Exam (50%)</th>
+                  {components.map((component) => (
+                    <th key={component.id} className="px-4 py-3 text-center font-semibold">
+                      {component.name} ({component.maxScore})
+                    </th>
+                  ))}
                   <th className="px-4 py-3 text-center font-semibold">Total</th>
                 </tr>
               </thead>
               <tbody>
                 {pupils.map((pupil, index) => {
                   const score = scores[pupil.id];
-                  const total = calculateTotal(score?.caScore || null, score?.testScore || null, score?.examScore || null);
+                  const total = calculateTotal(score?.caScore ?? null, score?.testScore ?? null, score?.examScore ?? null);
                   return (
                     <tr key={pupil.id} className={index % 2 === 0 ? "bg-surface" : "bg-background/50"}>
                       <td className="px-4 py-3 font-medium">{pupil.name}</td>
                       <td className="px-4 py-3 text-center text-xs text-muted">{pupil.admissionNo}</td>
-                      <td className="px-4 py-3">
-                        <input
-                          type="number"
-                          min="0"
-                          max="100"
-                          step="0.1"
-                          value={score?.caScore ?? ""}
-                          onChange={(e) => handleScoreChange(pupil.id, "caScore", e.target.value)}
-                          disabled={!isDraft}
-                          className="w-full max-w-20 rounded border border-border bg-surface px-2 py-1 text-center text-sm disabled:bg-gray-100 disabled:text-gray-500"
-                        />
-                      </td>
-                      <td className="px-4 py-3">
-                        <input
-                          type="number"
-                          min="0"
-                          max="100"
-                          step="0.1"
-                          value={score?.testScore ?? ""}
-                          onChange={(e) => handleScoreChange(pupil.id, "testScore", e.target.value)}
-                          disabled={!isDraft}
-                          className="w-full max-w-20 rounded border border-border bg-surface px-2 py-1 text-center text-sm disabled:bg-gray-100 disabled:text-gray-500"
-                        />
-                      </td>
-                      <td className="px-4 py-3">
-                        <input
-                          type="number"
-                          min="0"
-                          max="100"
-                          step="0.1"
-                          value={score?.examScore ?? ""}
-                          onChange={(e) => handleScoreChange(pupil.id, "examScore", e.target.value)}
-                          disabled={!isDraft}
-                          className="w-full max-w-20 rounded border border-border bg-surface px-2 py-1 text-center text-sm disabled:bg-gray-100 disabled:text-gray-500"
-                        />
-                      </td>
-                      <td className="px-4 py-3 text-center font-semibold">
-                        {total ?? "—"}
-                      </td>
+                      {components.map((component, componentIndex) => {
+                        const field = ["caScore", "testScore", "examScore"][componentIndex] as
+                          | "caScore"
+                          | "testScore"
+                          | "examScore";
+
+                        return (
+                          <td key={component.id} className="px-4 py-3">
+                            <input
+                              type="number"
+                              min="0"
+                              max={component.maxScore}
+                              step="0.1"
+                              value={score?.[field] ?? ""}
+                              onChange={(e) => handleScoreChange(pupil.id, field, e.target.value)}
+                              disabled={!isDraft}
+                              className="w-full max-w-20 rounded border border-border bg-surface px-2 py-1 text-center text-sm disabled:bg-gray-100 disabled:text-gray-500"
+                            />
+                          </td>
+                        );
+                      })}
+                      <td className="px-4 py-3 text-center font-semibold">{total ?? "—"}</td>
                     </tr>
                   );
                 })}

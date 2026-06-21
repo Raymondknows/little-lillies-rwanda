@@ -171,6 +171,7 @@ export function WaecReportCard({
   const maxAttendance = data.summary?.maxAttendance ?? data.statistics?.maxAttendance;
   const subjectColumns = {
     hasCa: true,
+    hasTest: data.subjects.some((subject) => subject.testScore !== undefined && subject.testScore !== null),
     hasExam: true,
     hasPosition: data.subjects.some((subject) => subject.subjectPosition),
   };
@@ -298,6 +299,7 @@ export function WaecReportCard({
                   <tr className="bg-gray-800 text-white">
                     <th className="border border-gray-500 p-1 text-left font-bold">Subject</th>
                     {subjectColumns.hasCa && <th className="border border-gray-500 p-1 text-center font-bold">CA</th>}
+                    {subjectColumns.hasTest && <th className="border border-gray-500 p-1 text-center font-bold">Test</th>}
                     {subjectColumns.hasExam && <th className="border border-gray-500 p-1 text-center font-bold">Exam</th>}
                     <th className="border border-gray-500 p-1 text-center font-bold">Total</th>
                     <th className="border border-gray-500 p-1 text-center font-bold">Grade</th>
@@ -309,6 +311,9 @@ export function WaecReportCard({
                     <tr key={idx} className={idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
                       <td className="border border-gray-500 p-1 text-gray-900 font-medium">{subject.subjectName}</td>
                       <td className="border border-gray-500 p-1 text-center text-gray-900">{subject.caScore ?? '—'}</td>
+                      {subjectColumns.hasTest && (
+                        <td className="border border-gray-500 p-1 text-center text-gray-900">{subject.testScore ?? '—'}</td>
+                      )}
                       <td className="border border-gray-500 p-1 text-center text-gray-900">{subject.examScore ?? '—'}</td>
                       <td className="border border-gray-500 p-1 text-center text-gray-900 font-semibold">{subject.totalScore.toFixed(1)}</td>
                       <td className="border border-gray-500 p-1 text-center">

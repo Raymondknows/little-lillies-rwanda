@@ -28,6 +28,9 @@ interface ReportCardData {
   };
   subjects: Array<{
     subjectName: string;
+    caScore?: number;
+    testScore?: number;
+    examScore?: number;
     totalScore: number;
     grade: string;
     teacherRemark?: string;
@@ -174,6 +177,15 @@ export function ProfessionalReportCard({
                     Subject
                   </th>
                   <th className="border border-gray-400 px-3 py-2 text-center font-bold">
+                    CA
+                  </th>
+                  <th className="border border-gray-400 px-3 py-2 text-center font-bold">
+                    Test
+                  </th>
+                  <th className="border border-gray-400 px-3 py-2 text-center font-bold">
+                    Exam
+                  </th>
+                  <th className="border border-gray-400 px-3 py-2 text-center font-bold">
                     Total Score
                   </th>
                   <th className="border border-gray-400 px-2 py-2 text-center font-bold">
@@ -194,6 +206,15 @@ export function ProfessionalReportCard({
                   >
                     <td className="border border-gray-400 px-3 py-2 font-medium">
                       {subject.subjectName}
+                    </td>
+                    <td className="border border-gray-400 px-3 py-2 text-center text-gray-900">
+                      {subject.caScore ?? '—'}
+                    </td>
+                    <td className="border border-gray-400 px-3 py-2 text-center text-gray-900">
+                      {subject.testScore ?? '—'}
+                    </td>
+                    <td className="border border-gray-400 px-3 py-2 text-center text-gray-900">
+                      {subject.examScore ?? '—'}
                     </td>
                     <td className="border border-gray-400 px-3 py-2 text-center font-bold">
                       {subject.totalScore}

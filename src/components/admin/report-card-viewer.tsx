@@ -41,6 +41,7 @@ interface ReportCard {
   subjects: Array<{
     subjectName: string;
     caScore?: number | null;
+    testScore?: number | null;
     examScore?: number | null;
     totalScore: number;
     grade: string;
@@ -313,6 +314,7 @@ export function ReportCardViewer({
                       <tr className="bg-gray-800 text-white">
                         <th className="border border-gray-500 p-1 text-left font-bold">Subject</th>
                         <th className="border border-gray-500 p-1 text-center font-bold">CA</th>
+                        <th className="border border-gray-500 p-1 text-center font-bold">Test</th>
                         <th className="border border-gray-500 p-1 text-center font-bold">Exam</th>
                         <th className="border border-gray-500 p-1 text-center font-bold">Total</th>
                         <th className="border border-gray-500 p-1 text-center font-bold">Grade</th>
@@ -324,6 +326,9 @@ export function ReportCardViewer({
                           <td className="border border-gray-500 p-1 text-gray-900 font-medium">{subject.subjectName}</td>
                           <td className="border border-gray-500 p-1 text-center text-gray-900">
                             {subject.caScore ?? '—'}
+                          </td>
+                          <td className="border border-gray-500 p-1 text-center text-gray-900">
+                            {subject.testScore ?? '—'}
                           </td>
                           <td className="border border-gray-500 p-1 text-center text-gray-900">
                             {subject.examScore ?? '—'}

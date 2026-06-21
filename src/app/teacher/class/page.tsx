@@ -85,7 +85,15 @@ export default function ClassPage() {
         });
         if (!res.ok) throw new Error('Failed to load students');
         const data = await res.json();
-        setStudents(data.students || []);
+        setStudents(
+          (data.students || []).map((student: any) => ({
+            ...student,
+            name:
+              student.name ||
+              [student.firstName, student.lastName].filter(Boolean).join(' ') ||
+              'Unknown student',
+          })),
+        );
         setCurrentPage(1);
         setError(null);
       } catch (err: any) {

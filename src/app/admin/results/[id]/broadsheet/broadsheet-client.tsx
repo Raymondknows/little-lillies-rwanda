@@ -1,7 +1,6 @@
 'use client'
 
-import { useSearchParams, useRouter } from 'next/navigation'
-import { formatMoney } from '@/lib/format'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { useState } from 'react'
 
@@ -9,6 +8,7 @@ interface BroadsheetRow {
   pupilId: string
   name: string
   admissionNo: string | null
+  className?: string | null
   subjectScores: Array<{ subjectId: string; totalScore: number | null }>
   total: number | null
   average: number | null
@@ -59,6 +59,7 @@ export default function BroadsheetClient({
 }: BroadsheetClientProps) {
   const router = useRouter()
   const [isExporting, setIsExporting] = useState(false)
+  const showClassColumn = selectedClassId === 'all'
 
   const handleClassChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newClassId = e.target.value
@@ -68,9 +69,10 @@ export default function BroadsheetClient({
   const exportToCSV = () => {
     setIsExporting(true)
     try {
-      const headers = ['Name', 'Admission No', ...subjects.map((s) => s.name), 'Total', 'Average', 'Position', 'Grade']
+      const headers = ['Name', ...(showClassColumn ? ['Class'] : []), 'Admission No', ...subjects.map((s) => s.name), 'Total', 'Average', 'Position', 'Grade']
       const rows = broadsheetData.map((row) => [
         row.name,
+        ...(showClassColumn ? [row.className || '—'] : []),
         row.admissionNo,
         ...row.subjectScores.map((s) => (s.totalScore !== null ? Math.round(s.totalScore) : '—')),
         row.total !== null ? Math.round(row.total) : '—',
@@ -264,6 +266,7 @@ export default function BroadsheetClient({
               <tr>
                 <th className="px-4 py-3 sticky left-0 bg-slate-50 z-10 w-12">#</th>
                 <th className="px-4 py-3 sticky left-12 bg-slate-50 z-10 min-w-[150px]">Name</th>
+                {showClassColumn && <th className="px-4 py-3 min-w-[120px]">Class</th>}
                 <th className="px-4 py-3 min-w-[100px]">Adm. No</th>
                 {subjects.map((subject) => (
                   <th key={subject.id} className="px-4 py-3 text-center min-w-[80px]">
@@ -281,6 +284,7 @@ export default function BroadsheetClient({
                 <tr key={row.pupilId} className="hover:bg-slate-50">
                   <td className="px-4 py-3 sticky left-0 bg-white z-10 font-semibold text-foreground">{idx + 1}</td>
                   <td className="px-4 py-3 sticky left-12 bg-white z-10 font-medium text-foreground">{row.name}</td>
+                  {showClassColumn && <td className="px-4 py-3 text-muted">{row.className || '—'}</td>}
                   <td className="px-4 py-3 text-muted">{row.admissionNo}</td>
                   {row.subjectScores.map((score) => (
                     <td key={score.subjectId} className="px-4 py-3 text-center text-foreground">
@@ -326,6 +330,7 @@ export default function BroadsheetClient({
               <div className="flex items-start justify-between mb-3">
                 <div>
                   <div className="font-semibold text-foreground">#{idx + 1} {row.name}</div>
+                      {showClassColumn && <div className="text-xs text-muted mt-1">Class: {row.className || '—'}</div>}
                   <div className="text-xs text-muted mt-1">Adm: {row.admissionNo}</div>
                 </div>
                 <div className="text-right">

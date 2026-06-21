@@ -18,8 +18,12 @@ export async function GET(request: NextRequest) {
     });
 
     if (!response.ok) {
+      const backendText = await response.text().catch(() => '');
       return NextResponse.json(
-        { error: `Backend returned ${response.status}` },
+        {
+          error: `Backend ${backendUrl} returned ${response.status}`,
+          backendError: backendText || undefined,
+        },
         { status: response.status }
       );
     }
@@ -27,9 +31,13 @@ export async function GET(request: NextRequest) {
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error: any) {
-    console.error('Error fetching assessments:', error);
+    const backendUrl = getBackendUrl();
+    console.error(`Error fetching assessments from ${backendUrl}:`, error);
     return NextResponse.json(
-      { error: error.message || 'Failed to fetch assessments' },
+      {
+        error: error.message || 'Failed to fetch assessments',
+        backendUrl,
+      },
       { status: 500 }
     );
   }

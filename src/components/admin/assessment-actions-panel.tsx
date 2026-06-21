@@ -19,6 +19,7 @@ interface AssessmentActionsProps {
   assessmentId: string;
   status: string;
   schoolId: string;
+  isConfigured: boolean;
   onStatusChange?: (newStatus: string) => void;
 }
 
@@ -26,6 +27,7 @@ export function AssessmentActionsPanel({
   assessmentId,
   status,
   schoolId,
+  isConfigured,
   onStatusChange,
 }: AssessmentActionsProps) {
   const [loading, setLoading] = useState(false);
@@ -126,7 +128,7 @@ export function AssessmentActionsPanel({
       )}
 
       {/* Action Buttons - All managed by backend state machine */}
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+      <div className="flex flex-wrap gap-2">
         <Button
           onClick={() =>
             handleAction(
@@ -134,8 +136,9 @@ export function AssessmentActionsPanel({
               `/api/results/calculate-grades/${assessmentId}`
             )
           }
-          disabled={loading}
-          className="gap-2"
+            disabled={loading || !isConfigured}
+          className="h-10 whitespace-nowrap px-4"
+            title={!isConfigured ? 'Locked until assessment configuration is complete' : undefined}
         >
           <Calculator size={18} />
           Calculate Grades
@@ -148,8 +151,9 @@ export function AssessmentActionsPanel({
               `/api/results/calculate-positions/${assessmentId}`
             )
           }
-          disabled={loading}
-          className="gap-2"
+            disabled={loading || !isConfigured}
+          className="h-10 whitespace-nowrap px-4"
+            title={!isConfigured ? 'Locked until assessment configuration is complete' : undefined}
         >
           <RefreshCw size={18} />
           Calculate Positions
@@ -165,7 +169,6 @@ export function AssessmentActionsPanel({
               });
               const data = await response.json();
               setValidationResult(data);
-              setShowValidation(true);
             } catch (error) {
               setMessage({
                 type: 'error',
@@ -175,9 +178,10 @@ export function AssessmentActionsPanel({
               setLoading(false);
             }
           }}
-          disabled={loading}
+          disabled={loading || !isConfigured}
           variant="outline"
-          className="gap-2"
+          className="h-10 whitespace-nowrap px-4"
+          title={!isConfigured ? 'Locked until assessment configuration is complete' : undefined}
         >
           <AlertCircle size={18} />
           Validate
@@ -190,9 +194,10 @@ export function AssessmentActionsPanel({
               `/api/results/lock/${assessmentId}`
             )
           }
-          disabled={loading}
+            disabled={loading || !isConfigured}
           variant="outline"
-          className="gap-2"
+          className="h-10 whitespace-nowrap px-4"
+            title={!isConfigured ? 'Locked until assessment configuration is complete' : undefined}
         >
           <Lock size={18} />
           Lock Results
@@ -205,9 +210,10 @@ export function AssessmentActionsPanel({
               `/api/results/unlock/${assessmentId}`
             )
           }
-          disabled={loading}
+            disabled={loading || !isConfigured}
           variant="outline"
-          className="gap-2"
+          className="h-10 whitespace-nowrap px-4"
+            title={!isConfigured ? 'Locked until assessment configuration is complete' : undefined}
         >
           <Unlock size={18} />
           Unlock Results
@@ -220,8 +226,9 @@ export function AssessmentActionsPanel({
               `/api/results/publish/${assessmentId}`
             )
           }
-          disabled={loading}
-          className="gap-2 bg-green-600 hover:bg-green-700"
+            disabled={loading || !isConfigured}
+          className="h-10 whitespace-nowrap px-4 bg-green-600 hover:bg-green-700"
+            title={!isConfigured ? 'Locked until assessment configuration is complete' : undefined}
         >
           <Send size={18} />
           Publish Results
@@ -236,9 +243,10 @@ export function AssessmentActionsPanel({
                 `/api/results/unpublish/${assessmentId}`
               )
             }
-            disabled={loading}
+              disabled={loading || !isConfigured}
             variant="destructive"
-            className="gap-2"
+            className="h-10 whitespace-nowrap px-4"
+              title={!isConfigured ? 'Locked until assessment configuration is complete' : undefined}
           >
             <Unlock size={18} />
             Unpublish

@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useEffect, useState, use } from "react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, Save, AlertCircle, CheckCircle } from "lucide-react";
+import { getBackendUrl } from "@/lib/backend-url";
 
 interface ScoreEntry {
   pupilId: string;
@@ -22,13 +24,28 @@ interface AssessmentResult {
   totalScore: number | null;
 }
 
+interface AssessmentComponent {
+  id: string;
+  name: string;
+  maxScore: number;
+  weight: number;
+  sortOrder?: number;
+}
+
 interface Assessment {
   id: string;
   name: string;
   phase: string;
   status: string;
+  components?: AssessmentComponent[];
   results: AssessmentResult[];
 }
+
+const DEFAULT_COMPONENTS: AssessmentComponent[] = [
+  { id: "ca", name: "Continuous Assessment", maxScore: 20, weight: 20, sortOrder: 1 },
+  { id: "test", name: "Test", maxScore: 20, weight: 20, sortOrder: 2 },
+  { id: "exam", name: "Examination", maxScore: 60, weight: 60, sortOrder: 3 },
+];
 
 export default function TeacherSubjectScoresPage({
   params,
@@ -46,26 +63,42 @@ export default function TeacherSubjectScoresPage({
     type: "success" | "error";
     text: string;
   } | null>(null);
-  const [subjectName] = useState<string>(
+  const [subjectName, setSubjectName] = useState<string>(
     typeof subjectId === "string" ? decodeURIComponent(subjectId) : ""
   );
 
   useEffect(() => {
+    const fetchSubjectName = async () => {
+      try {
+        const response = await fetch("/api/teacher/subjects");
+        if (!response.ok) return;
+
+        const data = await response.json();
+        const matchedSubject = (data.subjects || []).find(
+          (subject: { id: string; name: string }) => subject.id === subjectId,
+        );
+
+        if (matchedSubject?.name) {
+          setSubjectName(matchedSubject.name);
+        }
+      } catch {
+        // Keep the fallback label based on the ID.
+      }
+    };
+
     const fetchAssessment = async () => {
       try {
         setLoading(true);
-        // Fetch assessment with subject filter (use subject name)
         const response = await fetch(
-          `/api/teacher/assessments/${id}?subject=${encodeURIComponent(subjectName)}`
+          `/api/teacher/assessments/${id}?subjectId=${encodeURIComponent(subjectId)}`
         );
         if (!response.ok) throw new Error("Failed to fetch assessment");
         const data = await response.json();
         setAssessment(data.assessment);
 
-        // Deduplicate results by pupilId (keep first occurrence)
         const seenPupils = new Set<string>();
         const uniqueResults: AssessmentResult[] = [];
-        
+
         data.assessment.results.forEach((result: AssessmentResult) => {
           if (!seenPupils.has(result.pupilId)) {
             seenPupils.add(result.pupilId);
@@ -73,7 +106,6 @@ export default function TeacherSubjectScoresPage({
           }
         });
 
-        // Extract results and initialize scores
         const initialScores: Record<string, ScoreEntry> = {};
         uniqueResults.forEach((result: AssessmentResult) => {
           initialScores[result.pupilId] = {
@@ -93,10 +125,11 @@ export default function TeacherSubjectScoresPage({
       }
     };
 
-    if (subjectName) {
+    if (subjectId) {
+      fetchSubjectName();
       fetchAssessment();
     }
-  }, [id, subjectName]);
+  }, [id, subjectId]);
 
   const handleScoreChange = (
     pupilId: string,
@@ -112,14 +145,25 @@ export default function TeacherSubjectScoresPage({
     }));
   };
 
+  const components = (assessment?.components && assessment.components.length > 0
+    ? [...assessment.components]
+    : DEFAULT_COMPONENTS
+  ).sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+
   const calculateTotal = (
     caScore: number | null,
     testScore: number | null,
     examScore: number | null
   ) => {
-    if (caScore === null || testScore === null || examScore === null)
-      return null;
-    return (caScore * 0.2 + testScore * 0.3 + examScore * 0.5).toFixed(1);
+    const values = [caScore, testScore, examScore];
+    if (values.some((score) => score === null)) return null;
+
+    return components
+      .reduce((total, component, index) => {
+        const score = values[index] ?? 0;
+        return total + (score / component.maxScore) * component.weight;
+      }, 0)
+      .toFixed(1);
   };
 
   const handleSave = async () => {
@@ -128,7 +172,6 @@ export default function TeacherSubjectScoresPage({
     setMessage(null);
 
     try {
-      // Prepare entries
       const entries = Object.entries(scores)
         .map(([pupilId, entry]) => ({
           pupilId,
@@ -137,8 +180,8 @@ export default function TeacherSubjectScoresPage({
           examScore: entry.examScore,
         }))
         .filter(
-          (e) =>
-            e.caScore !== null || e.testScore !== null || e.examScore !== null
+          (entry) =>
+            entry.caScore !== null || entry.testScore !== null || entry.examScore !== null
         );
 
       if (entries.length === 0) {
@@ -150,20 +193,26 @@ export default function TeacherSubjectScoresPage({
         return;
       }
 
-      // Save scores - use teacher results endpoint with subject support
-      const res = await fetch("/api/teacher/results", {
+      const backendUrl = getBackendUrl();
+      const res = await fetch(`${backendUrl}/api/teacher/results`, {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           assessmentId: id,
-          subject: subjectName,
+          subjectId,
           scores: entries,
         }),
       });
 
       if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || "Failed to save scores");
+        const errorText = await res.text();
+        try {
+          const error = JSON.parse(errorText);
+          throw new Error(error.error || "Failed to save scores");
+        } catch {
+          throw new Error(errorText || "Failed to save scores");
+        }
       }
 
       setMessage({ type: "success", text: "Scores saved successfully!" });
@@ -220,10 +269,26 @@ export default function TeacherSubjectScoresPage({
 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">
-            {assessment.name}
-          </h1>
+          <h1 className="text-2xl font-bold text-foreground">{assessment.name}</h1>
           <p className="text-sm text-muted mt-1">Subject: {subjectName}</p>
+        </div>
+        <Badge variant="secondary" className="bg-brand/10 text-brand border-brand/30">
+          West African Standard
+        </Badge>
+      </div>
+
+      <div className="mb-6 rounded-lg border border-border bg-surface p-4">
+        <h3 className="text-sm font-semibold text-foreground mb-3">Scoring Standard</h3>
+        <div className="flex flex-wrap gap-2">
+          {components.map((component) => (
+            <Badge
+              key={component.id}
+              variant="secondary"
+              className="bg-brand/10 text-brand border-brand/30"
+            >
+              {component.name} ({component.maxScore})
+            </Badge>
+          ))}
         </div>
       </div>
 
@@ -242,9 +307,7 @@ export default function TeacherSubjectScoresPage({
           )}
           <p
             className={`text-sm ${
-              message.type === "success"
-                ? "text-green-700"
-                : "text-red-700"
+              message.type === "success" ? "text-green-700" : "text-red-700"
             }`}
           >
             {message.text}
@@ -255,16 +318,14 @@ export default function TeacherSubjectScoresPage({
       {isPublished && (
         <div className="mb-4 p-4 rounded-lg border border-amber-200 bg-amber-50">
           <p className="text-sm text-amber-700">
-            ⚠️ This assessment is published and cannot be edited.
+            This assessment is published and cannot be edited.
           </p>
         </div>
       )}
 
       {results.length === 0 ? (
         <div className="py-12 text-center rounded-lg border border-border bg-surface">
-          <p className="text-muted">
-            No students found for this subject
-          </p>
+          <p className="text-muted">No students found for this subject</p>
         </div>
       ) : (
         <>
@@ -279,15 +340,14 @@ export default function TeacherSubjectScoresPage({
                     <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">
                       Admission No
                     </th>
-                    <th className="px-4 py-3 text-center text-sm font-semibold text-foreground">
-                      CA (20%)
-                    </th>
-                    <th className="px-4 py-3 text-center text-sm font-semibold text-foreground">
-                      Test (30%)
-                    </th>
-                    <th className="px-4 py-3 text-center text-sm font-semibold text-foreground">
-                      Exam (50%)
-                    </th>
+                    {components.map((component) => (
+                      <th
+                        key={component.id}
+                        className="px-4 py-3 text-center text-sm font-semibold text-foreground"
+                      >
+                        {component.name} ({component.maxScore})
+                      </th>
+                    ))}
                     <th className="px-4 py-3 text-center text-sm font-semibold text-foreground">
                       Total
                     </th>
@@ -313,60 +373,33 @@ export default function TeacherSubjectScoresPage({
                         <td className="px-4 py-3 text-sm text-muted">
                           {result.admissionNo}
                         </td>
-                        <td className="px-4 py-3 text-center">
-                          <input
-                            type="number"
-                            min="0"
-                            max="20"
-                            step="0.1"
-                            value={entry?.caScore ?? ""}
-                            onChange={(e) =>
-                              handleScoreChange(
-                                result.pupilId,
-                                "caScore",
-                                e.target.value
-                              )
-                            }
-                            disabled={isPublished}
-                            className="w-16 px-2 py-1 rounded border border-border text-center text-sm focus:outline-none focus:ring-2 focus:ring-brand"
-                          />
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <input
-                            type="number"
-                            min="0"
-                            max="30"
-                            step="0.1"
-                            value={entry?.testScore ?? ""}
-                            onChange={(e) =>
-                              handleScoreChange(
-                                result.pupilId,
-                                "testScore",
-                                e.target.value
-                              )
-                            }
-                            disabled={isPublished}
-                            className="w-16 px-2 py-1 rounded border border-border text-center text-sm focus:outline-none focus:ring-2 focus:ring-brand"
-                          />
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <input
-                            type="number"
-                            min="0"
-                            max="50"
-                            step="0.1"
-                            value={entry?.examScore ?? ""}
-                            onChange={(e) =>
-                              handleScoreChange(
-                                result.pupilId,
-                                "examScore",
-                                e.target.value
-                              )
-                            }
-                            disabled={isPublished}
-                            className="w-16 px-2 py-1 rounded border border-border text-center text-sm focus:outline-none focus:ring-2 focus:ring-brand"
-                          />
-                        </td>
+                        {components.map((component, index) => {
+                          const field = ["caScore", "testScore", "examScore"][index] as
+                            | "caScore"
+                            | "testScore"
+                            | "examScore";
+
+                          return (
+                            <td key={component.id} className="px-4 py-3 text-center">
+                              <input
+                                type="number"
+                                min="0"
+                                max={component.maxScore}
+                                step="0.1"
+                                value={entry?.[field] ?? ""}
+                                onChange={(e) =>
+                                  handleScoreChange(
+                                    result.pupilId,
+                                    field,
+                                    e.target.value
+                                  )
+                                }
+                                disabled={isPublished}
+                                className="w-16 px-2 py-1 rounded border border-border text-center text-sm focus:outline-none focus:ring-2 focus:ring-brand"
+                              />
+                            </td>
+                          );
+                        })}
                         <td className="px-4 py-3 text-center font-semibold text-foreground">
                           {total || "-"}
                         </td>

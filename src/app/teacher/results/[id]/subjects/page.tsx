@@ -107,7 +107,7 @@ export default function TeacherSubjectsPage({
         {subjects.map((subject) => (
           <Link
             key={subject.id}
-            href={`/teacher/results/${id}/subjects/${encodeURIComponent(subject.name)}`}
+            href={`/teacher/results/${id}/subjects/${encodeURIComponent(subject.id)}`}
           >
             <div className="h-full p-6 rounded-xl border border-border bg-surface hover:border-brand hover:bg-brand/5 transition-all cursor-pointer group">
               <div className="flex items-start justify-between mb-3">

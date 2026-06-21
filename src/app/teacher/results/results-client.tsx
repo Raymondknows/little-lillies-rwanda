@@ -41,6 +41,9 @@ interface Assessment {
   status: ResultStatus;
   term: { name: string };
   _count?: { results: number };
+  studentCount?: number;
+  entryCount?: number;
+  subjectCount?: number;
   results?: Array<{
     pupilId: string;
     totalScore: number | null;
@@ -80,9 +83,9 @@ export default function TeacherResultsEnhancedClient({
     const readyToPublish = assessments.filter((a) => a.status === "APPROVED").length;
     const published = assessments.filter((a) => a.status === "PUBLISHED").length;
     const incomplete = assessments.filter((a) => {
-      const entered = a.results?.length || 0;
-      const total = a._count?.results || 0;
-      return a.status !== "PUBLISHED" && entered < total;
+      const entered = a.entryCount ?? a._count?.results ?? 0;
+      const total = a.studentCount ?? 0;
+      return a.status !== "PUBLISHED" && total > 0 && entered < total;
     }).length;
 
     return { pending, readyToPublish, published, incomplete };
@@ -134,11 +137,12 @@ export default function TeacherResultsEnhancedClient({
 
   // Calculate assessment progress
   const calculateProgress = (assessment: Assessment) => {
-    if (!assessment.results) return 0;
-    if (assessment._count?.results === 0) return 100;
-    const percentage = Math.round(
-      (assessment.results.length / (assessment._count?.results || 1)) * 100
-    );
+    const totalStudents = assessment.studentCount ?? 0;
+    const entered = assessment.entryCount ?? assessment._count?.results ?? 0;
+
+    if (totalStudents === 0) return 0;
+
+    const percentage = Math.round((entered / totalStudents) * 100);
     return Math.min(100, percentage);
   };
 
@@ -362,19 +366,23 @@ export default function TeacherResultsEnhancedClient({
                     <div>
                       <p className="text-xs text-muted">Total Students</p>
                       <p className="text-lg font-bold text-foreground">
-                        {assessment._count?.results || 0}
+                              {assessment.studentCount ?? assessment._count?.results ?? 0}
                       </p>
                     </div>
                     <div>
                       <p className="text-xs text-muted">Entries</p>
                       <p className="text-lg font-bold text-foreground">
-                        {assessment.results?.length || 0}
+                              {assessment.entryCount ?? assessment._count?.results ?? 0}
                       </p>
                     </div>
                     <div>
                       <p className="text-xs text-muted">Remaining</p>
                       <p className="text-lg font-bold text-orange-600">
-                        {Math.max(0, (assessment._count?.results || 0) - (assessment.results?.length || 0))}
+                              {Math.max(
+                                0,
+                                (assessment.studentCount ?? assessment._count?.results ?? 0) -
+                                  (assessment.entryCount ?? assessment._count?.results ?? 0)
+                              )}
                       </p>
                     </div>
                   </div>

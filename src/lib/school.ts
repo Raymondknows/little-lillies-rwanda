@@ -1,25 +1,29 @@
 import { getStaffSession } from "@/lib/auth";
-import { cookies } from "next/headers";
-import { jwtVerify } from "jose";
+import { getBackendUrl } from "@/lib/backend-url";
 
 // Fetch school data from the backend API instead of direct database access
 async function fetchSchoolFromAPI(schoolId: string) {
-  const baseUrl = process.env.BACKEND_URL || "http://localhost:3006";
-  
+  const baseUrl = getBackendUrl();
+
   try {
-    const response = await fetch(`${baseUrl}/api/admin/school/${schoolId}`, {
+    const url = `${baseUrl.replace(/\/$/, "")}/api/admin/school/${schoolId}`;
+    const response = await fetch(url, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
     });
-    
+
     if (!response.ok) {
-      console.error(`Failed to fetch school: ${response.status}`);
+      const body = await response.text().catch(() => "");
+      console.error(
+        `Failed to fetch school ${schoolId} from ${url}: ${response.status}`,
+        body,
+      );
       return null;
     }
-    
+
     return await response.json();
   } catch (error) {
-    console.error("Error fetching school from API:", error);
+    console.error(`Error fetching school ${schoolId} from ${baseUrl}:`, error);
     return null;
   }
 }
@@ -27,21 +31,22 @@ async function fetchSchoolFromAPI(schoolId: string) {
 export async function getCurrentSchool() {
   const session = await getStaffSession();
 
-  // If a staff session exists, use its schoolId (staff are scoped to a school)
-  if (session) {
-    const school = await fetchSchoolFromAPI(session.schoolId as string);
-    if (!school) {
-      // School not found - this shouldn't happen in normal operation
-      // Return a fallback to prevent crashes
-      console.error(`School not found for staff session: ${session.schoolId}`);
-      throw new Error("Your school information could not be loaded. Please log in again.");
-    }
-    return school;
+  if (!session) {
+    throw new Error("No session found. Please log in.");
   }
 
-  // For non-authenticated users, we can't fetch school data without direct database access
-  // This function should only be called from authenticated contexts
-  throw new Error("No session found. Please log in.");
+  if (!session.schoolId) {
+    console.error("Staff session has no schoolId:", session);
+    throw new Error("Your session is invalid. Please log in again.");
+  }
+
+  const school = await fetchSchoolFromAPI(session.schoolId);
+  if (!school) {
+    console.error(`School not found or backend unavailable for staff session: ${session.schoolId}`);
+    throw new Error("Your school information could not be loaded. Please log in again.");
+  }
+
+  return school;
 }
 
 export async function getCurrentSchoolId() {

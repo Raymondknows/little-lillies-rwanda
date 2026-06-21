@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState, use } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, PenSquare, FileText } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, PenSquare, FileText } from "lucide-react";
 import { resultStatusLabel } from "@/lib/format";
 
 interface AssessmentResult {
@@ -17,6 +17,13 @@ interface AssessmentResult {
   totalScore: number | null;
   grade: string | null;
   subject?: string;
+}
+
+interface GroupedAssessmentResult {
+  pupilId: string;
+  pupilName: string;
+  admissionNo: string;
+  subjects: AssessmentResult[];
 }
 
 interface Assessment {
@@ -37,6 +44,7 @@ export default function TeacherAssessmentDetailPage({
   const [assessment, setAssessment] = useState<Assessment | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [collapsedPupils, setCollapsedPupils] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const fetchAssessment = async () => {
@@ -80,6 +88,72 @@ export default function TeacherAssessmentDetailPage({
 
   const isPublished = assessment.status === "PUBLISHED";
   const hasResults = assessment.results && assessment.results.length > 0;
+
+  const groupedResults: GroupedAssessmentResult[] = [];
+  const groupedMap = new Map<string, GroupedAssessmentResult>();
+
+  if (hasResults) {
+    for (const result of assessment.results) {
+      const pupilGroup = groupedMap.get(result.pupilId);
+      if (pupilGroup) {
+        pupilGroup.subjects.push(result);
+      } else {
+        groupedMap.set(result.pupilId, {
+          pupilId: result.pupilId,
+          pupilName: result.pupilName,
+          admissionNo: result.admissionNo,
+          subjects: [result],
+        });
+      }
+    }
+    groupedResults.push(...Array.from(groupedMap.values()).sort((a, b) => a.pupilName.localeCompare(b.pupilName)));
+    groupedResults.forEach((group) => {
+      group.subjects.sort((a, b) => (a.subject || "").localeCompare(b.subject || ""));
+    });
+  }
+
+  const toggleCollapse = (pupilId: string) => {
+    setCollapsedPupils((prev) => {
+      const next = new Set(prev);
+      if (next.has(pupilId)) {
+        next.delete(pupilId);
+      } else {
+        next.add(pupilId);
+      }
+      return next;
+    });
+  };
+
+  const getSubjectTotal = (result: AssessmentResult) => {
+    if (result.totalScore !== null) return result.totalScore;
+    if (result.caScore === null || result.testScore === null || result.examScore === null) {
+      return null;
+    }
+    return result.caScore + result.testScore + result.examScore;
+  };
+
+  const getSubjectGrade = (result: AssessmentResult) => {
+    if (result.grade) return result.grade;
+    const total = getSubjectTotal(result);
+    if (total === null) return null;
+    if (total >= 70) return "A";
+    if (total >= 60) return "B";
+    if (total >= 50) return "C";
+    if (total >= 45) return "D";
+    if (total >= 40) return "E";
+    return "F";
+  };
+
+  const subjectTotals = assessment.results
+    .map(getSubjectTotal)
+    .filter((value): value is number => value !== null);
+
+  const uniqueStudentCount = groupedResults.length;
+  const enteredCount = assessment.results.filter((result) => getSubjectTotal(result) !== null).length;
+  const averageScore = subjectTotals.length > 0
+    ? subjectTotals.reduce((sum, value) => sum + value, 0) / subjectTotals.length
+    : null;
+  const highScore = subjectTotals.length > 0 ? Math.max(...subjectTotals) : null;
 
   return (
     <div className="mx-auto max-w-6xl px-3 py-4">
@@ -172,41 +246,73 @@ export default function TeacherAssessmentDetailPage({
             <thead className="border-b border-border bg-background text-muted">
               <tr>
                 <th className="px-4 py-3 font-medium">Student</th>
-                <th className="px-4 py-3 font-medium text-center">CA</th>
-                <th className="px-4 py-3 font-medium text-center">Test</th>
-                <th className="px-4 py-3 font-medium text-center">Exam</th>
-                <th className="px-4 py-3 font-medium text-center">Total</th>
-                <th className="px-4 py-3 font-medium text-center">Grade</th>
+              <th className="px-4 py-3 font-medium">Subject</th>
+              <th className="px-4 py-3 font-medium text-center">CA</th>
+              <th className="px-4 py-3 font-medium text-center">Test</th>
+              <th className="px-4 py-3 font-medium text-center">Exam</th>
+              <th className="px-4 py-3 font-medium text-center">Total</th>
+              <th className="px-4 py-3 font-medium text-center">Grade</th>
               </tr>
             </thead>
             <tbody>
               {hasResults ? (
-                assessment.results.map((result, index) => (
-                  <tr key={`${result.pupilId}-${index}`} className="border-t border-border hover:bg-background/50 transition-colors">
-                    <td className="px-4 py-3">
-                      <p className="font-medium text-foreground">{result.pupilName}</p>
-                      <p className="text-xs text-muted">{result.admissionNo}</p>
-                    </td>
-                    <td className="px-4 py-3 text-center text-foreground">
-                      {result.caScore !== null ? result.caScore : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-center text-foreground">
-                      {result.testScore !== null ? result.testScore : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-center text-foreground">
-                      {result.examScore !== null ? result.examScore : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-center font-semibold text-foreground">
-                      {result.totalScore !== null ? result.totalScore : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-center text-foreground">
-                      {result.grade || "—"}
-                    </td>
-                  </tr>
-                ))
+                groupedResults.map((group) => {
+                  const collapsed = collapsedPupils.has(group.pupilId);
+
+                  return group.subjects.map((result, subjectIndex) => {
+                    const total = getSubjectTotal(result);
+                    const grade = getSubjectGrade(result);
+                    const showRow = !collapsed || subjectIndex === 0;
+                    if (!showRow) return null;
+
+                    return (
+                      <tr
+                        key={`${group.pupilId}-${result.subject}-${subjectIndex}`}
+                        className="border-t border-border hover:bg-background/50 transition-colors"
+                      >
+                        {subjectIndex === 0 ? (
+                          <td rowSpan={collapsed ? 1 : group.subjects.length} className="px-4 py-3 align-top">
+                            <button
+                              type="button"
+                              onClick={() => toggleCollapse(group.pupilId)}
+                              className="inline-flex items-center gap-2 rounded-md border border-border bg-surface px-3 py-2 text-left text-sm font-medium text-foreground transition hover:border-brand hover:bg-brand/5"
+                            >
+                              {collapsed ? (
+                                <ChevronRight className="h-4 w-4" />
+                              ) : (
+                                <ChevronDown className="h-4 w-4" />
+                              )}
+                              <span>{group.pupilName}</span>
+                            </button>
+                            <p className="mt-2 text-xs text-muted">{group.admissionNo}</p>
+                            {collapsed && group.subjects.length > 1 ? (
+                              <p className="mt-1 text-xs text-muted">
+                                {group.subjects.length} subjects, {group.subjects.length - 1} hidden
+                              </p>
+                            ) : null}
+                          </td>
+                        ) : null}
+                        <td className="px-4 py-3 text-foreground">{result.subject || "—"}</td>
+                        <td className="px-4 py-3 text-center text-foreground">
+                          {result.caScore !== null ? result.caScore : "—"}
+                        </td>
+                        <td className="px-4 py-3 text-center text-foreground">
+                          {result.testScore !== null ? result.testScore : "—"}
+                        </td>
+                        <td className="px-4 py-3 text-center text-foreground">
+                          {result.examScore !== null ? result.examScore : "—"}
+                        </td>
+                        <td className="px-4 py-3 text-center font-semibold text-foreground">
+                          {total !== null ? total : "—"}
+                        </td>
+                        <td className="px-4 py-3 text-center text-foreground">{grade || "—"}</td>
+                      </tr>
+                    );
+                  });
+                })
               ) : (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-muted">
+                  <td colSpan={7} className="px-4 py-8 text-center text-muted">
                     No results entered yet.
                   </td>
                 </tr>
@@ -221,31 +327,22 @@ export default function TeacherAssessmentDetailPage({
         <div className="mt-6 grid grid-cols-2 sm:grid-cols-5 gap-4">
           <div className="rounded-lg border border-border bg-surface p-4">
             <p className="text-xs text-muted font-medium">Total Students</p>
-            <p className="text-2xl font-bold text-foreground mt-1">{assessment.results.length}</p>
+            <p className="text-2xl font-bold text-foreground mt-1">{uniqueStudentCount}</p>
           </div>
           <div className="rounded-lg border border-border bg-surface p-4">
             <p className="text-xs text-muted font-medium">Results Entered</p>
-            <p className="text-2xl font-bold text-foreground mt-1">
-              {assessment.results.filter((r) => r.totalScore !== null).length}
-            </p>
+            <p className="text-2xl font-bold text-foreground mt-1">{enteredCount}</p>
           </div>
           <div className="rounded-lg border border-border bg-surface p-4">
             <p className="text-xs text-muted font-medium">Avg. Score</p>
             <p className="text-2xl font-bold text-foreground mt-1">
-              {assessment.results.length > 0
-                ? (
-                    assessment.results.reduce((sum, r) => sum + (r.totalScore || 0), 0) /
-                    assessment.results.length
-                  ).toFixed(1)
-                : "—"}
+              {averageScore !== null ? averageScore.toFixed(1) : "—"}
             </p>
           </div>
           <div className="rounded-lg border border-border bg-surface p-4">
             <p className="text-xs text-muted font-medium">High Score</p>
             <p className="text-2xl font-bold text-foreground mt-1">
-              {assessment.results.length > 0
-                ? Math.max(...assessment.results.map((r) => r.totalScore || 0))
-                : "—"}
+              {highScore !== null ? highScore : "—"}
             </p>
           </div>
           {assessment.subjects && assessment.subjects.length > 0 && (

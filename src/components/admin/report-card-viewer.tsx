@@ -316,7 +316,6 @@ export function ReportCardViewer({
                         <th className="border border-gray-500 p-1 text-center font-bold">Exam</th>
                         <th className="border border-gray-500 p-1 text-center font-bold">Total</th>
                         <th className="border border-gray-500 p-1 text-center font-bold">Grade</th>
-                        <th className="border border-gray-500 p-1 text-center font-bold">Position</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -336,9 +335,6 @@ export function ReportCardViewer({
                             <span className="inline-block bg-blue-100 px-2 py-0.5 rounded font-bold text-blue-900">
                               {subject.grade}
                             </span>
-                          </td>
-                          <td className="border border-gray-500 p-1 text-center text-gray-900 font-semibold">
-                            {subject.subjectPosition ? `${subject.subjectPosition}` : '—'}
                           </td>
                         </tr>
                       ))}

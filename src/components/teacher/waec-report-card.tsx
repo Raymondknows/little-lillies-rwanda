@@ -160,10 +160,6 @@ export function WaecReportCard({
 
   const getGradeColor = (grade: string) => GRADE_COLORS[grade] || { bg: "bg-gray-100", text: "text-gray-900" };
 
-  const hasOptionalScores = data.subjects.some(
-    (s) => s.caScore !== undefined || s.testScore !== undefined || s.examScore !== undefined || s.projectScore !== undefined
-  );
-
   const averageScore = data.summary?.averageScore ?? data.averageScore ?? 0;
   const totalScore = data.summary?.totalScore ?? data.subjects.reduce((sum, subject) => sum + subject.totalScore, 0);
   const classPosition = data.summary?.classPosition ?? data.classPosition;
@@ -174,8 +170,8 @@ export function WaecReportCard({
   const attendance = data.summary?.attendance ?? data.statistics?.attendance;
   const maxAttendance = data.summary?.maxAttendance ?? data.statistics?.maxAttendance;
   const subjectColumns = {
-    hasCa: hasOptionalScores && data.subjects.some((subject) => subject.caScore !== undefined),
-    hasExam: hasOptionalScores && data.subjects.some((subject) => subject.examScore !== undefined),
+    hasCa: true,
+    hasExam: true,
     hasPosition: data.subjects.some((subject) => subject.subjectPosition),
   };
 
@@ -312,12 +308,8 @@ export function WaecReportCard({
                   {data.subjects.map((subject, idx) => (
                     <tr key={idx} className={idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
                       <td className="border border-gray-500 p-1 text-gray-900 font-medium">{subject.subjectName}</td>
-                      {subjectColumns.hasCa && (
-                        <td className="border border-gray-500 p-1 text-center text-gray-900">{subject.caScore ?? '—'}</td>
-                      )}
-                      {subjectColumns.hasExam && (
-                        <td className="border border-gray-500 p-1 text-center text-gray-900">{subject.examScore ?? '—'}</td>
-                      )}
+                      <td className="border border-gray-500 p-1 text-center text-gray-900">{subject.caScore ?? '—'}</td>
+                      <td className="border border-gray-500 p-1 text-center text-gray-900">{subject.examScore ?? '—'}</td>
                       <td className="border border-gray-500 p-1 text-center text-gray-900 font-semibold">{subject.totalScore.toFixed(1)}</td>
                       <td className="border border-gray-500 p-1 text-center">
                         <span className="inline-block bg-blue-100 px-2 py-0.5 rounded font-bold text-blue-900">

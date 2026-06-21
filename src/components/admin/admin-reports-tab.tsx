@@ -135,7 +135,7 @@ export function AdminReportsTab({ assessmentId, pupils, status }: ReportsTabProp
   return (
     <div className="space-y-6">
       {/* Student Selector and Details - Side by Side */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 print:hidden">
         {/* Left: Student Selector Dropdown */}
         <div className="rounded-lg border border-border bg-surface p-4">
           <label className="block text-sm font-semibold mb-4 text-foreground">Select Student:</label>
@@ -223,7 +223,7 @@ export function AdminReportsTab({ assessmentId, pupils, status }: ReportsTabProp
       {/* Report Card Display */}
       {selectedPupilId && !loadingPupilDetails && (
         <div className="rounded-lg border border-border bg-surface p-6">
-          <div className="mb-6">
+          <div className="mb-6 print:hidden">
             <h4 className="text-md font-semibold text-foreground">Report Card Preview</h4>
             <p className="text-sm text-muted mt-1">Full assessment details for {selectedPupilDetails?.name}</p>
           </div>
@@ -239,7 +239,7 @@ export function AdminReportsTab({ assessmentId, pupils, status }: ReportsTabProp
       )}
 
       {/* Bulk Actions */}
-      <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+      <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 print:hidden">
         <p className="text-sm text-amber-900">
           💡 <strong>Bulk Export:</strong> Use the download button above to export individual report cards, or access the API directly for bulk operations.
         </p>

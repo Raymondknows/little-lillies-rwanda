@@ -52,3 +52,22 @@ html.dark {
   --surface: #0f172a;
   --background: #020617;
 }
+
+/* Print Styles */
+@media print {
+  body {
+    background: white;
+    margin: 0;
+    padding: 0;
+  }
+
+  [class*="print:hidden"] {
+    display: none !important;
+  }
+
+  main {
+    background: white;
+    margin: 0;
+    padding: 0;
+  }
+}

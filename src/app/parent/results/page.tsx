@@ -202,12 +202,12 @@ export default function ParentResultsPage() {
 
   return (
     <div className="space-y-6 pb-8">
-      <div className="border-b border-slate-200 pb-6">
+      <div className="border-b border-slate-200 pb-6 print:hidden">
         <h1 className="text-4xl font-bold text-slate-900">Academic Results</h1>
         <p className="mt-1 text-sm text-slate-600">View your child's grades and assessment performance</p>
       </div>
 
-      <div className="rounded-lg border border-slate-200 bg-white p-6 hover:shadow-sm transition-shadow">
+      <div className="rounded-lg border border-slate-200 bg-white p-6 hover:shadow-sm transition-shadow print:hidden">
         <div className="flex items-center gap-3 mb-4">
           <Filter className="h-5 w-5 text-slate-600" />
           <h2 className="font-semibold text-slate-900">Filter Results</h2>
@@ -269,8 +269,8 @@ export default function ParentResultsPage() {
       </div>
 
       {selectedChild && (
-        <div className="space-y-6 rounded-lg border border-slate-200 bg-white p-6 hover:shadow-sm transition-shadow">
-          <div className="flex items-center gap-3 border-b border-slate-200 pb-4">
+        <div className="space-y-6 rounded-lg border border-slate-200 bg-white p-6 hover:shadow-sm transition-shadow print:border-0 print:bg-transparent print:p-0 print:rounded-none print:shadow-none">
+          <div className="flex items-center gap-3 border-b border-slate-200 pb-4 print:hidden">
             <GraduationCap className="h-5 w-5 text-slate-600" />
             <div>
               <h2 className="font-semibold text-slate-900">
@@ -281,7 +281,7 @@ export default function ParentResultsPage() {
           </div>
 
           {results.length === 0 ? (
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-12 text-center">
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-12 text-center print:hidden">
               <GraduationCap className="h-12 w-12 text-slate-400 mx-auto mb-3" />
               <p className="text-slate-600">
                 {selectedTerm ? `No results available for ${selectedTerm.name}` : "No results available yet"}
@@ -289,7 +289,7 @@ export default function ParentResultsPage() {
             </div>
           ) : (
             <>
-              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 print:hidden">
                 {results.map((result) => (
                   <button
                     key={result.assessmentId}
@@ -312,7 +312,7 @@ export default function ParentResultsPage() {
                 ))}
               </div>
 
-              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700 print:hidden">
                 <p className="font-semibold text-slate-900">Selected report card</p>
                 <p className="mt-1">
                   {selectedAssessment
@@ -351,7 +351,7 @@ export default function ParentResultsPage() {
                 </div>
               )}
 
-              <div className="flex justify-end">
+              <div className="flex justify-end print:hidden">
                 <Link
                   href={selectedAssessmentId ? `/parent/results/${selectedAssessmentId}/${selectedChild.id}` : "/parent/results"}
                   className="inline-flex items-center gap-2 text-sm font-semibold text-brand hover:text-brand/80"

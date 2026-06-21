@@ -162,11 +162,11 @@ export default function AssessmentDetailPage({
 
   return (
     <div className="mx-auto max-w-7xl px-3 py-4">
-      <Link href="/admin/results" className="text-sm font-medium text-brand hover:underline">
+      <Link href="/admin/results" className="text-sm font-medium text-brand hover:underline print:hidden">
         ← Results
       </Link>
 
-      <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
+      <div className="mt-4 flex flex-wrap items-start justify-between gap-4 print:hidden">
         <div>
           <h1 className="text-2xl font-bold">{assessment.name}</h1>
           <p className="text-muted">{assessment.term.name}</p>
@@ -188,7 +188,7 @@ export default function AssessmentDetailPage({
 
       {/* Setup Wizard Modal */}
       {showSetupWizard && (
-        <div className="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
+        <div className="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-4 print:hidden">
           <AssessmentSetupWizard
             assessmentId={id}
             onSetupComplete={() => {
@@ -201,7 +201,7 @@ export default function AssessmentDetailPage({
       )}
 
       {/* Tab Navigation */}
-      <div className="mt-6 border-b border-gray-200">
+      <div className="mt-6 border-b border-gray-200 print:hidden">
         <div className="flex gap-4 overflow-x-auto">
           <button
             onClick={() => setActiveTab("overview")}
@@ -409,7 +409,6 @@ export default function AssessmentDetailPage({
       {/* Reports Tab */}
       {activeTab === "reports" && (
         <div className="mt-6">
-          <h2 className="text-lg font-semibold mb-4">Student Report Cards</h2>
           <AdminReportsTab 
             assessmentId={id} 
             pupils={pupils} 

@@ -433,7 +433,7 @@ export function ReportCardViewer({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-2 pt-4">
+          <div className="flex gap-2 pt-4 print:hidden">
             <Button
               onClick={() => window.print()}
               className="gap-2 text-sm"

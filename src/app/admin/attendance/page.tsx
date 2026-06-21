@@ -2,7 +2,8 @@
 
 import { getBackendUrl } from "@/lib/backend-url";
 import { useEffect, useState, useMemo } from "react";
-import { Calendar, Users, CheckCircle, AlertCircle, Clock, Send, TrendingUp, ArrowUpRight } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Calendar, Users, CheckCircle, AlertCircle, Clock, Send, TrendingUp, ArrowUpRight, Download, BarChart2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -31,6 +32,31 @@ interface AttendanceData {
   lateCount: number;
 }
 
+interface AttendanceSummaryRecord {
+  id: string;
+  date: string;
+  status: "PRESENT" | "ABSENT" | "LATE";
+  pupil: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  };
+  class: {
+    id: string;
+    name: string;
+  };
+}
+
+interface AttendanceSummaryData {
+  summary: {
+    totalRecords: number;
+    presentCount: number;
+    absentCount: number;
+    lateCount: number;
+  };
+  records: AttendanceSummaryRecord[];
+}
+
 const PHASE_ORDER = ["EARLY_YEARS", "PRIMARY", "SECONDARY"];
 const PHASE_LABELS: { [key: string]: string } = {
   EARLY_YEARS: "Early Years",
@@ -39,11 +65,13 @@ const PHASE_LABELS: { [key: string]: string } = {
 };
 
 export default function AttendancePage() {
+  const router = useRouter();
   const [allClasses, setAllClasses] = useState<ClassData[]>([]);
   const [selectedPhase, setSelectedPhase] = useState<string>("ALL");
-  const [selectedClass, setSelectedClass] = useState<string>("");
+  const [selectedClass, setSelectedClass] = useState<string>("ALL");
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split("T")[0]);
   const [attendanceData, setAttendanceData] = useState<AttendanceData | null>(null);
+  const [summaryData, setSummaryData] = useState<AttendanceSummaryData | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [notifying, setNotifying] = useState(false);
@@ -69,9 +97,8 @@ export default function AttendancePage() {
             return a.name.localeCompare(b.name);
           });
           setAllClasses(sorted);
-          if (sorted.length > 0) {
-            setSelectedClass(sorted[0].id);
-            setSelectedPhase(sorted[0].phase);
+          if (sorted.length > 0 && selectedClass === "ALL") {
+            setSelectedPhase("ALL");
           }
         } else {
           setError("Failed to load classes");
@@ -92,6 +119,16 @@ export default function AttendancePage() {
     return allClasses.filter((cls) => cls.phase === selectedPhase);
   }, [allClasses, selectedPhase]);
 
+  useEffect(() => {
+    if (selectedClass === "ALL") return;
+    if (!filteredClasses.some((cls) => cls.id === selectedClass)) {
+      const fallbackClass = filteredClasses[0] || allClasses[0];
+      if (fallbackClass) {
+        setSelectedClass(fallbackClass.id);
+      }
+    }
+  }, [allClasses, filteredClasses, selectedClass]);
+
   // Fetch attendance data when class or date changes
   useEffect(() => {
     if (!selectedClass) return;
@@ -101,16 +138,32 @@ export default function AttendancePage() {
       setError(null);
       try {
         const backendUrl = getBackendUrl();
-        const response = await fetch(
-          `${backendUrl}/api/admin/attendance/data?classId=${selectedClass}&date=${selectedDate}`,
-          { credentials: "include" }
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setAttendanceData(data);
-          setModifications({});
+        if (selectedClass === "ALL") {
+          const response = await fetch(
+            `${backendUrl}/api/admin/attendance/summary?fromDate=${selectedDate}&toDate=${selectedDate}`,
+            { credentials: "include" }
+          );
+          if (response.ok) {
+            const data = await response.json();
+            setSummaryData(data);
+            setAttendanceData(null);
+            setModifications({});
+          } else {
+            throw new Error("Failed to load attendance summary");
+          }
         } else {
-          throw new Error("Failed to load attendance");
+          const response = await fetch(
+            `${backendUrl}/api/admin/attendance/data?classId=${selectedClass}&date=${selectedDate}`,
+            { credentials: "include" }
+          );
+          if (response.ok) {
+            const data = await response.json();
+            setAttendanceData(data);
+            setSummaryData(null);
+            setModifications({});
+          } else {
+            throw new Error("Failed to load attendance");
+          }
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load attendance");
@@ -131,7 +184,7 @@ export default function AttendancePage() {
   };
 
   const handleSaveAttendance = async () => {
-    if (!attendanceData) return;
+    if (!attendanceData || selectedClass === "ALL") return;
 
     setSaving(true);
     setError(null);
@@ -179,7 +232,7 @@ export default function AttendancePage() {
   };
 
   const handleSendNotifications = async () => {
-    if (!attendanceData) return;
+    if (!attendanceData || selectedClass === "ALL") return;
 
     setNotifying(true);
     setError(null);
@@ -211,6 +264,14 @@ export default function AttendancePage() {
   };
 
   const stats = useMemo(() => {
+    if (selectedClass === "ALL") {
+      return {
+        present: summaryData?.summary.presentCount || 0,
+        absent: summaryData?.summary.absentCount || 0,
+        late: summaryData?.summary.lateCount || 0,
+        total: summaryData?.summary.totalRecords || 0,
+      };
+    }
     if (!attendanceData) return { present: 0, absent: 0, late: 0, total: 0 };
     return {
       present: attendanceData.presentCount,
@@ -218,9 +279,57 @@ export default function AttendancePage() {
       late: attendanceData.lateCount,
       total: attendanceData.totalPupils,
     };
-  }, [attendanceData]);
+  }, [attendanceData, summaryData, selectedClass]);
 
   const hasModifications = Object.keys(modifications).length > 0;
+
+  const exportCSV = () => {
+    const escapeCell = (value: string | number | null | undefined) =>
+      `"${String(value ?? "").replace(/"/g, '""')}"`;
+
+    let rows: string[][] = [];
+
+    if (selectedClass === "ALL" && summaryData) {
+      rows = [
+        ["Date", "Class", "Student", "Status"],
+        ...summaryData.records.map((record) => [
+          record.date,
+          record.class.name,
+          `${record.pupil.firstName} ${record.pupil.lastName}`,
+          record.status,
+        ]),
+        ["", "", "", ""],
+        ["Summary", "Count", "", ""],
+        ["Present", String(summaryData.summary.presentCount), "", ""],
+        ["Absent", String(summaryData.summary.absentCount), "", ""],
+        ["Late", String(summaryData.summary.lateCount), "", ""],
+        ["Total Records", String(summaryData.summary.totalRecords), "", ""],
+      ];
+    } else if (attendanceData) {
+      rows = [
+        ["Student", "Status"],
+        ...attendanceData.pupils.map((pupil) => [pupil.name, pupil.status]),
+        ["", "", ""],
+        ["Present", String(attendanceData.presentCount), ""],
+        ["Absent", String(attendanceData.absentCount), ""],
+        ["Late", String(attendanceData.lateCount), ""],
+        ["Total", String(attendanceData.totalPupils), ""],
+      ];
+    }
+
+    if (rows.length === 0) return;
+
+    const csv = rows.map((row) => row.map(escapeCell).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.href = url;
+    link.download = selectedClass === "ALL" ? `attendance-summary-${selectedDate}.csv` : `attendance-${selectedClass}-${selectedDate}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="space-y-6 p-6">
@@ -231,6 +340,17 @@ export default function AttendancePage() {
           Attendance Management
         </h1>
         <p className="mt-1 text-muted">Track and manage student attendance by class and date</p>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <Button onClick={() => router.push("/admin/attendance/summary")} variant="secondary" className="gap-2">
+          <BarChart2 className="h-4 w-4" />
+          View Summary
+        </Button>
+        <Button onClick={exportCSV} variant="secondary" className="gap-2">
+          <Download className="h-4 w-4" />
+          Export CSV
+        </Button>
       </div>
 
       {/* Error/Success Messages */}
@@ -262,7 +382,13 @@ export default function AttendancePage() {
           {PHASE_ORDER.map((phase) => (
             <button
               key={phase}
-              onClick={() => setSelectedPhase(phase)}
+              onClick={() => {
+                setSelectedPhase(phase);
+                const nextClass = allClasses.find((cls) => cls.phase === phase);
+                if (nextClass) {
+                  setSelectedClass(nextClass.id);
+                }
+              }}
               className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
                 selectedPhase === phase
                   ? "bg-brand text-white"
@@ -291,10 +417,11 @@ export default function AttendancePage() {
                   setSelectedClass(e.target.value);
                   const selected = allClasses.find((c) => c.id === e.target.value);
                   if (selected) setSelectedPhase(selected.phase);
+                  if (e.target.value === "ALL") setSelectedPhase("ALL");
                 }}
                 className="w-full rounded-lg border border-border bg-surface px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-brand"
               >
-                <option value="">Select a class</option>
+                <option value="ALL">All Classes</option>
                 {filteredClasses.map((cls) => (
                   <option key={cls.id} value={cls.id}>
                     {cls.name} {cls.arm || ""}
@@ -321,7 +448,49 @@ export default function AttendancePage() {
           </div>
 
           {/* Summary Cards */}
-          {attendanceData && (
+          {selectedClass === "ALL" && summaryData && (
+            <div className="rounded-lg border border-border overflow-hidden">
+              <div className="border-b border-border bg-background px-6 py-4">
+                <h2 className="text-lg font-semibold text-foreground">School Attendance Summary</h2>
+                <p className="text-sm text-muted">Attendance records for {new Date(selectedDate).toLocaleDateString()}</p>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-border bg-background">
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Class</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Student</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {summaryData.records.map((record) => {
+                      const statusColor =
+                        record.status === "PRESENT"
+                          ? "bg-green-100 text-green-800"
+                          : record.status === "ABSENT"
+                          ? "bg-red-100 text-red-800"
+                          : "bg-orange-100 text-orange-800";
+
+                      return (
+                        <tr key={record.id} className="hover:bg-surface/50 transition-colors">
+                          <td className="px-6 py-4 text-sm text-foreground">{record.class.name}</td>
+                          <td className="px-6 py-4 text-sm font-medium text-foreground">{record.pupil.firstName} {record.pupil.lastName}</td>
+                          <td className="px-6 py-4 text-sm">
+                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColor}`}>
+                              {record.status}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {selectedClass !== "ALL" && attendanceData && (
             <div className="hidden sm:grid grid-cols-4 gap-3">
               <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50 flex flex-col">
                 <div className="flex items-start gap-3">
@@ -382,7 +551,7 @@ export default function AttendancePage() {
           )}
 
           {/* Mobile Stats */}
-          {attendanceData && (
+          {selectedClass !== "ALL" && attendanceData && (
             <div className="sm:hidden space-y-3">
               <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50">
                 <div className="flex items-start gap-3">
@@ -423,7 +592,7 @@ export default function AttendancePage() {
           {/* Attendance Grid */}
           {loading ? (
             <div className="text-center py-12 text-muted">Loading attendance...</div>
-          ) : attendanceData?.pupils && attendanceData.pupils.length > 0 ? (
+          ) : selectedClass !== "ALL" && attendanceData?.pupils && attendanceData.pupils.length > 0 ? (
             <>
               <div className="rounded-lg border border-border overflow-hidden">
                 <div className="overflow-x-auto">
@@ -471,7 +640,7 @@ export default function AttendancePage() {
               <div className="flex gap-3 flex-col sm:flex-row">
                 <Button
                   onClick={handleSaveAttendance}
-                  disabled={!hasModifications || saving}
+                  disabled={selectedClass === "ALL" || !hasModifications || saving}
                   className="flex-1"
                 >
                   {saving ? "Saving..." : "Save Attendance"}
@@ -488,7 +657,7 @@ export default function AttendancePage() {
                   </select>
                   <Button
                     onClick={handleSendNotifications}
-                    disabled={notifying}
+                    disabled={selectedClass === "ALL" || notifying}
                     variant="secondary"
                     className="flex items-center gap-2"
                   >
@@ -498,7 +667,7 @@ export default function AttendancePage() {
                 </div>
               </div>
             </>
-          ) : !loading && attendanceData ? (
+          ) : !loading && selectedClass !== "ALL" && attendanceData ? (
             <div className="rounded-lg border border-border bg-surface p-8 text-center">
               <p className="text-muted">No pupils in this class</p>
             </div>

@@ -1,7 +1,8 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { CreditCard, AlertCircle, Download, Eye, ChevronDown, Filter } from "lucide-react";
+import { CreditCard, AlertCircle, Eye, Filter } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 import { getBackendUrl } from "@/lib/backend-url";
 
@@ -16,6 +17,7 @@ interface Invoice {
 }
 
 export default function InvoicesPage() {
+  const router = useRouter();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [filter, setFilter] = useState<"all" | "outstanding" | "paid">("all");
   const [loading, setLoading] = useState(true);
@@ -276,9 +278,12 @@ export default function InvoicesPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-center">
-                        <button className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-brand border border-brand rounded-lg hover:bg-brand/5 transition-colors">
+                        <button
+                          onClick={() => router.push(`/parent/invoices/${invoice.id}`)}
+                          className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-brand border border-brand rounded-lg hover:bg-brand/5 transition-colors"
+                        >
                           <Eye className="h-3.5 w-3.5" />
-                          View
+                          Open
                         </button>
                       </td>
                     </tr>

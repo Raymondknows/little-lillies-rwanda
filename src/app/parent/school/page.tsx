@@ -18,10 +18,17 @@ interface SchoolInfo {
     end: string;
   };
   country?: string;
+  logoUrl?: string;
+  city?: string;
+  currency?: string;
+  initials?: string;
+  termCount?: number;
+  principalComment?: string;
 }
 
 export default function SchoolPage() {
   const [school, setSchool] = useState<SchoolInfo | null>(null);
+  const [schoolLogoUrl, setSchoolLogoUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [calling, setCalling] = useState(false);
@@ -42,6 +49,23 @@ export default function SchoolPage() {
 
         const data = await res.json();
         setSchool(data);
+
+        try {
+          const logoRes = await fetch("/api/admin/school-logo", {
+            credentials: "include",
+          });
+
+          if (logoRes.ok) {
+            const blob = await logoRes.blob();
+            setSchoolLogoUrl(URL.createObjectURL(blob));
+          } else {
+            setSchoolLogoUrl(null);
+          }
+        } catch (logoErr) {
+          console.error("Error loading school logo:", logoErr);
+          setSchoolLogoUrl(null);
+        }
+
         setLoading(false);
       } catch (err) {
         console.error("Error loading school:", err);
@@ -52,6 +76,14 @@ export default function SchoolPage() {
 
     loadData();
   }, []);
+
+  useEffect(() => {
+    return () => {
+      if (schoolLogoUrl) {
+        URL.revokeObjectURL(schoolLogoUrl);
+      }
+    };
+  }, [schoolLogoUrl]);
 
   const handleCallSchool = async () => {
     if (!school?.phone) {
@@ -106,98 +138,124 @@ export default function SchoolPage() {
 
   return (
     <div className="space-y-6 pb-8">
-      {/* Header */}
-      <div className="border-b border-slate-200 pb-6">
-        <h1 className="text-3xl font-bold text-slate-900">{school.name}</h1>
-        {school.motto && (
-          <p className="mt-2 text-sm text-slate-600 italic">"{school.motto}"</p>
-        )}
+      <div className="rounded-3xl border border-border bg-surface p-6 shadow-sm md:p-8">
+        <div className="flex flex-col gap-3 border-l-4 border-brand pl-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted">School information</p>
+          <h1 className="text-3xl font-bold text-foreground md:text-4xl">{school.name}</h1>
+          {school.motto && <p className="max-w-3xl text-sm italic text-muted">{school.motto}</p>}
+        </div>
       </div>
 
-      <div className="mx-auto max-w-4xl space-y-6">
-        {/* School Info Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Left: Logo & Status */}
-          <div className="md:col-span-1">
-            <div className="space-y-4">
-              {school.logo ? (
-                <img 
-                  src={school.logo} 
-                  alt="School Logo" 
-                  className="w-full rounded-lg border border-slate-200 object-contain p-4 bg-white aspect-square"
-                />
-              ) : (
-                <div className="flex w-full items-center justify-center rounded-lg border border-slate-200 bg-slate-100 aspect-square">
-                  <span className="text-6xl">🏫</span>
-                </div>
-              )}
-              {school.principal && (
-                <div className="rounded-lg bg-slate-50 border border-slate-200 p-3">
-                  <p className="text-xs font-semibold uppercase text-slate-500 mb-1">Principal</p>
-                  <p className="text-sm font-medium text-slate-900">{school.principal}</p>
-                </div>
-              )}
-            </div>
+      <div className="mx-auto max-w-5xl space-y-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-[240px_minmax(0,1fr)]">
+          <div className="space-y-4">
+            {schoolLogoUrl ? (
+              <img
+                src={schoolLogoUrl}
+                alt="School Logo"
+                className="mx-auto h-28 w-28 rounded-2xl border border-border object-contain bg-background p-3 shadow-sm md:h-32 md:w-32"
+              />
+            ) : (
+              <div className="mx-auto flex h-28 w-28 items-center justify-center rounded-2xl border border-border bg-background shadow-sm md:h-32 md:w-32">
+                <span className="text-4xl">🏫</span>
+              </div>
+            )}
+
+            {school.principal && (
+              <div className="rounded-2xl border border-border bg-surface p-4 shadow-sm">
+                <p className="mb-1 text-xs font-semibold uppercase text-muted">Principal</p>
+                <p className="text-sm font-medium text-foreground">{school.principal}</p>
+              </div>
+            )}
           </div>
 
-          {/* Right: Main Info */}
-          <div className="md:col-span-2 space-y-6">
-            {/* Key Details Grid */}
-            <div className="grid grid-cols-2 gap-4">
-              {school.address && (
-                <div>
-                  <p className="text-xs font-semibold uppercase text-slate-500">Address</p>
-                  <p className="mt-1 text-sm font-medium text-slate-900">{school.address}</p>
-                </div>
-              )}
-              {school.country && (
-                <div>
-                  <p className="text-xs font-semibold uppercase text-slate-500">Country</p>
-                  <p className="mt-1 text-sm font-medium text-slate-900">{school.country}</p>
-                </div>
-              )}
-              {school.schoolHours && (
-                <div>
-                  <p className="text-xs font-semibold uppercase text-slate-500">School Hours</p>
-                  <p className="mt-1 text-sm font-medium text-slate-900">
-                    {school.schoolHours.start} - {school.schoolHours.end}
-                  </p>
-                </div>
-              )}
+          <div className="rounded-3xl border border-border bg-surface p-6 shadow-sm md:p-8">
+            <div className="border-l-4 border-brand pl-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted">About the school</p>
+              <p className="mt-2 text-sm leading-6 text-foreground/80">
+                {school.principalComment || school.motto || `Keep up the good work and continue to thrive in excellence.`}
+              </p>
             </div>
 
-            {/* Contact Information */}
-            <div className="border-t border-slate-200 pt-4 space-y-3">
+            <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <p className="text-xs font-semibold uppercase text-muted">Address</p>
+                <p className="mt-1 text-sm font-medium text-foreground">{school.address}</p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase text-muted">City</p>
+                <p className="mt-1 text-sm font-medium text-foreground">{school.city || "-"}</p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase text-muted">Country</p>
+                <p className="mt-1 text-sm font-medium text-foreground">{school.country || "-"}</p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase text-muted">Currency</p>
+                <p className="mt-1 text-sm font-medium text-foreground">{school.currency || "-"}</p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase text-muted">Terms Per Session</p>
+                <p className="mt-1 text-sm font-medium text-foreground">{typeof school.termCount === "number" ? school.termCount : "-"}</p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase text-muted">Contact information</p>
+                <p className="mt-1 text-sm font-medium text-foreground">Available below</p>
+              </div>
+            </div>
+
+            <div className="mt-6 space-y-3 rounded-2xl border border-border bg-background p-5">
+              <p className="text-xs font-semibold uppercase text-muted">Contact information</p>
               {school.phone && (
                 <div className="flex items-center gap-3">
-                  <Phone className="h-4 w-4 text-slate-400 flex-shrink-0" />
+                  <Phone className="h-4 w-4 flex-shrink-0 text-muted" />
                   <div className="min-w-0">
-                    <p className="text-xs text-slate-500">Phone</p>
-                    <p className="text-sm text-slate-900">{school.phone}</p>
+                    <p className="text-xs text-muted">Phone</p>
+                    <p className="text-sm text-foreground">{school.phone}</p>
                   </div>
                 </div>
               )}
               {school.email && (
                 <div className="flex items-center gap-3">
-                  <Mail className="h-4 w-4 text-slate-400 flex-shrink-0" />
+                  <Mail className="h-4 w-4 flex-shrink-0 text-muted" />
                   <div className="min-w-0">
-                    <p className="text-xs text-slate-500">Email</p>
-                    <a href={`mailto:${school.email}`} className="text-sm text-blue-600 hover:text-blue-700 truncate">
+                    <p className="text-xs text-muted">Email</p>
+                    <a href={`mailto:${school.email}`} className="text-sm text-brand hover:opacity-80 truncate">
                       {school.email}
                     </a>
                   </div>
                 </div>
               )}
             </div>
+
+            <div className="mt-6 flex flex-wrap gap-3">
+              <button
+                onClick={handleCallSchool}
+                disabled={!school.phone || calling}
+                className="inline-flex items-center gap-2 rounded-lg bg-brand px-6 py-2.5 font-medium text-white transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Phone className="h-4 w-4" />
+                {calling ? "Calling..." : "Call School"}
+              </button>
+              {school.email && (
+                <a
+                  href={`mailto:${school.email}`}
+                  className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-6 py-2.5 font-medium text-foreground transition-colors hover:border-brand/40 hover:text-brand"
+                >
+                  <Mail className="h-4 w-4" />
+                  Email School
+                </a>
+              )}
+            </div>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="border-t border-slate-200 pt-6 flex gap-3">
+        <div className="hidden gap-3 rounded-2xl border border-border bg-surface p-5 shadow-sm">
           <button
             onClick={handleCallSchool}
             disabled={!school.phone || calling}
-            className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center gap-2 rounded-lg bg-brand px-6 py-2.5 font-medium text-white transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Phone className="h-4 w-4" />
             {calling ? "Calling..." : "Call School"}
@@ -205,7 +263,7 @@ export default function SchoolPage() {
           {school.email && (
             <a
               href={`mailto:${school.email}`}
-              className="flex items-center gap-2 px-6 py-2.5 bg-slate-100 text-slate-900 rounded-lg font-medium hover:bg-slate-200 transition-colors border border-slate-200"
+              className="flex items-center gap-2 rounded-lg border border-border bg-background px-6 py-2.5 font-medium text-foreground transition-colors hover:border-brand/40 hover:text-brand"
             >
               <Mail className="h-4 w-4" />
               Email School

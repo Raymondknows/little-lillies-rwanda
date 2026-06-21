@@ -1,6 +1,5 @@
 import { getStaffSession } from "@/lib/auth";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3006";
+import { buildApiUrl } from "@/lib/api-client";
 
 export async function GET(
   req: Request,
@@ -14,7 +13,7 @@ export async function GET(
 
     const { id } = await params;
 
-    const response = await fetch(`${API_BASE}/api/admin/results/${id}`, {
+    const response = await fetch(buildApiUrl(`/admin/results/${id}`), {
       headers: {
         "x-school-id": session.schoolId,
       },

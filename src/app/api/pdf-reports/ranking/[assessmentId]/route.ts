@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getBackendUrl } from '@/lib/backend-url';
+import { buildApiUrl } from '@/lib/api-client';
 
 export async function GET(
   request: NextRequest,
@@ -7,13 +7,11 @@ export async function GET(
 ) {
   try {
     const { assessmentId } = await params;
-    const backendUrl = getBackendUrl();
-    
     // Get x-school-id from request headers
     const schoolId = request.headers.get('x-school-id');
     
     const response = await fetch(
-      `${backendUrl}/api/pdf-reports/ranking/${assessmentId}`,
+      buildApiUrl(`/pdf-reports/ranking/${assessmentId}`),
       {
         method: 'GET',
         credentials: 'include',

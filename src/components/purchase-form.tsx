@@ -277,13 +277,13 @@ export function PurchaseForm({ initialPlan = "starter", success = false }: Purch
       {bankAccountNumber ? (
         <div className="rounded-none bg-background p-4 text-sm text-foreground shadow-none sm:rounded-3xl sm:p-6 sm:shadow-sm">
           <p className="font-semibold">Prefer bank transfer?</p>
-          <p className="mt-2 text-sm text-muted">
-            You can also pay by bank transfer to ClickBase Technologies Ltd. After making the transfer, email a copy of the transfer advice to <a className="text-brand" href="mailto:sales@clickbasegroup.com">sales@clickbasegroup.com</a> so we can confirm and start onboarding.
+          <p className="mt-2 text-sm leading-6 text-muted">
+            You can also complete payment by bank transfer. Please use your school name as the payment description, then email your payment receipt to <a className="text-brand" href="mailto:sales@schoolbase.live">sales@schoolbase.live</a> so we can confirm your payment and continue onboarding.
           </p>
           <div className="mt-4 grid gap-3 text-xs text-muted sm:grid-cols-3">
             <div>
               <div className="font-semibold text-foreground">Account name</div>
-              ClickBase Technologies Ltd
+              {bankAccountName}
             </div>
             <div>
               <div className="font-semibold text-foreground">Account number</div>

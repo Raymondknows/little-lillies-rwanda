@@ -45,9 +45,9 @@ export default function PurchaseSuccessPage() {
             </div>
             {bankAccountNumber ? (
               <div className="mx-auto mt-6 max-w-2xl rounded-lg border border-border bg-background p-4 text-sm">
-                <p className="font-semibold">Prefer bank transfer?</p>
+                <p className="font-semibold">Alternative payment option</p>
                 <p className="mt-2 text-sm text-muted">
-                  You can also pay by bank transfer to ClickBase Technologies Ltd. After making the transfer, email a copy of the transfer advice to <a className="text-brand" href="mailto:sales@clickbasegroup.com">sales@clickbasegroup.com</a> so we can confirm and start onboarding.
+                  If you prefer to pay by bank transfer, use the account details below and write your school name as the payment description. After sending your payment, please email your receipt to <a className="text-brand" href="mailto:sales@schoolbase.live">sales@schoolbase.live</a> so we can confirm receipt and continue onboarding.
                 </p>
                 <div className="mt-3 text-xs">
                   <div><strong>Account name:</strong> {bankAccountName}</div>

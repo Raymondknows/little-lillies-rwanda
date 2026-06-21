@@ -1,6 +1,5 @@
 import { getStaffSession } from "@/lib/auth";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3006";
+import { buildApiUrl } from "@/lib/api-client";
 
 export async function POST(req: Request) {
   try {
@@ -11,7 +10,7 @@ export async function POST(req: Request) {
 
     const body = await req.json();
 
-    const response = await fetch(`${API_BASE}/api/admin/results`, {
+    const response = await fetch(buildApiUrl(`/admin/results`), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

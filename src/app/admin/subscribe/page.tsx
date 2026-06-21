@@ -77,6 +77,11 @@ export default function SubscribePage() {
   const [schoolName, setSchoolName] = useState("");
   const [schoolSlug, setSchoolSlug] = useState("");
   const [schoolData, setSchoolData] = useState<any>(null);
+  const [showBankPanel, setShowBankPanel] = useState(false);
+
+  const bankAccountName = process.env.BANK_ACCOUNT_NAME ?? process.env.NEXT_PUBLIC_BANK_ACCOUNT_NAME ?? "ClickBase Technologies Ltd";
+  const bankAccountNumber = process.env.BANK_ACCOUNT_NUMBER ?? process.env.NEXT_PUBLIC_BANK_ACCOUNT_NUMBER ?? "1228481040";
+  const bankName = process.env.BANK_NAME ?? process.env.NEXT_PUBLIC_BANK_NAME ?? "Zenith";
 
   useEffect(() => {
     let mounted = true;
@@ -172,6 +177,16 @@ export default function SubscribePage() {
         </p>
       </div>
 
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => setShowBankPanel((prev) => !prev)}
+          className="rounded-full border border-border bg-surface px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-surface/90"
+        >
+          {showBankPanel ? "Hide alternative payment" : "Show alternative payment"}
+        </button>
+      </div>
+
       {/* Plans */}
       <div className="grid gap-5 md:grid-cols-3">
         {plans.map((plan) => (
@@ -264,6 +279,59 @@ export default function SubscribePage() {
           />
         </div>
       )}
+
+      {bankAccountNumber ? (
+        <>
+          <div
+            className={`fixed inset-y-0 right-0 z-50 w-full max-w-md transform bg-surface p-6 shadow-2xl transition duration-300 ease-out sm:rounded-l-3xl ${
+              showBankPanel ? "translate-x-0" : "translate-x-full"
+            }`}
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-widest text-brand">
+                  Alternative payment option
+                </p>
+                <h2 className="mt-2 text-lg font-semibold text-foreground">
+                  Bank transfer details
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowBankPanel(false)}
+                className="rounded-lg border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground"
+              >
+                Close
+              </button>
+            </div>
+            <p className="mt-4 text-sm leading-6 text-muted">
+              Use the account details below and write your school name as the payment description. Email your payment receipt to <a className="text-brand" href="mailto:sales@schoolbase.live">sales@schoolbase.live</a> so we can confirm receipt and continue onboarding.
+            </p>
+            <div className="mt-6 space-y-4 text-sm text-foreground">
+              <div>
+                <div className="font-semibold">Account name</div>
+                <div>{bankAccountName}</div>
+              </div>
+              <div>
+                <div className="font-semibold">Account number</div>
+                <div>{bankAccountNumber}</div>
+              </div>
+              <div>
+                <div className="font-semibold">Bank</div>
+                <div>{bankName}</div>
+              </div>
+            </div>
+          </div>
+          {showBankPanel ? (
+            <button
+              type="button"
+              onClick={() => setShowBankPanel(false)}
+              className="fixed inset-0 z-40 bg-black/30"
+              aria-label="Close alternative payment panel"
+            />
+          ) : null}
+        </>
+      ) : null}
     </div>
   );
 }

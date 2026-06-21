@@ -42,7 +42,7 @@ export async function GET(
     return new NextResponse(blob, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="report-${assessmentId}-${pupilId}.pdf"`,
+        'Content-Disposition': response.headers.get('content-disposition') || `attachment; filename="report-${assessmentId}-${pupilId}.pdf"`,
       },
     });
   } catch (error: any) {

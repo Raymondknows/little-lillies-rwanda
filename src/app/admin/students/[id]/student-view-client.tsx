@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, Edit2, Mail, Phone, MapPin } from "lucide-react";
-import { pupilName } from "@/lib/format";
+import { formatMoney, pupilName } from "@/lib/format";
 import { resolveFileUrl } from "@/lib/api-client";
 
 export default function StudentViewClient({ studentId }: { studentId: string }) {
@@ -151,7 +151,7 @@ export default function StudentViewClient({ studentId }: { studentId: string }) 
         <div className="grid grid-cols-3 gap-4">
           <div className="rounded-lg border border-slate-200 p-4 text-center">
             <p className="text-xs font-semibold uppercase text-slate-500 mb-2">Fees Balance</p>
-            <p className="text-2xl font-bold text-slate-900">₦{(student.feesBalance || 0).toLocaleString()}</p>
+            <p className="text-2xl font-bold text-slate-900">{formatMoney(student.feesBalance || 0)}</p>
             <p className="text-xs text-slate-600 mt-1">Due</p>
           </div>
           <div className="rounded-lg border border-slate-200 p-4 text-center">

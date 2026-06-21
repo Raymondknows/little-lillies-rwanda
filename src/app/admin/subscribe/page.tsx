@@ -14,6 +14,10 @@ interface Plan {
   disabled?: boolean;
 }
 
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
 const defaultPlans: Plan[] = [
   {
     id: "starter",
@@ -255,7 +259,7 @@ export default function SubscribePage() {
             schoolName={schoolName}
             slug={schoolSlug}
             phone=""
-            disabled={!adminName || !adminEmail || !schoolName}
+            disabled={!adminName || !adminEmail || !schoolName || !isValidEmail(adminEmail)}
             isSubscription={true}
           />
         </div>

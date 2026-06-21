@@ -1,11 +1,15 @@
 /**
  * Get the backend URL based on environment
- * - Explicit env var: use NEXT_PUBLIC_BACKEND_URL
+ * - Explicit env var: use NEXT_PUBLIC_API_URL or NEXT_PUBLIC_BACKEND_URL
  * - Client-side: detect from window.location.hostname
  * - Server-side: use sensible defaults
  */
 export function getBackendUrl(): string {
   // First, check if explicitly set in environment
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+
   if (process.env.NEXT_PUBLIC_BACKEND_URL) {
     return process.env.NEXT_PUBLIC_BACKEND_URL;
   }

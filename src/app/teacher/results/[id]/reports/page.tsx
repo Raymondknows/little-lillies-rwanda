@@ -5,6 +5,7 @@ import { useEffect, useState, use } from "react";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, FileText } from "lucide-react";
 import { WaecReportCard } from "@/components/teacher/waec-report-card";
+import { getTeacherDashboard } from "@/lib/teacher-utils";
 
 interface Assessment {
   id: string;
@@ -32,12 +33,23 @@ export default function TeacherReportsPage({
   const { id } = use(params);
   const [assessment, setAssessment] = useState<Assessment | null>(null);
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
+  const [studentFilter, setStudentFilter] = useState("");
   const [reportCardData, setReportCardData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [reportLoading, setReportLoading] = useState(false);
+  const [schoolId, setSchoolId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const fetchSchoolId = async () => {
+      try {
+        const dashboard = await getTeacherDashboard();
+        setSchoolId(dashboard.school.id);
+      } catch (err) {
+        console.error("Failed to load teacher school ID:", err);
+      }
+    };
+
     const fetchAssessment = async () => {
       try {
         setLoading(true);
@@ -57,6 +69,7 @@ export default function TeacherReportsPage({
       }
     };
 
+    fetchSchoolId();
     fetchAssessment();
   }, [id]);
 
@@ -134,16 +147,35 @@ export default function TeacherReportsPage({
     new Map(assessment.results.map((r) => [r.pupilId, r])).values()
   );
 
+  const filteredStudents = uniqueStudents.filter((student) => {
+    const filter = studentFilter.trim().toLowerCase();
+    if (!filter) return true;
+    return (
+      student.pupilName.toLowerCase().includes(filter) ||
+      (student.admissionNo?.toLowerCase().includes(filter) ?? false)
+    );
+  });
+
   const handleDownloadPDF = async (pupilId: string) => {
     try {
-      const response = await fetch(`/api/pdf-reports/${id}/${pupilId}`);
+      const headers: HeadersInit = {};
+      if (schoolId) {
+        headers["x-school-id"] = schoolId;
+      }
+
+      const response = await fetch(`/api/pdf-reports/${id}/${pupilId}`, {
+        headers,
+      });
       if (!response.ok) throw new Error("Failed to download PDF");
 
       const blob = await response.blob();
+      const disposition = response.headers.get("content-disposition") || "";
+      const filenameMatch = disposition.match(/filename=\"?([^\";]+)\"?/i);
+      const filename = filenameMatch?.[1] || `report-${assessment.name}-${pupilId}.pdf`;
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `report-${assessment.name}-${pupilId}.pdf`;
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -154,16 +186,16 @@ export default function TeacherReportsPage({
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-3 py-4">
+    <div className="mx-auto max-w-7xl px-3 py-4 print:max-w-none print:p-0">
       <Link
         href={`/teacher/results/${id}`}
-        className="inline-flex items-center gap-1 text-sm font-medium text-brand hover:underline mb-4"
+        className="inline-flex items-center gap-1 text-sm font-medium text-brand hover:underline mb-4 print:hidden"
       >
         <ChevronLeft className="w-4 h-4" />
         Back to Assessment
       </Link>
 
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 print:hidden">
         <div>
           <h1 className="text-3xl font-bold">{assessment.name}</h1>
           <p className="text-sm text-muted mt-1">Professional student report cards</p>
@@ -175,32 +207,47 @@ export default function TeacherReportsPage({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Student List Sidebar */}
-        <div className="lg:col-span-1">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 print:block print:space-y-0">
+        {/* Student Selector Sidebar */}
+        <div className="lg:col-span-1 print:hidden">
           <div className="rounded-lg border border-border bg-surface p-4 sticky top-4">
             <h2 className="text-sm font-semibold mb-3">Students ({uniqueStudents.length})</h2>
-            <div className="space-y-1 max-h-96 overflow-y-auto">
-              {uniqueStudents.map((result) => (
-                <button
-                  key={result.pupilId}
-                  onClick={() => setSelectedStudent(result.pupilId)}
-                  className={`w-full px-3 py-2 rounded-lg text-left text-sm transition-colors ${
-                    selectedStudent === result.pupilId
-                      ? "bg-brand text-white"
-                      : "hover:bg-background text-foreground"
-                  }`}
-                >
-                  <p className="font-medium truncate text-xs">{result.pupilName}</p>
-                  <p className="text-xs opacity-75">{result.admissionNo}</p>
-                </button>
-              ))}
-            </div>
+            <label className="block text-xs font-semibold text-gray-600 mb-2" htmlFor="student-search">
+              Search student
+            </label>
+            <input
+              id="student-search"
+              type="search"
+              value={studentFilter}
+              onChange={(event) => setStudentFilter(event.target.value)}
+              placeholder="Search by name or admission"
+              className="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm text-foreground shadow-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/10 mb-4"
+            />
+
+            <label className="block text-xs font-semibold text-gray-600 mb-2" htmlFor="student-select">
+              Select student
+            </label>
+            <select
+              id="student-select"
+              value={selectedStudent || ""}
+              onChange={(event) => setSelectedStudent(event.target.value)}
+              className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/10"
+            >
+              {filteredStudents.length === 0 ? (
+                <option value="">No matching students</option>
+              ) : (
+                filteredStudents.map((student) => (
+                  <option key={student.pupilId} value={student.pupilId}>
+                    {student.pupilName} — {student.admissionNo}
+                  </option>
+                ))
+              )}
+            </select>
           </div>
         </div>
 
         {/* Report Card Viewer */}
-        <div className="lg:col-span-3">
+        <div className="lg:col-span-3 print:block print:w-full">
           {reportLoading ? (
             <div className="text-center py-12 text-muted">Loading report card...</div>
           ) : reportCardData && selectedStudent ? (

@@ -40,6 +40,8 @@ interface ReportCard {
   };
   subjects: Array<{
     subjectName: string;
+    caScore?: number | null;
+    examScore?: number | null;
     totalScore: number;
     grade: string;
     subjectPosition: number | null;
@@ -282,20 +284,20 @@ export function ReportCardViewer({
                 )}
                 
                 {/* Student Details Grid */}
-                <div className={`grid gap-4 text-xs ${photoUrl ? 'grid-cols-2 flex-1' : 'grid-cols-2 w-full'}`}>
-                  <div className="border border-gray-400 p-2">
+                <div className={`grid gap-x-8 gap-y-3 text-xs ${photoUrl ? 'grid-cols-2 flex-1' : 'grid-cols-2 w-full'}`}>
+                  <div>
                     <p className="text-gray-600 font-semibold text-xs">Pupil's Name:</p>
                     <p className="text-gray-900 font-bold">{reportCard.student.name}</p>
                   </div>
-                  <div className="border border-gray-400 p-2">
+                  <div>
                     <p className="text-gray-600 font-semibold text-xs">Admission No:</p>
                     <p className="text-gray-900 font-bold">{reportCard.student.admissionNo || 'N/A'}</p>
                   </div>
-                  <div className="border border-gray-400 p-2">
+                  <div>
                     <p className="text-gray-600 font-semibold text-xs">Class:</p>
                     <p className="text-gray-900 font-bold">{reportCard.class.name}</p>
                   </div>
-                  <div className="border border-gray-400 p-2">
+                  <div>
                     <p className="text-gray-600 font-semibold text-xs">Term/Session:</p>
                     <p className="text-gray-900 font-bold">{reportCard.term.name} {reportCard.term.session}</p>
                   </div>
@@ -310,7 +312,9 @@ export function ReportCardViewer({
                     <thead>
                       <tr className="bg-gray-800 text-white">
                         <th className="border border-gray-500 p-1 text-left font-bold">Subject</th>
-                        <th className="border border-gray-500 p-1 text-center font-bold">Score</th>
+                        <th className="border border-gray-500 p-1 text-center font-bold">CA</th>
+                        <th className="border border-gray-500 p-1 text-center font-bold">Exam</th>
+                        <th className="border border-gray-500 p-1 text-center font-bold">Total</th>
                         <th className="border border-gray-500 p-1 text-center font-bold">Grade</th>
                         <th className="border border-gray-500 p-1 text-center font-bold">Position</th>
                       </tr>
@@ -319,6 +323,12 @@ export function ReportCardViewer({
                       {reportCard.subjects.map((subject, idx) => (
                         <tr key={idx} className={idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
                           <td className="border border-gray-500 p-1 text-gray-900 font-medium">{subject.subjectName}</td>
+                          <td className="border border-gray-500 p-1 text-center text-gray-900">
+                            {subject.caScore ?? '—'}
+                          </td>
+                          <td className="border border-gray-500 p-1 text-center text-gray-900">
+                            {subject.examScore ?? '—'}
+                          </td>
                           <td className="border border-gray-500 p-1 text-center text-gray-900 font-semibold">
                             {subject.totalScore.toFixed(1)}
                           </td>

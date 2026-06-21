@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 
 async function ActivateSchoolServer({ reference }: { reference: string }) {
   try {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? (process.env.NODE_ENV === 'production' ? 'https://www.schoolbase.live' : 'http://localhost:3000');
-    const response = await fetch(`${appUrl}/api/paystack/verify-subscription`, {
+    const backendUrl = process.env.BACKEND_URL ?? 'http://localhost:3006';
+    const response = await fetch(`${backendUrl}/api/paystack/verify-subscription`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ reference }),

@@ -1,14 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactElement } from "react";
 import { Button } from "@/components/ui/button";
 
 declare global {
   interface Window {
     PaystackPop?: {
-      setup: (options: Record<string, unknown>) => void;
+      setup: (options: Record<string, unknown>) => { openIframe: () => void };
     };
   }
+}
+
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
 function loadPaystackScript(): Promise<void> {
@@ -20,21 +24,57 @@ function loadPaystackScript(): Promise<void> {
       return resolve();
     }
 
-    const existing = document.querySelector(
-      "script[src='https://js.paystack.co/v1/inline.js']",
-    );
+    const src = "https://js.paystack.co/v1/inline.js";
+    const existing = document.querySelector(`script[src='${src}']`) as HTMLScriptElement | null;
+    const timeout = window.setTimeout(() => {
+      reject(new Error("Paystack script load timed out."));
+    }, 15000);
+
+    const cleanup = () => {
+      window.clearTimeout(timeout);
+    };
+
+    const handleLoad = () => {
+      cleanup();
+      resolve();
+    };
+
+    const handleError = () => {
+      cleanup();
+      reject(new Error("Paystack script failed to load."));
+    };
 
     if (existing) {
-      existing.addEventListener("load", () => resolve());
-      existing.addEventListener("error", () => reject(new Error("Paystack script failed to load.")));
-      return;
+      const existingScript = existing as HTMLScriptElement & { readyState?: string };
+      const needsReload =
+        existing.hasAttribute("crossorigin") ||
+        existingScript.readyState === "error" ||
+        ((existingScript.readyState === "complete" || existingScript.readyState === "loaded") && !window.PaystackPop);
+
+      if (needsReload) {
+        existing.remove();
+      } else {
+        if (window.PaystackPop) {
+          cleanup();
+          return resolve();
+        }
+
+        if (existingScript.readyState === "complete" || existingScript.readyState === "loaded") {
+          cleanup();
+          return resolve();
+        }
+
+        existing.addEventListener("load", handleLoad);
+        existing.addEventListener("error", handleError);
+        return;
+      }
     }
 
     const script = document.createElement("script");
-    script.src = "https://js.paystack.co/v1/inline.js";
+    script.src = src;
     script.async = true;
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error("Paystack script failed to load."));
+    script.addEventListener("load", handleLoad);
+    script.addEventListener("error", handleError);
     document.body.appendChild(script);
   });
 }
@@ -63,15 +103,12 @@ export function PaystackPurchaseButton({
   phone,
   disabled = false,
   isSubscription = false,
-}: PaystackPurchaseButtonProps) {
-  // For subscriptions, use ClickBase's dedicated key; for school fees, use the general key
-  const envPublicKey = isSubscription 
-    ? process.env.NEXT_PUBLIC_PAYSTACK_SUBSCRIPTION_PUBLIC_KEY 
-    : process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY;
-  const [publicKey, setPublicKey] = useState<string | null>(envPublicKey ?? null);
+}: PaystackPurchaseButtonProps): ReactElement {
+  const fallbackPublicKey = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY ?? null;
+  const [publicKey, setPublicKey] = useState<string | null>(null);
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   const [loading, setLoading] = useState(false);
-  const [ready, setReady] = useState(false);
+  const [ready, setReady] = useState(isSubscription);
   const [error, setError] = useState<string | null>(null);
   const [country, setCountry] = useState<string | null>(null);
 
@@ -83,37 +120,29 @@ export function PaystackPurchaseButton({
   }, [appUrl]);
 
   useEffect(() => {
-    // For subscription payments, only use ClickBase's public key (never fetch school keys)
-    // For school fee payments, try to fetch per-school public key; fall back to env key
     let mounted = true;
-    
-    if (!isSubscription) {
-      fetch("/api/admin/settings")
-        .then((r) => r.json())
-        .then((d) => {
-          if (!mounted) return;
-          const cfgKey = d?.config?.paystackPublic ?? null;
-          if (cfgKey) setPublicKey(cfgKey);
-        })
-        .catch(() => {});
-    }
+
+    fetch("/api/admin/settings/data")
+      .then((r) => r.json())
+      .then((d) => {
+        if (!mounted) return;
+        const cfgKey = d?.config?.paystackPublicKey ?? d?.config?.paystackPublic ?? null;
+        setPublicKey(String(cfgKey ?? fallbackPublicKey ?? "").trim() || null);
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setPublicKey(fallbackPublicKey);
+      });
 
     if (!publicKey) return;
     loadPaystackScript()
       .then(() => setReady(true))
       .catch((err) => setError(err.message));
 
-    if (!country) {
-      fetch('/api/country/config')
-        .then(r => r.json())
-        .then(d => setCountry(d?.country ?? null))
-        .catch(() => {});
-    }
-
     return () => {
       mounted = false;
     };
-  }, [publicKey, isSubscription]);
+  }, [fallbackPublicKey, publicKey]);
 
   const verifyPayment = useCallback(
     async (reference: string) => {
@@ -125,9 +154,6 @@ export function PaystackPurchaseButton({
           },
           body: JSON.stringify({
             reference,
-            plan,
-            schoolName,
-            // include slug if provided for provisioning
             slug: slug ?? undefined,
             email,
             name,
@@ -148,22 +174,74 @@ export function PaystackPurchaseButton({
         setLoading(false);
       }
     },
-    [amountMinor, callbackUrl, currency, email, name, phone, plan, schoolName],
+    [amountMinor, callbackUrl, currency, email, name, phone, slug],
   );
 
   const pay = useCallback(async () => {
-    if (!publicKey) return;
     setError(null);
     setLoading(true);
 
     try {
-      // Use inline Paystack checkout for both subscription and school fee payments
+      if (isSubscription) {
+        const backendBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3006";
+        if (!isValidEmail(email)) {
+        throw new Error("Please use a valid email address before checking out.");
+      }
+
+      const response = await fetch(`${backendBaseUrl}/api/paystack/init`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            amount: amountMinor / 100,
+            email,
+            plan,
+            schoolName,
+            name,
+            phone,
+            callback_url: `${window.location.origin}/admin/subscription-success`,
+            reference: `SUB-${Date.now()}-${Math.round(Math.random() * 1000000)}`,
+          }),
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to initialize payment.");
+        }
+
+        const authorizationUrl = data?.authorization_url || data?.data?.authorization_url;
+        if (!authorizationUrl) {
+          throw new Error("Paystack authorization URL was not returned.");
+        }
+
+        window.location.href = authorizationUrl;
+        return;
+      }
+
+      if (!publicKey) {
+        throw new Error("Paystack configuration is unavailable.");
+      }
+
+      let checkoutTimeout: number | null = null;
+      const clearCheckoutTimeout = () => {
+        if (checkoutTimeout !== null) {
+          window.clearTimeout(checkoutTimeout);
+          checkoutTimeout = null;
+        }
+      };
+
       await loadPaystackScript();
       if (!window.PaystackPop) {
         throw new Error("Paystack checkout is unavailable.");
       }
 
-      window.PaystackPop.setup({
+      checkoutTimeout = window.setTimeout(() => {
+        setError("Paystack checkout did not appear. Please try again.");
+        setLoading(false);
+      }, 12000);
+
+      const handler = window.PaystackPop.setup({
         key: publicKey,
         email,
         amount: amountMinor,
@@ -181,19 +259,22 @@ export function PaystackPurchaseButton({
           ],
         },
         onClose: () => {
+          clearCheckoutTimeout();
           setLoading(false);
         },
         callback(response: { reference: string }) {
+          clearCheckoutTimeout();
           verifyPayment(response.reference);
         },
       });
+      handler.openIframe();
     } catch (err) {
       setError((err as Error).message || "Unable to start payment.");
       setLoading(false);
     }
-  }, [amountMinor, callbackUrl, currency, email, name, phone, plan, publicKey, schoolName, verifyPayment]);
+  }, [amountMinor, callbackUrl, currency, email, isSubscription, name, phone, plan, publicKey, schoolName, verifyPayment]);
 
-  if (!publicKey) {
+  if (!isSubscription && !publicKey) {
     return (
       <button
         disabled

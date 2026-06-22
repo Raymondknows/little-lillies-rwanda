@@ -380,7 +380,7 @@ export default function FeesManagementPage() {
           </p>
           <div className="mt-8 flex gap-4 justify-center">
             <button className="rounded-lg bg-white px-6 py-3 font-medium text-brand hover:bg-white/90">
-              Start Free 30-Day Trial
+              Start Free 7-Day Trial
             </button>
             <Link
               href="/contact"

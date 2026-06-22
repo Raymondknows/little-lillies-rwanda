@@ -231,7 +231,7 @@ export default function DataManagementPage() {
         <div className="max-w-4xl mx-auto bg-gradient-to-r from-[#0A66C2] to-[#084a9a] text-white rounded-lg p-12 text-center">
           <h2 className="text-3xl font-bold mb-4">Trust Your School Data to the Experts</h2>
           <p className="text-[#bfdbfe] mb-8 text-lg">
-            Enterprise-grade security. School-friendly simplicity. 30 days free.
+            Enterprise-grade security. School-friendly simplicity. 7 days free.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link

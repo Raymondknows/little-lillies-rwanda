@@ -8,6 +8,21 @@ import { UserGuide } from "@/components/ui/user-guide";
 import { getBackendUrl } from "@/lib/backend-url";
 import { X, Plus } from "lucide-react";
 
+function parseApiErrorMessage(body: any, status: number): string {
+  if (!body) return `Server error: ${status}`;
+
+  const payload = body.error ?? body.message ?? body;
+  if (typeof payload === 'string' && payload.trim()) return payload;
+
+  if (typeof payload === 'object') {
+    if (payload === null) return `Server error: ${status}`;
+    if (typeof payload.message === 'string' && payload.message.trim()) return payload.message;
+    if (Object.keys(payload).length > 0) return JSON.stringify(payload);
+  }
+
+  return `Server error: ${status}`;
+}
+
 const TEACHER_GUIDE = {
   title: "Teachers Management",
   overview: "Manage teacher profiles, class assignments, and subject allocations. Teachers can mark attendance, enter results, and communicate with parents.",
@@ -287,9 +302,8 @@ export default function TeachersPageClient({
                     });
 
                     if (!response.ok) {
-                      const error = await response.json();
-                      console.error('Backend error:', error);
-                      throw new Error(error.error || `Server error: ${response.status}`);
+                      const errorBody = await response.json().catch(() => null);
+                      throw new Error(parseApiErrorMessage(errorBody, response.status));
                     }
 
                     const data = await response.json();
@@ -298,7 +312,6 @@ export default function TeachersPageClient({
                     setErrorMessage(null);
                     window.location.reload();
                   } catch (error: unknown) {
-                    console.error('Error:', error);
                     if (error instanceof Error) {
                       setErrorMessage(error.message);
                       setShowErrorModal(true);
@@ -456,9 +469,8 @@ export default function TeachersPageClient({
                     });
 
                     if (!response.ok) {
-                      const error = await response.json();
-                      console.error('Backend error:', error);
-                      throw new Error(error.error || `Server error: ${response.status}`);
+                      const errorBody = await response.json().catch(() => null);
+                      throw new Error(parseApiErrorMessage(errorBody, response.status));
                     }
 
                     const data = await response.json();
@@ -467,7 +479,6 @@ export default function TeachersPageClient({
                     setErrorMessage(null);
                     window.location.reload();
                   } catch (error: unknown) {
-                    console.error('Error:', error);
                     if (error instanceof Error) {
                       setErrorMessage(error.message);
                       setShowErrorModal(true);

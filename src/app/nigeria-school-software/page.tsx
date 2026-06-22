@@ -296,7 +296,7 @@ export default function NigeriaPage() {
               },
               {
                 q: "Can we get a demo first?",
-                a: "Yes. 30-day free trial. Full access to all features. No credit card needed.",
+                a: "Yes. 7-day free trial. Full access to all features. No credit card needed.",
               },
             ].map((item, i) => (
               <div key={i} className="rounded-lg border border-border bg-white p-6">
@@ -313,7 +313,7 @@ export default function NigeriaPage() {
         <div className="mx-auto max-w-4xl px-4 py-12 text-center">
           <h2 className="text-3xl font-bold">₦35-45k/Month. Results Within Hours.</h2>
           <p className="mt-4 text-lg text-brand/80">
-            30 days free. No credit card. Join 80+ Nigeria schools using SchoolBase.
+            7 days free. No credit card. Join 80+ Nigeria schools using SchoolBase.
           </p>
           <div className="mt-8 flex gap-4 justify-center">
             <button className="rounded-lg bg-white px-6 py-3 font-medium text-brand hover:bg-white/90">

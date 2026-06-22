@@ -5,7 +5,7 @@ import Link from 'next/link'
 export const metadata: Metadata = {
   title: 'SchoolBase for South African Schools | Primary & Secondary Software',
   description:
-    'School management software built for South African schools. Support for CAPS curriculum, Matric reporting, fee collection in ZAR. 30 days free.',
+    'School management software built for South African schools. Support for CAPS curriculum, Matric reporting, fee collection in ZAR. 7 days free.',
   keywords: [
     'school management software South Africa',
     'South African school system',
@@ -266,7 +266,7 @@ export default function SouthAfricaSchoolsPage() {
         <div className="max-w-4xl mx-auto bg-gradient-to-r from-[#0A66C2] to-[#084a9a] text-white rounded-lg p-12 text-center">
           <h2 className="text-3xl font-bold mb-4">Join South African Schools Using SchoolBase</h2>
           <p className="text-[#bfdbfe] mb-8 text-lg">
-            30 days free. No credit card. CAPS-compliant from day one.
+            7 days free. No credit card. CAPS-compliant from day one.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link

@@ -203,7 +203,7 @@ export default function StudentAttendancePage() {
         <div className="max-w-4xl mx-auto bg-gradient-to-r from-[#0A66C2] to-[#084a9a] text-white rounded-lg p-12 text-center">
           <h2 className="text-3xl font-bold mb-4">Stop Wasting Time on Attendance</h2>
           <p className="text-[#bfdbfe] mb-8 text-lg">
-            Get 30 days free. See why 500+ schools use SchoolBase to manage attendance.
+            Get 7 days free. See why 500+ schools use SchoolBase to manage attendance.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link

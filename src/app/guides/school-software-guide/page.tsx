@@ -343,7 +343,7 @@ export default function SchoolSoftwareGuidePage() {
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-4">Ready to Choose the Right Software?</h2>
           <p className="text-[#bfdbfe] mb-8 text-lg">
-            SchoolBase is trusted by 500+ schools. Start your 30-day free trial and see if we're the right fit for your school.
+            SchoolBase is trusted by 500+ schools. Start your 7-day free trial and see if we're the right fit for your school.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link

@@ -313,7 +313,7 @@ export default function UgandaPage() {
         <div className="mx-auto max-w-4xl px-4 py-12 text-center">
           <h2 className="text-3xl font-bold">UGX 150-250k/Month. Works Everywhere in Uganda.</h2>
           <p className="mt-4 text-lg text-brand/80">
-            30 days free. MTN Mobile Money. SMS + WhatsApp. Local support.
+            7 days free. MTN Mobile Money. SMS + WhatsApp. Local support.
           </p>
           <div className="mt-8 flex gap-4 justify-center">
             <button className="rounded-lg bg-white px-6 py-3 font-medium text-brand hover:bg-white/90">

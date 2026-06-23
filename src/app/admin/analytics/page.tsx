@@ -5,6 +5,61 @@ import { useRouter } from "next/navigation";
 import { BarChart3, TrendingUp, Users, BookOpen, AlertCircle, Activity, Download, Filter, Search, ChevronDown, ArrowRight } from "lucide-react";
 import SubscriptionModal from "@/components/subscription-modal";
 
+// Skeleton Loader Components
+function CardSkeleton() {
+  return (
+    <div className="rounded-lg border border-slate-200 p-6 bg-white animate-pulse">
+      <div className="flex items-center justify-between mb-3">
+        <div className="h-4 bg-slate-200 rounded w-24"></div>
+        <div className="h-5 w-5 bg-slate-200 rounded"></div>
+      </div>
+      <div className="h-10 bg-slate-200 rounded w-20 mb-2"></div>
+      <div className="h-3 bg-slate-200 rounded w-16"></div>
+    </div>
+  );
+}
+
+function TableSkeleton() {
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
+      <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 animate-pulse">
+        <div className="h-6 bg-slate-200 rounded w-32"></div>
+      </div>
+      <div className="divide-y divide-slate-200">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="px-6 py-3 flex gap-4 animate-pulse">
+            <div className="h-4 bg-slate-200 rounded flex-1"></div>
+            <div className="h-4 bg-slate-200 rounded w-24"></div>
+            <div className="h-4 bg-slate-200 rounded w-20"></div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DistributionSkeleton() {
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white p-6 animate-pulse">
+      <div className="flex items-center justify-between mb-6">
+        <div className="h-5 bg-slate-200 rounded w-32"></div>
+        <div className="h-4 bg-slate-200 rounded w-24"></div>
+      </div>
+      <div className="space-y-4">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <div key={i}>
+            <div className="flex justify-between mb-2">
+              <div className="h-4 bg-slate-200 rounded w-16"></div>
+              <div className="h-4 bg-slate-200 rounded w-20"></div>
+            </div>
+            <div className="h-3 bg-slate-200 rounded w-full"></div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 interface AnalyticsData {
   schoolAnalytics: {
     schoolAverage: number;
@@ -76,11 +131,18 @@ export default function AnalyticsPage() {
     const fetchAnalytics = async () => {
       try {
         setLoading(true);
+        setError(null);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+        
         const url = `/api/admin/analytics/data?termId=${selectedTermId}&phase=${activePhase}`;
         const response = await fetch(url, {
           credentials: "include",
           headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
         });
+        clearTimeout(timeoutId);
+        
         if (!response.ok) {
           // Check for subscription blocking
           if (response.status === 403) {
@@ -94,13 +156,62 @@ export default function AnalyticsPage() {
           const errorData = await response.json().catch(() => ({}));
           throw new Error(errorData.error || `Failed to fetch analytics: ${response.status}`);
         }
+        
         const data = await response.json();
-        setAnalytics(data);
-        setError(null);
+        
+        // Validate and set analytics with defaults if data is incomplete
+        if (data && data.schoolAnalytics) {
+          // Ensure all required fields exist with defaults
+          const validatedData = {
+            schoolAnalytics: {
+              schoolAverage: data.schoolAnalytics.schoolAverage ?? 0,
+              passRate: data.schoolAnalytics.passRate ?? 0,
+              totalResults: data.schoolAnalytics.totalResults ?? 0,
+              gradeDistribution: data.schoolAnalytics.gradeDistribution ?? {},
+              topPerformers: data.schoolAnalytics.topPerformers ?? [],
+              strugglingStudents: data.schoolAnalytics.strugglingStudents ?? [],
+            },
+            classes: data.classes ?? [],
+            subjects: data.subjects ?? [],
+          };
+          setAnalytics(validatedData);
+        } else {
+          // Set empty but valid analytics structure
+          setAnalytics({
+            schoolAnalytics: {
+              schoolAverage: 0,
+              passRate: 0,
+              totalResults: 0,
+              gradeDistribution: {},
+              topPerformers: [],
+              strugglingStudents: [],
+            },
+            classes: [],
+            subjects: [],
+          });
+        }
+        
         setCurrentPage(1);
       } catch (err) {
         console.error("Error fetching analytics:", err);
-        setError(err instanceof Error ? err.message : "Failed to load analytics");
+        if (err instanceof Error && err.name === 'AbortError') {
+          setError("Analytics loading took too long. Please try again.");
+        } else {
+          setError(err instanceof Error ? err.message : "Failed to load analytics");
+        }
+        // Set empty analytics on error to exit loading state
+        setAnalytics({
+          schoolAnalytics: {
+            schoolAverage: 0,
+            passRate: 0,
+            totalResults: 0,
+            gradeDistribution: {},
+            topPerformers: [],
+            strugglingStudents: [],
+          },
+          classes: [],
+          subjects: [],
+        });
       } finally {
         setLoading(false);
       }
@@ -144,10 +255,51 @@ export default function AnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto" style={{ borderBottomColor: '#0A66C2' }}></div>
-          <p className="mt-4 text-slate-600">Loading analytics...</p>
+      <div className="space-y-6 pb-8">
+        {/* Header Skeleton */}
+        <div className="border-b border-slate-200 pb-6 animate-pulse">
+          <div className="h-10 bg-slate-200 rounded w-1/3 mb-3"></div>
+          <div className="h-4 bg-slate-200 rounded w-1/2"></div>
+        </div>
+
+        {/* Card Skeletons */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <CardSkeleton key={i} />
+          ))}
+        </div>
+
+        {/* Phase Tabs Skeleton */}
+        <div className="h-12 bg-slate-200 rounded animate-pulse"></div>
+
+        {/* Grade Distribution Skeleton */}
+        <DistributionSkeleton />
+
+        {/* Table Skeleton */}
+        <TableSkeleton />
+
+        {/* Subjects Skeleton */}
+        <div className="rounded-lg border border-slate-200 bg-white p-6 animate-pulse">
+          <div className="h-6 bg-slate-200 rounded w-32 mb-4"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-12 bg-slate-200 rounded"></div>
+            ))}
+          </div>
+        </div>
+
+        {/* Bottom sections Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {[1, 2].map((i) => (
+            <div key={i} className="rounded-lg border border-slate-200 bg-white p-6 animate-pulse">
+              <div className="h-6 bg-slate-200 rounded w-32 mb-4"></div>
+              <div className="space-y-2">
+                {[1, 2, 3].map((j) => (
+                  <div key={j} className="h-12 bg-slate-200 rounded"></div>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -157,6 +309,57 @@ export default function AnalyticsPage() {
     return <SubscriptionModal reason={subscriptionBlocked.reason} />;
   }
 
+  if (terms.length === 0) {
+    return (
+      <div className="rounded-lg border border-yellow-300 bg-yellow-50 p-6 flex gap-3">
+        <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+        <div>
+          <h3 className="font-semibold text-yellow-900">No Academic Terms</h3>
+          <p className="text-sm text-yellow-700 mt-1">Please create an academic term first before viewing analytics.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!selectedTermId) {
+    return (
+      <div className="space-y-6 pb-8">
+        <div className="border-b border-slate-200 pb-6">
+          <div className="flex items-start justify-between gap-4 mb-4">
+            <div>
+              <h1 className="text-4xl font-bold text-slate-900">School Analytics</h1>
+              <p className="mt-1 text-sm text-slate-600">Real-time performance insights and academic metrics</p>
+            </div>
+            <div className="min-w-[220px]">
+              <label className="block text-sm font-medium text-slate-900 mb-2">Select Term</label>
+              <select
+                value={selectedTermId}
+                onChange={(e) => setSelectedTermId(e.target.value)}
+                className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 bg-white"
+                style={{ '--tw-ring-color': '#0A66C2' } as React.CSSProperties}
+              >
+                <option value="">Choose a term...</option>
+                {terms.map((term) => (
+                  <option key={term.id} value={term.id}>
+                    {term.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-8 text-center">
+          <BarChart3 className="h-12 w-12 text-blue-400 mx-auto mb-4" />
+          <h2 className="text-lg font-semibold text-blue-900 mb-2">Select a Term</h2>
+          <p className="text-sm text-blue-700">
+            Please select an academic term from the dropdown above to view analytics.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   if (error) {
     return (
       <div className="rounded-lg border border-red-300 bg-red-50 p-4 flex gap-3">
@@ -164,6 +367,12 @@ export default function AnalyticsPage() {
         <div>
           <h3 className="font-semibold text-red-900">Error</h3>
           <p className="text-sm text-red-700 mt-1">{error}</p>
+          <button 
+            onClick={() => location.reload()}
+            className="text-sm text-red-700 font-medium mt-2 hover:underline"
+          >
+            Retry
+          </button>
         </div>
       </div>
     );
@@ -173,6 +382,55 @@ export default function AnalyticsPage() {
     return (
       <div className="rounded-lg border border-slate-200 bg-slate-50 p-12 text-center">
         <p className="text-slate-600">No analytics data available</p>
+      </div>
+    );
+  }
+
+  // Check if we have any data at all for this term/phase
+  const hasData = analytics.schoolAnalytics.totalResults > 0 || 
+                  analytics.classes.length > 0 || 
+                  analytics.subjects.length > 0;
+
+  if (!hasData) {
+    return (
+      <div className="space-y-6 pb-8">
+        {/* Header with Term Dropdown */}
+        <div className="border-b border-slate-200 pb-6">
+          <div className="flex items-start justify-between gap-4 mb-4">
+            <div>
+              <h1 className="text-4xl font-bold text-slate-900">School Analytics</h1>
+              <p className="mt-1 text-sm text-slate-600">Real-time performance insights and academic metrics</p>
+            </div>
+            <div className="min-w-[220px]">
+              <label className="block text-sm font-medium text-slate-900 mb-2">Select Term</label>
+              <select
+                value={selectedTermId}
+                onChange={(e) => setSelectedTermId(e.target.value)}
+                className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 bg-white"
+                style={{ '--tw-ring-color': '#0A66C2' } as React.CSSProperties}
+              >
+                <option value="">Choose a term...</option>
+                {terms.map((term) => (
+                  <option key={term.id} value={term.id}>
+                    {term.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* No Data Message */}
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-8 text-center">
+          <BarChart3 className="h-12 w-12 text-blue-400 mx-auto mb-4" />
+          <h2 className="text-lg font-semibold text-blue-900 mb-2">No Analytics Data</h2>
+          <p className="text-sm text-blue-700 mb-4">
+            There is no data to display for the selected term and phase. 
+          </p>
+          <p className="text-sm text-blue-600">
+            Analytics will appear once students have results published.
+          </p>
+        </div>
       </div>
     );
   }

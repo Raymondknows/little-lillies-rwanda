@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Building2, MapPin, DollarSign, FileText, Upload, Save, AlertCircle, Zap, X } from "lucide-react";
+import { UserGuide, type PageHelpGuide } from "@/components/ui/user-guide";
 import countriesData from "../../../../config/countries.json";
 import { resolveSchoolAssetUrl } from "@/lib/asset-urls";
 import { getBackendUrl } from "@/lib/backend-url";
@@ -174,6 +175,72 @@ export default function SettingsPageClient({
         .map((value) => value.charAt(0).toUpperCase() + value.slice(1)),
     [school.enabledPhases],
   );
+
+  const HELP_GUIDE: PageHelpGuide = {
+    title: "Managing School Settings",
+    overview: "Configure your school profile, branding, payment information, and system integrations.",
+    steps: [
+      "Update your school name, location, and contact information.",
+      "Upload your school logo, principal signature, and school stamp.",
+      "Configure payment details for manual bank transfers.",
+      "Set up Paystack for online payments (if enabled).",
+      "Configure WhatsApp integration for notifications.",
+    ],
+    commonTasks: [
+      {
+        title: "Update School Profile",
+        description: "Change your school name, location, and contact details.",
+        tips: [
+          "School name is displayed on all official documents",
+          "Initials appear on student result sheets and reports",
+          "Country and currency settings affect fee calculations",
+          "Contact information is visible to parents and staff",
+        ],
+      },
+      {
+        title: "Upload School Branding",
+        description: "Add your logo, principal signature, and school stamp for documents.",
+        tips: [
+          "Logo appears at the top of all reports and certificates",
+          "Principal signature is printed on student result sheets",
+          "School stamp authenticates official documents",
+          "Use high-quality images (PNG or JPG format recommended)",
+        ],
+      },
+      {
+        title: "Configure Payment Methods",
+        description: "Set up bank account details for manual payment collection.",
+        tips: [
+          "Provide accurate bank details to receive payments",
+          "Account name must match your school registration",
+          "Account number should be verified before saving",
+          "These details appear on generated invoices sent to parents",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        question: "What image format should I use for uploads?",
+        answer: "PNG (with transparency) or JPG formats work best. Recommended sizes: Logo (200x200px), Signature (400x100px), Stamp (150x150px). Ensure images have good resolution for printing.",
+      },
+      {
+        question: "Can I change the currency after creation?",
+        answer: "Yes, you can change the currency in settings. However, existing fees and transactions are recorded in the original currency. Plan currency changes carefully.",
+      },
+      {
+        question: "What happens if I don't configure payment details?",
+        answer: "Parents can still pay online via Paystack if configured. If not configured, students won't have a payment method available and you'll need to enter payments manually.",
+      },
+      {
+        question: "How do I integrate Paystack payments?",
+        answer: "Paystack integration is configured by your system administrator. Once configured, it will show as 'Configured' in the status badges.",
+      },
+      {
+        question: "Can I update settings during the school year?",
+        answer: "Yes, you can update most settings anytime. Changes take effect immediately. However, be cautious with currency changes as they may affect reports and calculations.",
+      },
+    ],
+  };
 
   return (
     <div className="space-y-6 p-6">
@@ -508,6 +575,9 @@ export default function SettingsPageClient({
           </Button>
         </div>
       </form>
+
+      {/* Help & Guide */}
+      <UserGuide guide={HELP_GUIDE} />
     </div>
   );
 }

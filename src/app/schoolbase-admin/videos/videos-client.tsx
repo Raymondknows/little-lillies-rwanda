@@ -31,6 +31,8 @@ export default function VideosClient({
   const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [confirmDeleteVideoId, setConfirmDeleteVideoId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -168,14 +170,24 @@ export default function VideosClient({
     }
   };
 
-  const handleDelete = async (videoId: string) => {
-    if (!confirm("Delete this video? This cannot be undone.")) return;
+  const handleDelete = (videoId: string) => {
+    setConfirmDeleteVideoId(videoId);
+  };
+
+  const confirmDelete = async () => {
+    if (!confirmDeleteVideoId) return;
 
     try {
-      await deleteVideoAction(videoId);
-      setVideos((prevVideos) => prevVideos.filter((v) => v.id !== videoId));
+      await deleteVideoAction(confirmDeleteVideoId);
+      setVideos((prevVideos) =>
+        prevVideos.filter((v) => v.id !== confirmDeleteVideoId)
+      );
+      setToastMessage("Video deleted successfully.");
+      window.setTimeout(() => setToastMessage(null), 1800);
     } catch (err: any) {
       setError(err.message || "Failed to delete video");
+    } finally {
+      setConfirmDeleteVideoId(null);
     }
   };
 
@@ -183,16 +195,24 @@ export default function VideosClient({
     if (typeof window !== 'undefined') {
       const shareUrl = `${window.location.origin}/video-tutorials/${videoId}`;
       navigator.clipboard.writeText(shareUrl);
-      alert("Link copied to clipboard!");
+      setToastMessage("Link copied to clipboard!");
+      window.setTimeout(() => setToastMessage(null), 1800);
     }
   };
 
+  const totalVideos = videos.length;
+  const featuredVideos = videos.filter((video) => video.featured).length;
+  const deleteVideo = confirmDeleteVideoId
+    ? videos.find((video) => video.id === confirmDeleteVideoId)
+    : null;
+
   return (
-    <div className="space-y-4 sm:space-y-6 w-full">
+    <div className="relative space-y-4 sm:space-y-6 w-full">
       {/* Add/Edit Form */}
       <div className="rounded-lg border border-border bg-surface p-4 sm:p-6 w-full">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4">
-          <h2 className="text-lg sm:text-xl font-semibold text-foreground break-words">
+          <h2 className="flex items-center gap-2 text-lg sm:text-xl font-semibold text-foreground break-words">
+            <Plus className="h-5 w-5 text-brand" />
             {editingId ? "Edit Video" : "Add New Video"}
           </h2>
           {!showForm ? (
@@ -337,77 +357,89 @@ export default function VideosClient({
       </div>
 
       {/* Videos List */}
-      <div className="space-y-3 w-full">
-        <h2 className="text-lg sm:text-xl font-semibold text-foreground break-words">
-          Tutorials ({videos.length})
-        </h2>
+      <div className="rounded-3xl border border-border bg-surface p-6 shadow-sm shadow-slate-200/50 w-full">
+        <div className="mb-6 grid gap-4 md:grid-cols-[1fr_auto] md:items-center">
+          <div>
+            <h2 className="text-lg sm:text-xl font-semibold text-foreground">
+              Video Library
+            </h2>
+            <p className="mt-2 text-sm text-muted max-w-2xl">
+              A polished collection of tutorials for your team and schools, with quick actions for editing, sharing, and managing each item.
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-2xl border border-border bg-background p-4 text-sm">
+              <p className="text-muted uppercase tracking-[0.2em] text-[10px]">Total videos</p>
+              <p className="mt-2 text-2xl font-semibold text-foreground">{totalVideos}</p>
+            </div>
+            <div className="rounded-2xl border border-border bg-background p-4 text-sm">
+              <p className="text-muted uppercase tracking-[0.2em] text-[10px]">Featured</p>
+              <p className="mt-2 text-2xl font-semibold text-foreground">{featuredVideos}</p>
+            </div>
+          </div>
+        </div>
 
         {videos.length === 0 ? (
-          <div className="text-center py-12 rounded-lg border border-dashed border-border">
-            <p className="text-muted">No videos yet. Create your first one!</p>
+          <div className="text-center py-12 rounded-3xl border border-dashed border-border bg-background">
+            <p className="text-muted">No videos yet. Add a tutorial to get started.</p>
           </div>
         ) : (
-          <div className="grid gap-3 sm:gap-4 w-full">
+          <div className="grid gap-4">
             {videos.map((video) => (
               <div
                 key={video.id}
-                className="rounded-lg border border-border bg-surface p-3 sm:p-4 hover:shadow-md transition w-full"
+                className="rounded-3xl border border-border bg-white p-4 sm:p-5 shadow-sm transition hover:shadow-md"
               >
-                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4 w-full">
-                  <div className="flex-1 min-w-0 w-full">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <h3 className="font-semibold text-foreground text-sm sm:text-base truncate">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2 mb-3">
+                      <h3 className="font-semibold text-foreground text-base sm:text-lg truncate">
                         {video.title}
                       </h3>
+                      <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                        {video.category}
+                      </span>
                       {video.featured && (
-                        <span className="inline-flex items-center rounded-full bg-yellow-100 px-2 py-1 text-xs font-medium text-yellow-700 flex-shrink-0 whitespace-nowrap">
+                        <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
                           Featured
                         </span>
                       )}
                     </div>
-                    <p className="text-xs sm:text-sm text-muted mb-2 line-clamp-2 break-words">
-                      {video.description}
+                    <p className="text-sm text-muted mb-4 line-clamp-3">
+                      {video.description || "No description provided."}
                     </p>
-                    <div className="flex flex-wrap gap-2 sm:gap-3 text-xs text-muted mb-2">
-                      <span className="whitespace-nowrap">📁 {video.category}</span>
-                      <span className="whitespace-nowrap">
-                        📅 {new Date(video.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
-
-                    {/* Share Link */}
-                    <div className="p-2 bg-background rounded text-xs border border-border overflow-x-auto max-w-full">
-                      <code className="text-primary break-all">
-                        {typeof window !== 'undefined' ? `${window.location.origin}/video-tutorials/${video.id}` : `/video-tutorials/${video.id}`}
-                      </code>
+                    <div className="flex flex-wrap gap-3 text-xs text-muted">
+                      <span>Created {new Date(video.createdAt).toLocaleDateString()}</span>
+                      <span className="hidden sm:inline">•</span>
+                      <span className="truncate">{typeof window !== 'undefined' ? `${window.location.origin}/video-tutorials/${video.id}` : `/video-tutorials/${video.id}`}</span>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 flex-shrink-0 w-full sm:w-auto">
-                    <Button
+                  <div className="flex flex-wrap items-center justify-end gap-2">
+                    <button
+                      type="button"
                       onClick={() => copyShareLink(video.id)}
-                      variant="outline"
-                      className="gap-2"
-                      title="Copy shareable link"
+                      aria-label="Copy link"
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100"
                     >
                       <Copy className="h-4 w-4" />
-                    </Button>
-                    <Button
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => handleEdit(video)}
-                      variant="outline"
-                      className="gap-2"
-                      title="Edit video"
+                      aria-label="Edit video"
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-brand/10 text-brand border border-brand/20 transition hover:bg-brand/20"
                     >
                       <Edit2 className="h-4 w-4" />
-                    </Button>
-                    <Button
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => handleDelete(video.id)}
-                      variant="outline"
-                      className="text-red-600 hover:bg-red-50"
-                      title="Delete video"
+                      aria-label="Delete video"
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-error/10 text-error border border-error/20 transition hover:bg-error/20"
                     >
                       <Trash2 className="h-4 w-4" />
-                    </Button>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -415,6 +447,46 @@ export default function VideosClient({
           </div>
         )}
       </div>
+      {toastMessage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/30 p-4">
+          <div className="max-w-sm rounded-3xl bg-white p-5 text-center shadow-xl shadow-slate-900/20">
+            <p className="text-sm font-semibold text-foreground">{toastMessage}</p>
+          </div>
+        </div>
+      )}
+
+      {confirmDeleteVideoId && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/40 p-4">
+          <div className="w-full max-w-lg rounded-3xl border border-border bg-white p-6 shadow-xl shadow-slate-900/20">
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold text-foreground">Delete video</h3>
+              <p className="mt-2 text-sm text-muted">
+                Are you sure you want to delete{' '}
+                <span className="font-semibold text-foreground">
+                  {deleteVideo?.title || "this video"}
+                </span>
+                ? This action cannot be undone.
+              </p>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setConfirmDeleteVideoId(null)}
+                className="inline-flex w-full justify-center rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition hover:bg-slate-100 sm:w-auto"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmDelete}
+                className="inline-flex w-full justify-center rounded-lg bg-error px-4 py-2 text-sm font-medium text-white transition hover:bg-red-600 sm:w-auto"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -35,37 +35,27 @@ export default function SubscriptionsPageClient({
   schools: School[];
 }) {
   const [schools, setSchools] = useState<School[]>(initialSchools);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [planFilter, setPlanFilter] = useState("ALL");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedPlans, setSelectedPlans] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    async function loadSchools() {
-      try {
-        const backendUrl = getBackendUrl();
-        const res = await fetch(`${backendUrl}/schoolbase-admin/api/schools?limit=500`, {
-          credentials: "include",
-        });
-        const data = await res.json();
-        setSchools(data.schools || []);
-        setLoading(false);
-      } catch (err) {
-        console.error("Error loading schools:", err);
-        setLoading(false);
+    setSelectedPlans((prev) => {
+      const next = { ...prev };
+      let changed = false;
+
+      for (const school of schools) {
+        if (school.status === "PENDING" && !next[school.id]) {
+          next[school.id] = "STARTER";
+          changed = true;
+        }
       }
-    }
-    loadSchools();
-  }, []);
-  const [selectedPlans, setSelectedPlans] = useState<Record<string, string>>(
-    schools.reduce((acc, school) => {
-      if (school.status === "PENDING") {
-        acc[school.id] = "STARTER";
-      }
-      return acc;
-    }, {} as Record<string, string>)
-  );
+
+      return changed ? next : prev;
+    });
+  }, [schools]);
 
   // Get pending schools
   const pendingSchools = useMemo(() => {
@@ -114,17 +104,6 @@ export default function SubscriptionsPageClient({
     return schools.filter((s) => s.status === status).length;
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand mx-auto"></div>
-          <p className="mt-3 text-muted">Loading subscriptions...</p>
-        </div>
-      </div>
-    );
-  }
-
   const totalPages = Math.ceil(filteredSchools.length / ITEMS_PER_PAGE);
   const paginatedSchools = filteredSchools.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
@@ -138,14 +117,6 @@ export default function SubscriptionsPageClient({
 
   return (
     <div className="w-full space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">School Subscriptions</h1>
-        <p className="mt-2 max-w-2xl text-sm text-muted">
-          Manage all school subscriptions, plans, and activations across the platform.
-        </p>
-      </div>
-
       {pendingSchools.length > 0 && (
         <div className="rounded-lg border border-border bg-surface p-6">
           <div className="flex items-center gap-2 mb-4">
@@ -222,22 +193,46 @@ export default function SubscriptionsPageClient({
       )}
 
       {/* Search & Filters */}
-      <div className="space-y-4">
-        <div>
-          <input
-            type="text"
-            placeholder="Search by school name, slug, email, or country..."
-            value={searchQuery}
-            onChange={handleSearchChange}
-            className="w-full rounded-lg border border-border bg-surface px-4 py-2 text-sm text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-        </div>
-
-
-        <div className="text-xs text-muted">
+      <div className="grid gap-3 sm:grid-cols-[1fr_auto_auto_auto] sm:items-center">
+        <input
+          type="text"
+          placeholder="Search by school name, slug, email, or country..."
+          value={searchQuery}
+          onChange={handleSearchChange}
+          className="min-w-0 rounded-lg border border-border bg-surface px-4 py-2 text-sm text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary"
+        />
+        <select
+          value={planFilter}
+          onChange={(e) => {
+            setPlanFilter(e.target.value);
+            setCurrentPage(1);
+          }}
+          className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground focus:outline-none"
+        >
+          <option value="ALL">All plans</option>
+          <option value="FREE">Free</option>
+          <option value="STARTER">Starter</option>
+          <option value="GROWTH">Growth</option>
+          <option value="ENTERPRISE">Enterprise</option>
+        </select>
+        <select
+          value={statusFilter}
+          onChange={(e) => {
+            setStatusFilter(e.target.value);
+            setCurrentPage(1);
+          }}
+          className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground focus:outline-none"
+        >
+          <option value="ALL">All statuses</option>
+          <option value="PENDING">Pending</option>
+          <option value="TRIAL">Trial</option>
+          <option value="ACTIVE">Active</option>
+          <option value="SUSPENDED">Suspended</option>
+          <option value="CANCELLED">Cancelled</option>
+        </select>
+        <div className="min-w-0 text-xs text-muted">
           Showing {paginatedSchools.length > 0 ? (currentPage - 1) * ITEMS_PER_PAGE + 1 : 0}–
-          {Math.min(currentPage * ITEMS_PER_PAGE, filteredSchools.length)} of{" "}
-          {filteredSchools.length} school{filteredSchools.length !== 1 ? "s" : ""}
+          {Math.min(currentPage * ITEMS_PER_PAGE, filteredSchools.length)} of {filteredSchools.length} school{filteredSchools.length !== 1 ? "s" : ""}
         </div>
       </div>
 

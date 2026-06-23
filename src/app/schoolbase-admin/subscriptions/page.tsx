@@ -28,7 +28,7 @@ export default function SubscriptionsPage() {
 
   if (loading) {
     return (
-      <div className="p-6 flex items-center justify-center min-h-screen">
+      <div className="px-3 py-6 sm:px-5 flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand mx-auto"></div>
           <p className="mt-4 text-muted">Loading subscriptions...</p>
@@ -38,7 +38,7 @@ export default function SubscriptionsPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="px-3 py-6 sm:px-5 space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Subscriptions</h1>
         <p className="mt-1 text-muted">Manage school subscriptions and billing</p>

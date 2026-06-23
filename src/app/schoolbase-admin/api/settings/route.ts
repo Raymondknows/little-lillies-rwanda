@@ -1,5 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getBackendUrl } from "@/lib/backend-url";
 
-export async function GET() {
-  return NextResponse.json({ error: "Use backend API instead" }, { status: 503 });
+export async function GET(request: NextRequest) {
+  try {
+    const backendUrl = getBackendUrl();
+    const response = await fetch(`${backendUrl}/schoolbase-admin/api/profile`, {
+      headers: {
+        Cookie: request.headers.get('cookie') || '',
+        'Content-Type': 'application/json',
+      },
+    });
+
+    const data = await response.json().catch(() => ({ message: 'Failed to parse response.' }));
+    return NextResponse.json(data, { status: response.status });
+  } catch (error) {
+    console.error('Error proxying settings profile:', error);
+    return NextResponse.json({ message: 'Failed to proxy profile request.' }, { status: 500 });
+  }
 }

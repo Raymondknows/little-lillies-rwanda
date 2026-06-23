@@ -48,6 +48,8 @@ export default function SetupRemindersClient({
   const [filter, setFilter] = useState<"all" | "new">("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [emailLogPage, setEmailLogPage] = useState(1);
+  const [emailLogItemsPerPage, setEmailLogItemsPerPage] = useState(10);
   const [pageLoading, setPageLoading] = useState(true);
 
   // Load schools and email logs
@@ -212,9 +214,24 @@ export default function SetupRemindersClient({
     [displaySchools, currentPage, itemsPerPage]
   );
 
+  const emailLogTotalPages = Math.max(1, Math.ceil(emailLogs.length / emailLogItemsPerPage));
+  const paginatedEmailLogs = useMemo(
+    () =>
+      emailLogs.slice(
+        (emailLogPage - 1) * emailLogItemsPerPage,
+        emailLogPage * emailLogItemsPerPage
+      ),
+    [emailLogs, emailLogPage, emailLogItemsPerPage]
+  );
+
   const handlePageSizeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setItemsPerPage(Number(event.target.value));
     setCurrentPage(1);
+  };
+
+  const handleEmailLogPageSizeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setEmailLogItemsPerPage(Number(event.target.value));
+    setEmailLogPage(1);
   };
 
   const handleFilterToggle = () => {
@@ -429,6 +446,27 @@ export default function SetupRemindersClient({
           </p>
         </div>
 
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
+          <p className="text-sm text-muted">
+            Showing {emailLogs.length === 0 ? 0 : (emailLogPage - 1) * emailLogItemsPerPage + 1}–
+            {Math.min(emailLogPage * emailLogItemsPerPage, emailLogs.length)} of {emailLogs.length} emails
+          </p>
+          <label className="text-sm text-muted">
+            Rows per page
+            <select
+              value={emailLogItemsPerPage}
+              onChange={handleEmailLogPageSizeChange}
+              className="ml-2 rounded-lg border border-border bg-background px-2 py-1 text-sm text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
+            >
+              {PAGE_SIZE_OPTIONS.map((size) => (
+                <option key={size} value={size}>
+                  {size}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
         <div className="overflow-x-auto">
           <table className="w-full divide-y divide-border text-sm">
             <thead className="bg-background text-left text-xs uppercase tracking-[0.15em] text-muted">
@@ -447,7 +485,7 @@ export default function SetupRemindersClient({
                   </td>
                 </tr>
               ) : (
-                emailLogs.map((log) => (
+                paginatedEmailLogs.map((log) => (
                   <tr
                     key={log.id}
                     className="hover:bg-brand/5 transition-colors"
@@ -493,6 +531,16 @@ export default function SetupRemindersClient({
             </tbody>
           </table>
         </div>
+        {emailLogTotalPages > 1 && (
+          <div className="mt-4">
+            <Pagination
+              currentPage={emailLogPage}
+              totalPages={emailLogTotalPages}
+              onPageChange={setEmailLogPage}
+              className="justify-end"
+            />
+          </div>
+        )}
       </div>
     </div>
   );

@@ -36,7 +36,15 @@ function formatDate(date?: string | Date | null) {
   return value.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
-export default function SchoolsViewSwitcher({ initialSchools }: { initialSchools: SchoolRow[] }) {
+export default function SchoolsViewSwitcher({
+  initialSchools,
+  title,
+  subtitle,
+}: {
+  initialSchools: SchoolRow[];
+  title?: string;
+  subtitle?: string;
+}) {
   const [view, setView] = useState<"list" | "grid">("list");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
@@ -117,39 +125,13 @@ export default function SchoolsViewSwitcher({ initialSchools }: { initialSchools
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        {view === "grid" ? (
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center flex-1">
-            <input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search schools..."
-              className="min-w-[240px] rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-            />
-            <select
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value)}
-              className="rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none"
-            >
-              <option value="ALL">All statuses</option>
-              <option value="TRIAL">Trial</option>
-              <option value="ACTIVE">Active</option>
-              <option value="SUSPENDED">Suspended</option>
-              <option value="CANCELLED">Cancelled</option>
-            </select>
-            <select
-              value={verificationFilter}
-              onChange={(event) => setVerificationFilter(event.target.value)}
-              className="rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none"
-            >
-              <option value="ALL">All verifications</option>
-              <option value="VERIFIED">Verified only</option>
-              <option value="UNVERIFIED">Unverified only</option>
-            </select>
-          </div>
-        ) : null}
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+        <div className="min-w-0">
+          {title ? <h1 className="text-3xl font-bold truncate">{title}</h1> : null}
+          {subtitle ? <p className="mt-1 text-muted">{subtitle}</p> : null}
+        </div>
 
-        <div className="flex gap-2 ml-auto">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <button
             onClick={() => setView("list")}
             className={`inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-colors ${
@@ -172,6 +154,37 @@ export default function SchoolsViewSwitcher({ initialSchools }: { initialSchools
           </button>
         </div>
       </div>
+
+      {view === "grid" ? (
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search schools..."
+            className="min-w-[240px] rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+          />
+          <select
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+            className="rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none"
+          >
+            <option value="ALL">All statuses</option>
+            <option value="TRIAL">Trial</option>
+            <option value="ACTIVE">Active</option>
+            <option value="SUSPENDED">Suspended</option>
+            <option value="CANCELLED">Cancelled</option>
+          </select>
+          <select
+            value={verificationFilter}
+            onChange={(event) => setVerificationFilter(event.target.value)}
+            className="rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none"
+          >
+            <option value="ALL">All verifications</option>
+            <option value="VERIFIED">Verified only</option>
+            <option value="UNVERIFIED">Unverified only</option>
+          </select>
+        </div>
+      ) : null}
 
       {view === "list" ? (
         <SchoolTable initialSchools={filteredSchools} />

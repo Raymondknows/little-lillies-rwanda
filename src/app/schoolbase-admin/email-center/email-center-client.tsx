@@ -249,8 +249,8 @@ export default function EmailCenterClient({
 
   // Email logs are loaded as initialEmailLogs from server, fetch from API when available
   useEffect(() => {
-    fetchEmailLogs(1, itemsPerPage);
-  }, [selectedEmailType]);
+    fetchEmailLogs(currentPage, itemsPerPage);
+  }, [selectedEmailType, currentPage, itemsPerPage]);
 
   const emailTypeLabel = useMemo(
     () =>
@@ -496,7 +496,7 @@ export default function EmailCenterClient({
             </button>
             <div className="flex items-center gap-2 rounded-2xl border border-border bg-background px-3 py-2 text-sm text-foreground">
               <label htmlFor="pageSize" className="text-sm text-muted">
-                Rows:
+                Rows per page:
               </label>
               <select
                 id="pageSize"

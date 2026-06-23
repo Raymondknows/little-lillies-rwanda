@@ -103,16 +103,86 @@ export async function sendSetupCompletionReminder(schoolId: string): Promise<any
   }
 }
 
-export async function setSchoolPlanAction(...args: any[]): Promise<any> {
-  throw new Error("Use POST /api/schoolbase-admin/schools/plan instead");
+export async function setSchoolPlanAction(formData: FormData): Promise<any> {
+  const schoolId = formData.get('schoolId')?.toString();
+  const plan = formData.get('plan')?.toString();
+
+  if (!schoolId || !plan) {
+    throw new Error('schoolId and plan are required.');
+  }
+
+  const backendUrl = getBackendUrl();
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get('schoolbase_session')?.value;
+
+  const response = await fetch(`${backendUrl}/schoolbase-admin/api/schools`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(sessionCookie ? { Cookie: `schoolbase_session=${sessionCookie}` } : {}),
+    },
+    body: JSON.stringify({ schoolId, action: 'setPlan', plan }),
+  });
+
+  const data = await response.json().catch(() => ({ message: 'Failed to parse response.' }));
+  if (!response.ok) {
+    throw new Error(data.message || `Failed to set plan (${response.status})`);
+  }
+  return data;
 }
 
-export async function approveSchoolSubscriptionAction(...args: any[]): Promise<any> {
-  throw new Error("Use POST /api/schoolbase-admin/subscriptions/approve instead");
+export async function approveSchoolSubscriptionAction(formData: FormData): Promise<any> {
+  const schoolId = formData.get('schoolId')?.toString();
+  const plan = formData.get('plan')?.toString();
+
+  if (!schoolId || !plan) {
+    throw new Error('schoolId and plan are required to approve a subscription.');
+  }
+
+  const backendUrl = getBackendUrl();
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get('schoolbase_session')?.value;
+
+  const response = await fetch(`${backendUrl}/schoolbase-admin/api/schools`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(sessionCookie ? { Cookie: `schoolbase_session=${sessionCookie}` } : {}),
+    },
+    body: JSON.stringify({ schoolId, action: 'setPlan', plan }),
+  });
+
+  const data = await response.json().catch(() => ({ message: 'Failed to parse response.' }));
+  if (!response.ok) {
+    throw new Error(data.message || `Failed to approve subscription (${response.status})`);
+  }
+  return data;
 }
 
-export async function rejectSchoolSubscriptionAction(...args: any[]): Promise<any> {
-  throw new Error("Use POST /api/schoolbase-admin/subscriptions/reject instead");
+export async function rejectSchoolSubscriptionAction(formData: FormData): Promise<any> {
+  const schoolId = formData.get('schoolId')?.toString();
+  if (!schoolId) {
+    throw new Error('schoolId is required to reject a subscription.');
+  }
+
+  const backendUrl = getBackendUrl();
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get('schoolbase_session')?.value;
+
+  const response = await fetch(`${backendUrl}/schoolbase-admin/api/schools`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(sessionCookie ? { Cookie: `schoolbase_session=${sessionCookie}` } : {}),
+    },
+    body: JSON.stringify({ schoolId, action: 'cancel' }),
+  });
+
+  const data = await response.json().catch(() => ({ message: 'Failed to parse response.' }));
+  if (!response.ok) {
+    throw new Error(data.message || `Failed to reject subscription (${response.status})`);
+  }
+  return data;
 }
 
 export async function createVideoAction(data: any): Promise<any> {

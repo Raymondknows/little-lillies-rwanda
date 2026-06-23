@@ -4,11 +4,12 @@ import { getBackendUrl } from "@/lib/backend-url";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import FeesPageClient from "./fees-client";
+import SubscriptionModal from "@/components/subscription-modal";
 
 export default function FeesPage() {
   const router = useRouter();
   const [data, setData] = useState<{ invoices: any[]; outstanding: number; terms: any[]; currency: string } | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [subscriptionBlocked, setSubscriptionBlocked] = useState<{ reason: string } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -22,7 +23,15 @@ export default function FeesPage() {
         });
 
         if (!response.ok) {
-          throw new Error("Failed to fetch fees data");
+          const errorBody = await response.json().catch(() => null);
+          
+          // Check if subscription is blocked
+          if (response.status === 403 && errorBody?.code === 'SUBSCRIPTION_INACTIVE') {
+            setSubscriptionBlocked({ reason: errorBody.reason || 'Your school subscription is not active' });
+          } else {
+            // For other errors, show as before (though we'll hide them soon)
+          }
+          return;
         }
 
         const feesData = await response.json();
@@ -34,7 +43,6 @@ export default function FeesPage() {
         });
       } catch (err) {
         console.error("Error loading fees:", err);
-        setError("Failed to load fees data");
       } finally {
         setLoading(false);
       }
@@ -99,12 +107,8 @@ export default function FeesPage() {
     );
   }
 
-  if (error) {
-    return (
-      <div className="p-6">
-        <div className="text-red-600">{error}</div>
-      </div>
-    );
+  if (subscriptionBlocked) {
+    return <SubscriptionModal reason={subscriptionBlocked.reason} />;
   }
 
   if (!data) {

@@ -21,7 +21,15 @@ export async function GET(request: NextRequest) {
     });
 
     if (!resp.ok) {
-      return NextResponse.json({ error: `Backend error: ${resp.status}` }, { status: resp.status });
+      const errorBody = await resp.json().catch(() => null);
+      // Forward subscription error information if present
+      if (resp.status === 403 && errorBody?.code === 'SUBSCRIPTION_INACTIVE') {
+        return NextResponse.json(errorBody, { status: resp.status });
+      }
+      return NextResponse.json(
+        errorBody || { error: `Backend error: ${resp.status}` },
+        { status: resp.status }
+      );
     }
 
     const body = await resp.json();

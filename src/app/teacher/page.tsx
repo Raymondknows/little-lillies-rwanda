@@ -13,11 +13,14 @@ import {
   Clipboard,
 } from 'lucide-react';
 import { getTeacherDashboard, type TeacherDashboardData, detectSchoolPhase } from '@/lib/teacher-utils';
+import { SubscriptionBlockedError } from '@/lib/subscription-utils';
+import SubscriptionModal from '@/components/subscription-modal';
 
 export default function TeacherDashboardPage() {
   const [data, setData] = useState<TeacherDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [subscriptionBlocked, setSubscriptionBlocked] = useState<{ reason: string } | null>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -26,7 +29,13 @@ export default function TeacherDashboardPage() {
         setData(dashboardData);
       } catch (err: any) {
         console.error('Error loading teacher dashboard:', err);
-        setError(err.message || 'Failed to load dashboard');
+        
+        // Check if it's a subscription error
+        if (err instanceof SubscriptionBlockedError) {
+          setSubscriptionBlocked({ reason: err.reason });
+        } else {
+          setError(err.message || 'Failed to load dashboard');
+        }
       } finally {
         setLoading(false);
       }
@@ -44,6 +53,10 @@ export default function TeacherDashboardPage() {
         </div>
       </div>
     );
+  }
+
+  if (subscriptionBlocked) {
+    return <SubscriptionModal reason={subscriptionBlocked.reason} />;
   }
 
   if (error) {

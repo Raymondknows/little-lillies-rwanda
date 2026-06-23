@@ -3,12 +3,14 @@
 import { useEffect, useState } from "react";
 import { getBackendUrl } from "@/lib/backend-url";
 import SettingsPageClient from "./settings-client";
+import SubscriptionModal from "@/components/subscription-modal";
 
 export default function SettingsPage() {
   const [school, setSchool] = useState<any>(null);
   const [staff, setStaff] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [subscriptionBlocked, setSubscriptionBlocked] = useState<{ reason: string } | null>(null);
 
   useEffect(() => {
     async function loadSettings() {
@@ -17,6 +19,16 @@ export default function SettingsPage() {
         const response = await fetch(`${backendUrl}/api/admin/settings/data`, {
           credentials: "include",
         });
+
+        // Check for subscription error
+        if (response.status === 403) {
+          const errorBody = await response.json().catch(() => null);
+          if (errorBody?.code === 'SUBSCRIPTION_INACTIVE') {
+            setSubscriptionBlocked({ reason: errorBody.reason || 'Your school subscription is not active' });
+            setLoading(false);
+            return;
+          }
+        }
 
         if (!response.ok) {
           throw new Error("Failed to load settings");
@@ -44,6 +56,10 @@ export default function SettingsPage() {
         </div>
       </div>
     );
+  }
+
+  if (subscriptionBlocked) {
+    return <SubscriptionModal reason={subscriptionBlocked.reason} />;
   }
 
   if (error || !school) {

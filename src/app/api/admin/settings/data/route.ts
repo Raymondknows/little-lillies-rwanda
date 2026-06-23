@@ -21,9 +21,21 @@ export async function GET(request: Request) {
     }
 
     const resp = await fetch(backendUrl, { headers: { cookie: request.headers.get('cookie') || '' } });
-    const body = await resp.arrayBuffer();
-    const headers = new Headers(resp.headers);
-    return new NextResponse(body, { status: resp.status, headers });
+    
+    if (!resp.ok) {
+      const errorBody = await resp.json().catch(() => null);
+      // Forward subscription error information if present
+      if (resp.status === 403 && errorBody?.code === 'SUBSCRIPTION_INACTIVE') {
+        return NextResponse.json(errorBody, { status: resp.status });
+      }
+      return NextResponse.json(
+        errorBody || { error: `Backend error: ${resp.status}` },
+        { status: resp.status }
+      );
+    }
+
+    const body = await resp.json();
+    return NextResponse.json(body, { status: resp.status });
   } catch (err) {
     console.error('Proxy /api/admin/settings/data error:', err);
     return NextResponse.json({ error: String(err) }, { status: 500 });

@@ -4,6 +4,7 @@ import { redirect, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import SharedLayout from '@/components/shared-layout';
 import PendingSchoolModal from '@/components/pending-school-modal';
+import SubscriptionModal from '@/components/subscription-modal';
 import { SubscriptionAlert } from '@/components/subscription-alert';
 import { getBackendUrl } from '@/lib/backend-url';
 
@@ -33,6 +34,7 @@ export default function AdminLayout({
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [subscriptionBlocked, setSubscriptionBlocked] = useState<{ reason: string } | null>(null);
   const [session, setSession] = useState<any>(null);
   const [school, setSchool] = useState<any>(null);
 
@@ -71,7 +73,14 @@ export default function AdminLayout({
         });
         
         if (!schoolRes.ok) {
-          setError('School not found');
+          const errorBody = await schoolRes.json().catch(() => null);
+          
+          // Check if subscription is blocked
+          if (schoolRes.status === 403 && errorBody?.code === 'SUBSCRIPTION_INACTIVE') {
+            setSubscriptionBlocked({ reason: errorBody.reason || 'Your school subscription is not active' });
+          } else {
+            setError(errorBody?.error || 'School not found');
+          }
           setLoading(false);
           return;
         }
@@ -98,6 +107,10 @@ export default function AdminLayout({
         </div>
       </div>
     );
+  }
+
+  if (subscriptionBlocked) {
+    return <SubscriptionModal reason={subscriptionBlocked.reason} />;
   }
 
   if (error || !session || !school) {

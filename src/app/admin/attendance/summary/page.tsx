@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { getBackendUrl } from "@/lib/backend-url";
 import { Button } from "@/components/ui/button";
+import SubscriptionModal from "@/components/subscription-modal";
 
 interface ClassData {
   id: string;
@@ -69,6 +70,7 @@ export default function AttendanceSummaryPage() {
   const [statusFilter, setStatusFilter] = useState<"ALL" | "PRESENT" | "ABSENT" | "LATE">("ALL");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [subscriptionBlocked, setSubscriptionBlocked] = useState<{ reason: string } | null>(null);
   const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
@@ -91,6 +93,14 @@ export default function AttendanceSummaryPage() {
         });
 
         if (!response.ok) {
+          if (response.status === 403) {
+            const errorBody = await response.json().catch(() => null);
+            if (errorBody?.code === 'SUBSCRIPTION_INACTIVE') {
+              setSubscriptionBlocked({ reason: errorBody.reason || 'Your school subscription is not active' });
+              setLoading(false);
+              return;
+            }
+          }
           throw new Error("Failed to load classes");
         }
 
@@ -319,6 +329,10 @@ export default function AttendanceSummaryPage() {
         <Loader2 className="h-8 w-8 animate-spin text-brand" />
       </div>
     );
+  }
+
+  if (subscriptionBlocked) {
+    return <SubscriptionModal reason={subscriptionBlocked.reason} />;
   }
 
   return (

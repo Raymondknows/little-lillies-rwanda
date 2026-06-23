@@ -3,9 +3,10 @@
 import { useEffect, useState } from "react";
 import TeacherResultsEnhancedClient from "./results-client";
 import { useAssessmentData } from "@/lib/hooks/useAssessmentData";
+import SubscriptionModal from "@/components/subscription-modal";
 
 export default function ResultsPage() {
-  const { data, loading, error } = useAssessmentData({
+  const { data, loading, error, subscriptionBlocked } = useAssessmentData({
     endpoint: "/api/teacher/assessments",
   });
 
@@ -17,6 +18,10 @@ export default function ResultsPage() {
         <p className="text-muted">Loading results...</p>
       </div>
     );
+  }
+
+  if (subscriptionBlocked) {
+    return <SubscriptionModal reason={subscriptionBlocked.reason} />;
   }
 
   if (error) {

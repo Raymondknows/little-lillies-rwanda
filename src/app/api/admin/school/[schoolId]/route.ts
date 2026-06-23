@@ -20,6 +20,7 @@ export async function GET(
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        cookie: request.headers.get('cookie') || '',
       },
     });
 

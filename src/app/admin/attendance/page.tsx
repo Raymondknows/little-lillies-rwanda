@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Calendar, Users, CheckCircle, AlertCircle, Clock, Send, TrendingUp, ArrowUpRight, Download, BarChart2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import SubscriptionModal from "@/components/subscription-modal";
 
 interface ClassData {
   id: string;
@@ -76,6 +77,7 @@ export default function AttendancePage() {
   const [saving, setSaving] = useState(false);
   const [notifying, setNotifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [subscriptionBlocked, setSubscriptionBlocked] = useState<{ reason: string } | null>(null);
   const [success, setSuccess] = useState(false);
   const [modifications, setModifications] = useState<{ [key: string]: "PRESENT" | "ABSENT" | "LATE" }>({});
   const [notificationMode, setNotificationMode] = useState<"ALL" | "ABSENT" | "LATE">("ALL");
@@ -89,7 +91,18 @@ export default function AttendancePage() {
         const response = await fetch(`${backendUrl}/api/admin/classes/data`, {
           credentials: "include",
         });
-        if (response.ok) {
+        if (!response.ok) {
+          // Check for subscription blocking
+          if (response.status === 403) {
+            const errorBody = await response.json().catch(() => null);
+            if (errorBody?.code === 'SUBSCRIPTION_INACTIVE') {
+              setSubscriptionBlocked({ reason: errorBody.reason || 'Your school subscription is not active' });
+              setClassesLoading(false);
+              return;
+            }
+          }
+          setError("Failed to load classes");
+        } else {
           const data = await response.json();
           const sorted = (data.classes || []).sort((a: any, b: any) => {
             const phaseOrder = PHASE_ORDER.indexOf(a.phase) - PHASE_ORDER.indexOf(b.phase);
@@ -100,8 +113,6 @@ export default function AttendancePage() {
           if (sorted.length > 0 && selectedClass === "ALL") {
             setSelectedPhase("ALL");
           }
-        } else {
-          setError("Failed to load classes");
         }
       } catch (err) {
         console.error("Failed to fetch classes:", err);
@@ -330,6 +341,21 @@ export default function AttendancePage() {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
+
+  if (subscriptionBlocked) {
+    return <SubscriptionModal reason={subscriptionBlocked.reason} />;
+  }
+
+  if (classesLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand mx-auto"></div>
+          <p className="mt-4 text-muted">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 p-6">

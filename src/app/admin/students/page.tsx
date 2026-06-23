@@ -2,17 +2,15 @@
 
 import { getBackendUrl } from "@/lib/backend-url";
 
-
-
-
 import { useEffect, useState } from "react";
 import StudentsPageClient from "./students-client";
+import SubscriptionModal from "@/components/subscription-modal";
 
 export default function StudentsPage() {
   const [pupils, setPupils] = useState([]);
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [subscriptionBlocked, setSubscriptionBlocked] = useState<{ reason: string } | null>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -23,14 +21,19 @@ export default function StudentsPage() {
           headers: { 'Content-Type': 'application/json' },
         });
         if (!response.ok) {
-          throw new Error(`Failed to fetch: ${response.statusText}`);
+          const errorBody = await response.json().catch(() => null);
+          
+          // Check if subscription is blocked
+          if (response.status === 403 && errorBody?.code === 'SUBSCRIPTION_INACTIVE') {
+            setSubscriptionBlocked({ reason: errorBody.reason || 'Your school subscription is not active' });
+          }
+          return;
         }
         const data = await response.json();
         setPupils(data.pupils || []);
         setClasses(data.classes || []);
       } catch (err) {
         console.error("Error loading students:", err);
-        setError("Failed to load students");
       } finally {
         setLoading(false);
       }
@@ -42,8 +45,8 @@ export default function StudentsPage() {
     return <div className="p-6">Loading...</div>;
   }
 
-  if (error) {
-    return <div className="p-6 text-red-600">{error}</div>;
+  if (subscriptionBlocked) {
+    return <SubscriptionModal reason={subscriptionBlocked.reason} />;
   }
 
   return <StudentsPageClient pupils={pupils} classes={classes} />;

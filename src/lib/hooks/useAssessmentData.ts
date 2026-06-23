@@ -11,7 +11,7 @@ interface UseAssessmentDataOptions {
  * Eliminates boilerplate code in admin/teacher/parent results pages
  * 
  * Usage:
- * const { data, loading, error } = useAssessmentData({
+ * const { data, loading, error, subscriptionBlocked } = useAssessmentData({
  *   endpoint: '/api/admin/results/data'
  * });
  */
@@ -23,17 +23,29 @@ export function useAssessmentData({
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [subscriptionBlocked, setSubscriptionBlocked] = useState<{ reason: string } | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         setError(null);
+        setSubscriptionBlocked(null);
 
         const response = await fetch(endpoint, {
           credentials: "include",
         });
         if (!response.ok) {
+          // Check if subscription is blocked
+          if (response.status === 403) {
+            const errorBody = await response.json().catch(() => null);
+            if (errorBody?.code === 'SUBSCRIPTION_INACTIVE') {
+              setSubscriptionBlocked({ reason: errorBody.reason || 'Your school subscription is not active' });
+              setLoading(false);
+              return;
+            }
+          }
+          
           const errorText = await response.text().catch(() => "");
           throw new Error(
             errorText
@@ -59,7 +71,7 @@ export function useAssessmentData({
     fetchData();
   }, [endpoint, onSuccess, onError]);
 
-  return { data, loading, error };
+  return { data, loading, error, subscriptionBlocked };
 }
 
 /**

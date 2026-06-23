@@ -1,12 +1,9 @@
 "use client";
 
 import { getBackendUrl } from "@/lib/backend-url";
-
-
-
-
 import { useEffect, useState } from "react";
 import TeachersPageClient from "./teachers-client";
+import SubscriptionModal from "@/components/subscription-modal";
 
 export default function AdminTeachersPage() {
   const [classes, setClasses] = useState([]);
@@ -14,6 +11,7 @@ export default function AdminTeachersPage() {
   const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [subscriptionBlocked, setSubscriptionBlocked] = useState<{ reason: string } | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -25,6 +23,15 @@ export default function AdminTeachersPage() {
           headers: { 'Content-Type': 'application/json' },
         });
         if (!response.ok) {
+          // Check for subscription blocking
+          if (response.status === 403) {
+            const errorBody = await response.json().catch(() => null);
+            if (errorBody?.code === 'SUBSCRIPTION_INACTIVE') {
+              setSubscriptionBlocked({ reason: errorBody.reason || 'Your school subscription is not active' });
+              setLoading(false);
+              return;
+            }
+          }
           throw new Error(`Failed to fetch teachers data: ${response.status}`);
         }
         const data = await response.json();
@@ -49,6 +56,10 @@ export default function AdminTeachersPage() {
         <p className="text-muted">Loading teachers...</p>
       </div>
     );
+  }
+
+  if (subscriptionBlocked) {
+    return <SubscriptionModal reason={subscriptionBlocked.reason} />;
   }
 
   if (error) {

@@ -9,6 +9,7 @@ import { useMemo, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { UserGuide } from "@/components/ui/user-guide";
+import SubscriptionModal from "@/components/subscription-modal";
 import { BookOpen, Users, Plus, Edit2, TrendingUp, LayoutGrid, ArrowUpRight } from "lucide-react";
 
 const CLASS_GUIDE = {
@@ -96,6 +97,7 @@ export default function ClassesPageClient({ classes: initialClasses }: { classes
   const [classes, setClasses] = useState<any[]>(initialClasses || []);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [subscriptionBlocked, setSubscriptionBlocked] = useState<{ reason: string } | null>(null);
   const [activePhase, setActivePhase] = useState("ALL");
   const [searchQuery, setSearchQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
@@ -113,7 +115,17 @@ export default function ClassesPageClient({ classes: initialClasses }: { classes
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
         });
-        if (!response.ok) throw new Error("Failed to fetch classes");
+        if (!response.ok) {
+          if (response.status === 403) {
+            const errorBody = await response.json().catch(() => null);
+            if (errorBody?.code === 'SUBSCRIPTION_INACTIVE') {
+              setSubscriptionBlocked({ reason: errorBody.reason || 'Your school subscription is not active' });
+              setLoading(false);
+              return;
+            }
+          }
+          throw new Error("Failed to fetch classes");
+        }
         const data = await response.json();
         setClasses(data.classes || []);
         setError(null);
@@ -259,6 +271,10 @@ export default function ClassesPageClient({ classes: initialClasses }: { classes
       setLoading(false);
     }
   };
+
+  if (subscriptionBlocked) {
+    return <SubscriptionModal reason={subscriptionBlocked.reason} />;
+  }
 
   return (
     <>

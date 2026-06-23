@@ -51,6 +51,8 @@ export interface TeacherDashboardData {
 /**
  * Get teacher dashboard data from backend
  */
+import { SubscriptionBlockedError, checkSubscriptionError } from './subscription-utils';
+
 export async function getTeacherDashboard(): Promise<TeacherDashboardData> {
   const backendUrl = getBackendUrl();
   const response = await fetch(`${backendUrl}/api/teacher/dashboard`, {
@@ -61,6 +63,11 @@ export async function getTeacherDashboard(): Promise<TeacherDashboardData> {
   });
 
   if (!response.ok) {
+    // Check if subscription is blocked
+    const subscriptionError = await checkSubscriptionError(response);
+    if (subscriptionError) {
+      throw new SubscriptionBlockedError(subscriptionError.reason);
+    }
     throw new Error('Failed to fetch teacher dashboard');
   }
 
@@ -80,6 +87,11 @@ export async function getTeacherProfile(): Promise<TeacherProfile> {
   });
 
   if (!response.ok) {
+    // Check if subscription is blocked
+    const subscriptionError = await checkSubscriptionError(response);
+    if (subscriptionError) {
+      throw new SubscriptionBlockedError(subscriptionError.reason);
+    }
     throw new Error('Failed to fetch teacher profile');
   }
 

@@ -5,11 +5,13 @@ import { useEffect, useState } from "react";
 import { CreditCard, Users, Layers, TrendingUp, ArrowUpRight, Clock, ChevronLeft, ChevronRight, DollarSign, BookOpen, MessageSquare, Plus } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 import { getBackendUrl } from "@/lib/backend-url";
+import SubscriptionModal from "@/components/subscription-modal";
 
 export default function AdminDashboardPage() {
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [schoolName, setSchoolName] = useState<string>('');
   const [loading, setLoading] = useState(true);
+  const [subscriptionBlocked, setSubscriptionBlocked] = useState<{ reason: string } | null>(null);
   const [cardScroll, setCardScroll] = useState(0);
 
   useEffect(() => {
@@ -41,6 +43,18 @@ export default function AdminDashboardPage() {
             headers: { 'Content-Type': 'application/json' },
           }),
         ]);
+
+        // Check if any response is blocked by subscription guard
+        for (const res of [feesRes, studentsRes, classesRes, teachersRes]) {
+          if (res.status === 403) {
+            const errorBody = await res.json().catch(() => null);
+            if (errorBody?.code === 'SUBSCRIPTION_INACTIVE') {
+              setSubscriptionBlocked({ reason: errorBody.reason || 'Your school subscription is not active' });
+              setLoading(false);
+              return;
+            }
+          }
+        }
 
         const [feesData, studentsData, classesData, teachersData, verifyData] = await Promise.all([
           feesRes.json(),
@@ -156,6 +170,10 @@ export default function AdminDashboardPage() {
         </div>
       </div>
     );
+  }
+
+  if (subscriptionBlocked) {
+    return <SubscriptionModal reason={subscriptionBlocked.reason} schoolName={schoolName || 'Your School'} />;
   }
 
   const stats = [

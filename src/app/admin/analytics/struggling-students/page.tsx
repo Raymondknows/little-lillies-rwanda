@@ -22,6 +22,7 @@ export default function StrugglingStudentsPage() {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [subscriptionBlocked, setSubscriptionBlocked] = useState<{ reason: string } | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [currentPage, setCurrentPage] = useState(1);
@@ -30,8 +31,17 @@ export default function StrugglingStudentsPage() {
     const fetchAnalytics = async () => {
       try {
         setLoading(true);
-        const response = await fetch("/api/admin/analytics/data");
+        const response = await fetch("/api/admin/analytics/data", { credentials: "include" });
         if (!response.ok) {
+          // Check for subscription blocking
+          if (response.status === 403) {
+            const errorData = await response.json().catch(() => null);
+            if (errorData?.code === 'SUBSCRIPTION_INACTIVE') {
+              setSubscriptionBlocked({ reason: errorData.reason || 'Your school subscription is not active' });
+              setLoading(false);
+              return;
+            }
+          }
           throw new Error(`Failed to fetch analytics: ${response.status}`);
         }
         const data = await response.json();

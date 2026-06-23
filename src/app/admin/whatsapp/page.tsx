@@ -5,6 +5,7 @@ import { useEffect, useState, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MessageCircle, Send, Mail, AlertCircle, CheckCircle, Clock, TrendingUp, ArrowUpRight } from "lucide-react";
+import SubscriptionModal from "@/components/subscription-modal";
 
 interface Notification {
   id: string;
@@ -64,6 +65,10 @@ export default function WhatsAppPage() {
   const [stats, setStats] = useState<NotificationStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [subscriptionError, setSubscriptionError] = useState<{
+    reason?: string;
+    schoolName?: string;
+  } | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState("ALL");
   const [filterStatus, setFilterStatus] = useState("ALL");
@@ -90,6 +95,17 @@ export default function WhatsAppPage() {
         const response = await fetch(`${backendUrl}/api/admin/notifications?${params}`, {
           credentials: "include",
         });
+
+        if (response.status === 403) {
+          const data = await response.json();
+          if (data?.code === 'SUBSCRIPTION_INACTIVE') {
+            setSubscriptionError({
+              reason: data.reason || 'Your school subscription is not active.',
+              schoolName: data.school?.name,
+            });
+          }
+          return;
+        }
 
         if (response.ok) {
           const data = await response.json();
@@ -128,6 +144,21 @@ export default function WhatsAppPage() {
     return (
       <div className="p-6">
         <div className="text-muted">Loading communications...</div>
+      </div>
+    );
+  }
+
+  if (subscriptionError) {
+    return (
+      <div className="p-6">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-foreground flex items-center gap-2 justify-center mb-4">
+            <MessageCircle className="h-8 w-8 text-brand" />
+            Communications Log
+          </h1>
+          <p className="text-muted mb-6">View all notifications sent to parents</p>
+        </div>
+        <SubscriptionModal reason={subscriptionError.reason} schoolName={subscriptionError.schoolName} />
       </div>
     );
   }

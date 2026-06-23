@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { getBackendUrl } from "@/lib/backend-url";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Trash2, Loader } from "lucide-react";
+import { UserGuide, type PageHelpGuide } from "@/components/ui/user-guide";
 import SubscriptionModal from "@/components/subscription-modal";
 
 interface Announcement {
@@ -15,6 +16,63 @@ interface Announcement {
   publishedAt?: string;
   createdAt?: string;
 }
+
+const HELP_GUIDE: PageHelpGuide = {
+  title: "Managing Website & Announcements",
+  overview: "Publish announcements to your school website that parents and guardians can see. Keep your school community informed about important news and updates.",
+  steps: [
+    "Click 'Post news' to create a new announcement.",
+    "Write your announcement title and message.",
+    "Save as Draft to edit later, or Publish immediately.",
+    "Published announcements appear on your school's public website.",
+    "Delete announcements you no longer want to display.",
+  ],
+  commonTasks: [
+    {
+      title: "Create an Announcement",
+      description: "Post news that will be visible on your school website.",
+      tips: [
+        "Click 'Post news' button at the top right",
+        "Enter an engaging title (e.g., 'School Closed Tomorrow')",
+        "Write your message in the body field",
+        "Click 'Publish' to make it live immediately",
+        "Or save as 'Draft' to edit and publish later",
+      ],
+    },
+    {
+      title: "View Published Announcements",
+      description: "See which announcements are live on your website.",
+      tips: [
+        "Only 'Published' announcements appear on your public website",
+        "Drafts are saved but remain hidden from parents",
+        "Publication date shows when each announcement was published",
+      ],
+    },
+    {
+      title: "Delete an Announcement",
+      description: "Remove announcements from your website.",
+      tips: [
+        "Click the trash icon on the right side of any announcement",
+        "Both published and draft announcements can be deleted",
+        "Deletion is permanent",
+      ],
+    },
+  ],
+  faqs: [
+    {
+      question: "Where do announcements appear?",
+      answer: "Published announcements appear on your school's public website that parents can visit. They're organized by date with the newest first.",
+    },
+    {
+      question: "Can I edit an announcement after publishing?",
+      answer: "Currently, you need to delete and recreate an announcement to make changes. We're working on an edit feature for future releases.",
+    },
+    {
+      question: "How many announcements can I post?",
+      answer: "You can post unlimited announcements. We recommend keeping the 5-10 most recent visible for clarity.",
+    },
+  ],
+};
 
 export default function WebsitePage() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -177,6 +235,10 @@ export default function WebsitePage() {
           </div>
         )}
       </div>
+
+      {/* Help & Guide */}
+      <UserGuide guide={HELP_GUIDE} />
+
       {subscriptionError && (
         <SubscriptionModal reason={subscriptionError.reason} schoolName={subscriptionError.schoolName} />
       )}

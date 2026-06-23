@@ -5,7 +5,6 @@ import { useEffect, useState } from 'react';
 import SharedLayout from '@/components/shared-layout';
 import PendingSchoolModal from '@/components/pending-school-modal';
 import SubscriptionModal from '@/components/subscription-modal';
-import { SubscriptionAlert } from '@/components/subscription-alert';
 import { getBackendUrl } from '@/lib/backend-url';
 
 const nav = [
@@ -22,7 +21,7 @@ const nav = [
   { href: "/admin/whatsapp", label: "WhatsApp", icon: "WhatsApp" },
   { href: "/admin/support", label: "Support", icon: "HelpCircle" },
   { href: "/admin/website", label: "Website", icon: "Globe" },
-  { href: "/admin/subscribe", label: "Subscription", icon: "CreditCard" },
+  { href: "/admin/subscription", label: "Subscription", icon: "CreditCard" },
   { href: "/admin/settings", label: "Settings", icon: "Settings" },
 ];
 
@@ -135,7 +134,6 @@ export default function AdminLayout({
 
   return (
     <>
-      {school.status === "TRIAL" && <SubscriptionAlert />}
       <SharedLayout
         navItems={nav}
         school={school}

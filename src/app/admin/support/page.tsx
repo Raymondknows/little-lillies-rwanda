@@ -2,8 +2,66 @@
 
 import { useEffect, useState } from "react";
 import { getBackendUrl } from "@/lib/backend-url";
+import { UserGuide, type PageHelpGuide } from "@/components/ui/user-guide";
 import SupportRequestsClient from "./support-client";
 import SubscriptionModal from "@/components/subscription-modal";
+
+const HELP_GUIDE: PageHelpGuide = {
+  title: "Managing Support Requests",
+  overview: "View and respond to support requests from your school staff and community. Track request status and provide timely assistance.",
+  steps: [
+    "Review incoming support requests from your staff and parents.",
+    "Read the full message and context for each request.",
+    "Respond to requests to resolve issues or provide guidance.",
+    "Update request status as you work on them.",
+    "Mark requests as resolved once completed.",
+  ],
+  commonTasks: [
+    {
+      title: "View a Support Request",
+      description: "Open and read detailed support request information.",
+      tips: [
+        "Click on any request in the list to view full details",
+        "See the complete message thread and history",
+        "Check the priority level and current status",
+        "View sender information and contact details",
+      ],
+    },
+    {
+      title: "Respond to a Request",
+      description: "Send a reply to help resolve the support request.",
+      tips: [
+        "Open the request you want to respond to",
+        "Click 'Add response' or the message input area",
+        "Type your reply with helpful information or next steps",
+        "Send the response to notify the requester",
+      ],
+    },
+    {
+      title: "Update Request Status",
+      description: "Change the status to track progress.",
+      tips: [
+        "Use status options: Open, In Progress, Resolved",
+        "Update to 'In Progress' when you start working on it",
+        "Mark as 'Resolved' when the issue is fixed",
+      ],
+    },
+  ],
+  faqs: [
+    {
+      question: "How do I know when a new request comes in?",
+      answer: "New support requests appear at the top of your list. The number of unread requests is shown in your navigation menu.",
+    },
+    {
+      question: "Can I prioritize certain requests?",
+      answer: "Requests are marked with priority levels (Low, Medium, High, Urgent). Filter by priority to focus on urgent items first.",
+    },
+    {
+      question: "What should I do if I can't resolve a request?",
+      answer: "You can add a note explaining the situation or contact the SchoolBase support team (support@schoolbase.live) to escalate complex issues.",
+    },
+  ],
+};
 
 export type AdminSupportRequestRow = {
   id: string;
@@ -117,6 +175,9 @@ export default function SupportPage() {
       ) : (
         <SupportRequestsClient initialRequests={requests} />
       )}
+
+      {/* Help & Guide */}
+      <UserGuide guide={HELP_GUIDE} />
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { PaystackPurchaseButton } from "@/components/paystack-purchase-button";
 import { Check, Zap, Users, BarChart3, MessageSquare } from "lucide-react";
+import { UserGuide, type PageHelpGuide } from "@/components/ui/user-guide";
 
 interface Plan {
   id: string;
@@ -65,6 +66,72 @@ const defaultPlans: Plan[] = [
     disabled: true,
   },
 ];
+
+const HELP_GUIDE: PageHelpGuide = {
+  title: "Choosing Your SchoolBase Plan",
+  overview: "Select the perfect subscription plan for your school. Each plan offers different features and capacity to match your school's size and needs.",
+  steps: [
+    "Review the features and pricing of each plan.",
+    "Choose the plan that best fits your school's size and requirements.",
+    "Click 'Subscribe Now' to proceed with payment.",
+    "Complete the payment process using Paystack.",
+    "Your subscription activates immediately after successful payment.",
+  ],
+  commonTasks: [
+    {
+      title: "Compare Plans",
+      description: "Understand the differences between subscription tiers.",
+      tips: [
+        "STARTER is best for small schools with up to 150 students",
+        "GROWTH (Standard) supports up to 600 students with advanced features",
+        "ENTERPRISE is customizable for large institutions",
+        "All plans include parent portal access and email support",
+      ],
+    },
+    {
+      title: "Subscribe to a Plan",
+      description: "Purchase a subscription for your school.",
+      tips: [
+        "Select your desired plan from the list below",
+        "Click 'Subscribe Now' on your chosen plan",
+        "Enter your email address for the payment",
+        "Complete payment and your school gains immediate access",
+      ],
+    },
+    {
+      title: "Upgrade Your Plan",
+      description: "Move to a higher tier during your subscription.",
+      tips: [
+        "Go to your Subscription page anytime",
+        "Click 'Upgrade Plan' to view higher tiers",
+        "Complete the upgrade payment",
+        "Your new plan features activate immediately",
+      ],
+    },
+  ],
+  faqs: [
+    {
+      question: "What's included in all plans?",
+      answer: "All plans include student management, fee collection basics, parent portal access, and email support. Higher plans add more features like WhatsApp integration, results publishing, and advanced analytics.",
+    },
+    {
+      question: "How long does a subscription last?",
+      answer: "Each subscription lasts 30 days from the payment date. You can renew anytime before expiry, and you'll receive reminders as your subscription date approaches.",
+    },
+    {
+      question: "Can I change plans later?",
+      answer: "Yes! You can upgrade to a higher plan anytime from your subscription dashboard. Downgrades take effect at your next renewal period.",
+    },
+    {
+      question: "What payment methods are accepted?",
+      answer: "SchoolBase uses Paystack for secure payments. You can pay using bank transfers, cards, USSD, or other methods supported by Paystack in your region.",
+    },
+    {
+      question: "Is there a free trial?",
+      answer: "Yes! New schools get a free 14-day trial with all features unlocked. You can explore the platform before choosing a paid plan.",
+    },
+  ],
+};
 
 export default function SubscribePage() {
   const [loading, setLoading] = useState(true);
@@ -332,6 +399,9 @@ export default function SubscribePage() {
           ) : null}
         </>
       ) : null}
+
+      {/* Help & Guide */}
+      <UserGuide guide={HELP_GUIDE} />
     </div>
   );
 }

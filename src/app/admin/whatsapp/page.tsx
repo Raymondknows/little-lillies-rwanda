@@ -5,6 +5,7 @@ import { useEffect, useState, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MessageCircle, Send, Mail, AlertCircle, CheckCircle, Clock, TrendingUp, ArrowUpRight } from "lucide-react";
+import { UserGuide, type PageHelpGuide } from "@/components/ui/user-guide";
 import SubscriptionModal from "@/components/subscription-modal";
 
 interface Notification {
@@ -59,6 +60,64 @@ const getStatusConfig = (status?: string) =>
 
 const PAGE_SIZE_OPTIONS = [10, 50, 100, 200, 500] as const;
 const DEFAULT_ITEMS_PER_PAGE = 50;
+
+const HELP_GUIDE: PageHelpGuide = {
+  title: "WhatsApp & Email Notifications",
+  overview: "Monitor all WhatsApp and email notifications sent to parents and guardians. Track delivery status and troubleshoot failed messages.",
+  steps: [
+    "View all notifications sent through WhatsApp and Email channels.",
+    "Check the status of each notification (Sent, Failed, Pending).",
+    "Filter notifications by type (invoices, reminders, attendance) or status.",
+    "Review failure reasons to understand why messages didn't deliver.",
+    "Monitor statistics to see overall notification performance.",
+  ],
+  commonTasks: [
+    {
+      title: "Check Notification Status",
+      description: "See if messages reached parents successfully.",
+      tips: [
+        "Green 'Sent' status means the message was delivered",
+        "Yellow 'Pending' means the system is still processing",
+        "Red 'Failed' means the message didn't reach the recipient",
+        "View the failure reason by clicking on the failed notification",
+      ],
+    },
+    {
+      title: "View Notification Details",
+      description: "See the full content and recipient information.",
+      tips: [
+        "Click any notification row to see full details",
+        "See who received the message (guardian name)",
+        "Check the message content and when it was sent",
+        "View the sending channel (WhatsApp or Email)",
+      ],
+    },
+    {
+      title: "Filter Notifications",
+      description: "Find specific types of messages.",
+      tips: [
+        "Use status filter to find Failed or Pending messages",
+        "Filter by type: Invoice, Fee Reminder, or Attendance",
+        "Filter by channel: WhatsApp or Email",
+        "Combine filters to narrow down results",
+      ],
+    },
+  ],
+  faqs: [
+    {
+      question: "Why did a notification fail?",
+      answer: "Common reasons include invalid phone numbers, network issues, or the recipient opting out of WhatsApp messages. Check the failure reason in the notification details.",
+    },
+    {
+      question: "How long does delivery take?",
+      answer: "WhatsApp and Email usually deliver within seconds. Pending messages should resolve within a few minutes. If stuck longer, it may indicate a system issue.",
+    },
+    {
+      question: "Can I resend a failed notification?",
+      answer: "Currently, failed notifications must be resent through their original trigger (e.g., resend reminders or reissue invoices). Manual resend is coming in a future update.",
+    },
+  ],
+};
 
 export default function WhatsAppPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -495,20 +554,8 @@ export default function WhatsAppPage() {
         </div>
       )}
 
-      {/* Info Section */}
-      <div className="rounded-lg border border-border bg-surface p-6">
-        <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
-          <MessageCircle className="h-5 w-5" />
-          About Communications
-        </h3>
-        <ul className="space-y-2 text-sm text-muted">
-          <li>• All notifications sent via issue bills, reminders, and attendance updates are logged here</li>
-          <li>• Each message is sent via both WhatsApp and Email simultaneously</li>
-          <li>• View delivery status and failure reasons for troubleshooting</li>
-          <li>• Filter by type, status, and channel to find specific communications</li>
-          <li>• Reference numbers link back to specific invoices or attendance records</li>
-        </ul>
-      </div>
+      {/* Help & Guide */}
+      <UserGuide guide={HELP_GUIDE} />
     </div>
   );
 }

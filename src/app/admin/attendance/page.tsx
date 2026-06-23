@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Calendar, Users, CheckCircle, AlertCircle, Clock, Send, TrendingUp, ArrowUpRight, Download, BarChart2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { UserGuide, type PageHelpGuide } from "@/components/ui/user-guide";
 import SubscriptionModal from "@/components/subscription-modal";
 
 interface ClassData {
@@ -63,6 +64,72 @@ const PHASE_LABELS: { [key: string]: string } = {
   EARLY_YEARS: "Early Years",
   PRIMARY: "Primary",
   SECONDARY: "Secondary",
+};
+
+const HELP_GUIDE: PageHelpGuide = {
+  title: "Managing Attendance Records",
+  overview: "Record and track student attendance for each class and date. Monitor attendance rates by student and class, and send notifications to parents about absences.",
+  steps: [
+    "Select a date to record attendance for.",
+    "Choose a class to mark attendance.",
+    "Mark each student as Present, Absent, or Late.",
+    "Save attendance records for the class.",
+    "View attendance summary and history.",
+    "Send absence notifications to parents.",
+  ],
+  commonTasks: [
+    {
+      title: "Record Attendance",
+      description: "Mark students present or absent for the day.",
+      tips: [
+        "Select today's date or a past date from the calendar",
+        "Choose a class from the phase list",
+        "Click on each student to toggle Present/Absent/Late",
+        "Mark all students quickly using keyboard shortcuts",
+        "Click 'Save attendance' when finished",
+        "Confirmation shows number of records saved",
+      ],
+    },
+    {
+      title: "View Attendance Summary",
+      description: "See historical attendance records and patterns.",
+      tips: [
+        "Click 'View attendance summary' button",
+        "Filter by date range to see weekly or monthly trends",
+        "See total present, absent, and late records",
+        "View individual student attendance history",
+        "Export data as CSV for reports or analysis",
+      ],
+    },
+    {
+      title: "Send Absence Notifications",
+      description: "Alert parents when students are absent.",
+      tips: [
+        "Configure notification settings in your school settings",
+        "Notifications are sent via WhatsApp or Email automatically",
+        "Parents receive alerts when their child is marked absent",
+        "You can view notification status in the WhatsApp & Email section",
+      ],
+    },
+  ],
+  faqs: [
+    {
+      question: "Can I edit attendance after saving?",
+      answer: "Yes, you can update attendance records by selecting the same date and class again. Changes overwrite the previous record.",
+    },
+    {
+      question: "How are absence notifications sent?",
+      answer: "Automated notifications are sent to parents via WhatsApp and Email based on your school's communication settings. You can view delivery status in the WhatsApp & Email page.",
+    },
+    {
+      question: "Can I export attendance data?",
+      answer: "Yes, in the attendance summary you can download attendance records as CSV files for further analysis or sharing.",
+    },
+    {
+      question: "What's the difference between Absent and Late?",
+      answer: "Absent means the student didn't come to school. Late means the student arrived after the class started but still attended.",
+    },
+  ],
 };
 
 export default function AttendancePage() {
@@ -700,6 +767,9 @@ export default function AttendancePage() {
           ) : null}
         </>
       )}
+
+      {/* Help & Guide */}
+      <UserGuide guide={HELP_GUIDE} />
     </div>
   );
 }

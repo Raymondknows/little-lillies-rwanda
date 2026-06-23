@@ -185,10 +185,17 @@ export function PaystackPurchaseButton({
       if (isSubscription) {
         const backendBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3006";
         if (!isValidEmail(email)) {
-        throw new Error("Please use a valid email address before checking out.");
-      }
+          throw new Error("Please use a valid email address before checking out.");
+        }
 
-      const response = await fetch(`${backendBaseUrl}/api/paystack/init`, {
+        // Set a timeout to reset loading state if redirect doesn't happen
+        let redirectTimeout: number | null = null;
+        redirectTimeout = window.setTimeout(() => {
+          setError("Payment redirect timed out. Please try again.");
+          setLoading(false);
+        }, 5000); // 5 second timeout
+
+        const response = await fetch(`${backendBaseUrl}/api/paystack/init`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -207,15 +214,24 @@ export function PaystackPurchaseButton({
 
         const data = await response.json();
         if (!response.ok) {
+          if (redirectTimeout !== null) window.clearTimeout(redirectTimeout);
           throw new Error(data.error || "Failed to initialize payment.");
         }
 
         const authorizationUrl = data?.authorization_url || data?.data?.authorization_url;
         if (!authorizationUrl) {
+          if (redirectTimeout !== null) window.clearTimeout(redirectTimeout);
           throw new Error("Paystack authorization URL was not returned.");
         }
 
-        window.location.href = authorizationUrl;
+        // Attempt redirect
+        try {
+          window.location.href = authorizationUrl;
+        } catch (redirectError) {
+          if (redirectTimeout !== null) window.clearTimeout(redirectTimeout);
+          setLoading(false);
+          throw new Error("Unable to redirect to payment gateway. Please try again.");
+        }
         return;
       }
 

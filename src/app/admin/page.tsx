@@ -11,6 +11,7 @@ export default function AdminDashboardPage() {
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [schoolName, setSchoolName] = useState<string>('');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [subscriptionBlocked, setSubscriptionBlocked] = useState<{ reason: string } | null>(null);
   const [cardScroll, setCardScroll] = useState(0);
 
@@ -18,86 +19,109 @@ export default function AdminDashboardPage() {
     async function loadData() {
       try {
         const backendUrl = getBackendUrl();
+        console.log('[Dashboard] Loading from:', backendUrl);
         
-        // Fetch all data in parallel
-        const [feesRes, studentsRes, classesRes, teachersRes, verifyRes] = await Promise.all([
-          fetch(`${backendUrl}/api/admin/fees/data`, {
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-          }),
-          fetch(`${backendUrl}/api/admin/students/data`, {
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-          }),
-          fetch(`${backendUrl}/api/admin/classes/data`, {
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-          }),
-          fetch(`${backendUrl}/api/admin/teachers/data`, {
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-          }),
-          fetch(`${backendUrl}/api/admin/verify`, {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-          }),
-        ]);
-
-        // Check if any response is blocked by subscription guard
-        for (const res of [feesRes, studentsRes, classesRes, teachersRes]) {
-          if (res.status === 403) {
-            const errorBody = await res.json().catch(() => null);
-            if (errorBody?.code === 'SUBSCRIPTION_INACTIVE') {
-              setSubscriptionBlocked({ reason: errorBody.reason || 'Your school subscription is not active' });
-              setLoading(false);
-              return;
-            }
-          }
-        }
-
-        const [feesData, studentsData, classesData, teachersData, verifyData] = await Promise.all([
-          feesRes.json(),
-          studentsRes.json(),
-          classesRes.json(),
-          teachersRes.json(),
-          verifyRes.json(),
-        ]);
-
-        console.log('Dashboard data:', {
-          fees: feesData,
-          students: studentsData,
-          classes: classesData,
-          teachers: teachersData,
-          verify: verifyData,
-        });
-
-        // Extract school name - fetch the full school object just like the sidebar does
-        let schoolNameToUse = '';
-        if (verifyData.authenticated && verifyData.session?.schoolId) {
-          try {
-            const schoolRes = await fetch(`${backendUrl}/api/admin/school/${verifyData.session.schoolId}`, {
+        // Create abort controller for timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+        
+        try {
+          // Fetch all data in parallel
+          const [feesRes, studentsRes, classesRes, teachersRes, verifyRes] = await Promise.all([
+            fetch(`${backendUrl}/api/admin/fees/data`, {
               credentials: 'include',
               headers: { 'Content-Type': 'application/json' },
-            });
-            if (schoolRes.ok) {
-              const schoolData = await schoolRes.json();
-              schoolNameToUse = schoolData?.name || '';
-            }
-          } catch (err) {
-            console.error('Error fetching school:', err);
-          }
-        }
+              signal: controller.signal,
+            }).catch(err => {
+              console.error('[Dashboard] Fees fetch error:', err.message);
+              throw err;
+            }),
+            fetch(`${backendUrl}/api/admin/students/data`, {
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              signal: controller.signal,
+            }).catch(err => {
+              console.error('[Dashboard] Students fetch error:', err.message);
+              throw err;
+            }),
+            fetch(`${backendUrl}/api/admin/classes/data`, {
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              signal: controller.signal,
+            }).catch(err => {
+              console.error('[Dashboard] Classes fetch error:', err.message);
+              throw err;
+            }),
+            fetch(`${backendUrl}/api/admin/teachers/data`, {
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              signal: controller.signal,
+            }).catch(err => {
+              console.error('[Dashboard] Teachers fetch error:', err.message);
+              throw err;
+            }),
+            fetch(`${backendUrl}/api/admin/verify`, {
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              signal: controller.signal,
+            }).catch(err => {
+              console.error('[Dashboard] Verify fetch error:', err.message);
+              throw err;
+            }),
+          ]);
 
-        // Count active pupils
-        const pupils = studentsData.pupils || [];
-        const pupilCount = pupils.filter((p: any) => p.isActive).length;
-        
-        // Count classes
-        const classCount = (classesData.classes || []).length;
-        
-        // Get recent pupils (last 3 added)
-        const recentPupils = pupils
+          clearTimeout(timeoutId);
+
+          // Check if any response is blocked by subscription guard
+          for (const res of [feesRes, studentsRes, classesRes, teachersRes]) {
+            if (res.status === 403) {
+              const errorBody = await res.json().catch(() => null);
+              if (errorBody?.code === 'SUBSCRIPTION_INACTIVE') {
+                setSubscriptionBlocked({ reason: errorBody.reason || 'Your school subscription is not active' });
+                setLoading(false);
+                return;
+              }
+            }
+          }
+
+          const [feesData, studentsData, classesData, teachersData, verifyData] = await Promise.all([
+            feesRes.json(),
+            studentsRes.json(),
+            classesRes.json(),
+            teachersRes.json(),
+            verifyRes.json(),
+          ]);
+
+          console.log('[Dashboard] Data loaded successfully');
+
+          // Extract school name - fetch the full school object just like the sidebar does
+          let schoolNameToUse = '';
+          if (verifyData.authenticated && verifyData.session?.schoolId) {
+            try {
+              const schoolRes = await fetch(`${backendUrl}/api/admin/school/${verifyData.session.schoolId}`, {
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                signal: controller.signal,
+              });
+              if (schoolRes.ok) {
+                const schoolData = await schoolRes.json();
+                schoolNameToUse = schoolData?.name || '';
+              }
+            } catch (err) {
+              console.error('[Dashboard] Error fetching school:', err);
+            }
+          }
+
+          // Count active pupils
+          const pupils = studentsData.pupils || [];
+          const pupilCount = pupils.filter((p: any) => p.isActive).length;
+          
+          // Count classes
+          const classCount = (classesData.classes || []).length;
+          
+          // Get recent pupils (last 3 added)
+          const recentPupils = pupils
           .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
           .slice(0, 3);
         
@@ -152,8 +176,28 @@ export default function AdminDashboardPage() {
         });
         setSchoolName(schoolNameToUse);
         setLoading(false);
+        } catch (timeoutErr: unknown) {
+          const error = timeoutErr as any;
+          if (error?.name === 'AbortError') {
+            console.error('[Dashboard] Request timeout - backend may be unreachable');
+            setError('Backend service is unavailable. Please refresh the page.');
+            setLoading(false);
+          } else {
+            throw timeoutErr;
+          }
+        }
       } catch (err) {
-        console.error("Error loading dashboard:", err);
+        console.error('[Dashboard] Error loading dashboard:', err);
+        console.error('[Dashboard] Error details:', {
+          message: err instanceof Error ? err.message : String(err),
+          type: err instanceof Error ? err.constructor.name : typeof err,
+        });
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        if (errorMsg.includes('Failed to fetch')) {
+          setError('Cannot reach the backend server. Is it running?');
+        } else {
+          setError('Failed to load dashboard. Please try refreshing the page.');
+        }
         setLoading(false);
       }
     }
@@ -167,6 +211,34 @@ export default function AdminDashboardPage() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand mx-auto"></div>
           <p className="mt-4 text-muted">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center max-w-md">
+          <div className="mb-4">
+            <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+          </div>
+          <h2 className="text-lg font-semibold mb-2">Cannot Load Dashboard</h2>
+          <p className="text-muted mb-6">{error}</p>
+          <button
+            onClick={() => {
+              setError(null);
+              setLoading(true);
+              window.location.reload();
+            }}
+            className="bg-brand text-white px-6 py-2 rounded-lg hover:bg-brand/90 transition-colors"
+          >
+            Try Again
+          </button>
         </div>
       </div>
     );

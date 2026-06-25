@@ -2,7 +2,7 @@
 
 import { getBackendUrl } from "@/lib/backend-url";
 
-import { useMemo, useState, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
@@ -74,30 +74,90 @@ export default function SupportRequestsClient({
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
-  const [replyText, setReplyText] = useState("");
   const [replyStatus, setReplyStatus] = useState("IN_PROGRESS");
+  const [readRequestIds, setReadRequestIds] = useState<string[]>([]);
+  const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [replyError, setReplyError] = useState<string | null>(null);
   const [replySuccess, setReplySuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function loadRequests() {
-      try {
-        const backendUrl = getBackendUrl();
-        const res = await fetch(`${backendUrl}/schoolbase-admin/api/support`, {
-          credentials: "include",
-        });
-        const data = await res.json();
-        setRequests(data.supportRequests || []);
-        setLoading(false);
-      } catch (err) {
-        console.error("Error loading support requests:", err);
+  const refreshRequests = useCallback(async (showLoading = false) => {
+    if (showLoading) {
+      setLoading(true);
+    }
+
+    try {
+      const backendUrl = getBackendUrl();
+      const res = await fetch(`${backendUrl}/schoolbase-admin/api/support`, {
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        throw new Error("Unable to load support requests.");
+      }
+
+      const data = await res.json();
+      setRequests(data.supportRequests || []);
+    } catch (err) {
+      console.error("Error loading support requests:", err);
+    } finally {
+      if (showLoading) {
         setLoading(false);
       }
     }
-    loadRequests();
   }, []);
+
+  useEffect(() => {
+    try {
+      const storedRead = window.localStorage.getItem("support:read-requests");
+      if (storedRead) {
+        setReadRequestIds(JSON.parse(storedRead));
+      }
+
+      const storedDrafts = window.localStorage.getItem("support:reply-drafts");
+      if (storedDrafts) {
+        setReplyDrafts(JSON.parse(storedDrafts));
+      }
+    } catch (err) {
+      console.error("Error loading draft state:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem("support:read-requests", JSON.stringify(readRequestIds));
+  }, [readRequestIds]);
+
+  useEffect(() => {
+    window.localStorage.setItem("support:reply-drafts", JSON.stringify(replyDrafts));
+  }, [replyDrafts]);
+
+  useEffect(() => {
+    void refreshRequests(true);
+
+    const intervalId = window.setInterval(() => {
+      void refreshRequests(false);
+    }, 10000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        void refreshRequests(false);
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [refreshRequests]);
+
+  useEffect(() => {
+    if (selectedRequestId) {
+      setReadRequestIds((current) => (current.includes(selectedRequestId) ? current : [...current, selectedRequestId]));
+    }
+  }, [selectedRequestId]);
 
   const filtered = useMemo(
     () =>
@@ -120,9 +180,25 @@ export default function SupportRequestsClient({
     [requests, search, statusFilter],
   );
 
+  const unreadCount = useMemo(
+    () => requests.filter((request) => !readRequestIds.includes(request.id)).length,
+    [requests, readRequestIds],
+  );
+
   const selectedRequest = selectedRequestId
     ? requests.find((request) => request.id === selectedRequestId) ?? null
     : null;
+
+  useEffect(() => {
+    if (filtered.length === 0) {
+      if (selectedRequestId) setSelectedRequestId(null);
+      return;
+    }
+
+    if (!selectedRequestId || !filtered.some((request) => request.id === selectedRequestId)) {
+      setSelectedRequestId(filtered[0].id);
+    }
+  }, [filtered, selectedRequestId]);
 
   if (loading) {
     return (
@@ -135,9 +211,37 @@ export default function SupportRequestsClient({
     );
   }
 
+  const quickReplies = [
+    {
+      label: "Need more details",
+      text: "Thanks for reporting this. Could you please share a bit more detail about the issue, including screenshots, steps to reproduce, and the impact on your school operations?",
+    },
+    {
+      label: "Thanks for waiting",
+      text: "Thanks for your patience. We are reviewing this issue and will follow up with an update shortly with the next steps.",
+    },
+    {
+      label: "Investigating",
+      text: "We have received your report and are investigating the issue now. We will keep you updated as we work through it.",
+    },
+    {
+      label: "Action required",
+      text: "We need a little more information from your side to proceed. Please reply with the affected module, user role, and any recent changes made.",
+    },
+    {
+      label: "Resolved",
+      text: "This issue has now been resolved. Please test it on your end and let us know if anything else comes up.",
+    },
+    {
+      label: "Escalated",
+      text: "We have escalated this request to our technical team. You will receive an update as soon as we have more information.",
+    },
+  ];
+
   const handleReply = async () => {
     if (!selectedRequest) return;
-    if (!replyText.trim()) {
+    const currentDraft = replyDrafts[selectedRequest.id] ?? "";
+    if (!currentDraft.trim()) {
       setReplyError("Reply cannot be empty.");
       return;
     }
@@ -154,7 +258,7 @@ export default function SupportRequestsClient({
         credentials: 'include',
         body: JSON.stringify({
           requestId: selectedRequest.id,
-          response: replyText,
+          response: currentDraft,
           status: replyStatus,
         }),
       });
@@ -170,8 +274,12 @@ export default function SupportRequestsClient({
         ),
       );
       setReplySuccess("Reply sent successfully.");
-      setReplyText("");
-      setSelectedRequestId(null);
+      setReplyDrafts((current) => {
+        const next = { ...current };
+        delete next[selectedRequest.id];
+        return next;
+      });
+      setSelectedRequestId(selectedRequest.id);
     } catch (err) {
       setReplyError(err instanceof Error ? err.message : "Unable to send reply.");
     } finally {
@@ -180,190 +288,221 @@ export default function SupportRequestsClient({
   };
 
   return (
-    <div className="space-y-8">
-      <div className="rounded-3xl border border-border bg-surface p-6 shadow-sm">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-          <div className="space-y-2">
-            <h2 className="text-lg font-semibold text-foreground">All support requests</h2>
-            <p className="text-sm text-muted">
-              Review and filter support tickets by school, priority, or status. Select a ticket to reply from the panel below.
-            </p>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_200px] xl:grid-cols-[360px_minmax(0,1fr)]">
-            <input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search tickets..."
-              className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-            />
-            <select
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value)}
-              className="rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none"
-            >
-              <option value="ALL">All statuses</option>
-              <option value="OPEN">Open</option>
-              <option value="IN_PROGRESS">In progress</option>
-              <option value="RESOLVED">Resolved</option>
-              <option value="CLOSED">Closed</option>
-            </select>
-          </div>
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 border-b border-border pb-6 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Support Center</h1>
+          <p className="mt-1 text-sm text-muted">
+            Review and respond to school support tickets from a single, focused workspace.
+          </p>
         </div>
-
-        <div className="mt-6 overflow-x-auto">
-          <table className="min-w-full divide-y divide-border text-sm">
-            <thead className="bg-background text-left text-xs uppercase tracking-[0.15em] text-muted">
-              <tr>
-                <th className="px-4 py-3">Subject</th>
-                <th className="px-4 py-3">School</th>
-                <th className="px-4 py-3">Priority</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Created</th>
-                <th className="px-4 py-3">Response</th>
-                <th className="px-4 py-3">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-sm text-muted">
-                    No support requests match your search.
-                  </td>
-                </tr>
-              ) : (
-                filtered.map((request) => (
-                  <tr key={request.id} className="hover:bg-brand/5 transition-colors">
-                    <td className="px-4 py-4 font-semibold text-foreground">{request.subject}</td>
-                    <td className="px-4 py-4 text-muted">
-                      {request.school ? (
-                        <Link href={`/schoolbase-admin/schools/${request.school.id}`} className="text-brand hover:underline">
-                          {request.school.name}
-                        </Link>
-                      ) : (
-                        "Unknown"
-                      )}
-                    </td>
-                    <td className="px-4 py-4">
-                      <span className={`inline-flex rounded-full px-3 py-1 text-[11px] font-semibold ${priorityClasses(request.priority)}`}>
-                        {request.priority}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4">
-                      <span className={`inline-flex rounded-full px-3 py-1 text-[11px] font-semibold ${statusClasses(request.status)}`}>
-                        {request.status.replace("_", " ")}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4 text-muted">{formatDate(request.createdAt)}</td>
-                    <td className="px-4 py-4 text-muted line-clamp-2">
-                      {request.response ? request.response : "No reply yet."}
-                    </td>
-                    <td className="px-4 py-4">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedRequestId(request.id);
-                          setReplyText(request.response ?? "");
-                          setReplyStatus(request.status === "OPEN" ? "IN_PROGRESS" : request.status);
-                          setReplyError(null);
-                          setReplySuccess(null);
-                        }}
-                        className="rounded-2xl border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground transition hover:border-brand hover:text-brand"
-                      >
-                        Reply
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search tickets..."
+            className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 sm:w-64"
+          />
+          <select
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+            className="rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none"
+          >
+            <option value="ALL">All statuses</option>
+            <option value="OPEN">Open</option>
+            <option value="IN_PROGRESS">In progress</option>
+            <option value="RESOLVED">Resolved</option>
+            <option value="CLOSED">Closed</option>
+          </select>
         </div>
       </div>
 
-      {selectedRequest ? (
-        <section className="rounded-3xl border border-border bg-surface p-6 shadow-sm">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
+        <aside className="rounded-3xl border border-border bg-surface p-4 shadow-sm lg:max-h-[70vh] lg:overflow-y-auto lg:overflow-x-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          <div className="mb-4 flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-foreground">Reply to support request</h2>
-              <p className="mt-1 text-sm text-muted">{selectedRequest.subject} — {selectedRequest.school?.name ?? "Unknown school"}</p>
+              <h3 className="text-sm font-semibold text-foreground">Tickets</h3>
+              <p className="text-xs text-muted">{filtered.length} visible • {unreadCount} unread</p>
             </div>
-            <button
-              type="button"
-              onClick={() => setSelectedRequestId(null)}
-              className="rounded-2xl border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground transition hover:border-brand hover:text-brand"
-            >
-              Close
-            </button>
           </div>
 
-          <div className="space-y-4">
-            <div className="rounded-3xl border border-border bg-background p-4">
-              <h3 className="text-sm font-semibold text-foreground">Conversation thread</h3>
-              <div className="mt-4 space-y-3">
-                {selectedRequest.messages.length > 0 ? (
-                  selectedRequest.messages.map((message) => (
-                    <div key={message.id} className="rounded-2xl border border-border bg-surface p-4">
-                      <div className="flex items-center justify-between gap-3 text-xs text-muted">
-                        <span className="font-semibold text-foreground">
-                          {message.senderRole === "SCHOOL" ? message.senderName || "School" : message.senderName || "Support team"}
-                        </span>
-                        <span>{formatDate(message.createdAt)}</span>
+          <div className="space-y-2">
+            {filtered.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-border bg-background p-4 text-sm text-muted">
+                No support requests match your search.
+              </div>
+            ) : (
+              filtered.map((request) => {
+                const isActive = selectedRequest?.id === request.id;
+                return (
+                  <button
+                    key={request.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedRequestId(request.id);
+                      setReplyStatus(request.status === "OPEN" ? "IN_PROGRESS" : request.status);
+                      setReplyError(null);
+                      setReplySuccess(null);
+                    }}
+                    className={`w-full rounded-2xl border p-3 text-left transition ${isActive ? "border-brand bg-brand/5 shadow-sm" : "border-border bg-background hover:border-brand/40 hover:bg-brand/5"}`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-foreground">{request.subject}</p>
+                        <p className="mt-1 text-xs text-muted">{request.school?.name ?? "Unknown school"}</p>
                       </div>
-                      <p className="mt-2 text-sm leading-6 text-foreground whitespace-pre-line">{message.body}</p>
+                      <div className="flex flex-col items-end gap-1">
+                        {!readRequestIds.includes(request.id) ? (
+                          <span className="rounded-full bg-brand/10 px-2 py-1 text-[10px] font-semibold text-brand">New</span>
+                        ) : null}
+                        <span className={`inline-flex rounded-full px-2 py-1 text-[10px] font-semibold ${statusClasses(request.status)}`}>
+                          {request.status.replace("_", " ")}
+                        </span>
+                      </div>
                     </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-muted">No messages yet.</p>
-                )}
+                    <div className="mt-3 flex items-center justify-between gap-2 text-[11px] text-muted">
+                      <span className={`rounded-full px-2 py-1 ${priorityClasses(request.priority)}`}>{request.priority}</span>
+                      <span>{formatDate(request.createdAt)}</span>
+                    </div>
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </aside>
+
+        <section className="rounded-3xl border border-border bg-surface p-6 shadow-sm">
+          {selectedRequest ? (
+            <div className="space-y-6">
+              <div className="flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="text-lg font-semibold text-foreground">{selectedRequest.subject}</h2>
+                    <span className={`inline-flex rounded-full px-3 py-1 text-[11px] font-semibold ${priorityClasses(selectedRequest.priority)}`}>
+                      {selectedRequest.priority}
+                    </span>
+                    <span className={`inline-flex rounded-full px-3 py-1 text-[11px] font-semibold ${statusClasses(selectedRequest.status)}`}>
+                      {selectedRequest.status.replace("_", " ")}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm text-muted">
+                    {selectedRequest.school ? (
+                      <>
+                        From {selectedRequest.school.name} • {selectedRequest.school.country}
+                      </>
+                    ) : (
+                      "Unknown school"
+                    )}
+                  </p>
+                </div>
+                <div className="text-sm text-muted">
+                  <div>Created {formatDate(selectedRequest.createdAt)}</div>
+                  {selectedRequest.school ? (
+                    <Link href={`/schoolbase-admin/schools/${selectedRequest.school.id}`} className="mt-1 inline-flex text-brand hover:underline">
+                      View school
+                    </Link>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="space-y-3 border-t border-border pt-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-foreground">Conversation</h3>
+                  <span className="text-xs text-muted">
+                    {selectedRequest.messages.length} {selectedRequest.messages.length === 1 ? "message" : "messages"}
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  {selectedRequest.messages.length > 0 ? (
+                    selectedRequest.messages.map((message) => {
+                      const isSchoolMessage = message.senderRole === "SCHOOL";
+                      const normalizedSenderName = typeof message.senderName === "string"
+                        ? message.senderName.trim()
+                        : "";
+                      const senderName = isSchoolMessage
+                        ? (selectedRequest.school?.name || normalizedSenderName || "School")
+                        : (normalizedSenderName || "SchoolBase Support");
+                      const badgeLabel = isSchoolMessage ? "School" : "Support";
+                      const badgeClasses = isSchoolMessage
+                        ? "bg-emerald-100 text-emerald-700"
+                        : "bg-brand/10 text-brand";
+
+                      return (
+                        <div key={message.id} className="border-l-2 border-brand/30 pl-3 py-2">
+                          <div className="flex items-start justify-between gap-3 text-[11px] text-muted">
+                            <div className="flex items-center gap-2">
+                              <span className={`inline-flex rounded-full px-2 py-1 text-[10px] font-semibold ${badgeClasses}`}>
+                                {badgeLabel}
+                              </span>
+                              <span className="font-semibold text-foreground">{senderName}</span>
+                            </div>
+                            <span>{formatDate(message.createdAt)}</span>
+                          </div>
+                          <p className="mt-1 text-sm leading-6 text-foreground whitespace-pre-line">{message.body}</p>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="rounded-2xl border border-dashed border-border bg-background px-3 py-4 text-sm text-muted">
+                      No messages yet.
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-[220px_minmax(0,1fr)]">
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-foreground">Set status</label>
+                  <select
+                    value={replyStatus}
+                    onChange={(event) => setReplyStatus(event.target.value)}
+                    className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none"
+                  >
+                    <option value="IN_PROGRESS">In progress</option>
+                    <option value="RESOLVED">Resolved</option>
+                    <option value="CLOSED">Closed</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-foreground">Reply message</label>
+                  <div className="mb-2 flex flex-wrap gap-2">
+                    {quickReplies.map((template) => (
+                      <button
+                        key={template.label}
+                        type="button"
+                        onClick={() => setReplyDrafts((current) => ({ ...current, [selectedRequest.id]: `${current[selectedRequest.id] ?? ""}${current[selectedRequest.id] ? "\n\n" : ""}${template.text}`.trim() }))}
+                        className="rounded-full border border-border bg-background px-3 py-1 text-xs text-muted transition hover:border-brand hover:text-brand"
+                      >
+                        {template.label}
+                      </button>
+                    ))}
+                  </div>
+                  <textarea
+                    value={replyDrafts[selectedRequest.id] ?? ""}
+                    onChange={(event) => setReplyDrafts((current) => ({ ...current, [selectedRequest.id]: event.target.value }))}
+                    className="min-h-[160px] w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                    placeholder="Write your support reply here..."
+                  />
+                </div>
+              </div>
+
+              {replyError ? <div className="rounded-2xl bg-rose-50 p-3 text-sm text-rose-700">{replyError}</div> : null}
+              {replySuccess ? <div className="rounded-2xl bg-emerald-50 p-3 text-sm text-emerald-700">{replySuccess}</div> : null}
+
+              <div className="flex flex-wrap gap-3">
+                <Button type="button" disabled={busy} onClick={handleReply}>
+                  {busy ? "Sending reply..." : "Send reply"}
+                </Button>
               </div>
             </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="mb-2 block text-sm font-medium text-foreground">Set status</label>
-                <select
-                  value={replyStatus}
-                  onChange={(event) => setReplyStatus(event.target.value)}
-                  className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none"
-                >
-                  <option value="IN_PROGRESS">In progress</option>
-                  <option value="RESOLVED">Resolved</option>
-                  <option value="CLOSED">Closed</option>
-                </select>
-              </div>
-            <div>
-              <label className="mb-2 block text-sm font-medium text-foreground">Current status</label>
-              <div className="rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground">
-                {selectedRequest.status.replace("_", " ")}
-              </div>
+          ) : (
+            <div className="flex h-full min-h-[320px] items-center justify-center rounded-3xl border border-dashed border-border bg-background p-6 text-center text-sm text-muted">
+              Select a ticket from the left to view the conversation and reply.
             </div>
-          </div>
-
-          <div className="mt-6">
-            <label className="mb-2 block text-sm font-medium text-foreground">Reply message</label>
-            <textarea
-              value={replyText}
-              onChange={(event) => setReplyText(event.target.value)}
-              className="min-h-[160px] w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-              placeholder="Write your support reply here..."
-            />
-          </div>
-
-          {replyError ? <div className="mt-4 rounded-2xl bg-rose-50 p-3 text-sm text-rose-700">{replyError}</div> : null}
-          {replySuccess ? <div className="mt-4 rounded-2xl bg-emerald-50 p-3 text-sm text-emerald-700">{replySuccess}</div> : null}
-
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Button type="button" disabled={busy} onClick={handleReply}>
-              {busy ? "Sending reply..." : "Send reply"}
-            </Button>
-            <Button type="button" variant="secondary" onClick={() => setSelectedRequestId(null)}>
-              Cancel
-            </Button>
-          </div>
-        </div>
+          )}
         </section>
-      ) : null}
+      </div>
     </div>
   );
 }

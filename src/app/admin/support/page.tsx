@@ -134,10 +134,6 @@ export default function SupportPage() {
   if (loading) {
     return (
       <div className="space-y-8">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Support Requests</h1>
-          <p className="mt-1 text-muted">Manage support tickets from parents and staff.</p>
-        </div>
         <div className="rounded-lg border border-border bg-surface p-8 text-center">
           <p className="text-muted">Loading support requests...</p>
         </div>
@@ -149,10 +145,6 @@ export default function SupportPage() {
     return (
       <>
         <div className="space-y-8">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Support Requests</h1>
-            <p className="mt-1 text-muted">Manage support tickets from parents and staff.</p>
-          </div>
           <div className="rounded-lg border border-border bg-surface p-8 text-center">
             <p className="text-muted">Support requests are not available.</p>
           </div>
@@ -164,11 +156,6 @@ export default function SupportPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Support Requests</h1>
-        <p className="mt-1 text-muted">Manage support tickets from parents and staff.</p>
-      </div>
-
       <SupportRequestsClient initialRequests={requests} />
 
       {/* Help & Guide */}

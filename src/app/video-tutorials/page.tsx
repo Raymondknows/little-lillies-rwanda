@@ -31,9 +31,9 @@ export default function VideoTutorialsPage() {
       try {
         const backendUrl = getBackendUrl();
         const endpoints = [
-          `${backendUrl}/api/admin/videos`,
           `${backendUrl}/api/videos`,
           `${backendUrl}/schoolbase-admin/api/videos`,
+          `${backendUrl}/api/admin/videos`,
         ];
 
         let loadedVideos: Video[] = [];

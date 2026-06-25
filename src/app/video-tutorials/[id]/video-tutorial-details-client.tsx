@@ -1,8 +1,7 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { Copy, Share2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface VideoTutorialDetailsClientProps {
   video: {
@@ -16,26 +15,37 @@ interface VideoTutorialDetailsClientProps {
 
 export default function VideoTutorialDetailsClient({ video }: VideoTutorialDetailsClientProps) {
   const [copied, setCopied] = useState(false);
+  const [shareUrl, setShareUrl] = useState("");
+  const [canShare, setCanShare] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    setShareUrl(window.location.href);
+    setCanShare(typeof navigator.share === "function");
+  }, []);
 
   const handleCopy = () => {
     if (typeof window === "undefined") return;
-    navigator.clipboard.writeText(window.location.href);
+
+    const urlToCopy = shareUrl || window.location.href;
+    navigator.clipboard.writeText(urlToCopy);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   const handleShare = async () => {
-    if (typeof window !== "undefined" && navigator.share) {
-      try {
-        await navigator.share({
-          title: video.title,
-          text: video.description,
-          url: window.location.href,
-        });
-      } catch (error) {
-        if ((error as Error).name !== "AbortError") {
-          console.error("Error sharing:", error);
-        }
+    if (typeof window === "undefined" || !canShare) return;
+
+    try {
+      await navigator.share({
+        title: video.title,
+        text: video.description,
+        url: shareUrl || window.location.href,
+      });
+    } catch (error) {
+      if ((error as Error).name !== "AbortError") {
+        console.error("Error sharing:", error);
       }
     }
   };
@@ -53,7 +63,7 @@ export default function VideoTutorialDetailsClient({ video }: VideoTutorialDetai
           {/* Share Link */}
           <div className="flex gap-2">
             <div className="flex-1 px-4 py-3 rounded-lg bg-white border border-slate-200 text-sm text-slate-700 truncate font-mono text-xs">
-              {typeof window !== "undefined" ? window.location.href : ""}
+              {shareUrl || "Loading link..."}
             </div>
             <button
               onClick={handleCopy}
@@ -68,7 +78,7 @@ export default function VideoTutorialDetailsClient({ video }: VideoTutorialDetai
             </button>
           </div>
 
-          {typeof navigator !== "undefined" && typeof navigator.share === "function" && (
+          {canShare && (
             <button
               onClick={handleShare}
               className="w-full px-4 py-3 rounded-lg bg-brand text-white font-medium hover:bg-brand/90 transition-colors flex items-center justify-center gap-2"

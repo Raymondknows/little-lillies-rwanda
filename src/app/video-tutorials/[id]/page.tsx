@@ -14,9 +14,9 @@ export async function generateMetadata(props: {
 
   try {
     const endpoints = [
-      `${backendUrl}/api/admin/videos/${params.id}`,
       `${backendUrl}/api/videos/${params.id}`,
       `${backendUrl}/schoolbase-admin/api/videos/${params.id}`,
+      `${backendUrl}/api/admin/videos/${params.id}`,
     ];
 
     let video: any = null;
@@ -70,9 +70,9 @@ export default async function VideoTutorialPage(props: {
 
   try {
     const videoEndpoints = [
-      `${backendUrl}/api/admin/videos/${params.id}`,
       `${backendUrl}/api/videos/${params.id}`,
       `${backendUrl}/schoolbase-admin/api/videos/${params.id}`,
+      `${backendUrl}/api/admin/videos/${params.id}`,
     ];
 
     let video: any = null;
@@ -106,9 +106,9 @@ export default async function VideoTutorialPage(props: {
     let relatedVideos = [];
     try {
       const relatedEndpoints = [
-        `${backendUrl}/api/admin/videos`,
         `${backendUrl}/api/videos`,
         `${backendUrl}/schoolbase-admin/api/videos`,
+        `${backendUrl}/api/admin/videos`,
       ];
 
       for (const endpoint of relatedEndpoints) {

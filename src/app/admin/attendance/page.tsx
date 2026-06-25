@@ -144,7 +144,8 @@ export default function AttendancePage() {
   const [saving, setSaving] = useState(false);
   const [notifying, setNotifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [subscriptionBlocked, setSubscriptionBlocked] = useState<{ reason: string } | null>(null);
+  const [subscriptionBlocked, setSubscriptionBlocked] = useState<{ reason: string; schoolName?: string } | null>(null);
+  const [schoolName, setSchoolName] = useState("");
   const [success, setSuccess] = useState(false);
   const [modifications, setModifications] = useState<{ [key: string]: "PRESENT" | "ABSENT" | "LATE" }>({});
   const [notificationMode, setNotificationMode] = useState<"ALL" | "ABSENT" | "LATE">("ALL");
@@ -155,15 +156,45 @@ export default function AttendancePage() {
     async function fetchClasses() {
       try {
         const backendUrl = getBackendUrl();
-        const response = await fetch(`${backendUrl}/api/admin/classes/data`, {
-          credentials: "include",
-        });
+        const [response, verifyResponse] = await Promise.all([
+          fetch(`${backendUrl}/api/admin/classes/data`, {
+            credentials: "include",
+          }),
+          fetch(`${backendUrl}/api/admin/verify`, {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+          }),
+        ]);
+
+        let schoolNameToUse = "";
+        if (verifyResponse.ok) {
+          const verifyData = await verifyResponse.json().catch(() => null);
+          if (verifyData?.authenticated && verifyData.session?.schoolId) {
+            try {
+              const schoolResponse = await fetch(`${backendUrl}/api/admin/school/${verifyData.session.schoolId}`, {
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+              });
+              if (schoolResponse.ok) {
+                const schoolData = await schoolResponse.json().catch(() => null);
+                schoolNameToUse = schoolData?.name || "";
+              }
+            } catch (err) {
+              console.error("Error fetching school name:", err);
+            }
+          }
+        }
+
         if (!response.ok) {
-          // Check for subscription blocking
           if (response.status === 403) {
             const errorBody = await response.json().catch(() => null);
             if (errorBody?.code === 'SUBSCRIPTION_INACTIVE') {
-              setSubscriptionBlocked({ reason: errorBody.reason || 'Your school subscription is not active' });
+              setSubscriptionBlocked({
+                reason: errorBody.reason || 'Your school subscription is not active',
+                schoolName: schoolNameToUse || undefined,
+              });
+              setSchoolName(schoolNameToUse);
               setClassesLoading(false);
               return;
             }
@@ -171,6 +202,7 @@ export default function AttendancePage() {
           setError("Failed to load classes");
         } else {
           const data = await response.json();
+          setSchoolName(schoolNameToUse);
           const sorted = (data.classes || []).sort((a: any, b: any) => {
             const phaseOrder = PHASE_ORDER.indexOf(a.phase) - PHASE_ORDER.indexOf(b.phase);
             if (phaseOrder !== 0) return phaseOrder;
@@ -410,7 +442,7 @@ export default function AttendancePage() {
   };
 
   if (subscriptionBlocked) {
-    return <SubscriptionModal reason={subscriptionBlocked.reason} />;
+    return <SubscriptionModal reason={subscriptionBlocked.reason} schoolName={subscriptionBlocked.schoolName || schoolName || 'Your School'} />;
   }
 
   if (classesLoading) {

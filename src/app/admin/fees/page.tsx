@@ -9,32 +9,61 @@ import SubscriptionModal from "@/components/subscription-modal";
 export default function FeesPage() {
   const router = useRouter();
   const [data, setData] = useState<{ invoices: any[]; outstanding: number; terms: any[]; currency: string } | null>(null);
-  const [subscriptionBlocked, setSubscriptionBlocked] = useState<{ reason: string } | null>(null);
+  const [subscriptionBlocked, setSubscriptionBlocked] = useState<{ reason: string; schoolName?: string } | null>(null);
+  const [schoolName, setSchoolName] = useState<string>('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchData() {
       try {
         const backendUrl = getBackendUrl();
-        const response = await fetch(`${backendUrl}/api/admin/fees/data`, {
-          method: "GET",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-        });
+        const [response, verifyResponse] = await Promise.all([
+          fetch(`${backendUrl}/api/admin/fees/data`, {
+            method: "GET",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+          }),
+          fetch(`${backendUrl}/api/admin/verify`, {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+          }),
+        ]);
+
+        let schoolNameToUse = '';
+        if (verifyResponse.ok) {
+          const verifyData = await verifyResponse.json().catch(() => null);
+          if (verifyData?.authenticated && verifyData.session?.schoolId) {
+            try {
+              const schoolRes = await fetch(`${backendUrl}/api/admin/school/${verifyData.session.schoolId}`, {
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+              });
+              if (schoolRes.ok) {
+                const schoolData = await schoolRes.json().catch(() => null);
+                schoolNameToUse = schoolData?.name || '';
+              }
+            } catch (err) {
+              console.error("Error fetching school name:", err);
+            }
+          }
+        }
 
         if (!response.ok) {
           const errorBody = await response.json().catch(() => null);
-          
-          // Check if subscription is blocked
+
           if (response.status === 403 && errorBody?.code === 'SUBSCRIPTION_INACTIVE') {
-            setSubscriptionBlocked({ reason: errorBody.reason || 'Your school subscription is not active' });
-          } else {
-            // For other errors, show as before (though we'll hide them soon)
+            setSubscriptionBlocked({
+              reason: errorBody.reason || 'Your school subscription is not active',
+              schoolName: schoolNameToUse || undefined,
+            });
+            setSchoolName(schoolNameToUse);
           }
           return;
         }
 
         const feesData = await response.json();
+        setSchoolName(schoolNameToUse);
         setData({
           invoices: feesData.invoices || [],
           outstanding: feesData.outstanding || 0,
@@ -108,7 +137,7 @@ export default function FeesPage() {
   }
 
   if (subscriptionBlocked) {
-    return <SubscriptionModal reason={subscriptionBlocked.reason} />;
+    return <SubscriptionModal reason={subscriptionBlocked.reason} schoolName={subscriptionBlocked.schoolName || schoolName || 'Your School'} />;
   }
 
   if (!data) {

@@ -12,7 +12,7 @@ export default function AdminDashboardPage() {
   const [schoolName, setSchoolName] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [subscriptionBlocked, setSubscriptionBlocked] = useState<{ reason: string } | null>(null);
+  const [subscriptionBlocked, setSubscriptionBlocked] = useState<{ reason: string; schoolName?: string } | null>(null);
   const [cardScroll, setCardScroll] = useState(0);
 
   useEffect(() => {
@@ -73,31 +73,18 @@ export default function AdminDashboardPage() {
 
           clearTimeout(timeoutId);
 
-          // Check if any response is blocked by subscription guard
-          for (const res of [feesRes, studentsRes, classesRes, teachersRes]) {
-            if (res.status === 403) {
-              const errorBody = await res.json().catch(() => null);
-              if (errorBody?.code === 'SUBSCRIPTION_INACTIVE') {
-                setSubscriptionBlocked({ reason: errorBody.reason || 'Your school subscription is not active' });
-                setLoading(false);
-                return;
-              }
-            }
+          let verifyData: any = null;
+          try {
+            verifyData = await verifyRes.json();
+          } catch {
+            verifyData = null;
           }
-
-          const [feesData, studentsData, classesData, teachersData, verifyData] = await Promise.all([
-            feesRes.json(),
-            studentsRes.json(),
-            classesRes.json(),
-            teachersRes.json(),
-            verifyRes.json(),
-          ]);
 
           console.log('[Dashboard] Data loaded successfully');
 
           // Extract school name - fetch the full school object just like the sidebar does
           let schoolNameToUse = '';
-          if (verifyData.authenticated && verifyData.session?.schoolId) {
+          if (verifyData?.authenticated && verifyData.session?.schoolId) {
             try {
               const schoolRes = await fetch(`${backendUrl}/api/admin/school/${verifyData.session.schoolId}`, {
                 credentials: 'include',
@@ -112,6 +99,29 @@ export default function AdminDashboardPage() {
               console.error('[Dashboard] Error fetching school:', err);
             }
           }
+
+          // Check for subscription blocking before loading the dashboard content.
+          for (const res of [feesRes, studentsRes, classesRes, teachersRes]) {
+            if (res.status === 403) {
+              const errorBody = await res.json().catch(() => null);
+              if (errorBody?.code === 'SUBSCRIPTION_INACTIVE') {
+                setSubscriptionBlocked({
+                  reason: errorBody.reason || 'Your school subscription is not active',
+                  schoolName: schoolNameToUse || undefined,
+                });
+                setSchoolName(schoolNameToUse);
+                setLoading(false);
+                return;
+              }
+            }
+          }
+
+          const [feesData, studentsData, classesData, teachersData] = await Promise.all([
+            feesRes.json(),
+            studentsRes.json(),
+            classesRes.json(),
+            teachersRes.json(),
+          ]);
 
           // Count active pupils
           const pupils = studentsData.pupils || [];
@@ -245,7 +255,7 @@ export default function AdminDashboardPage() {
   }
 
   if (subscriptionBlocked) {
-    return <SubscriptionModal reason={subscriptionBlocked.reason} schoolName={schoolName || 'Your School'} />;
+    return <SubscriptionModal reason={subscriptionBlocked.reason} schoolName={subscriptionBlocked.schoolName || schoolName || 'Your School'} />;
   }
 
   const stats = [

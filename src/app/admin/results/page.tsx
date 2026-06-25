@@ -21,7 +21,7 @@ export default function ResultsPage() {
   }
 
   if (subscriptionBlocked) {
-    return <SubscriptionModal reason={subscriptionBlocked.reason} />;
+    return <SubscriptionModal reason={subscriptionBlocked.reason} schoolName={subscriptionBlocked.schoolName || 'Your School'} />;
   }
 
   if (error) {

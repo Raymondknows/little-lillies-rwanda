@@ -89,6 +89,19 @@ const PHASE_CONFIG = {
 const PHASE_ORDER = ["ALL", "EARLY_YEARS", "PRIMARY", "SECONDARY"];
 const PAGE_SIZE_OPTIONS = [10, 20, 50] as const;
 
+const emptyAnalyticsData = (): AnalyticsData => ({
+  schoolAnalytics: {
+    schoolAverage: 0,
+    passRate: 0,
+    totalResults: 0,
+    gradeDistribution: {},
+    topPerformers: [],
+    strugglingStudents: [],
+  },
+  classes: [],
+  subjects: [],
+});
+
 export default function AnalyticsPage() {
   const router = useRouter();
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
@@ -106,6 +119,7 @@ export default function AnalyticsPage() {
   useEffect(() => {
     const fetchTerms = async () => {
       try {
+        setLoading(true);
         const response = await fetch("/api/admin/terms", {
           credentials: "include",
           headers: { "Content-Type": "application/json" },
@@ -113,12 +127,18 @@ export default function AnalyticsPage() {
         if (!response.ok) throw new Error("Failed to fetch terms");
         const data = await response.json();
         setTerms(data.terms || []);
-        // Set first term as default
         if (data.terms && data.terms.length > 0) {
           setSelectedTermId(data.terms[0].id);
+        } else {
+          setSelectedTermId("");
+          setAnalytics(emptyAnalyticsData());
         }
       } catch (err) {
         console.error("Error fetching terms:", err);
+        setError(err instanceof Error ? err.message : "Failed to load terms");
+        setAnalytics(emptyAnalyticsData());
+      } finally {
+        setLoading(false);
       }
     };
     fetchTerms();
@@ -126,7 +146,12 @@ export default function AnalyticsPage() {
 
   // Fetch analytics when term or phase changes
   useEffect(() => {
-    if (!selectedTermId) return;
+    if (!selectedTermId) {
+      setLoading(false);
+      setError(null);
+      setAnalytics(emptyAnalyticsData());
+      return;
+    }
 
     const fetchAnalytics = async () => {
       try {
@@ -161,8 +186,7 @@ export default function AnalyticsPage() {
         
         // Validate and set analytics with defaults if data is incomplete
         if (data && data.schoolAnalytics) {
-          // Ensure all required fields exist with defaults
-          const validatedData = {
+          const validatedData: AnalyticsData = {
             schoolAnalytics: {
               schoolAverage: data.schoolAnalytics.schoolAverage ?? 0,
               passRate: data.schoolAnalytics.passRate ?? 0,
@@ -176,19 +200,7 @@ export default function AnalyticsPage() {
           };
           setAnalytics(validatedData);
         } else {
-          // Set empty but valid analytics structure
-          setAnalytics({
-            schoolAnalytics: {
-              schoolAverage: 0,
-              passRate: 0,
-              totalResults: 0,
-              gradeDistribution: {},
-              topPerformers: [],
-              strugglingStudents: [],
-            },
-            classes: [],
-            subjects: [],
-          });
+          setAnalytics(emptyAnalyticsData());
         }
         
         setCurrentPage(1);
@@ -199,19 +211,7 @@ export default function AnalyticsPage() {
         } else {
           setError(err instanceof Error ? err.message : "Failed to load analytics");
         }
-        // Set empty analytics on error to exit loading state
-        setAnalytics({
-          schoolAnalytics: {
-            schoolAverage: 0,
-            passRate: 0,
-            totalResults: 0,
-            gradeDistribution: {},
-            topPerformers: [],
-            strugglingStudents: [],
-          },
-          classes: [],
-          subjects: [],
-        });
+        setAnalytics(emptyAnalyticsData());
       } finally {
         setLoading(false);
       }

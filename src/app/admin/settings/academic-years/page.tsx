@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import SubscriptionModal from "@/components/subscription-modal";
 import { getBackendUrl } from "@/lib/backend-url";
 
 interface Term {
@@ -24,6 +25,8 @@ export default function AcademicYearsPage() {
   const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [subscriptionBlocked, setSubscriptionBlocked] = useState<{ reason: string; schoolName?: string } | null>(null);
+  const [schoolName, setSchoolName] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [showNewYearModal, setShowNewYearModal] = useState(false);
   const [showNewTermModal, setShowNewTermModal] = useState(false);
@@ -43,6 +46,58 @@ export default function AcademicYearsPage() {
     endsOn: "",
   });
 
+  const resolveSchoolName = async (backendUrl: string) => {
+    try {
+      const verifyResponse = await fetch(`${backendUrl}/api/admin/verify`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!verifyResponse.ok) {
+        return "";
+      }
+
+      const verifyData = await verifyResponse.json().catch(() => null);
+      if (!verifyData?.authenticated || !verifyData.session?.schoolId) {
+        return "";
+      }
+
+      const schoolResponse = await fetch(`${backendUrl}/api/admin/school/${verifyData.session.schoolId}`, {
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!schoolResponse.ok) {
+        return "";
+      }
+
+      const schoolData = await schoolResponse.json().catch(() => null);
+      return schoolData?.name || "";
+    } catch {
+      return "";
+    }
+  };
+
+  const handleSubscriptionBlock = async (response: Response, backendUrl: string) => {
+    if (response.status !== 403) {
+      return false;
+    }
+
+    const errorData = await response.json().catch(() => null);
+    if (errorData?.code !== "SUBSCRIPTION_INACTIVE") {
+      return false;
+    }
+
+    const resolvedSchoolName = await resolveSchoolName(backendUrl);
+    setSubscriptionBlocked({
+      reason: errorData.reason || "Your school subscription is not active",
+      schoolName: resolvedSchoolName || undefined,
+    });
+    setSchoolName(resolvedSchoolName);
+    return true;
+  };
+
   // Fetch academic years
   useEffect(() => {
     loadAcademicYears();
@@ -58,6 +113,10 @@ export default function AcademicYearsPage() {
       });
 
       if (!response.ok) {
+        if (await handleSubscriptionBlock(response, backendUrl)) {
+          setLoading(false);
+          return;
+        }
         throw new Error("Failed to load academic years");
       }
 
@@ -300,6 +359,15 @@ export default function AcademicYearsPage() {
       return "Invalid date";
     }
   };
+
+  if (subscriptionBlocked) {
+    return (
+      <SubscriptionModal
+        reason={subscriptionBlocked.reason}
+        schoolName={subscriptionBlocked.schoolName || schoolName || "Your School"}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6 p-6">

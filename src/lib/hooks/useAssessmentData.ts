@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getBackendUrl } from "@/lib/backend-url";
 
 interface UseAssessmentDataOptions {
   endpoint: string;
@@ -23,7 +24,7 @@ export function useAssessmentData({
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [subscriptionBlocked, setSubscriptionBlocked] = useState<{ reason: string } | null>(null);
+  const [subscriptionBlocked, setSubscriptionBlocked] = useState<{ reason: string; schoolName?: string } | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -40,7 +41,37 @@ export function useAssessmentData({
           if (response.status === 403) {
             const errorBody = await response.json().catch(() => null);
             if (errorBody?.code === 'SUBSCRIPTION_INACTIVE') {
-              setSubscriptionBlocked({ reason: errorBody.reason || 'Your school subscription is not active' });
+              const backendUrl = getBackendUrl();
+              let schoolNameToUse = "";
+
+              try {
+                const verifyResponse = await fetch(`${backendUrl}/api/admin/verify`, {
+                  method: "POST",
+                  credentials: "include",
+                  headers: { "Content-Type": "application/json" },
+                });
+
+                if (verifyResponse.ok) {
+                  const verifyData = await verifyResponse.json().catch(() => null);
+                  if (verifyData?.authenticated && verifyData.session?.schoolId) {
+                    const schoolResponse = await fetch(`${backendUrl}/api/admin/school/${verifyData.session.schoolId}`, {
+                      credentials: "include",
+                      headers: { "Content-Type": "application/json" },
+                    });
+                    if (schoolResponse.ok) {
+                      const schoolData = await schoolResponse.json().catch(() => null);
+                      schoolNameToUse = schoolData?.name || "";
+                    }
+                  }
+                }
+              } catch {
+                // Ignore school-name lookup failures and fall back to the default label.
+              }
+
+              setSubscriptionBlocked({
+                reason: errorBody.reason || 'Your school subscription is not active',
+                schoolName: schoolNameToUse || undefined,
+              });
               setLoading(false);
               return;
             }

@@ -11,23 +11,54 @@ export default function AdminTeachersPage() {
   const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [subscriptionBlocked, setSubscriptionBlocked] = useState<{ reason: string } | null>(null);
+  const [subscriptionBlocked, setSubscriptionBlocked] = useState<{ reason: string; schoolName?: string } | null>(null);
+  const [schoolName, setSchoolName] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         const backendUrl = getBackendUrl();
-        const response = await fetch(`${backendUrl}/api/admin/teachers/data`, {
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-        });
+        const [response, verifyResponse] = await Promise.all([
+          fetch(`${backendUrl}/api/admin/teachers/data`, {
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+          }),
+          fetch(`${backendUrl}/api/admin/verify`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        ]);
+
+        let schoolNameToUse = "";
+        if (verifyResponse.ok) {
+          const verifyData = await verifyResponse.json().catch(() => null);
+          if (verifyData?.authenticated && verifyData.session?.schoolId) {
+            try {
+              const schoolResponse = await fetch(`${backendUrl}/api/admin/school/${verifyData.session.schoolId}`, {
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+              });
+              if (schoolResponse.ok) {
+                const schoolData = await schoolResponse.json().catch(() => null);
+                schoolNameToUse = schoolData?.name || "";
+              }
+            } catch (err) {
+              console.error("Error fetching school name:", err);
+            }
+          }
+        }
+
         if (!response.ok) {
-          // Check for subscription blocking
           if (response.status === 403) {
             const errorBody = await response.json().catch(() => null);
             if (errorBody?.code === 'SUBSCRIPTION_INACTIVE') {
-              setSubscriptionBlocked({ reason: errorBody.reason || 'Your school subscription is not active' });
+              setSubscriptionBlocked({
+                reason: errorBody.reason || 'Your school subscription is not active',
+                schoolName: schoolNameToUse || undefined,
+              });
+              setSchoolName(schoolNameToUse);
               setLoading(false);
               return;
             }
@@ -35,6 +66,7 @@ export default function AdminTeachersPage() {
           throw new Error(`Failed to fetch teachers data: ${response.status}`);
         }
         const data = await response.json();
+        setSchoolName(schoolNameToUse);
         setClasses(data.classes || []);
         setSubjects(data.subjects || []);
         setTeachers(data.teachers || []);
@@ -59,7 +91,7 @@ export default function AdminTeachersPage() {
   }
 
   if (subscriptionBlocked) {
-    return <SubscriptionModal reason={subscriptionBlocked.reason} />;
+    return <SubscriptionModal reason={subscriptionBlocked.reason} schoolName={subscriptionBlocked.schoolName || schoolName || 'Your School'} />;
   }
 
   if (error) {

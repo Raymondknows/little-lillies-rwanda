@@ -30,17 +30,34 @@ export default function VideoTutorialsPage() {
     async function loadVideos() {
       try {
         const backendUrl = getBackendUrl();
-        const response = await fetch(`${backendUrl}/api/admin/videos`, {
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-        });
+        const endpoints = [
+          `${backendUrl}/api/admin/videos`,
+          `${backendUrl}/api/videos`,
+          `${backendUrl}/schoolbase-admin/api/videos`,
+        ];
 
-        if (!response.ok) {
-          throw new Error('Failed to load videos');
+        let loadedVideos: Video[] = [];
+
+        for (const endpoint of endpoints) {
+          try {
+            const response = await fetch(endpoint, {
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+            });
+
+            if (!response.ok) {
+              continue;
+            }
+
+            const data = await response.json();
+            loadedVideos = Array.isArray(data?.videos) ? data.videos : [];
+            break;
+          } catch (err) {
+            console.warn(`Unable to load videos from ${endpoint}:`, err);
+          }
         }
 
-        const data = await response.json();
-        setVideos(data.videos || []);
+        setVideos(loadedVideos);
       } catch (err) {
         console.error('Error loading videos:', err);
         setVideos([]);

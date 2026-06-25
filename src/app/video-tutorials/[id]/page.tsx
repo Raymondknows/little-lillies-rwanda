@@ -13,21 +13,42 @@ export async function generateMetadata(props: {
   const backendUrl = getBackendUrl();
 
   try {
-    const response = await fetch(`${backendUrl}/api/admin/videos/${params.id}`, {
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      cache: 'no-store',
-    });
+    const endpoints = [
+      `${backendUrl}/api/admin/videos/${params.id}`,
+      `${backendUrl}/api/videos/${params.id}`,
+      `${backendUrl}/schoolbase-admin/api/videos/${params.id}`,
+    ];
 
-    if (!response.ok) {
+    let video: any = null;
+
+    for (const endpoint of endpoints) {
+      try {
+        const response = await fetch(endpoint, {
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          cache: 'no-store',
+        });
+
+        if (!response.ok) {
+          continue;
+        }
+
+        const data = await response.json();
+        video = data.video;
+        if (video) {
+          break;
+        }
+      } catch {
+        // Try the next fallback endpoint.
+      }
+    }
+
+    if (!video) {
       return {
         title: "Video Not Found | SchoolBase",
         description: "The video tutorial you're looking for doesn't exist.",
       };
     }
-
-    const data = await response.json();
-    const video = data.video;
 
     return {
       title: `${video.title} | SchoolBase`,
@@ -48,34 +69,68 @@ export default async function VideoTutorialPage(props: {
   const backendUrl = getBackendUrl();
 
   try {
-    // Fetch current video
-    const response = await fetch(`${backendUrl}/api/admin/videos/${params.id}`, {
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      cache: 'no-store',
-    });
+    const videoEndpoints = [
+      `${backendUrl}/api/admin/videos/${params.id}`,
+      `${backendUrl}/api/videos/${params.id}`,
+      `${backendUrl}/schoolbase-admin/api/videos/${params.id}`,
+    ];
 
-    if (!response.ok) {
+    let video: any = null;
+
+    for (const endpoint of videoEndpoints) {
+      try {
+        const response = await fetch(endpoint, {
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          cache: 'no-store',
+        });
+
+        if (!response.ok) {
+          continue;
+        }
+
+        const data = await response.json();
+        video = data.video;
+        if (video) {
+          break;
+        }
+      } catch {
+        // Try the next fallback endpoint.
+      }
+    }
+
+    if (!video) {
       notFound();
     }
 
-    const data = await response.json();
-    const video = data.video;
-
-    // Fetch all videos to find related ones
     let relatedVideos = [];
     try {
-      const allVideosResponse = await fetch(`${backendUrl}/api/admin/videos`, {
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        cache: 'no-store',
-      });
-      
-      if (allVideosResponse.ok) {
-        const allData = await allVideosResponse.json();
-        relatedVideos = (allData.videos || [])
-          .filter((v: any) => v.category === video.category && v.id !== video.id)
-          .slice(0, 5);
+      const relatedEndpoints = [
+        `${backendUrl}/api/admin/videos`,
+        `${backendUrl}/api/videos`,
+        `${backendUrl}/schoolbase-admin/api/videos`,
+      ];
+
+      for (const endpoint of relatedEndpoints) {
+        try {
+          const allVideosResponse = await fetch(endpoint, {
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            cache: 'no-store',
+          });
+
+          if (!allVideosResponse.ok) {
+            continue;
+          }
+
+          const allData = await allVideosResponse.json();
+          relatedVideos = (allData.videos || [])
+            .filter((v: any) => v.category === video.category && v.id !== video.id)
+            .slice(0, 5);
+          break;
+        } catch (err) {
+          console.error('Error fetching related videos:', err);
+        }
       }
     } catch (err) {
       console.error('Error fetching related videos:', err);

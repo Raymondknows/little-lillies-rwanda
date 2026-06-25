@@ -168,13 +168,8 @@ export default function SupportPage() {
         <h1 className="text-2xl font-bold text-foreground">Support Requests</h1>
         <p className="mt-1 text-muted">Manage support tickets from parents and staff.</p>
       </div>
-      {requests.length === 0 ? (
-        <div className="rounded-lg border border-border bg-surface p-8 text-center">
-          <p className="text-muted">No support requests yet. Support tickets from parents and staff will appear here.</p>
-        </div>
-      ) : (
-        <SupportRequestsClient initialRequests={requests} />
-      )}
+
+      <SupportRequestsClient initialRequests={requests} />
 
       {/* Help & Guide */}
       <UserGuide guide={HELP_GUIDE} />

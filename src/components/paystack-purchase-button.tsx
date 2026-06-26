@@ -202,14 +202,15 @@ export function PaystackPurchaseButton({
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            amount: amountMinor / 100,
             email,
-            plan,
-            schoolName,
-            name,
-            phone,
+            amountMinor,
+            metadata: {
+              plan,
+              schoolName,
+              name,
+              phone,
+            },
             callback_url: `${window.location.origin}/admin/subscription-success`,
-            reference: `SUB-${Date.now()}-${Math.round(Math.random() * 1000000)}`,
           }),
         });
 

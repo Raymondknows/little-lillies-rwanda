@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, type ReactElement } from "react";
 import { Button } from "@/components/ui/button";
+import { buildApiUrl } from "@/lib/api-client";
 
 declare global {
   interface Window {
@@ -183,7 +184,7 @@ export function PaystackPurchaseButton({
 
     try {
       if (isSubscription) {
-        const backendBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3006";
+        const initUrl = buildApiUrl("/paystack/init");
         if (!isValidEmail(email)) {
           throw new Error("Please use a valid email address before checking out.");
         }
@@ -195,7 +196,7 @@ export function PaystackPurchaseButton({
           setLoading(false);
         }, 5000); // 5 second timeout
 
-        const response = await fetch(`${backendBaseUrl}/api/paystack/init`, {
+        const response = await fetch(initUrl, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

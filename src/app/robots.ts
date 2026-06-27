@@ -68,6 +68,7 @@ export default function robots(): MetadataRoute.Robots {
           '/guides',
           '/guides/school-software-guide',
           '/video-tutorials',
+          '/blog',
         ],
         disallow: [
           '/admin',

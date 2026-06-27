@@ -71,6 +71,9 @@ export default async function Header() {
               <Link href="/guides/school-fee-management" className="hover:text-brand">
                 Guides
               </Link>
+              <Link href="/blog" className="hover:text-brand">
+                Blog
+              </Link>
               <a href="https://clickbasegroup.com/" target="_blank" rel="noopener noreferrer" className="hover:text-brand">
                 ClickBase
               </a>

@@ -129,21 +129,18 @@ export function PaystackPurchaseButton({
         if (!mounted) return;
         const cfgKey = d?.config?.paystackPublicKey ?? d?.config?.paystackPublic ?? null;
         setPublicKey(String(cfgKey ?? fallbackPublicKey ?? "").trim() || null);
+        setReady(true);
       })
       .catch(() => {
         if (!mounted) return;
         setPublicKey(fallbackPublicKey);
+        setReady(true);
       });
-
-    if (!publicKey) return;
-    loadPaystackScript()
-      .then(() => setReady(true))
-      .catch((err) => setError(err.message));
 
     return () => {
       mounted = false;
     };
-  }, [fallbackPublicKey, publicKey]);
+  }, [fallbackPublicKey]);
 
   const verifyPayment = useCallback(
     async (reference: string) => {
@@ -183,114 +180,60 @@ export function PaystackPurchaseButton({
     setLoading(true);
 
     try {
-      if (isSubscription) {
-        const initUrl = buildApiUrl("/paystack/init");
-        if (!isValidEmail(email)) {
-          throw new Error("Please use a valid email address before checking out.");
-        }
-
-        // Set a timeout to reset loading state if redirect doesn't happen
-        let redirectTimeout: number | null = null;
-        redirectTimeout = window.setTimeout(() => {
-          setError("Payment redirect timed out. Please try again.");
-          setLoading(false);
-        }, 5000); // 5 second timeout
-
-        const response = await fetch(initUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email,
-            amountMinor,
-            metadata: {
-              plan,
-              schoolName,
-              name,
-              phone,
-            },
-            callback_url: `${window.location.origin}/admin/subscription-success`,
-          }),
-        });
-
-        const data = await response.json();
-        if (!response.ok) {
-          if (redirectTimeout !== null) window.clearTimeout(redirectTimeout);
-          throw new Error(data.error || "Failed to initialize payment.");
-        }
-
-        const authorizationUrl = data?.authorization_url || data?.data?.authorization_url;
-        if (!authorizationUrl) {
-          if (redirectTimeout !== null) window.clearTimeout(redirectTimeout);
-          throw new Error("Paystack authorization URL was not returned.");
-        }
-
-        // Attempt redirect
-        try {
-          window.location.href = authorizationUrl;
-        } catch (redirectError) {
-          if (redirectTimeout !== null) window.clearTimeout(redirectTimeout);
-          setLoading(false);
-          throw new Error("Unable to redirect to payment gateway. Please try again.");
-        }
-        return;
+      const initUrl = buildApiUrl("/paystack/init");
+      if (!isValidEmail(email)) {
+        throw new Error("Please use a valid email address before checking out.");
       }
 
-      if (!publicKey) {
-        throw new Error("Paystack configuration is unavailable.");
-      }
-
-      let checkoutTimeout: number | null = null;
-      const clearCheckoutTimeout = () => {
-        if (checkoutTimeout !== null) {
-          window.clearTimeout(checkoutTimeout);
-          checkoutTimeout = null;
-        }
-      };
-
-      await loadPaystackScript();
-      if (!window.PaystackPop) {
-        throw new Error("Paystack checkout is unavailable.");
-      }
-
-      checkoutTimeout = window.setTimeout(() => {
-        setError("Paystack checkout did not appear. Please try again.");
+      let redirectTimeout: number | null = null;
+      redirectTimeout = window.setTimeout(() => {
+        setError("Payment redirect timed out. Please try again.");
         setLoading(false);
-      }, 12000);
+      }, 5000);
 
-      const handler = window.PaystackPop.setup({
-        key: publicKey,
-        email,
-        amount: amountMinor,
-        currency,
-        ref: `SUB-${Date.now()}-${Math.round(Math.random() * 1000000)}`,
-        metadata: {
-          custom_fields: [
-            { display_name: "Plan", variable_name: "plan", value: plan },
-            { display_name: "School name", variable_name: "school_name", value: schoolName },
-            { display_name: "School slug", variable_name: "school_slug", value: ("" + (slug ?? "")).trim() },
-            { display_name: "Contact", variable_name: "contact_name", value: name },
-            { display_name: "Contact email", variable_name: "contact_email", value: email },
-            { display_name: "Contact phone", variable_name: "contact_phone", value: phone },
-            { display_name: "Country", variable_name: "country", value: country ?? "" },
-          ],
+      const response = await fetch(initUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-        onClose: () => {
-          clearCheckoutTimeout();
-          setLoading(false);
-        },
-        callback(response: { reference: string }) {
-          clearCheckoutTimeout();
-          verifyPayment(response.reference);
-        },
+        body: JSON.stringify({
+          email,
+          amountMinor,
+          metadata: {
+            plan,
+            schoolName,
+            name,
+            phone,
+            schoolSlug: slug ?? "",
+          },
+          callback_url: `${window.location.origin}${isSubscription ? "/admin/subscription-success" : "/purchase/success"}`,
+        }),
       });
-      handler.openIframe();
+
+      const data = await response.json();
+      if (!response.ok) {
+        if (redirectTimeout !== null) window.clearTimeout(redirectTimeout);
+        throw new Error(data.error || "Failed to initialize payment.");
+      }
+
+      const authorizationUrl = data?.authorization_url || data?.data?.authorization_url;
+      if (!authorizationUrl) {
+        if (redirectTimeout !== null) window.clearTimeout(redirectTimeout);
+        throw new Error("Paystack authorization URL was not returned.");
+      }
+
+      try {
+        window.location.assign(authorizationUrl);
+      } catch (redirectError) {
+        if (redirectTimeout !== null) window.clearTimeout(redirectTimeout);
+        setLoading(false);
+        throw new Error("Unable to redirect to payment gateway. Please try again.");
+      }
     } catch (err) {
       setError((err as Error).message || "Unable to start payment.");
       setLoading(false);
     }
-  }, [amountMinor, callbackUrl, currency, email, isSubscription, name, phone, plan, publicKey, schoolName, verifyPayment]);
+  }, [amountMinor, currency, email, isSubscription, name, phone, plan, schoolName, slug]);
 
   if (!isSubscription && !publicKey) {
     return (

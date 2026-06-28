@@ -116,7 +116,7 @@ const HELP_GUIDE: PageHelpGuide = {
     },
     {
       question: "How long does a subscription last?",
-      answer: "Each subscription lasts 30 days from the payment date. You can renew anytime before expiry, and you'll receive reminders as your subscription date approaches.",
+      answer: "Each subscription is billed for a full term from the payment date. You can renew at the start of the next term, and you'll receive reminders before renewal.",
     },
     {
       question: "Can I change plans later?",
@@ -128,7 +128,7 @@ const HELP_GUIDE: PageHelpGuide = {
     },
     {
       question: "Is there a free trial?",
-      answer: "Yes! New schools get a free 14-day trial with all features unlocked. You can explore the platform before choosing a paid plan.",
+      answer: "Yes! New schools get a free 7-day trial with all features unlocked. You can explore the platform before choosing a paid plan.",
     },
   ],
 };

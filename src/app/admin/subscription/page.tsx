@@ -82,23 +82,23 @@ const statusConfig: Record<string, { icon: React.ReactNode; color: string; badge
 
 const HELP_GUIDE: PageHelpGuide = {
   title: "Managing Your Subscription",
-  overview: "View and manage your school's subscription plan, billing dates, and renewal status. Stay informed about your trial period and subscription expiry dates.",
+  overview: "View and manage your school's subscription plan, billing dates, and renewal status. Stay informed about your trial period and subscription expiry dates for the active term.",
   steps: [
     "Check your current subscription status and plan details.",
     "Monitor your subscription expiry date and days remaining.",
-    "Renew your subscription before it expires to maintain access.",
+    "Renew your subscription before the current term expires to maintain access.",
     "Upgrade to a higher plan for more features and capacity.",
     "Contact support if you have questions about your subscription.",
   ],
   commonTasks: [
     {
       title: "Renew Your Subscription",
-      description: "Extend your school's subscription access.",
+      description: "Extend your school's subscription access for the next term.",
       tips: [
         "Click 'Renew Subscription' button on this page",
         "Select your plan and payment method",
         "Complete payment to activate the renewal",
-        "Your subscription will be extended by 30 days",
+        "Your subscription will be extended for the next school term",
       ],
     },
     {
@@ -129,7 +129,7 @@ const HELP_GUIDE: PageHelpGuide = {
     },
     {
       question: "How long does a subscription last?",
-      answer: "Each subscription lasts for 30 days from the payment date. You'll receive reminders before expiry, and you can renew anytime to extend your access.",
+      answer: "Each subscription is tied to a school term and remains active until the term ends. You'll receive reminders before expiry, and you can renew anytime to extend your access for the next term.",
     },
     {
       question: "What's the difference between plans?",

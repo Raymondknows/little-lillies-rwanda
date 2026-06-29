@@ -177,10 +177,15 @@ export default function ResultsPageClient({ assessments }: { assessments: any[] 
               Create and publish results in minutes — parents get notified instantly
             </p>
           </div>
-        <Button href="/admin/results/new" className="w-full sm:w-auto">
-          Create assessment
-        </Button>
-      </div>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <Button href="/admin/results/new" className="w-full sm:w-auto">
+              Create assessment
+            </Button>
+            <Button variant="secondary" href="/admin/promotions" className="w-full sm:w-auto">
+              Promotions
+            </Button>
+          </div>
+        </div>
 
       {/* Search Bar */}
       <div className="mb-6">
@@ -262,32 +267,35 @@ export default function ResultsPageClient({ assessments }: { assessments: any[] 
             <table className="w-full text-left text-xs sm:text-sm">
               <thead className="border-b border-border bg-background text-muted">
                 <tr>
-                    <th className="px-3 py-2 font-medium sm:px-4">Assessment</th>
-                    <th className="px-3 py-2 font-medium sm:px-4">Term</th>
-                    <th className="px-3 py-2 font-medium sm:px-4 text-center">Entries</th>
-                    <th className="px-3 py-2 font-medium sm:px-4">Status</th>
-                    <th className="px-3 py-2 font-medium sm:px-4">Actions</th>
+                    <th className="px-3 py-1.5 font-medium sm:px-4">Assessment</th>
+                    <th className="px-3 py-1.5 font-medium sm:px-4">Term</th>
+                    <th className="px-3 py-1.5 font-medium sm:px-4 text-center">Entries</th>
+                    <th className="px-3 py-1.5 font-medium sm:px-4">Status</th>
+                    <th className="px-3 py-1.5 font-medium sm:px-4">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {paginatedAssessments.map((a) => {
+                {paginatedAssessments.map((a, index) => {
                   const isPublished = a.status === "PUBLISHED";
                   const isApproved = a.status === "APPROVED";
                   const statusConfig = STATUS_CONFIG[a.status as keyof typeof STATUS_CONFIG];
                   const StatusIcon = statusConfig.icon;
 
                   return (
-                    <tr key={a.id} className="border-t border-border hover:bg-background/50 transition-colors">
-                      <td className="px-3 py-2 font-medium text-foreground truncate sm:px-4">
+                    <tr
+                      key={a.id}
+                      className={`border-t border-border transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/80'} hover:bg-slate-100/70`}
+                    >
+                      <td className="px-3 py-1.5 font-medium text-foreground truncate sm:px-4">
                         {a.name}
                       </td>
-                      <td className="px-3 py-2 text-muted truncate sm:px-4">
+                      <td className="px-3 py-1.5 text-muted truncate sm:px-4">
                         {a.term?.name || "—"}
                       </td>
-                      <td className="px-3 py-2 text-muted text-center sm:px-4">
+                      <td className="px-3 py-1.5 text-muted text-center sm:px-4">
                         {a._count.results}
                       </td>
-                      <td className="px-3 py-2 sm:px-4">
+                      <td className="px-3 py-1.5 sm:px-4">
                         <Badge
                           variant={
                             isPublished ? "success" : isApproved ? "brand" : "default"
@@ -297,13 +305,13 @@ export default function ResultsPageClient({ assessments }: { assessments: any[] 
                           {resultStatusLabel(a.status)}
                         </Badge>
                       </td>
-                      <td className="px-3 py-2 sm:px-4">
+                      <td className="px-3 py-1.5 sm:px-4">
                         <div className="flex items-center gap-2 flex-wrap">
                           <Link
                             href={`/admin/results/${a.id}`}
-                            className="bg-brand text-white hover:bg-brand-dark text-xs sm:text-sm font-medium flex items-center gap-1 px-3 py-1.5 rounded-lg transition"
+                            className={`${isPublished ? 'border border-border bg-background text-foreground hover:bg-surface' : 'bg-brand text-white hover:bg-brand-dark'} text-xs sm:text-sm font-medium flex items-center gap-1 px-3 py-1.5 rounded-lg transition`}
                           >
-                            {isPublished ? "View Results" : "Manage Results"}
+                            {isPublished ? "View" : "Manage"}
                             <ChevronRight className="w-3 h-3" />
                           </Link>
                           {isApproved && <PublishButton assessmentId={a.id} />}
@@ -318,7 +326,7 @@ export default function ResultsPageClient({ assessments }: { assessments: any[] 
 
           {/* Mobile List */}
           <div className="sm:hidden space-y-2">
-            {paginatedAssessments.map((a) => {
+            {paginatedAssessments.map((a, index) => {
               const isPublished = a.status === "PUBLISHED";
               const isApproved = a.status === "APPROVED";
               const statusConfig = STATUS_CONFIG[a.status as keyof typeof STATUS_CONFIG];
@@ -328,7 +336,7 @@ export default function ResultsPageClient({ assessments }: { assessments: any[] 
                 <Link
                   key={a.id}
                   href={`/admin/results/${a.id}`}
-                  className="block rounded-lg border border-border bg-surface px-4 py-2 hover:bg-background/50 transition-colors"
+                  className={`block rounded-lg border border-border px-4 py-2 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/80'} hover:bg-slate-100/70`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1 min-w-0">

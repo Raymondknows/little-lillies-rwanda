@@ -4,41 +4,46 @@
  * - Client-side: detect from window.location.hostname
  * - Server-side: use sensible defaults
  */
+function normalizeBackendUrl(url: string): string {
+  return url.trim().replace(/\/+$/, '');
+}
+
 export function getBackendUrl(): string {
   // First, check if explicitly set in environment
   if (process.env.NEXT_PUBLIC_API_URL) {
-    return process.env.NEXT_PUBLIC_API_URL;
+    return normalizeBackendUrl(process.env.NEXT_PUBLIC_API_URL);
   }
 
   if (process.env.NEXT_PUBLIC_BACKEND_URL) {
-    return process.env.NEXT_PUBLIC_BACKEND_URL;
+    return normalizeBackendUrl(process.env.NEXT_PUBLIC_BACKEND_URL);
   }
 
   // Allow server-side BACKEND_URL fallback if only backend env is defined.
   if (process.env.BACKEND_URL) {
-    return process.env.BACKEND_URL;
+    return normalizeBackendUrl(process.env.BACKEND_URL);
   }
 
   if (process.env.API_URL) {
-    return process.env.API_URL;
+    return normalizeBackendUrl(process.env.API_URL);
   }
 
   if (process.env.BACKEND_API_URL) {
-    return process.env.BACKEND_API_URL;
+    return normalizeBackendUrl(process.env.BACKEND_API_URL);
   }
 
   // Client-side: detect from window.location
   if (typeof window !== 'undefined') {
     const host = window.location.hostname;
-    
+    const protocol = window.location.protocol;
+
     if (host === 'localhost' || host === '127.0.0.1') {
-      return 'http://localhost:3006';
+      return normalizeBackendUrl(`${protocol}//localhost:3006`);
     }
-    
+
     if (host.includes('schoolbase.live')) {
       return 'https://api.schoolbase.live';
     }
-    
+
     if (host.includes('vercel.app')) {
       return 'https://api.schoolbase.live';
     }

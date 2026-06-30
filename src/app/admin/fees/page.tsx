@@ -3,6 +3,7 @@
 import { getBackendUrl } from "@/lib/backend-url";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { WhatsAppIcon } from "@/components/ui/icons";
 import FeesPageClient from "./fees-client";
 import SubscriptionModal from "@/components/subscription-modal";
 
@@ -12,6 +13,8 @@ export default function FeesPage() {
   const [subscriptionBlocked, setSubscriptionBlocked] = useState<{ reason: string; schoolName?: string } | null>(null);
   const [schoolName, setSchoolName] = useState<string>('');
   const [loading, setLoading] = useState(true);
+  const [whatsAppConnected, setWhatsAppConnected] = useState<boolean | null>(null);
+  const [whatsAppStatusMessage, setWhatsAppStatusMessage] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -70,6 +73,25 @@ export default function FeesPage() {
           terms: feesData.terms || [],
           currency: feesData.currency || "NGN",
         });
+
+        try {
+          const whatsappRes = await fetch(`${backendUrl}/api/admin/whatsapp-baileys/status`, {
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+          });
+          if (whatsappRes.ok) {
+            const whatsappData = await whatsappRes.json();
+            setWhatsAppConnected(whatsappData?.session?.status === 'connected');
+            setWhatsAppStatusMessage(whatsappData?.session?.statusMessage || whatsappData?.session?.status || null);
+          } else {
+            setWhatsAppConnected(false);
+            setWhatsAppStatusMessage('Unable to retrieve WhatsApp status.');
+          }
+        } catch (err) {
+          console.error("Error loading WhatsApp status:", err);
+          setWhatsAppConnected(false);
+          setWhatsAppStatusMessage('Unable to retrieve WhatsApp status.');
+        }
       } catch (err) {
         console.error("Error loading fees:", err);
       } finally {
@@ -149,13 +171,17 @@ export default function FeesPage() {
   }
 
   return (
-    <FeesPageClient
-      invoices={data.invoices}
-      outstanding={data.outstanding}
-      currency={data.currency}
-      terms={data.terms}
-      onIssueBills={handleIssueBills}
-      onSendReminders={handleSendReminders}
-    />
+    <div className="space-y-6 p-6">
+      <FeesPageClient
+        invoices={data.invoices}
+        outstanding={data.outstanding}
+        currency={data.currency}
+        terms={data.terms}
+        onIssueBills={handleIssueBills}
+        onSendReminders={handleSendReminders}
+        whatsAppConnected={whatsAppConnected}
+        whatsAppStatusMessage={whatsAppStatusMessage}
+      />
+    </div>
   );
 }

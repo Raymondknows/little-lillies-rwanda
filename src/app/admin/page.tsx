@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { CreditCard, Users, Layers, TrendingUp, ArrowUpRight, Clock, ChevronLeft, ChevronRight, DollarSign, BookOpen, MessageSquare, Plus } from "lucide-react";
+import { CreditCard, Users, Layers, TrendingUp, ArrowUpRight, Clock, ChevronLeft, ChevronRight, DollarSign, BookOpen, MessageSquare, Plus, CheckCircle2 } from "lucide-react";
+import { WhatsAppIcon } from "@/components/ui/icons";
 import { formatMoney } from "@/lib/format";
 import { getBackendUrl } from "@/lib/backend-url";
 import SubscriptionModal from "@/components/subscription-modal";
@@ -14,6 +15,8 @@ export default function AdminDashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [subscriptionBlocked, setSubscriptionBlocked] = useState<{ reason: string; schoolName?: string } | null>(null);
   const [cardScroll, setCardScroll] = useState(0);
+  const [whatsAppConnected, setWhatsAppConnected] = useState<boolean | null>(null);
+  const [whatsAppStatusMessage, setWhatsAppStatusMessage] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -123,11 +126,30 @@ export default function AdminDashboardPage() {
             teachersRes.json(),
           ]);
 
+          // Get WhatsApp connection status if available
+          try {
+            const whatsappRes = await fetch(`${backendUrl}/api/admin/whatsapp-baileys/status`, {
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              signal: controller.signal,
+            });
+            if (whatsappRes.ok) {
+              const whatsappData = await whatsappRes.json();
+              setWhatsAppConnected(whatsappData?.session?.status === 'connected');
+              setWhatsAppStatusMessage(whatsappData?.session?.statusMessage || whatsappData?.session?.status || null);
+            } else {
+              setWhatsAppConnected(false);
+              setWhatsAppStatusMessage('Unable to retrieve WhatsApp status.');
+            }
+          } catch (err) {
+            console.error('[Dashboard] WhatsApp status fetch error:', err);
+            setWhatsAppConnected(false);
+            setWhatsAppStatusMessage('Unable to retrieve WhatsApp status.');
+          }
+
           // Count active pupils
           const pupils = studentsData.pupils || [];
           const pupilCount = pupils.filter((p: any) => p.isActive).length;
-          
-          // Count classes
           const classCount = (classesData.classes || []).length;
           
           // Get recent pupils (last 3 added)
@@ -291,13 +313,36 @@ export default function AdminDashboardPage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-foreground">
-          Good morning, {schoolName || 'Dashboard'}
-        </h1>
-        <p className="mt-1 text-muted">
-          Live dashboard — fees, results, and pupils from your database.
-        </p>
+      <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">
+            Good morning, {schoolName || 'Dashboard'}
+          </h1>
+          <p className="mt-1 text-muted">
+            Live dashboard — fees, results, and pupils from your database.
+          </p>
+        </div>
+
+        {whatsAppConnected !== null && (
+          <div className="inline-flex items-center gap-3 rounded-full border px-4 py-2 shadow-sm transition-colors">
+            <span className={`inline-flex h-9 w-9 items-center justify-center rounded-full ${whatsAppConnected ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+              <WhatsAppIcon className="h-5 w-5" />
+            </span>
+            <div className="flex flex-col">
+              <span className={`text-sm font-semibold ${whatsAppConnected ? 'text-foreground' : 'text-foreground'}`}>
+                {whatsAppConnected ? 'WhatsApp connected' : 'WhatsApp disconnected'}
+              </span>
+              <span className="text-xs text-muted">
+                {whatsAppConnected
+                  ? 'Ready to send school messages.'
+                  : 'Reconnect via settings.'}
+              </span>
+            </div>
+            <span className={`inline-flex h-6 min-w-[2.25rem] items-center justify-center rounded-full px-2 text-xs font-semibold ${whatsAppConnected ? 'bg-emerald-600 text-white' : 'bg-amber-600 text-white'}`}>
+              {whatsAppConnected ? 'On' : 'Off'}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Stats Cards with Quick Actions Overlay */}

@@ -17,6 +17,7 @@ interface ErrorModalProps {
     onClick: () => void;
   };
   onSuccessAction?: () => void; // For success modal primary button
+  confirmLabel?: string;
 }
 
 export function ErrorModal({
@@ -28,6 +29,7 @@ export function ErrorModal({
   type = "error",
   action,
   onSuccessAction,
+  confirmLabel,
 }: ErrorModalProps) {
   const [showDetails, setShowDetails] = useState(false);
 
@@ -106,7 +108,7 @@ export function ErrorModal({
             }}
             className={`flex-1 rounded-lg ${buttonBgColor} px-4 py-2.5 text-sm font-medium text-white transition-colors`}
           >
-            {isSuccess ? "Login Now" : "Try again"}
+            {confirmLabel ?? (isSuccess ? "Login Now" : "Try again")}
           </button>
         </div>
       </div>

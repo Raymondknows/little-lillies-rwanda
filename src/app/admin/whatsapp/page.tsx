@@ -5,6 +5,7 @@ import { useEffect, useState, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MessageCircle, Send, Mail, AlertCircle, CheckCircle, Clock, TrendingUp, ArrowUpRight } from "lucide-react";
+import { WhatsAppIcon } from "@/components/ui/icons";
 import { UserGuide, type PageHelpGuide } from "@/components/ui/user-guide";
 import SubscriptionModal from "@/components/subscription-modal";
 
@@ -128,6 +129,8 @@ export default function WhatsAppPage() {
     reason?: string;
     schoolName?: string;
   } | null>(null);
+  const [whatsAppConnected, setWhatsAppConnected] = useState<boolean | null>(null);
+  const [whatsAppStatusMessage, setWhatsAppStatusMessage] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState("ALL");
   const [filterStatus, setFilterStatus] = useState("ALL");
@@ -170,6 +173,25 @@ export default function WhatsAppPage() {
           const data = await response.json();
           setNotifications(data.notifications || []);
           setStats(data.stats);
+
+          try {
+            const whatsappRes = await fetch(`${backendUrl}/api/admin/whatsapp-baileys/status`, {
+              credentials: "include",
+              headers: { "Content-Type": "application/json" },
+            });
+            if (whatsappRes.ok) {
+              const whatsappData = await whatsappRes.json();
+              setWhatsAppConnected(whatsappData?.session?.status === 'connected');
+              setWhatsAppStatusMessage(whatsappData?.session?.statusMessage || whatsappData?.session?.status || null);
+            } else {
+              setWhatsAppConnected(false);
+              setWhatsAppStatusMessage('Unable to retrieve WhatsApp status.');
+            }
+          } catch (err) {
+            console.error('Error loading WhatsApp status:', err);
+            setWhatsAppConnected(false);
+            setWhatsAppStatusMessage('Unable to retrieve WhatsApp status.');
+          }
         } else {
           throw new Error("Failed to load notifications");
         }
@@ -225,12 +247,33 @@ export default function WhatsAppPage() {
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-          <MessageCircle className="h-8 w-8 text-brand" />
-          Communications Log
-        </h1>
-        <p className="mt-1 text-muted">View all notifications sent to parents</p>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-6">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
+            <MessageCircle className="h-8 w-8 text-brand" />
+            Communications Log
+          </h1>
+          <p className="mt-1 text-muted">View all notifications sent to parents</p>
+        </div>
+
+        {whatsAppConnected !== null && (
+          <div className="inline-flex items-center gap-3 rounded-full border px-4 py-2 shadow-sm transition-colors">
+            <span className={`inline-flex h-9 w-9 items-center justify-center rounded-full ${whatsAppConnected ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+              <WhatsAppIcon className="h-5 w-5" />
+            </span>
+            <div className="flex flex-col">
+              <span className="text-sm font-semibold text-foreground">
+                {whatsAppConnected ? 'WhatsApp connected' : 'WhatsApp disconnected'}
+              </span>
+              <span className="text-xs text-muted">
+                {whatsAppConnected ? 'Ready for messages.' : 'Reconnect via settings.'}
+              </span>
+            </div>
+            <span className={`inline-flex h-6 min-w-[2.25rem] items-center justify-center rounded-full px-2 text-xs font-semibold ${whatsAppConnected ? 'bg-emerald-600 text-white' : 'bg-amber-600 text-white'}`}>
+              {whatsAppConnected ? 'On' : 'Off'}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Error Message */}

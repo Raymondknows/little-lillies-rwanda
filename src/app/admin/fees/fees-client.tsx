@@ -26,6 +26,7 @@ import {
   type InvoiceStatus,
 } from "@/lib/fees-grouping";
 import { ArrowUpRight, TrendingUp, CheckCircle, AlertCircle, Clock } from "lucide-react";
+import { WhatsAppIcon } from "@/components/ui/icons";
 
 const STATUS_CONFIG = {
   DRAFT: { label: "Draft", color: "bg-gray-100 text-gray-800" },
@@ -103,6 +104,8 @@ export default function FeesPageClient({
   terms = [],
   onIssueBills = async () => {},
   onSendReminders = async () => {},
+  whatsAppConnected = null,
+  whatsAppStatusMessage = null,
 }: {
   invoices?: any[];
   outstanding?: number;
@@ -110,6 +113,8 @@ export default function FeesPageClient({
   terms?: TermItem[];
   onIssueBills?: (termId: string) => Promise<void>;
   onSendReminders?: () => Promise<void>;
+  whatsAppConnected?: boolean | null;
+  whatsAppStatusMessage?: string | null;
 }) {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -498,10 +503,31 @@ export default function FeesPageClient({
       {/* Main Page */}
       <div className="space-y-6">
         {/* Header */}
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between lg:gap-6">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Fees & Invoices</h1>
           <p className="mt-1 text-muted">Manage student invoices and track fee payments by phase, term, and class</p>
         </div>
+
+        {whatsAppConnected !== null && (
+          <div className="inline-flex items-center gap-3 rounded-full border px-4 py-2 shadow-sm transition-colors">
+            <span className={`inline-flex h-9 w-9 items-center justify-center rounded-full ${whatsAppConnected ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+              <WhatsAppIcon className="h-5 w-5" />
+            </span>
+            <div className="flex flex-col">
+              <span className="text-sm font-semibold text-foreground">
+                {whatsAppConnected ? 'WhatsApp connected' : 'WhatsApp disconnected'}
+              </span>
+              <span className="text-xs text-muted">
+                {whatsAppConnected ? 'Ready to send reminders.' : 'Reconnect via settings.'}
+              </span>
+            </div>
+            <span className={`inline-flex h-6 min-w-[2.25rem] items-center justify-center rounded-full px-2 text-xs font-semibold ${whatsAppConnected ? 'bg-emerald-600 text-white' : 'bg-amber-600 text-white'}`}>
+              {whatsAppConnected ? 'On' : 'Off'}
+            </span>
+          </div>
+        )}
+      </div>
 
         {/* Summary Cards */}
         <div className="hidden sm:grid grid-cols-4 gap-3">

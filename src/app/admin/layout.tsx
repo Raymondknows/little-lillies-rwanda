@@ -21,7 +21,7 @@ const nav = [
   { href: "/admin/attendance", label: "Attendance", icon: "ClipboardList" },
   { href: "/admin/whatsapp", label: "WhatsApp", icon: "WhatsApp" },
   { href: "/admin/support", label: "Support", icon: "HelpCircle" },
-  { href: "/admin/website", label: "Website", icon: "Globe" },
+  { href: "/admin/website", label: "Announcements", icon: "Globe" },
   { href: "/admin/subscription", label: "Subscription", icon: "CreditCard" },
   { href: "/admin/settings", label: "Settings", icon: "Settings" },
 ];

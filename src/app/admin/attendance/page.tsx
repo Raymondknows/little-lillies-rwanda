@@ -7,6 +7,7 @@ import { Calendar, Users, CheckCircle, AlertCircle, Clock, Send, TrendingUp, Arr
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { UserGuide, type PageHelpGuide } from "@/components/ui/user-guide";
+import { WhatsAppIcon } from "@/components/ui/icons";
 import SubscriptionModal from "@/components/subscription-modal";
 
 interface ClassData {
@@ -148,6 +149,8 @@ export default function AttendancePage() {
   const [schoolName, setSchoolName] = useState("");
   const [success, setSuccess] = useState(false);
   const [modifications, setModifications] = useState<{ [key: string]: "PRESENT" | "ABSENT" | "LATE" }>({});
+  const [whatsAppConnected, setWhatsAppConnected] = useState<boolean | null>(null);
+  const [whatsAppStatusMessage, setWhatsAppStatusMessage] = useState<string | null>(null);
   const [notificationMode, setNotificationMode] = useState<"ALL" | "ABSENT" | "LATE">("ALL");
   const [classesLoading, setClassesLoading] = useState(true);
 
@@ -202,6 +205,26 @@ export default function AttendancePage() {
           setError("Failed to load classes");
         } else {
           const data = await response.json();
+
+          try {
+            const whatsappRes = await fetch(`${backendUrl}/api/admin/whatsapp-baileys/status`, {
+              credentials: "include",
+              headers: { "Content-Type": "application/json" },
+            });
+            if (whatsappRes.ok) {
+              const whatsappData = await whatsappRes.json();
+              setWhatsAppConnected(whatsappData?.session?.status === 'connected');
+              setWhatsAppStatusMessage(whatsappData?.session?.statusMessage || whatsappData?.session?.status || null);
+            } else {
+              setWhatsAppConnected(false);
+              setWhatsAppStatusMessage('Unable to retrieve WhatsApp status.');
+            }
+          } catch (err) {
+            console.error('Error loading WhatsApp status:', err);
+            setWhatsAppConnected(false);
+            setWhatsAppStatusMessage('Unable to retrieve WhatsApp status.');
+          }
+
           setSchoolName(schoolNameToUse);
           const sorted = (data.classes || []).sort((a: any, b: any) => {
             const phaseOrder = PHASE_ORDER.indexOf(a.phase) - PHASE_ORDER.indexOf(b.phase);
@@ -459,12 +482,33 @@ export default function AttendancePage() {
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-          <Calendar className="h-8 w-8 text-brand" />
-          Attendance Management
-        </h1>
-        <p className="mt-1 text-muted">Track and manage student attendance by class and date</p>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-6">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
+            <Calendar className="h-8 w-8 text-brand" />
+            Attendance Management
+          </h1>
+          <p className="mt-1 text-muted">Track and manage student attendance by class and date</p>
+        </div>
+
+        {whatsAppConnected !== null && (
+          <div className="inline-flex items-center gap-3 rounded-full border px-4 py-2 shadow-sm transition-colors">
+            <span className={`inline-flex h-9 w-9 items-center justify-center rounded-full ${whatsAppConnected ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+              <WhatsAppIcon className="h-5 w-5" />
+            </span>
+            <div className="flex flex-col">
+              <span className="text-sm font-semibold text-foreground">
+                {whatsAppConnected ? 'WhatsApp connected' : 'WhatsApp disconnected'}
+              </span>
+              <span className="text-xs text-muted">
+                {whatsAppConnected ? 'Ready to send absences.' : 'Reconnect via settings.'}
+              </span>
+            </div>
+            <span className={`inline-flex h-6 min-w-[2.25rem] items-center justify-center rounded-full px-2 text-xs font-semibold ${whatsAppConnected ? 'bg-emerald-600 text-white' : 'bg-amber-600 text-white'}`}>
+              {whatsAppConnected ? 'On' : 'Off'}
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="flex flex-wrap gap-2">

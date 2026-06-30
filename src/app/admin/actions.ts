@@ -2,6 +2,7 @@
 
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { getBackendUrl } from "@/lib/backend-url";
 
 // Server actions removed for Vercel compatibility
 // All backend operations must use API routes (e.g., POST /api/admin/...)
@@ -135,26 +136,41 @@ export async function createAnnouncement(formData: FormData) {
 
     // Build absolute URL from headers (same pattern as other actions)
     const headersList = await headers();
-    const protocol = headersList.get("x-forwarded-proto") || "https";
-    const host = headersList.get("x-forwarded-host") || headersList.get("host") || "localhost:3000";
-    const apiUrl = `${protocol}://${host}/api/admin/announcements`;
+    const backendUrl = getBackendUrl();
+    const apiUrl = `${backendUrl}/api/admin/announcements`;
+    const requestHeaders: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+
+    const cookieHeader = headersList.get("cookie");
+    if (cookieHeader) {
+      requestHeaders.cookie = cookieHeader;
+    }
 
     const response = await fetch(apiUrl, {
       method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
+      headers: requestHeaders,
       body: JSON.stringify({ title, body, publish }),
     });
 
     if (!response.ok) {
-      let errorData;
-      try {
-        errorData = await response.json();
-      } catch (e) {
-        const text = await response.text();
-        throw new Error(`Server error: ${response.status} ${response.statusText}`);
+      const rawBody = await response.text();
+      let errorMessage = `Server error: ${response.status} ${response.statusText}`;
+      if (rawBody) {
+        try {
+          const errorData = JSON.parse(rawBody);
+          if (errorData?.error) {
+            errorMessage = errorData.error;
+          } else if (typeof errorData === 'string') {
+            errorMessage = errorData;
+          } else {
+            errorMessage = `${errorMessage} - ${JSON.stringify(errorData)}`;
+          }
+        } catch {
+          errorMessage = `${errorMessage} - ${rawBody}`;
+        }
       }
-      throw new Error(errorData.error || "Failed to create announcement");
+      throw new Error(errorMessage);
     }
 
     // Redirect with success flag

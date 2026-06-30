@@ -77,7 +77,7 @@ export default function SettingsPage() {
       school={school}
       staff={staff}
       paystackConfigured={school.hasPaystackPublic && school.hasPaystackSecret}
-      whatsappConfigured={school.hasWaCloudAccessToken && school.hasWaCloudPhoneNumberId}
+      whatsappConfigured={false}
     />
   );
 }

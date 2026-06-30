@@ -251,20 +251,24 @@ export default function SettingsPageClient({
           <h1 className="mt-2 text-3xl font-bold text-foreground">School Settings</h1>
           <p className="mt-3 max-w-2xl text-sm text-muted">Manage your school profile, location, branding, and system configuration</p>
         </div>
-        <Link href="/admin/settings/academic-years">
-          <Button variant="secondary" className="text-sm">
-            Manage Academic Years
-          </Button>
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/admin/settings/academic-years">
+            <Button variant="secondary" className="text-sm">
+              Manage Academic Years
+            </Button>
+          </Link>
+          <Link href="/admin/settings/whatsapp">
+            <Button variant="secondary" className="text-sm">
+              WhatsApp Settings
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Status Badges */}
       <div className="flex flex-wrap gap-2">
         <Badge variant={status?.paystack?.effective ? "success" : "default"}>
           {status?.paystack?.effective ? "✓ Paystack Configured" : "Paystack Not Configured"}
-        </Badge>
-        <Badge variant={status?.twilio?.effective ? "success" : "default"}>
-          {status?.twilio?.effective ? "✓ WhatsApp Configured" : "WhatsApp Not Configured"}
         </Badge>
       </div>
 

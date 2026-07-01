@@ -5,7 +5,7 @@ import { getBackendUrl } from "@/lib/backend-url";
 
 
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { UserGuide } from "@/components/ui/user-guide";
@@ -101,11 +101,19 @@ export default function ClassesPageClient({ classes: initialClasses }: { classes
   const [schoolName, setSchoolName] = useState("");
   const [activePhase, setActivePhase] = useState("ALL");
   const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedClass, setSelectedClass] = useState<any | null>(null);
   const [className, setClassName] = useState("");
   const [classPhase, setClassPhase] = useState("PRIMARY");
   const [classArm, setClassArm] = useState("");
+
+  useEffect(() => {
+    if (isSearchOpen && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [isSearchOpen]);
 
   useEffect(() => {
     const fetchClasses = async () => {
@@ -424,18 +432,32 @@ export default function ClassesPageClient({ classes: initialClasses }: { classes
           </div>
 
           {/* Search & Filter */}
-          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="Search classes by name, arm, or phase..."
-              className="flex-1 rounded-lg border border-border bg-surface px-4 py-2 text-sm text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-brand"
-            />
-            <Button onClick={() => openModal()} className="gap-2 flex items-center whitespace-nowrap">
-              <Plus className="h-4 w-4" />
-              Add class
-            </Button>
+          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+            <div className="flex flex-wrap gap-2 items-center">
+              {/* Animated Search Panel - slides out on same line */}
+              <div className={`overflow-hidden transition-all duration-300 ease-out flex-shrink-0 ${isSearchOpen ? "w-72 opacity-100 translate-x-0" : "w-0 opacity-0 translate-x-full"}`}>
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="Search classes by name, arm, or phase..."
+                  className="w-full rounded-lg border-2 border-[#0A66C2] bg-background px-4 py-2 text-sm text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+                />
+              </div>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setIsSearchOpen((open) => !open)}
+                className="px-3 py-2 text-sm"
+              >
+                {isSearchOpen ? "Close Search" : "Search Classes"}
+              </Button>
+              <Button onClick={() => openModal()} className="gap-2 flex items-center whitespace-nowrap">
+                <Plus className="h-4 w-4" />
+                Add class
+              </Button>
+            </div>
           </div>
 
           {/* Phase Filters */}

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { UserGuide } from "@/components/ui/user-guide";
@@ -76,6 +76,8 @@ export default function SubjectsPageClient({
   teacherSubjects: any[];
 }) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -84,6 +86,12 @@ export default function SubjectsPageClient({
   const [selectedClassIds, setSelectedClassIds] = useState<string[]>([]);
   const [subjects, setSubjects] = useState(initialSubjects);
   const [subjectClasses, setSubjectClasses] = useState(initialSubjectClasses);
+
+  useEffect(() => {
+    if (isSearchOpen && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [isSearchOpen]);
 
   const activeSubjectCount = subjects.length;
   const activeClassCount = initialClasses.length;
@@ -287,18 +295,27 @@ export default function SubjectsPageClient({
           <div className="hidden rounded-full bg-background px-4 py-2 text-sm text-muted sm:block">
             {activeSubjectCount} subject{activeSubjectCount === 1 ? "" : "s"} · {activeClassCount} class{activeClassCount === 1 ? "" : "es"}
           </div>
+          {/* Animated Search Panel - slides out on same line */}
+          <div className={`overflow-hidden transition-all duration-300 ease-out flex-shrink-0 ${isSearchOpen ? "w-72 opacity-100 translate-x-0" : "w-0 opacity-0 translate-x-full"}`}>
+            <input
+              ref={searchInputRef}
+              type="text"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Search subjects, classes, or teachers..."
+              className="w-full rounded-lg border-2 border-[#0A66C2] bg-background px-4 py-2 text-sm text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+            />
+          </div>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => setIsSearchOpen((open) => !open)}
+            className="px-3 py-2 text-sm"
+          >
+            {isSearchOpen ? "Close Search" : "Search Subject"}
+          </Button>
           <Button type="button" onClick={() => openSubjectModal()} className="w-full sm:w-auto">Add subject</Button>
         </div>
-      </div>
-
-      <div className="mb-6">
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(event) => setSearchQuery(event.target.value)}
-          placeholder="Search subjects, classes, or teachers..."
-          className="w-full rounded-lg border border-border bg-surface px-4 py-2 text-sm text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary"
-        />
       </div>
 
       <div className="overflow-hidden rounded-lg border border-border bg-surface">

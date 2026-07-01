@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import {
   FileText,
   CheckCircle2,
@@ -95,7 +95,15 @@ export default function ResultsPageClient({ assessments }: { assessments: any[] 
   const [activePhase, setActivePhase] = useState("ALL");
   const [activeStatus, setActiveStatus] = useState("ALL");
   const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    if (isSearchOpen && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [isSearchOpen]);
 
   // Filter by phase, status, and search
   const filteredAssessments = useMemo(() => {
@@ -178,6 +186,25 @@ export default function ResultsPageClient({ assessments }: { assessments: any[] 
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            {/* Animated Search Panel - slides out on same line */}
+            <div className={`overflow-hidden transition-all duration-300 ease-out flex-shrink-0 ${isSearchOpen ? "w-72 opacity-100 translate-x-0" : "w-0 opacity-0 translate-x-full"}`}>
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Search by assessment name or term..."
+                value={searchQuery}
+                onChange={handleSearchChange}
+                className="w-full rounded-lg border-2 border-[#0A66C2] bg-background px-3 py-2 text-sm text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-[#0A66C2] sm:px-4 sm:py-2"
+              />
+            </div>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setIsSearchOpen((open) => !open)}
+              className="w-full sm:w-auto"
+            >
+              {isSearchOpen ? "Close Search" : "Search Results"}
+            </Button>
             <Button href="/admin/results/new" className="w-full sm:w-auto">
               Create assessment
             </Button>
@@ -186,17 +213,6 @@ export default function ResultsPageClient({ assessments }: { assessments: any[] 
             </Button>
           </div>
         </div>
-
-      {/* Search Bar */}
-      <div className="mb-6">
-        <input
-          type="text"
-          placeholder="Search by assessment name or term..."
-          value={searchQuery}
-          onChange={handleSearchChange}
-          className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary sm:px-4 sm:py-2"
-        />
-      </div>
 
       {/* Filters - Phase Tabs and Status Dropdown */}
       <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">

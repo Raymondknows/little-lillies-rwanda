@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -141,6 +141,16 @@ export default function FeesPageClient({
   const [issuingBills, setIssuingBills] = useState(false);
   const [sendingReminders, setSendingReminders] = useState(false);
   const [selectedTermId, setSelectedTermId] = useState("");
+  
+  // Search panel state
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  
+  useEffect(() => {
+    if (isSearchOpen && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [isSearchOpen]);
 
   const handleIssueBillsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -648,18 +658,28 @@ export default function FeesPageClient({
         </div>
 
         {/* Actions & Search Bar */}
-        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          {/* Search Box - Left */}
-          <input
-            type="text"
-            placeholder="Search by student name, invoice number, or class..."
-            value={searchQuery}
-            onChange={handleSearchChange}
-            className="flex-1 rounded-lg border border-border bg-surface px-4 py-2 text-sm text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-brand"
-          />
-
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
           {/* Buttons - Right */}
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 items-center">
+            {/* Animated Search Panel - slides out on same line */}
+            <div className={`overflow-hidden transition-all duration-300 ease-out flex-shrink-0 ${isSearchOpen ? "w-72 opacity-100 translate-x-0" : "w-0 opacity-0 translate-x-full"}`}>
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Search by student name, invoice number, or class..."
+                value={searchQuery}
+                onChange={handleSearchChange}
+                className="w-full rounded-lg border-2 border-[#0A66C2] bg-background px-4 py-2 text-sm text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+              />
+            </div>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setIsSearchOpen((open) => !open)}
+              className="px-3 py-2 text-sm"
+            >
+              {isSearchOpen ? "Close Search" : "Search Fees"}
+            </Button>
             <form onSubmit={handleIssueBillsSubmit} className="flex gap-2">
               <select
                 value={selectedTermId}

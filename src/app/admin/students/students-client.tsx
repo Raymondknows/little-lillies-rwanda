@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
@@ -82,6 +82,7 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
   const router = useRouter();
   const [activePhase, setActivePhase] = useState("ALL");
   const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(DEFAULT_ITEMS_PER_PAGE);
   const searchParams = useSearchParams();
@@ -99,7 +100,13 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
   );
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [profileStudent, setProfileStudent] = useState<any | null>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    if (isSearchOpen) {
+      searchInputRef.current?.focus();
+    }
+  }, [isSearchOpen]);
 
   const openProfileModal = (student: any) => {
     setProfileStudent(student);
@@ -129,6 +136,16 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
   const getGuardian = (student: any) => {
     const entry = student.guardians?.[0] ?? null;
     return entry?.guardian ?? entry ?? null;
+  };
+
+  const getStudentInitials = (student: any) => {
+    const displayName = pupilName(student?.firstName, student?.lastName).trim();
+    const parts = displayName.split(/\s+/).filter(Boolean);
+
+    if (parts.length === 0) return "S";
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+
+    return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
   };
 
   const profileGuardian = profileStudent ? getGuardian(profileStudent) : null;
@@ -192,16 +209,37 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
   return (
     <>
       <div>
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Students</h1>
             <p className="mt-2 text-sm text-muted">
               {pupils.length} active student{pupils.length !== 1 ? "s" : ""} across all phases
             </p>
           </div>
-          <Button type="button" onClick={() => router.push('/admin/students/new')} className="w-full sm:w-auto px-3 py-2 text-sm">
-            Register Student
-          </Button>
+          <div className="flex flex-wrap gap-2 sm:justify-end sm:items-center">
+            {/* Animated Search Panel - slides out on same line */}
+            <div className={`overflow-hidden transition-all duration-300 ease-out flex-shrink-0 ${isSearchOpen ? "w-72 opacity-100 translate-x-0" : "w-0 opacity-0 -translate-x-full"}`}>
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Search by name or admission number..."
+                value={searchQuery}
+                onChange={handleSearchChange}
+                className="w-full rounded-lg border-2 border-[#0A66C2] bg-background px-3 py-1.5 text-sm text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+              />
+            </div>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setIsSearchOpen((open) => !open)}
+              className="w-full sm:w-auto px-3 py-2 text-sm"
+            >
+              {isSearchOpen ? "Close Search" : "Search Student"}
+            </Button>
+            <Button type="button" onClick={() => router.push('/admin/students/new')} className="w-full sm:w-auto px-3 py-2 text-sm">
+              Register Student
+            </Button>
+          </div>
         </div>
 
         {successModalMessage ? (
@@ -250,21 +288,9 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
             </div>
           </div>
         ) : null}
-        
 
-      {/* Search Bar */}
-      <div className="mb-6">
-        <input
-          type="text"
-          placeholder="Search by name or admission number..."
-          value={searchQuery}
-          onChange={handleSearchChange}
-          className="w-full rounded-lg border border-border bg-surface px-4 py-2 text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary"
-        />
-      </div>
-
-      {/* Tabs */}
-      <div className="mb-6 flex flex-wrap gap-1 border-b border-border sm:gap-2">
+        {/* Tabs */}
+        <div className="mb-6 flex flex-wrap gap-1 border-b border-border sm:gap-2">
         {PHASE_ORDER.map((phase) => {
           const count = getPhaseStats(phase);
           const config = PHASE_CONFIG[phase as keyof typeof PHASE_CONFIG];
@@ -346,8 +372,8 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
                             className="h-10 w-10 rounded-full object-cover"
                           />
                         ) : (
-                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-xs text-muted-foreground">
-                            No photo
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full border border-primary/10 bg-primary/10 text-xs font-semibold text-primary shadow-sm">
+                            {getStudentInitials(p)}
                           </div>
                         )}
                       </td>

@@ -334,6 +334,17 @@ export default function SubscriptionPage() {
   const status = subscription.subscriptionStatus;
   const config = statusConfig[status] || statusConfig.PENDING;
   const planConfig = planDetails[subscription.currentPlan] || planDetails.FREE;
+  const isActivePlan = status === "ACTIVE" || status === "ACTIVE_PAID";
+  const activePlanDate = subscription.subscriptionExpiresAt || subscription.trialEndsAt;
+  const activePlanLabel = isActivePlan ? "Plan Active" : "Trial Expires";
+  const activePlanValue = isActivePlan
+    ? `Your ${subscription.currentPlan} plan is active`
+    : activePlanDate
+      ? new Date(activePlanDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+      : "No date available";
+  const activePlanSecondary = isActivePlan && activePlanDate
+    ? `Renews on ${new Date(activePlanDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`
+    : null;
 
   return (
     <div className="w-full max-w-5xl mx-auto space-y-10">
@@ -393,19 +404,16 @@ export default function SubscriptionPage() {
 
       {/* Subscription Dates + Next Steps Grid */}
       <div className="grid gap-5 md:grid-cols-[repeat(2,minmax(0,1fr))] lg:grid-cols-[repeat(3,minmax(0,1fr))]">
-        {/* Trial End Date */}
-        {subscription.trialEndsAt && (
+        {/* Active/Trial Status Date */}
+        {(subscription.trialEndsAt || subscription.subscriptionExpiresAt || isActivePlan) && (
           <div className="rounded-xl border border-border p-5 md:p-6 bg-surface/60 backdrop-blur-sm flex items-center gap-4">
             <Calendar className="h-5 w-5 text-slate-400 flex-shrink-0" />
             <div>
-              <p className="text-xs font-semibold uppercase tracking-widest text-slate-600 mb-1">Trial Expires</p>
-              <p className="text-lg font-semibold text-foreground">
-                {new Date(subscription.trialEndsAt).toLocaleDateString('en-US', { 
-                  month: 'short', 
-                  day: 'numeric', 
-                  year: 'numeric' 
-                })}
-              </p>
+              <p className="text-xs font-semibold uppercase tracking-widest text-slate-600 mb-1">{activePlanLabel}</p>
+              <p className="text-lg font-semibold text-foreground">{activePlanValue}</p>
+              {activePlanSecondary && (
+                <p className="mt-1 text-sm text-muted">{activePlanSecondary}</p>
+              )}
             </div>
           </div>
         )}
@@ -443,8 +451,7 @@ export default function SubscriptionPage() {
             {subscription.canUpgrade && (
               <Link href="/admin/subscribe" className="block">
                 <Button 
-                  variant="outline" 
-                  className="w-full gap-2 font-semibold py-2.5 rounded-lg hover:bg-surface/80 transition-colors"
+                  className="w-full gap-2 font-semibold py-2.5 rounded-lg bg-[#0A66C2] text-white hover:bg-[#0A66C2]/90 transition-colors"
                 >
                   <TrendingUp className="h-4 w-4" />
                   Upgrade Plan

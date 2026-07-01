@@ -20,6 +20,7 @@ interface EmailLog {
 const EMAIL_TYPES = [
   { value: "PRODUCT_UPDATE", label: "Product update / feature announcement" },
   { value: "PRICE_UPDATE", label: "Price update / plan change" },
+  { value: "SUBSCRIPTION_THANK_YOU", label: "Subscription thank-you email" },
   { value: "SUPPORT_UPDATE", label: "Support case update" },
   { value: "ONBOARDING_GUIDANCE", label: "Onboarding guidance for new schools" },
   { value: "BEST_PRACTICE_TIP", label: "Best-practice tips for using SchoolBase" },
@@ -58,6 +59,34 @@ Key points:
 This change is intended to help your school capture more value from SchoolBase while keeping costs predictable.
 
 If you have questions or want a price review for your current plan, reply directly to this email.`,
+  },
+  SUBSCRIPTION_THANK_YOU: {
+    subject: "Thank you for choosing SchoolBase — your school is now set up to thrive",
+    body: `Hello,
+
+Thank you for subscribing to SchoolBase. We’re truly delighted to support your school and help your team work with greater confidence every day.
+
+With your subscription, your school now has access to the tools that make school operations smoother and more professional, including Admissions, Student Records, Attendance, Fees, Payments, Results, Report Cards, Staff Management, and WhatsApp Communication.
+
+What this means for your school:
+• Faster, more organized daily operations for administrators and staff.
+• Easier communication with parents through the parent portal and WhatsApp.
+• Better visibility into fees, attendance, and academic performance.
+• A stronger, more modern experience for your entire school community.
+
+Payment acknowledgement:
+• We have received your payment successfully.
+• This email serves as your confirmation and acknowledgement of the completed transaction.
+
+What to do next:
+• Log in to SchoolBase and review your dashboard.
+• Register your teachers and confirm your class structure.
+• Publish fee schedules and share the parent portal with families.
+• Start using WhatsApp communication to keep everyone informed.
+
+We’re excited to see your school grow with SchoolBase. If you ever need help, please reach out to us at info@schoolbase.live, visit our support page, or contact us on WhatsApp at +2349031368963.
+
+Thank you again for choosing SchoolBase — we’re proud to be part of your journey.`,
   },
   SUPPORT_UPDATE: {
     subject: "Support update: your SchoolBase request is being handled",
@@ -145,6 +174,7 @@ const DEFAULT_SUBJECTS: Record<string, string> = {
   BEST_PRACTICE_TIP: "Best practice tips for using SchoolBase",
   MANUAL_ANNOUNCEMENT: "Important SchoolBase update from our team",
   PRICE_UPDATE: "Important price update for SchoolBase",
+  SUBSCRIPTION_THANK_YOU: "Thank you for choosing SchoolBase",
   POLICY_UPDATE: "Important compliance and policy update",
   ACCOUNT_SECURITY: "Important account security notice",
 };
@@ -313,10 +343,10 @@ export default function EmailCenterClient({
   };
 
   return (
-    <div className="space-y-8">
-      <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
-        <section className="rounded-3xl border border-border bg-surface p-6 shadow-sm shadow-slate-200/50">
-          <div className="mb-6 flex items-start justify-between gap-4">
+    <div className="space-y-4 sm:space-y-8">
+      <div className="grid gap-4 sm:gap-6 lg:grid-cols-[1.5fr_1fr]">
+        <section className="rounded-3xl border border-border bg-surface p-4 shadow-sm shadow-slate-200/50 sm:p-6">
+          <div className="mb-4 flex items-start justify-between gap-4 sm:mb-6">
             <div>
               <h2 className="text-lg font-semibold text-foreground">Send platform communication email</h2>
               <p className="mt-2 text-sm text-muted">
@@ -456,7 +486,7 @@ export default function EmailCenterClient({
           </form>
         </section>
 
-        <section className="rounded-3xl border border-border bg-surface p-6 shadow-sm shadow-slate-200/50">
+        <section className="rounded-3xl border border-border bg-surface p-4 shadow-sm shadow-slate-200/50 sm:p-6">
           <h2 className="text-lg font-semibold text-foreground">Email details</h2>
           <div className="mt-4 space-y-4 text-sm text-muted">
             <p>
@@ -480,8 +510,8 @@ export default function EmailCenterClient({
         </section>
       </div>
 
-      <section className="rounded-3xl border border-border bg-surface p-6 shadow-sm shadow-slate-200/50">
-        <div className="mb-6 flex items-center justify-between gap-4">
+      <section className="rounded-3xl border border-border bg-surface p-4 shadow-sm shadow-slate-200/50 sm:p-6">
+        <div className="mb-4 flex items-center justify-between gap-4 sm:mb-6">
           <div>
             <h2 className="text-lg font-semibold text-foreground">Recent email activity</h2>
             <p className="mt-1 text-sm text-muted">Recently sent platform communication emails.</p>

@@ -21,38 +21,31 @@ export async function POST(request: NextRequest) {
     const isJson = contentType.includes('application/json');
 
     if (isMultipart) {
-        // Use server-side FormData parsing and forward FormData to backend.
-        // This mirrors the working settings upload flow and ensures fetch
-        // sets the correct multipart boundary.
-        const incoming = await request.formData();
-        const forwardForm = new FormData();
-        for (const [k, v] of incoming.entries()) {
-          forwardForm.append(k, v as any);
-        }
+      // Stream original request body to backend and forward key headers
+      const forwardHeaders: Record<string, string> = {};
+      const cookieHeader = request.headers.get('cookie');
+      if (cookieHeader) forwardHeaders.cookie = cookieHeader;
+      const xSchool = request.headers.get('x-school-id');
+      if (xSchool) forwardHeaders['x-school-id'] = xSchool;
+      const incomingContentType = request.headers.get('content-type');
+      if (incomingContentType) forwardHeaders['content-type'] = incomingContentType;
 
-        const forwardHeaders: Record<string, string> = {};
-        const cookieHeader = request.headers.get('cookie');
-        if (cookieHeader) forwardHeaders.cookie = cookieHeader;
-        const xSchool = request.headers.get('x-school-id');
-        if (xSchool) {
-          forwardHeaders['x-school-id'] = xSchool;
-          // also include schoolId in the forwarded form so backend can resolve it
-          forwardForm.append('schoolId', xSchool as any);
-        }
+      const fetchOptions: any = {
+        method: 'POST',
+        headers: forwardHeaders,
+        body: request.body,
+        duplex: 'half' as const,
+      };
 
-        const resp = await fetch(backendUrl, {
-          method: 'POST',
-          headers: forwardHeaders,
-          body: forwardForm,
-        });
+      const resp = await fetch(backendUrl, fetchOptions);
 
-        const ct = resp.headers.get('content-type') || '';
-        if (ct.includes('application/json')) {
-          const data = await resp.json();
-          return NextResponse.json(data, { status: resp.status });
-        }
-        const text = await resp.text();
-        return new NextResponse(text, { status: resp.status, headers: { 'content-type': ct || 'text/plain' } });
+      const ct = resp.headers.get('content-type') || '';
+      if (ct.includes('application/json')) {
+        const data = await resp.json();
+        return NextResponse.json(data, { status: resp.status });
+      }
+      const text = await resp.text();
+      return new NextResponse(text, { status: resp.status, headers: { 'content-type': ct || 'text/plain' } });
     }
 
     if (isJson) {

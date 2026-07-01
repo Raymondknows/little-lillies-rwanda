@@ -207,11 +207,11 @@ export default function VideosClient({
     : null;
 
   return (
-    <div className="relative space-y-4 sm:space-y-6 w-full">
+    <div className="relative w-full space-y-2 px-0 sm:px-0 sm:space-y-4">
       {/* Add/Edit Form */}
-      <div className="rounded-lg border border-border bg-surface p-4 sm:p-6 w-full">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4">
-          <h2 className="flex items-center gap-2 text-lg sm:text-xl font-semibold text-foreground break-words">
+      <div className="w-full rounded-2xl border border-border/70 bg-surface p-3 shadow-sm sm:p-4">
+        <div className="mb-3 flex flex-col gap-3 sm:mb-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+          <h2 className="flex items-center gap-2 break-words text-lg font-semibold text-foreground sm:text-xl">
             <Plus className="h-5 w-5 text-brand" />
             {editingId ? "Edit Video" : "Add New Video"}
           </h2>
@@ -221,7 +221,7 @@ export default function VideosClient({
                 handleReset();
                 setShowForm(true);
               }}
-              className="gap-2"
+              className="w-full gap-2 sm:w-auto"
             >
               <Plus className="h-4 w-4" />
               Add Video
@@ -233,6 +233,7 @@ export default function VideosClient({
                 setShowForm(false);
               }}
               variant="outline"
+              className="w-full sm:w-auto"
             >
               Cancel
             </Button>
@@ -344,7 +345,7 @@ export default function VideosClient({
             <Button
               type="submit"
               disabled={loading}
-              className="w-full"
+              className="w-full sm:w-auto"
             >
               {loading
                 ? "Saving..."
@@ -357,18 +358,18 @@ export default function VideosClient({
       </div>
 
       {/* Videos List */}
-      <div className="rounded-3xl border border-border bg-surface p-6 shadow-sm shadow-slate-200/50 w-full">
-        <div className="mb-6 grid gap-4 md:grid-cols-[1fr_auto] md:items-center">
+      <div className="w-full rounded-2xl border border-border/70 bg-surface p-3 shadow-sm sm:p-4">
+        <div className="mb-4 grid gap-4 md:mb-6 md:grid-cols-[1fr_auto] md:items-center">
           <div>
             <h2 className="text-lg sm:text-xl font-semibold text-foreground">
               Video Library
             </h2>
-            <p className="mt-2 text-sm text-muted max-w-2xl">
+            <p className="mt-2 max-w-2xl text-sm text-muted">
               A polished collection of tutorials for your team and schools, with quick actions for editing, sharing, and managing each item.
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-2xl border border-border bg-background p-4 text-sm">
+            <div className="rounded-2xl border border-border bg-background p-3 text-sm sm:p-4">
               <p className="text-muted uppercase tracking-[0.2em] text-[10px]">Total videos</p>
               <p className="mt-2 text-2xl font-semibold text-foreground">{totalVideos}</p>
             </div>
@@ -380,7 +381,7 @@ export default function VideosClient({
         </div>
 
         {videos.length === 0 ? (
-          <div className="text-center py-12 rounded-3xl border border-dashed border-border bg-background">
+          <div className="rounded-2xl border border-dashed border-border bg-background px-4 py-10 text-center sm:py-12">
             <p className="text-muted">No videos yet. Add a tutorial to get started.</p>
           </div>
         ) : (
@@ -388,11 +389,11 @@ export default function VideosClient({
             {videos.map((video) => (
               <div
                 key={video.id}
-                className="rounded-3xl border border-border bg-white p-4 sm:p-5 shadow-sm transition hover:shadow-md"
+                className="rounded-2xl border border-border bg-white p-3 shadow-sm transition hover:shadow-md sm:p-4"
               >
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                   <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2 mb-3">
+                    <div className="mb-3 flex flex-wrap items-center gap-2">
                       <h3 className="font-semibold text-foreground text-base sm:text-lg truncate">
                         {video.title}
                       </h3>
@@ -405,17 +406,17 @@ export default function VideosClient({
                         </span>
                       )}
                     </div>
-                    <p className="text-sm text-muted mb-4 line-clamp-3">
+                    <p className="mb-3 text-sm text-muted line-clamp-3">
                       {video.description || "No description provided."}
                     </p>
-                    <div className="flex flex-wrap gap-3 text-xs text-muted">
+                    <div className="flex flex-wrap gap-2 text-xs text-muted">
                       <span>Created {new Date(video.createdAt).toLocaleDateString()}</span>
                       <span className="hidden sm:inline">•</span>
-                      <span className="truncate">{typeof window !== 'undefined' ? `${window.location.origin}/video-tutorials/${video.id}` : `/video-tutorials/${video.id}`}</span>
+                      <span className="break-all">{typeof window !== 'undefined' ? `${window.location.origin}/video-tutorials/${video.id}` : `/video-tutorials/${video.id}`}</span>
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap items-center justify-end gap-2">
+                  <div className="flex flex-wrap items-center justify-start gap-2 sm:justify-end">
                     <button
                       type="button"
                       onClick={() => copyShareLink(video.id)}

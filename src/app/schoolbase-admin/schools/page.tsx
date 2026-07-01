@@ -5,7 +5,7 @@ import SchoolsViewSwitcher from "./schools-view-switcher";
 
 export default function SchoolsPage() {
   return (
-    <div className="px-3 py-6 sm:px-5">
+    <div className="px-0.5 py-1.5 sm:px-1 sm:py-2">
       <Suspense fallback={<div className="text-center py-8 text-muted">Loading schools...</div>}>
         <SchoolsViewSwitcher
           initialSchools={[]}

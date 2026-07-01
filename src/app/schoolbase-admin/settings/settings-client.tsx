@@ -100,13 +100,12 @@ export default function SettingsClient() {
   }
 
   return (
-    <div>
-
+    <div className="w-full px-0 sm:px-0">
       {/* GRID */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-2 lg:grid-cols-3">
 
         {/* PROFILE CARD */}
-        <div className="rounded-xl border border-border bg-surface p-5 shadow-sm hover:shadow-md transition">
+        <div className="w-full rounded-xl border border-border bg-surface p-4 shadow-sm transition hover:shadow-md sm:p-5">
           <div className="flex items-center gap-2 mb-4">
             <User className="h-4 w-4 text-brand" />
             <h2 className="font-semibold text-foreground">Profile</h2>
@@ -149,7 +148,7 @@ export default function SettingsClient() {
         </div>
 
         {/* SECURITY CARD */}
-        <div className="rounded-xl border border-border bg-surface p-5 shadow-sm hover:shadow-md transition">
+        <div className="w-full rounded-xl border border-border bg-surface p-4 shadow-sm transition hover:shadow-md sm:p-5">
           <div className="flex items-center gap-2 mb-4">
             <Shield className="h-4 w-4 text-brand" />
             <h2 className="font-semibold text-foreground">Security</h2>
@@ -180,7 +179,7 @@ export default function SettingsClient() {
         </div>
 
         {/* SYSTEM INFO CARD */}
-        <div className="rounded-xl border border-border bg-surface p-5 shadow-sm hover:shadow-md transition">
+        <div className="w-full rounded-xl border border-border bg-surface p-4 shadow-sm transition hover:shadow-md sm:p-5">
           <div className="flex items-center gap-2 mb-4">
             <Server className="h-4 w-4 text-brand" />
             <h2 className="font-semibold text-foreground">System Info</h2>

@@ -288,25 +288,25 @@ export default function SupportRequestsClient({
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 border-b border-border pb-6 lg:flex-row lg:items-end lg:justify-between">
+    <div className="space-y-2.5 sm:space-y-4">
+      <div className="space-y-3">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Support Center</h1>
+          <h1 className="text-2xl font-semibold text-foreground sm:text-3xl">Support Center</h1>
           <p className="mt-1 text-sm text-muted">
             Review and respond to school support tickets from a single, focused workspace.
           </p>
         </div>
-        <div className="flex flex-col gap-3 sm:flex-row">
+        <div className="grid gap-3 sm:grid-cols-[minmax(0,0.4fr)_220px]">
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search tickets..."
-            className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20 sm:w-64"
+            className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
           />
           <select
             value={statusFilter}
             onChange={(event) => setStatusFilter(event.target.value)}
-            className="rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none"
+            className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none"
           >
             <option value="ALL">All statuses</option>
             <option value="OPEN">Open</option>
@@ -317,9 +317,9 @@ export default function SupportRequestsClient({
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
-        <aside className="rounded-3xl border border-border bg-surface p-4 shadow-sm lg:max-h-[70vh] lg:overflow-y-auto lg:overflow-x-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-          <div className="mb-4 flex items-center justify-between">
+      <div className="grid gap-2.5 sm:gap-4 xl:grid-cols-[320px_minmax(0,1fr)]">
+        <aside className="rounded-2xl border border-border/70 bg-surface p-2.5 shadow-sm sm:p-3 lg:max-h-[78vh] lg:min-h-[540px] lg:overflow-y-auto lg:overflow-x-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          <div className="mb-3 flex items-center justify-between py-1">
             <div>
               <h3 className="text-sm font-semibold text-foreground">Tickets</h3>
               <p className="text-xs text-muted">{filtered.length} visible • {unreadCount} unread</p>
@@ -344,7 +344,7 @@ export default function SupportRequestsClient({
                       setReplyError(null);
                       setReplySuccess(null);
                     }}
-                    className={`w-full rounded-2xl border p-3 text-left transition ${isActive ? "border-brand bg-brand/5 shadow-sm" : "border-border bg-background hover:border-brand/40 hover:bg-brand/5"}`}
+                    className={`w-full rounded-2xl border p-2.5 text-left transition sm:p-3 ${isActive ? "border-brand bg-brand/5 shadow-sm" : "border-border bg-background hover:border-brand/40 hover:bg-brand/5"}`}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
@@ -371,10 +371,10 @@ export default function SupportRequestsClient({
           </div>
         </aside>
 
-        <section className="rounded-3xl border border-border bg-surface p-6 shadow-sm">
+        <section className="rounded-2xl border border-border/70 bg-surface p-2.5 shadow-sm sm:p-4">
           {selectedRequest ? (
-            <div className="space-y-6">
-              <div className="flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-start sm:justify-between">
+            <div className="space-y-4">
+              <div className="flex flex-col gap-2.5 border-b border-border pb-3 sm:flex-row sm:items-start sm:justify-between sm:gap-3 sm:pb-4">
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
                     <h2 className="text-lg font-semibold text-foreground">{selectedRequest.subject}</h2>
@@ -405,8 +405,8 @@ export default function SupportRequestsClient({
                 </div>
               </div>
 
-              <div className="space-y-3 border-t border-border pt-4">
-                <div className="flex items-center justify-between">
+              <div className="space-y-2.5 border-t border-border pt-3">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <h3 className="text-sm font-semibold text-foreground">Conversation</h3>
                   <span className="text-xs text-muted">
                     {selectedRequest.messages.length} {selectedRequest.messages.length === 1 ? "message" : "messages"}
@@ -429,8 +429,8 @@ export default function SupportRequestsClient({
                         : "bg-brand/10 text-brand";
 
                       return (
-                        <div key={message.id} className="border-l-2 border-brand/30 pl-3 py-2">
-                          <div className="flex items-start justify-between gap-3 text-[11px] text-muted">
+                        <div key={message.id} className="rounded-2xl border border-brand/20 bg-background/80 px-3 py-2.5 sm:px-4">
+                          <div className="flex flex-col gap-2 text-[11px] text-muted sm:flex-row sm:items-start sm:justify-between sm:gap-3">
                             <div className="flex items-center gap-2">
                               <span className={`inline-flex rounded-full px-2 py-1 text-[10px] font-semibold ${badgeClasses}`}>
                                 {badgeLabel}
@@ -451,7 +451,7 @@ export default function SupportRequestsClient({
                 </div>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-[220px_minmax(0,1fr)]">
+              <div className="grid gap-3 md:grid-cols-[220px_minmax(0,1fr)]">
                 <div>
                   <label className="mb-2 block text-sm font-medium text-foreground">Set status</label>
                   <select
@@ -490,14 +490,14 @@ export default function SupportRequestsClient({
               {replyError ? <div className="rounded-2xl bg-rose-50 p-3 text-sm text-rose-700">{replyError}</div> : null}
               {replySuccess ? <div className="rounded-2xl bg-emerald-50 p-3 text-sm text-emerald-700">{replySuccess}</div> : null}
 
-              <div className="flex flex-wrap gap-3">
-                <Button type="button" disabled={busy} onClick={handleReply}>
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                <Button type="button" disabled={busy} onClick={handleReply} className="w-full sm:w-auto">
                   {busy ? "Sending reply..." : "Send reply"}
                 </Button>
               </div>
             </div>
           ) : (
-            <div className="flex h-full min-h-[320px] items-center justify-center rounded-3xl border border-dashed border-border bg-background p-6 text-center text-sm text-muted">
+            <div className="flex h-full min-h-[320px] items-center justify-center rounded-2xl border border-dashed border-border bg-background p-3 text-center text-sm text-muted sm:p-5">
               Select a ticket from the left to view the conversation and reply.
             </div>
           )}

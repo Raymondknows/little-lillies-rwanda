@@ -131,28 +131,31 @@ export default function SchoolsViewSwitcher({
           {subtitle ? <p className="mt-1 text-muted">{subtitle}</p> : null}
         </div>
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <button
-            onClick={() => setView("list")}
-            className={`inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-colors ${
+        <button
+          type="button"
+          onClick={() => setView(view === "list" ? "grid" : "list")}
+          className="inline-flex items-center rounded-full border border-border bg-slate-100 p-1 shadow-sm"
+          aria-label={`Switch to ${view === "list" ? "grid" : "list"} view`}
+        >
+          <span
+            className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
               view === "list"
-                ? "bg-brand text-white hover:bg-brand/90 shadow-sm hover:shadow-md"
-                : "bg-slate-100 text-foreground hover:bg-slate-200"
+                ? "bg-white text-brand shadow-sm"
+                : "bg-transparent text-foreground"
             }`}
           >
-            Table
-          </button>
-          <button
-            onClick={() => setView("grid")}
-            className={`inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-colors ${
+            List
+          </span>
+          <span
+            className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
               view === "grid"
-                ? "bg-brand text-white hover:bg-brand/90 shadow-sm hover:shadow-md"
-                : "bg-slate-100 text-foreground hover:bg-slate-200"
+                ? "bg-white text-brand shadow-sm"
+                : "bg-transparent text-foreground"
             }`}
           >
             Grid
-          </button>
-        </div>
+          </span>
+        </button>
       </div>
 
       {view === "grid" ? (

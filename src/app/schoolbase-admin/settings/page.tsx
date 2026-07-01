@@ -4,10 +4,10 @@ import SettingsClient from "./settings-client";
 
 export default function SettingsPage() {
   return (
-    <div className="p-6 space-y-6">
-      <div>
+    <div className="space-y-4 px-2 py-3 sm:px-4 sm:py-5 lg:px-6 lg:py-6">
+      <div className="space-y-1">
         <h1 className="text-3xl font-bold">Settings</h1>
-        <p className="mt-1 text-muted">Platform admin settings and configuration</p>
+        <p className="text-muted">Platform admin settings and configuration</p>
       </div>
 
       <SettingsClient />

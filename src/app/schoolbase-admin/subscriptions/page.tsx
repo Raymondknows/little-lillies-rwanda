@@ -1,30 +1,57 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import SubscriptionsClient from "./subscriptions-client";
 import { getBackendUrl } from "@/lib/backend-url";
 
 export default function SubscriptionsPage() {
   const [schools, setSchools] = useState([]);
+  const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const loadSchools = async () => {
-      try {
-        const backendUrl = getBackendUrl();
-        const res = await fetch(`${backendUrl}/schoolbase-admin/api/schools?limit=500`, {
+  const loadData = useCallback(async () => {
+    try {
+      const backendUrl = getBackendUrl();
+      const [schoolsRes, paymentsRes] = await Promise.all([
+        fetch(`${backendUrl}/schoolbase-admin/api/schools?limit=500`, {
           credentials: "include",
-        });
-        const data = await res.json();
-        setSchools(data.schools || []);
-        setLoading(false);
-      } catch (err) {
-        console.error("Error loading schools:", err);
-        setLoading(false);
-      }
-    };
-    loadSchools();
+        }),
+        fetch(`${backendUrl}/schoolbase-admin/api/subscription-payments?limit=100`, {
+          credentials: "include",
+        }),
+      ]);
+
+      const schoolsData = await schoolsRes.json();
+      const paymentsData = await paymentsRes.json();
+
+      setSchools(schoolsData.schools || []);
+      setPayments(paymentsData.payments || []);
+    } catch (err) {
+      console.error("Error loading subscriptions data:", err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadData();
+
+    const handleFocus = () => {
+      loadData();
+    };
+
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        loadData();
+      }
+    });
+
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleFocus);
+    };
+  }, [loadData]);
 
   if (loading) {
     return (
@@ -44,7 +71,7 @@ export default function SubscriptionsPage() {
         <p className="mt-1 text-muted">Manage school subscriptions and billing</p>
       </div>
 
-      <SubscriptionsClient schools={schools} />
+      <SubscriptionsClient schools={schools} payments={payments} />
     </div>
   );
 }

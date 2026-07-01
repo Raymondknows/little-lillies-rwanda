@@ -29,17 +29,41 @@ const STATUS_CONFIG = {
 
 const ITEMS_PER_PAGE = 15;
 
+interface SubscriptionPaymentRecord {
+  id: string;
+  amount: number;
+  method: string;
+  reference: string | null;
+  createdAt: string;
+  schoolId: string | null;
+  schoolName: string;
+  schoolSlug: string | null;
+  schoolEmail: string | null;
+  schoolCountry: string | null;
+  plan: string | null;
+  status: string | null;
+  paymentStatus: string | null;
+}
+
 export default function SubscriptionsPageClient({
   schools: initialSchools,
+  payments: initialPayments,
 }: {
   schools: School[];
+  payments: SubscriptionPaymentRecord[];
 }) {
   const [schools, setSchools] = useState<School[]>(initialSchools);
+  const [payments, setPayments] = useState<SubscriptionPaymentRecord[]>(initialPayments);
+  const [activeTab, setActiveTab] = useState<"overview" | "payments">("overview");
   const [searchQuery, setSearchQuery] = useState("");
   const [planFilter, setPlanFilter] = useState("ALL");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedPlans, setSelectedPlans] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    setPayments(initialPayments);
+  }, [initialPayments]);
 
   useEffect(() => {
     setSelectedPlans((prev) => {
@@ -117,7 +141,137 @@ export default function SubscriptionsPageClient({
 
   return (
     <div className="w-full space-y-8">
-      {pendingSchools.length > 0 && (
+      <div className="rounded-lg border border-border bg-surface p-3 sm:p-4">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setActiveTab("overview")}
+              className={`rounded-md px-3 py-2 text-sm font-medium transition ${activeTab === "overview" ? "bg-brand text-white" : "text-muted hover:bg-background"}`}
+            >
+              School Overview
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("payments")}
+              className={`rounded-md px-3 py-2 text-sm font-medium transition ${activeTab === "payments" ? "bg-brand text-white" : "text-muted hover:bg-background"}`}
+            >
+              Payment History
+            </button>
+          </div>
+
+          {activeTab === "overview" && (
+            <div className="grid w-full gap-2 sm:grid-cols-[1.2fr_auto_auto_auto] lg:max-w-[760px] lg:items-center">
+              <input
+                type="text"
+                placeholder="Search by school name, slug, email, or country..."
+                value={searchQuery}
+                onChange={handleSearchChange}
+                className="min-w-0 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              <select
+                value={planFilter}
+                onChange={(e) => {
+                  setPlanFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none"
+              >
+                <option value="ALL">All plans</option>
+                <option value="FREE">Free</option>
+                <option value="STARTER">Starter</option>
+                <option value="GROWTH">Growth</option>
+                <option value="ENTERPRISE">Enterprise</option>
+              </select>
+              <select
+                value={statusFilter}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none"
+              >
+                <option value="ALL">All statuses</option>
+                <option value="PENDING">Pending</option>
+                <option value="TRIAL">Trial</option>
+                <option value="ACTIVE">Active</option>
+                <option value="SUSPENDED">Suspended</option>
+                <option value="CANCELLED">Cancelled</option>
+              </select>
+              <div className="min-w-0 text-xs text-muted">
+                Showing {paginatedSchools.length > 0 ? (currentPage - 1) * ITEMS_PER_PAGE + 1 : 0}–
+                {Math.min(currentPage * ITEMS_PER_PAGE, filteredSchools.length)} of {filteredSchools.length} school{filteredSchools.length !== 1 ? "s" : ""}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {activeTab === "payments" ? (
+        <div className="rounded-lg border border-border bg-surface p-4">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">Subscription Payments</h2>
+              <p className="text-sm text-muted">Recent successful subscription payments with school details and payment status.</p>
+            </div>
+            <span className="rounded-full bg-brand/10 px-3 py-1 text-xs font-semibold text-brand">
+              {payments.length} payment{payments.length === 1 ? "" : "s"}
+            </span>
+          </div>
+
+          {payments.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-left text-sm">
+                <thead className="border-b border-border bg-background text-muted">
+                  <tr>
+                    <th className="px-3 py-2 font-medium">School</th>
+                    <th className="px-3 py-2 font-medium">Email</th>
+                    <th className="px-3 py-2 font-medium">Country</th>
+                    <th className="px-3 py-2 font-medium">Plan</th>
+                    <th className="px-3 py-2 font-medium">Payment Status</th>
+                    <th className="px-3 py-2 font-medium">Amount</th>
+                    <th className="px-3 py-2 font-medium">Method</th>
+                    <th className="px-3 py-2 font-medium">Reference</th>
+                    <th className="px-3 py-2 font-medium">Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {payments.map((payment) => (
+                    <tr key={payment.id} className="border-t border-border hover:bg-background/50 transition-colors">
+                      <td className="px-3 py-2">
+                        <div className="font-medium text-foreground">{payment.schoolName}</div>
+                        {payment.schoolSlug ? <div className="text-xs text-muted">{payment.schoolSlug}</div> : null}
+                      </td>
+                      <td className="px-3 py-2 text-xs text-muted">{payment.schoolEmail || "—"}</td>
+                      <td className="px-3 py-2 text-xs text-muted">{payment.schoolCountry || "—"}</td>
+                      <td className="px-3 py-2">{payment.plan ? <Badge variant="default">{payment.plan}</Badge> : "—"}</td>
+                      <td className="px-3 py-2">
+                        <span className="rounded-full bg-success/10 px-2.5 py-1 text-xs font-semibold text-success">
+                          {payment.paymentStatus || "COMPLETED"}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2 font-medium text-foreground">
+                        {new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN" }).format((payment.amount || 0) / 100)}
+                      </td>
+                      <td className="px-3 py-2 text-foreground">{payment.method}</td>
+                      <td className="px-3 py-2 text-xs text-muted">{payment.reference || "—"}</td>
+                      <td className="px-3 py-2 text-xs text-muted">
+                        {new Date(payment.createdAt).toLocaleString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="rounded-lg border border-dashed border-border bg-background px-4 py-6 text-center text-sm text-muted">
+              No subscription payments have been recorded yet.
+            </div>
+          )}
+        </div>
+      ) : (
+        <>
+          {pendingSchools.length > 0 && (
         <div className="rounded-lg border border-border bg-surface p-6">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-3 h-3 rounded-full bg-warning animate-pulse"></div>
@@ -191,50 +345,6 @@ export default function SubscriptionsPageClient({
           </div>
         </div>
       )}
-
-      {/* Search & Filters */}
-      <div className="grid gap-3 sm:grid-cols-[1fr_auto_auto_auto] sm:items-center">
-        <input
-          type="text"
-          placeholder="Search by school name, slug, email, or country..."
-          value={searchQuery}
-          onChange={handleSearchChange}
-          className="min-w-0 rounded-lg border border-border bg-surface px-4 py-2 text-sm text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary"
-        />
-        <select
-          value={planFilter}
-          onChange={(e) => {
-            setPlanFilter(e.target.value);
-            setCurrentPage(1);
-          }}
-          className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground focus:outline-none"
-        >
-          <option value="ALL">All plans</option>
-          <option value="FREE">Free</option>
-          <option value="STARTER">Starter</option>
-          <option value="GROWTH">Growth</option>
-          <option value="ENTERPRISE">Enterprise</option>
-        </select>
-        <select
-          value={statusFilter}
-          onChange={(e) => {
-            setStatusFilter(e.target.value);
-            setCurrentPage(1);
-          }}
-          className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground focus:outline-none"
-        >
-          <option value="ALL">All statuses</option>
-          <option value="PENDING">Pending</option>
-          <option value="TRIAL">Trial</option>
-          <option value="ACTIVE">Active</option>
-          <option value="SUSPENDED">Suspended</option>
-          <option value="CANCELLED">Cancelled</option>
-        </select>
-        <div className="min-w-0 text-xs text-muted">
-          Showing {paginatedSchools.length > 0 ? (currentPage - 1) * ITEMS_PER_PAGE + 1 : 0}–
-          {Math.min(currentPage * ITEMS_PER_PAGE, filteredSchools.length)} of {filteredSchools.length} school{filteredSchools.length !== 1 ? "s" : ""}
-        </div>
-      </div>
 
       {/* Schools Table */}
       {paginatedSchools.length > 0 ? (
@@ -405,6 +515,8 @@ export default function SubscriptionsPageClient({
             {searchQuery ? `No schools found matching "${searchQuery}"` : "No schools found"}
           </p>
         </div>
+      )}
+        </>
       )}
     </div>
   );

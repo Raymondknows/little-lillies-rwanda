@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { Info } from "lucide-react";
 import { Pagination } from "@/components/ui/pagination";
 import { getBackendUrl } from "@/lib/backend-url";
 import { sendPlatformCommunicationEmailAction } from "@/app/schoolbase-admin/actions";
@@ -166,6 +167,31 @@ const SEGMENTS = [
   { value: "trial", label: "Trial schools" },
   { value: "new", label: "New schools (last 7 days)" },
 ];
+
+function InfoTooltip({ content }: { content: string }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="relative inline-flex">
+      <button
+        type="button"
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+        onClick={() => setOpen((value) => !value)}
+        className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-border/60 bg-background text-muted transition hover:border-brand hover:text-brand"
+        aria-label="More information"
+      >
+        <Info className="h-3.5 w-3.5" />
+      </button>
+
+      {open && (
+        <div className="absolute left-0 top-6 z-20 w-64 rounded-xl border border-border/70 bg-white p-2.5 text-xs leading-5 text-foreground shadow-lg">
+          {content}
+        </div>
+      )}
+    </div>
+  );
+}
 
 const DEFAULT_SUBJECTS: Record<string, string> = {
   PRODUCT_UPDATE: "SchoolBase product update: new feature available",
@@ -343,19 +369,22 @@ export default function EmailCenterClient({
   };
 
   return (
-    <div className="space-y-4 sm:space-y-8">
-      <div className="grid gap-4 sm:gap-6 lg:grid-cols-[1.5fr_1fr]">
-        <section className="rounded-3xl border border-border bg-surface p-4 shadow-sm shadow-slate-200/50 sm:p-6">
-          <div className="mb-4 flex items-start justify-between gap-4 sm:mb-6">
+    <div className="space-y-3 sm:space-y-5">
+      <div className="grid gap-3 sm:gap-5 lg:grid-cols-[1.5fr_1fr]">
+        <section className="rounded-2xl bg-surface p-3 shadow-sm sm:p-5">
+          <div className="mb-4 flex items-start justify-between gap-4 sm:mb-5">
             <div>
-              <h2 className="text-lg font-semibold text-foreground">Send platform communication email</h2>
-              <p className="mt-2 text-sm text-muted">
+              <div className="mb-2 inline-flex items-center rounded-full bg-brand/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-brand">
+                Compose
+              </div>
+              <h2 className="text-lg font-semibold text-foreground">Send platform communication</h2>
+              <p className="mt-1.5 text-sm text-muted">
                 Choose a school or a school segment, then send announcements, product news, updates, or security notices.
               </p>
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-foreground">Email type</label>
@@ -363,7 +392,7 @@ export default function EmailCenterClient({
                   value={selectedEmailType}
                   onChange={(event) => setSelectedEmailType(event.target.value)}
                   name="emailType"
-                  className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand"
+                  className="w-full rounded-xl border border-border/80 bg-background px-3.5 py-2.5 text-sm text-foreground outline-none transition focus:border-brand"
                 >
                   {EMAIL_TYPES.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -375,8 +404,8 @@ export default function EmailCenterClient({
 
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-foreground">Send to</label>
-                <div className="grid gap-2 rounded-3xl border border-transparent bg-background p-2 sm:border-border">
-                  <label className="flex items-center gap-3 rounded-2xl px-3 py-2 text-sm cursor-pointer transition hover:bg-slate-50">
+                <div className="grid gap-2 rounded-2xl bg-background p-2">
+                  <label className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm cursor-pointer transition hover:bg-slate-50">
                     <input
                       type="radio"
                       name="target"
@@ -387,7 +416,7 @@ export default function EmailCenterClient({
                     />
                     Single school
                   </label>
-                  <label className="flex items-center gap-3 rounded-2xl px-3 py-2 text-sm cursor-pointer transition hover:bg-slate-50">
+                  <label className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm cursor-pointer transition hover:bg-slate-50">
                     <input
                       type="radio"
                       name="target"
@@ -409,7 +438,7 @@ export default function EmailCenterClient({
                   name="schoolId"
                   value={selectedSchoolId}
                   onChange={(event) => setSelectedSchoolId(event.target.value)}
-                  className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand"
+                  className="w-full rounded-xl border border-border/80 bg-background px-3.5 py-2.5 text-sm text-foreground outline-none transition focus:border-brand"
                 >
                   {initialSchools.map((school) => (
                     <option key={school.id} value={school.id}>
@@ -425,7 +454,7 @@ export default function EmailCenterClient({
                   name="segment"
                   value={selectedSegment}
                   onChange={(event) => setSelectedSegment(event.target.value)}
-                  className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand"
+                  className="w-full rounded-xl border border-border/80 bg-background px-3.5 py-2.5 text-sm text-foreground outline-none transition focus:border-brand"
                 >
                   {SEGMENTS.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -444,58 +473,59 @@ export default function EmailCenterClient({
                 value={subject}
                 onChange={(event) => setSubject(event.target.value)}
                 placeholder={defaultSubject}
-                className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand"
+                className="w-full rounded-xl border border-border/80 bg-background px-3.5 py-2.5 text-sm text-foreground outline-none transition focus:border-brand"
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-foreground">Message</label>
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-semibold text-foreground">Message</label>
+                <InfoTooltip content="The selected template already includes a greeting and signing text, so you can focus on the main message content." />
+              </div>
               <textarea
                 name="body"
                 value={body}
                 onChange={(event) => setBody(event.target.value)}
                 rows={10}
                 placeholder={`Write your ${emailTypeLabel.toLowerCase()} message here.`}
-                className="w-full rounded-3xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand"
+                className="w-full rounded-xl border border-border/80 bg-background px-3.5 py-2.5 text-sm text-foreground outline-none transition focus:border-brand"
               />
-              <p className="text-sm text-muted">
-                Note: the selected template already includes a greeting and signing text, so you can focus on the main message content.
-              </p>
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-muted">
-                {selectedTarget === "school"
-                  ? "The email will be sent to the selected school admin email address."
-                  : "The email will be sent to the admin user of each school in the selected segment."}
-              </p>
+              <div className="flex items-center gap-2">
+                <InfoTooltip
+                  content={
+                    selectedTarget === "school"
+                      ? "The email will be sent to the selected school admin email address."
+                      : "The email will be sent to the admin user of each school in the selected segment."
+                  }
+                />
+              </div>
               <button
                 type="submit"
                 disabled={sending}
-                className="inline-flex items-center justify-center rounded-2xl bg-brand px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center justify-center rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {sending ? "Sending…" : "Send email"}
               </button>
             </div>
 
             {error && (
-              <div className="rounded-3xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+              <div className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
                 {error}
               </div>
             )}
           </form>
         </section>
 
-        <section className="rounded-3xl border border-border bg-surface p-4 shadow-sm shadow-slate-200/50 sm:p-6">
-          <h2 className="text-lg font-semibold text-foreground">Email details</h2>
-          <div className="mt-4 space-y-4 text-sm text-muted">
-            <p>
-              Use this panel for platform announcements, product news, support updates, onboarding guidance, compliance alerts, and security notices.
-            </p>
-            <p>
-              SchoolBase will send these messages to the primary school admin email address for each selected school.
-            </p>
-            <div className="rounded-3xl border border-transparent bg-background p-4 sm:border-border">
+        <section className="rounded-2xl bg-surface p-3 shadow-sm sm:p-5">
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-semibold text-foreground">Email details</h2>
+            <InfoTooltip content="Use this panel for platform announcements, product news, support updates, onboarding guidance, compliance alerts, and security notices. SchoolBase will send these messages to the primary school admin email address for each selected school." />
+          </div>
+          <div className="mt-3 space-y-3 text-sm text-muted">
+            <div className="rounded-2xl bg-background p-3">
               <p className="text-sm font-semibold text-foreground">Recommended use</p>
               <ul className="mt-2 space-y-2 pl-4 text-sm text-muted list-disc">
                 <li>Product updates and feature announcements</li>
@@ -510,11 +540,13 @@ export default function EmailCenterClient({
         </section>
       </div>
 
-      <section className="rounded-3xl border border-border bg-surface p-4 shadow-sm shadow-slate-200/50 sm:p-6">
-        <div className="mb-4 flex items-center justify-between gap-4 sm:mb-6">
+      <section className="rounded-2xl bg-surface p-3 shadow-sm sm:p-5">
+        <div className="mb-4 flex items-center justify-between gap-4 sm:mb-5">
           <div>
-            <h2 className="text-lg font-semibold text-foreground">Recent email activity</h2>
-            <p className="mt-1 text-sm text-muted">Recently sent platform communication emails.</p>
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-semibold text-foreground">Recent email activity</h2>
+              <InfoTooltip content="This section shows the most recently sent platform communication emails and their current status." />
+            </div>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <button

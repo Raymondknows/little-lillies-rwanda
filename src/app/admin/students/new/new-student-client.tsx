@@ -55,8 +55,7 @@ export default function NewStudentClient() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const backendUrl = getBackendUrl();
-        const response = await fetch(`${backendUrl}/api/admin/students/data`, {
+        const response = await fetch('/api/admin/students/data', {
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
         });
@@ -91,42 +90,89 @@ export default function NewStudentClient() {
     setIsSubmitting(true);
     setError("");
 
-    try {
-      const formData = new FormData();
-      formData.append("lastName", lastName);
-      formData.append("firstName", firstName);
-      formData.append("middleName", middleName);
-      formData.append("admissionNo", nextAdmissionNo);
-      formData.append("classId", classId);
-      formData.append("status", status);
-      formData.append("admissionDate", admissionDate || new Date().toISOString().split("T")[0]);
-      formData.append("gender", gender);
-      formData.append("dateOfBirth", dateOfBirth);
-      formData.append("studentEmail", studentEmail);
-      formData.append("studentPhone", studentPhone);
-      formData.append("address", address);
-      formData.append("bloodGroup", bloodGroup);
-      formData.append("genotype", genotype);
-      formData.append("medicalNotes", medicalNotes);
-      formData.append("previousSchool", previousSchool);
-      formData.append("previousClass", previousClass);
-      formData.append("guardianFirst", guardianFirst);
-      formData.append("guardianLast", guardianLast);
-      formData.append("guardianRelationship", guardianRelationship);
-      formData.append("guardianEmail", guardianEmail);
-      formData.append("guardianPhone", guardianPhone);
-      formData.append("guardianAltPhone", guardianAltPhone);
-      formData.append("guardianOccupation", guardianOccupation);
+    const trimmedFirstName = firstName.trim();
+    const trimmedLastName = lastName.trim();
 
-      if (photoFile) {
-        formData.append("photo", photoFile);
+    if (!trimmedFirstName || !trimmedLastName) {
+      setError('First name and last name are required');
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      const shouldUseMultipart = Boolean(photoFile);
+      const headers: Record<string, string> = {};
+      let body: FormData | string;
+
+      if (shouldUseMultipart) {
+        const formData = new FormData();
+        formData.append("lastName", trimmedLastName);
+        formData.append("firstName", trimmedFirstName);
+        formData.append("middleName", middleName.trim());
+        formData.append("admissionNo", nextAdmissionNo);
+        formData.append("classId", classId);
+        formData.append("status", status);
+        formData.append("admissionDate", admissionDate || new Date().toISOString().split("T")[0]);
+        formData.append("gender", gender);
+        formData.append("dateOfBirth", dateOfBirth);
+        formData.append("studentEmail", studentEmail.trim());
+        formData.append("studentPhone", studentPhone.trim());
+        formData.append("address", address.trim());
+        formData.append("bloodGroup", bloodGroup.trim());
+        formData.append("genotype", genotype.trim());
+        formData.append("medicalNotes", medicalNotes.trim());
+        formData.append("previousSchool", previousSchool.trim());
+        formData.append("previousClass", previousClass.trim());
+        formData.append("guardianFirst", guardianFirst.trim());
+        formData.append("guardianLast", guardianLast.trim());
+        formData.append("guardianRelationship", guardianRelationship);
+        formData.append("guardianEmail", guardianEmail.trim());
+        formData.append("guardianPhone", guardianPhone.trim());
+        formData.append("guardianAltPhone", guardianAltPhone.trim());
+        formData.append("guardianOccupation", guardianOccupation.trim());
+
+        if (photoFile) {
+          formData.append("photo", photoFile);
+        }
+
+        body = formData;
+      } else {
+        const payload = {
+          lastName: trimmedLastName,
+          firstName: trimmedFirstName,
+          middleName: middleName.trim() || null,
+          admissionNo: nextAdmissionNo,
+          classId: classId || null,
+          status,
+          admissionDate: admissionDate || new Date().toISOString().split("T")[0],
+          gender,
+          dateOfBirth: dateOfBirth || null,
+          studentEmail: studentEmail.trim() || null,
+          studentPhone: studentPhone.trim() || null,
+          address: address.trim() || null,
+          bloodGroup: bloodGroup.trim() || null,
+          genotype: genotype.trim() || null,
+          medicalNotes: medicalNotes.trim() || null,
+          previousSchool: previousSchool.trim() || null,
+          previousClass: previousClass.trim() || null,
+          guardianFirst: guardianFirst.trim() || null,
+          guardianLast: guardianLast.trim() || null,
+          guardianRelationship,
+          guardianEmail: guardianEmail.trim() || null,
+          guardianPhone: guardianPhone.trim() || null,
+          guardianAltPhone: guardianAltPhone.trim() || null,
+          guardianOccupation: guardianOccupation.trim() || null,
+        };
+
+        body = JSON.stringify(payload);
+        headers['Content-Type'] = 'application/json';
       }
 
-        const backendUrl = getBackendUrl();
-      const response = await fetch(`${backendUrl}/api/admin/students`, {
+      const response = await fetch('/api/admin/students', {
         method: "POST",
         credentials: 'include',
-        body: formData,
+        headers,
+        body,
       });
 
       if (!response.ok) {

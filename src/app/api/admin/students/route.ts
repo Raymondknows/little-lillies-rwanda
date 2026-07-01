@@ -3,16 +3,34 @@ import { buildApiUrl } from '@/lib/api-client';
 
 export async function POST(request: NextRequest) {
   try {
-    const formData = await request.formData();
     const backendUrl = buildApiUrl('/admin/students');
-
-    const resp = await fetch(backendUrl, {
+    const contentType = request.headers.get('content-type') || '';
+    let fetchOptions: RequestInit = {
       method: 'POST',
       headers: {
         cookie: request.headers.get('cookie') || '',
       },
-      body: formData,
-    });
+    };
+
+    if (contentType.includes('application/json')) {
+      const jsonBody = await request.json();
+      fetchOptions = {
+        ...fetchOptions,
+        headers: {
+          ...fetchOptions.headers,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(jsonBody),
+      };
+    } else {
+      const formData = await request.formData();
+      fetchOptions = {
+        ...fetchOptions,
+        body: formData,
+      };
+    }
+
+    const resp = await fetch(backendUrl, fetchOptions);
 
     if (!resp.ok) {
       const error = await resp.json();

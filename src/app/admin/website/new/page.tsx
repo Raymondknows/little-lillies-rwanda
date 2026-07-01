@@ -1,9 +1,23 @@
+"use client";
+
 import Link from "next/link";
+import { FormEvent, useState } from "react";
 import { createAnnouncement } from "@/app/admin/actions";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 
 export default function NewAnnouncementPage() {
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    if (submitting) {
+      event.preventDefault();
+      return;
+    }
+
+    setSubmitting(true);
+  };
+
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       {/* Back link */}
@@ -25,6 +39,7 @@ export default function NewAnnouncementPage() {
 
       <form
         action={createAnnouncement}
+        onSubmit={handleSubmit}
         className="space-y-4 rounded-xl border border-border bg-surface p-6"
       >
         <label className="block text-sm font-medium">
@@ -60,8 +75,8 @@ export default function NewAnnouncementPage() {
         </label>
 
         <div className="flex gap-3">
-          <Button type="submit" className="flex-1">
-            Post announcement
+          <Button type="submit" disabled={submitting} className="flex-1">
+            {submitting ? "Publishing…" : "Post announcement"}
           </Button>
           <Link href="/admin/website" className="flex-1">
             <Button type="button" variant="outline" className="w-full">

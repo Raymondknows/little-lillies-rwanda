@@ -34,7 +34,11 @@ export async function POST(request: NextRequest) {
         const cookieHeader = request.headers.get('cookie');
         if (cookieHeader) forwardHeaders.cookie = cookieHeader;
         const xSchool = request.headers.get('x-school-id');
-        if (xSchool) forwardHeaders['x-school-id'] = xSchool;
+        if (xSchool) {
+          forwardHeaders['x-school-id'] = xSchool;
+          // also include schoolId in the forwarded form so backend can resolve it
+          forwardForm.append('schoolId', xSchool as any);
+        }
 
         const resp = await fetch(backendUrl, {
           method: 'POST',

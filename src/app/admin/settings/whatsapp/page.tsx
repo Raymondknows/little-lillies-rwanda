@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { UserGuide, type PageHelpGuide } from "@/components/ui/user-guide";
 import { Badge } from "@/components/ui/badge";
 import { ErrorModal } from "@/components/ui/error-modal";
 import { ArrowLeft, CheckCircle2, QrCode, Send, Wifi, WifiOff } from "lucide-react";
@@ -121,19 +122,19 @@ export default function WhatsAppSettingsPage() {
       setLoading(true);
     }
     try {
-      const response = await fetch('/api/admin/whatsapp-baileys/status', { credentials: 'include' });
+      const response = await fetch('/api/admin/whatsapp/status', { credentials: 'include' });
       if (!response.ok) {
         if (showLoading) {
-          setActionMessage('Unable to load Baileys WhatsApp status.');
+          setActionMessage('Unable to load WhatsApp status.');
         }
         return;
       }
       const data = await response.json();
       syncSession(data.session || null);
-    } catch (error) {
+      } catch (error) {
       console.error('Status fetch error:', error);
       if (showLoading) {
-        setActionMessage('Unable to load Baileys WhatsApp status.');
+        setActionMessage('Unable to load WhatsApp status.');
       }
     } finally {
       if (showLoading) {
@@ -150,7 +151,7 @@ export default function WhatsAppSettingsPage() {
     }
     setIsConnecting(true);
     try {
-      const response = await fetch('/api/admin/whatsapp-baileys/connect', {
+      const response = await fetch('/api/admin/whatsapp/connect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -161,11 +162,11 @@ export default function WhatsAppSettingsPage() {
         syncSession(data.session || null);
         setActionMessage(usePairingCode ? 'Connection requested. Enter the pairing code in WhatsApp.' : 'Connection requested. Scan the QR code if shown.');
       } else {
-        setActionMessage(data.error || 'Failed to start Baileys connection.');
+        setActionMessage(data.error || 'Failed to start WhatsApp connection.');
       }
     } catch (error) {
-      console.error('Connect error:', error);
-      setActionMessage('Unable to connect Baileys WhatsApp.');
+    console.error('Connect error:', error);
+    setActionMessage('Unable to connect WhatsApp.');
     } finally {
       setIsConnecting(false);
     }
@@ -176,20 +177,20 @@ export default function WhatsAppSettingsPage() {
     setActionMessage(null);
     setIsDisconnecting(true);
     try {
-      const response = await fetch('/api/admin/whatsapp-baileys/disconnect', {
+      const response = await fetch('/api/admin/whatsapp/disconnect', {
         method: 'POST',
         credentials: 'include',
       });
       const data = await response.json();
       if (response.ok) {
         syncSession(data.session || null);
-        setActionMessage('Baileys session disconnected.');
+        setActionMessage('WhatsApp session disconnected.');
       } else {
-        setActionMessage(data.error || 'Failed to disconnect Baileys session.');
+        setActionMessage(data.error || 'Failed to disconnect WhatsApp session.');
       }
     } catch (error) {
-      console.error('Disconnect error:', error);
-      setActionMessage('Unable to disconnect Baileys WhatsApp.');
+    console.error('Disconnect error:', error);
+    setActionMessage('Unable to disconnect WhatsApp.');
     } finally {
       setIsDisconnecting(false);
     }
@@ -206,7 +207,7 @@ export default function WhatsAppSettingsPage() {
     try {
       const payloadMessage = `${message.trim()}\n\n— ${schoolPreviewName || ''}${schoolPreviewName && schoolPreviewPhone ? ' | ' : ''}${schoolPreviewPhone || ''}`;
 
-      const response = await fetch('/api/admin/whatsapp-baileys/send-message', {
+      const response = await fetch('/api/admin/whatsapp/send-message', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -218,11 +219,11 @@ export default function WhatsAppSettingsPage() {
         setSuccessModalMessage(successMessage);
         setShowSuccessModal(true);
       } else {
-        setActionMessage(data.error || 'Failed to send Baileys test message.');
+        setActionMessage(data.error || 'Failed to send test message.');
       }
     } catch (error) {
-      console.error('Send test error:', error);
-      setActionMessage('Unable to send Baileys test message.');
+    console.error('Send test error:', error);
+    setActionMessage('Unable to send test message.');
     } finally {
       setIsSending(false);
     }
@@ -241,7 +242,7 @@ export default function WhatsAppSettingsPage() {
     setActionMessage(null);
     setIsRunningDebug(true);
     try {
-      const response = await fetch('/api/admin/whatsapp-baileys/debug', {
+      const response = await fetch('/api/admin/whatsapp/debug', {
         method: 'POST',
         credentials: 'include',
       });
@@ -251,11 +252,11 @@ export default function WhatsAppSettingsPage() {
         setDebugInfo(data.result || null);
         setActionMessage(data.result?.summary || 'Debug probe completed.');
       } else {
-        setActionMessage(data.error || 'Failed to run Baileys debug probe.');
+        setActionMessage(data.error || 'Failed to run debug probe.');
       }
     } catch (error) {
-      console.error('Debug probe error:', error);
-      setActionMessage('Unable to run Baileys debug probe.');
+    console.error('Debug probe error:', error);
+    setActionMessage('Unable to run debug probe.');
     } finally {
       setIsRunningDebug(false);
     }
@@ -287,10 +288,21 @@ export default function WhatsAppSettingsPage() {
     }
   };
 
-  const pageTitle = schoolPreviewName ? `${schoolPreviewName} WhatsApp System` : 'Baileys WhatsApp';
+  const pageTitle = schoolPreviewName ? `${schoolPreviewName} WhatsApp System` : 'WhatsApp System';
+
+  const extractPhone = (raw?: string | null): string | null => {
+    if (!raw) return null;
+    let s = String(raw || '');
+    const colon = s.indexOf(':');
+    if (colon !== -1) s = s.slice(0, colon);
+    const at = s.indexOf('@');
+    if (at !== -1) s = s.slice(0, at);
+    const digits = s.replace(/\D/g, '');
+    return digits || s || null;
+  };
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6">
       <div className="flex flex-col gap-4 rounded-3xl border border-border bg-surface p-6 shadow-sm shadow-black/5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           <div className="flex h-14 w-14 items-center justify-center rounded-3xl bg-[#25D366]/10 text-[#25D366] shadow-md shadow-[#25D366]/10">
@@ -322,7 +334,9 @@ export default function WhatsAppSettingsPage() {
             {isStreamErrorRetrying && (
               <p className="text-sm font-medium text-amber-600 mt-2">Retrying after stream error ({streamErrorReconnectAttempts})</p>
             )}
-            {session?.phoneNumber && <p className="text-xs text-muted">Phone: {session.phoneNumber}</p>}
+            {session?.phoneNumber && (
+              <p className="mt-1 text-lg font-semibold">{extractPhone(session.phoneNumber)}</p>
+            )}
             {session?.pairingCode && <p className="text-xs text-muted">Pairing code: {session.pairingCode}</p>}
           </div>
 
@@ -442,7 +456,7 @@ export default function WhatsAppSettingsPage() {
             {isRunningDebug ? 'Running…' : 'Run Deep Debug Probe'}
           </Button>
         </div>
-        <p className="mt-2 text-sm text-muted">This shows the latest Baileys connection events and failures so the QR issue can be diagnosed directly.</p>
+            <p className="mt-2 text-sm text-muted">This shows the latest WhatsApp connection events and failures so the QR issue can be diagnosed directly.</p>
         {debugLog.length > 0 ? (
           <div className="mt-4 max-h-72 overflow-auto rounded-lg border border-border bg-background p-3 text-xs font-mono">
             {debugLog.map((entry, index) => (
@@ -468,6 +482,8 @@ export default function WhatsAppSettingsPage() {
         </div>
       )}
 
+      <UserGuide guide={HELP_GUIDE} />
+
       <ErrorModal
         isOpen={showSuccessModal}
         onClose={() => setShowSuccessModal(false)}
@@ -479,3 +495,43 @@ export default function WhatsAppSettingsPage() {
     </div>
   );
 }
+
+const HELP_GUIDE: PageHelpGuide = {
+  title: 'WhatsApp Settings & Pairing',
+  overview: 'Manage and monitor the WhatsApp connection for your school. Connect using QR or pairing code, send test messages, and view pairing details.',
+  steps: [
+    'Open this page to view current session status and QR code if available.',
+    'Use "Connect" to start a WhatsApp session (scan QR or use pairing code).',
+    'Send a test message to verify delivery to a guardian phone number.',
+    'Use "Disconnect" to end the current session when rotating devices.',
+  ],
+  commonTasks: [
+    {
+      title: 'Start a Connection',
+      description: 'Initiate a WhatsApp session using QR or pairing code.',
+      tips: [
+        'Choose QR code for standard pairing and scan from WhatsApp -> Linked devices.',
+        'Use pairing code when linking from the same phone number across devices.',
+        'Refresh status if QR does not appear immediately.',
+      ],
+    },
+    {
+      title: 'Send Test Message',
+      description: 'Verify that messages are delivered through the connected session.',
+      tips: [
+        'Enter a recipient phone number in international format.',
+        'Use the preview area to verify the message content and school signature.',
+      ],
+    },
+  ],
+  faqs: [
+    {
+      question: 'No QR appears — what now?',
+      answer: 'Try refreshing the status, ensure the server is running, and that the session is not already paired to another device.',
+    },
+    {
+      question: 'Pairing code not accepted?',
+      answer: 'Wait a few seconds and retry; pairing codes are short-lived and the probe may need to be retriggered.',
+    },
+  ],
+};

@@ -185,7 +185,7 @@ export default function SubscriptionPage() {
 
   if (loading) {
     return (
-      <div className="w-full max-w-5xl mx-auto px-4 md:px-6 py-10 space-y-10">
+      <div className="w-full max-w-5xl mx-auto space-y-10">
         {/* Header Skeleton */}
         <div className="text-center space-y-3">
           <div className="h-10 bg-slate-200 rounded-xl w-48 mx-auto animate-pulse" />
@@ -255,7 +255,7 @@ export default function SubscriptionPage() {
                                error?.includes('403');
     
     return (
-      <div className="w-full max-w-5xl mx-auto px-4 md:px-6 py-10 space-y-10">
+      <div className="w-full max-w-5xl mx-auto space-y-10">
         {/* Header */}
         <div className="text-center">
           <h1 className="text-3xl font-bold">Your Subscription</h1>
@@ -336,7 +336,7 @@ export default function SubscriptionPage() {
   const planConfig = planDetails[subscription.currentPlan] || planDetails.FREE;
 
   return (
-    <div className="w-full max-w-5xl mx-auto px-4 md:px-6 py-10 space-y-10">
+    <div className="w-full max-w-5xl mx-auto space-y-10">
       {/* Header */}
       <div className="text-center">
         <h1 className="text-3xl font-bold">Your Subscription</h1>
@@ -391,8 +391,8 @@ export default function SubscriptionPage() {
         )}
       </div>
 
-      {/* Subscription Dates Grid */}
-      <div className="grid gap-5 md:grid-cols-2">
+      {/* Subscription Dates + Next Steps Grid */}
+      <div className="grid gap-5 md:grid-cols-[repeat(2,minmax(0,1fr))] lg:grid-cols-[repeat(3,minmax(0,1fr))]">
         {/* Trial End Date */}
         {subscription.trialEndsAt && (
           <div className="rounded-xl border border-border p-5 md:p-6 bg-surface/60 backdrop-blur-sm flex items-center gap-4">
@@ -426,44 +426,43 @@ export default function SubscriptionPage() {
             </div>
           </div>
         )}
-      </div>
 
-      {/* Actions Section */}
-      <div className="rounded-xl border border-border p-6 md:p-8 bg-surface/40">
-        <h3 className="text-lg font-semibold mb-4 text-foreground">Next Steps</h3>
-        <div className="space-y-3">
-          {subscription.canRenew && (
-            <Link href="/admin/subscribe" className="block">
-              <Button className="w-full gap-2 bg-brand hover:bg-brand/90 text-white font-semibold py-2.5 rounded-lg transition-colors">
-                <RefreshCw className="h-4 w-4" />
-                Renew Subscription
-              </Button>
-            </Link>
-          )}
+        {/* Actions Section */}
+        <div className="rounded-xl border border-border p-6 md:p-8 bg-surface/40">
+          <h3 className="text-lg font-semibold mb-4 text-foreground">Next Steps</h3>
+          <div className="space-y-3">
+            {subscription.canRenew && (
+              <Link href="/admin/subscribe" className="block">
+                <Button className="w-full gap-2 bg-brand hover:bg-brand/90 text-white font-semibold py-2.5 rounded-lg transition-colors">
+                  <RefreshCw className="h-4 w-4" />
+                  Renew Subscription
+                </Button>
+              </Link>
+            )}
 
-          {subscription.canUpgrade && (
-            <Link href="/admin/subscribe" className="block">
-              <Button 
-                variant="outline" 
-                className="w-full gap-2 font-semibold py-2.5 rounded-lg hover:bg-surface/80 transition-colors"
-              >
-                <TrendingUp className="h-4 w-4" />
-                Upgrade Plan
-              </Button>
-            </Link>
-          )}
+            {subscription.canUpgrade && (
+              <Link href="/admin/subscribe" className="block">
+                <Button 
+                  variant="outline" 
+                  className="w-full gap-2 font-semibold py-2.5 rounded-lg hover:bg-surface/80 transition-colors"
+                >
+                  <TrendingUp className="h-4 w-4" />
+                  Upgrade Plan
+                </Button>
+              </Link>
+            )}
 
-          {!subscription.canRenew && !subscription.canUpgrade && (
-            <Link href="/admin/subscribe" className="block">
-              <Button 
-                variant="outline" 
-                className="w-full gap-2 font-semibold py-2.5 rounded-lg hover:bg-surface/80 transition-colors"
-              >
-                <CreditCard className="h-4 w-4" />
-                View All Plans
-              </Button>
-            </Link>
-          )}
+            {!subscription.canRenew && !subscription.canUpgrade && (
+              <Link href="/admin/subscribe" className="block">
+                <Button 
+                  className="w-full gap-2 bg-brand hover:bg-brand/90 text-white font-semibold py-2.5 rounded-lg transition-colors"
+                >
+                  <CreditCard className="h-4 w-4" />
+                  View All Plans
+                </Button>
+              </Link>
+            )}
+          </div>
         </div>
       </div>
 

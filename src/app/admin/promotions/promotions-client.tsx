@@ -309,7 +309,7 @@ export default function PromotionsPageClient({
   const currentYearLabel = selectedYear?.name || 'Academic Year';
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div className="space-y-2">
           <p className="text-sm font-semibold text-brand">Student Promotion</p>

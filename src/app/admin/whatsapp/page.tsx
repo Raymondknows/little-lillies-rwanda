@@ -175,7 +175,7 @@ export default function WhatsAppPage() {
           setStats(data.stats);
 
           try {
-            const whatsappRes = await fetch(`${backendUrl}/api/admin/whatsapp-baileys/status`, {
+              const whatsappRes = await fetch(`/api/admin/whatsapp/status`, {
               credentials: "include",
               headers: { "Content-Type": "application/json" },
             });
@@ -223,7 +223,7 @@ export default function WhatsAppPage() {
 
   if (loading && !stats) {
     return (
-      <div className="p-6">
+      <div>
         <div className="text-muted">Loading communications...</div>
       </div>
     );
@@ -231,7 +231,7 @@ export default function WhatsAppPage() {
 
   if (subscriptionError) {
     return (
-      <div className="p-6">
+      <div>
         <div className="text-center">
           <h1 className="text-3xl font-bold text-foreground flex items-center gap-2 justify-center mb-4">
             <MessageCircle className="h-8 w-8 text-brand" />
@@ -245,7 +245,7 @@ export default function WhatsAppPage() {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-6">
         <div>

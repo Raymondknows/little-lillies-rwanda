@@ -128,7 +128,7 @@ export default function AdminDashboardPage() {
 
           // Get WhatsApp connection status if available
           try {
-            const whatsappRes = await fetch(`${backendUrl}/api/admin/whatsapp-baileys/status`, {
+            const whatsappRes = await fetch(`/api/admin/whatsapp/status`, {
               credentials: 'include',
               headers: { 'Content-Type': 'application/json' },
               signal: controller.signal,

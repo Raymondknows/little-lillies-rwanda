@@ -4,12 +4,34 @@ const BACKEND_URL = process.env.BACKEND_URL || process.env.API_URL || "http://lo
 
 const getBackendUrl = (pathSegments: string[]): string => {
   const path = pathSegments.join("/");
-  return `${BACKEND_URL.replace(/\/+$/, "")}/api/admin/whatsapp/${path}`;
+  // Forward to internal backend Baileys endpoints while exposing neutral frontend path
+  return `${BACKEND_URL.replace(/\/+$/, "")}/api/admin/whatsapp-baileys/${path}`;
+};
+
+const resolvePathSegments = async (params: Promise<{ path?: string[] }> | { path?: string[] }) => {
+  const resolvedParams = await params;
+  return resolvedParams.path ?? [];
 };
 
 const forwardRequest = async (request: NextRequest, pathSegments: string[]) => {
   const url = new URL(getBackendUrl(pathSegments));
+  // Preserve incoming search params, then add dev schoolId if missing
   url.search = request.nextUrl.search;
+
+  try {
+    const hasCookie = Boolean(request.headers.get('cookie'));
+    const params = new URLSearchParams(url.search);
+    if (!hasCookie && !params.has('schoolId')) {
+      const devId = process.env.DEV_SCHOOL_ID || 'cmpfstpy30002ttiwhvivq6gt';
+      if (process.env.NODE_ENV !== 'production' && devId) {
+        params.set('schoolId', devId);
+      }
+      url.search = params.toString();
+      console.debug('[WHATSAPP PROXY] Injected DEV_SCHOOL_ID into forwarded request');
+    }
+  } catch (e) {
+    // ignore
+  }
 
   const headers = new Headers();
   request.headers.forEach((value, key) => {
@@ -37,7 +59,6 @@ const forwardRequest = async (request: NextRequest, pathSegments: string[]) => {
     const responseBody = await response.arrayBuffer();
     const responseHeaders = new Headers(response.headers);
 
-    // Remove hop-by-hop headers that NextResponse will handle itself.
     responseHeaders.delete("transfer-encoding");
     responseHeaders.delete("content-encoding");
     responseHeaders.delete("connection");
@@ -55,32 +76,26 @@ const forwardRequest = async (request: NextRequest, pathSegments: string[]) => {
   }
 };
 
-export async function GET(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
-  const { params } = context;
-  return forwardRequest(request, (await params).path);
+export async function GET(request: NextRequest, { params }: { params: Promise<{ path?: string[] }> }) {
+  return forwardRequest(request, await resolvePathSegments(params));
 }
 
-export async function POST(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
-  const { params } = context;
-  return forwardRequest(request, (await params).path);
+export async function POST(request: NextRequest, { params }: { params: Promise<{ path?: string[] }> }) {
+  return forwardRequest(request, await resolvePathSegments(params));
 }
 
-export async function PUT(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
-  const { params } = context;
-  return forwardRequest(request, (await params).path);
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ path?: string[] }> }) {
+  return forwardRequest(request, await resolvePathSegments(params));
 }
 
-export async function PATCH(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
-  const { params } = context;
-  return forwardRequest(request, (await params).path);
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ path?: string[] }> }) {
+  return forwardRequest(request, await resolvePathSegments(params));
 }
 
-export async function DELETE(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
-  const { params } = context;
-  return forwardRequest(request, (await params).path);
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ path?: string[] }> }) {
+  return forwardRequest(request, await resolvePathSegments(params));
 }
 
-export async function OPTIONS(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
-  const { params } = context;
-  return forwardRequest(request, (await params).path);
+export async function OPTIONS(request: NextRequest, { params }: { params: Promise<{ path?: string[] }> }) {
+  return forwardRequest(request, await resolvePathSegments(params));
 }

@@ -207,7 +207,7 @@ export default function AttendancePage() {
           const data = await response.json();
 
           try {
-            const whatsappRes = await fetch(`${backendUrl}/api/admin/whatsapp-baileys/status`, {
+            const whatsappRes = await fetch(`/api/admin/whatsapp/status`, {
               credentials: "include",
               headers: { "Content-Type": "application/json" },
             });
@@ -480,7 +480,7 @@ export default function AttendancePage() {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-6">
         <div>

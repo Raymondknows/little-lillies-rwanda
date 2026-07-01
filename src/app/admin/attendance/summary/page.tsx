@@ -368,7 +368,7 @@ export default function AttendanceSummaryPage() {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
         <div className="space-y-2">
           <Link href="/admin/attendance" className="inline-flex items-center gap-2 text-sm font-medium text-brand hover:opacity-80">

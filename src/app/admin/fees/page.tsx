@@ -75,7 +75,7 @@ export default function FeesPage() {
         });
 
         try {
-          const whatsappRes = await fetch(`${backendUrl}/api/admin/whatsapp-baileys/status`, {
+            const whatsappRes = await fetch(`/api/admin/whatsapp/status`, {
             credentials: "include",
             headers: { "Content-Type": "application/json" },
           });
@@ -171,17 +171,15 @@ export default function FeesPage() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <FeesPageClient
-        invoices={data.invoices}
-        outstanding={data.outstanding}
-        currency={data.currency}
-        terms={data.terms}
-        onIssueBills={handleIssueBills}
-        onSendReminders={handleSendReminders}
-        whatsAppConnected={whatsAppConnected}
-        whatsAppStatusMessage={whatsAppStatusMessage}
-      />
-    </div>
+    <FeesPageClient
+      invoices={data.invoices}
+      outstanding={data.outstanding}
+      currency={data.currency}
+      terms={data.terms}
+      onIssueBills={handleIssueBills}
+      onSendReminders={handleSendReminders}
+      whatsAppConnected={whatsAppConnected}
+      whatsAppStatusMessage={whatsAppStatusMessage}
+    />
   );
 }

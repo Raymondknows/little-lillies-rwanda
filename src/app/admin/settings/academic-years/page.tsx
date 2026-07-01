@@ -31,6 +31,8 @@ export default function AcademicYearsPage() {
   const [showNewYearModal, setShowNewYearModal] = useState(false);
   const [showNewTermModal, setShowNewTermModal] = useState(false);
   const [editingTermId, setEditingTermId] = useState<string | null>(null);
+  const [pendingDeleteTermId, setPendingDeleteTermId] = useState<string | null>(null);
+  const [pendingDeleteYearId, setPendingDeleteYearId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [newYearData, setNewYearData] = useState({ name: "", isCurrent: false });
   const [newTermData, setNewTermData] = useState({
@@ -227,7 +229,12 @@ export default function AcademicYearsPage() {
   };
 
   const handleDeleteYear = async (id: string) => {
-    if (!confirm("Are you sure? This will delete the academic year and all its terms.")) return;
+    setPendingDeleteTermId(null);
+    setPendingDeleteYearId(id);
+  };
+
+  const confirmDeleteYear = async () => {
+    if (!pendingDeleteYearId) return;
 
     setSaving(true);
     setError(null);
@@ -235,7 +242,7 @@ export default function AcademicYearsPage() {
     try {
       const backendUrl = getBackendUrl();
       const response = await fetch(
-        `${backendUrl}/api/admin/academic-years/${id}`,
+        `${backendUrl}/api/admin/academic-years/${pendingDeleteYearId}`,
         {
           method: "DELETE",
           credentials: "include",
@@ -246,6 +253,7 @@ export default function AcademicYearsPage() {
         throw new Error("Failed to delete academic year");
       }
 
+      setPendingDeleteYearId(null);
       await loadAcademicYears();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete year");
@@ -254,8 +262,12 @@ export default function AcademicYearsPage() {
     }
   };
 
-  const handleDeleteTerm = async (termId: string) => {
-    if (!confirm("Are you sure you want to delete this term?")) return;
+  const handleDeleteTerm = (termId: string) => {
+    setPendingDeleteTermId(termId);
+  };
+
+  const confirmDeleteTerm = async () => {
+    if (!pendingDeleteTermId) return;
 
     setSaving(true);
     setError(null);
@@ -263,7 +275,7 @@ export default function AcademicYearsPage() {
     try {
       const backendUrl = getBackendUrl();
       const response = await fetch(
-        `${backendUrl}/api/admin/terms/${termId}`,
+        `${backendUrl}/api/admin/terms/${pendingDeleteTermId}`,
         {
           method: "DELETE",
           credentials: "include",
@@ -274,6 +286,7 @@ export default function AcademicYearsPage() {
         throw new Error("Failed to delete term");
       }
 
+      setPendingDeleteTermId(null);
       await loadAcademicYears();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete term");
@@ -370,7 +383,7 @@ export default function AcademicYearsPage() {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
@@ -537,6 +550,72 @@ export default function AcademicYearsPage() {
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Delete Term Confirmation Modal */}
+      {pendingDeleteTermId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-lg border border-border bg-surface p-6 shadow-2xl">
+            <h2 className="text-xl font-semibold text-foreground">Delete Term</h2>
+            <p className="mt-2 text-sm text-muted">
+              Are you sure you want to delete this term? This action cannot be undone.
+            </p>
+
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <Button
+                type="button"
+                variant="destructive"
+                className="flex-1"
+                onClick={confirmDeleteTerm}
+                disabled={saving}
+              >
+                {saving ? "Deleting..." : "Delete term"}
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                className="flex-1"
+                onClick={() => setPendingDeleteTermId(null)}
+                disabled={saving}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Academic Year Confirmation Modal */}
+      {pendingDeleteYearId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-lg border border-border bg-surface p-6 shadow-2xl">
+            <h2 className="text-xl font-semibold text-foreground">Delete academic year</h2>
+            <p className="mt-2 text-sm text-muted">
+              Are you sure you want to delete this academic year and all its terms? This action cannot be undone.
+            </p>
+
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <Button
+                type="button"
+                variant="destructive"
+                className="flex-1"
+                onClick={confirmDeleteYear}
+                disabled={saving}
+              >
+                {saving ? "Deleting..." : "Delete year"}
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                className="flex-1"
+                onClick={() => setPendingDeleteYearId(null)}
+                disabled={saving}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
         </div>
       )}
 

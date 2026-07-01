@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import SubscriptionsClient from "./subscriptions-client";
-import { getBackendUrl } from "@/lib/backend-url";
 
 export default function SubscriptionsPage() {
   const [schools, setSchools] = useState([]);
@@ -11,12 +10,11 @@ export default function SubscriptionsPage() {
 
   const loadData = useCallback(async () => {
     try {
-      const backendUrl = getBackendUrl();
       const [schoolsRes, paymentsRes] = await Promise.all([
-        fetch(`${backendUrl}/schoolbase-admin/api/schools?limit=500`, {
+        fetch(`/schoolbase-admin/api/schools?limit=500`, {
           credentials: "include",
         }),
-        fetch(`${backendUrl}/schoolbase-admin/api/subscription-payments?limit=100`, {
+        fetch(`/schoolbase-admin/api/subscription-payments?limit=100`, {
           credentials: "include",
         }),
       ]);

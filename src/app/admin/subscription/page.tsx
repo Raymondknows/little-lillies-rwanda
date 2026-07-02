@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Calendar, CreditCard, RefreshCw, TrendingUp, AlertCircle, CheckCircle, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UserGuide, type PageHelpGuide } from "@/components/ui/user-guide";
+import AdminSkeleton from "@/components/ui/skeleton";
 
 interface SubscriptionStatus {
   subscriptionStatus: string;
@@ -185,65 +186,8 @@ export default function SubscriptionPage() {
 
   if (loading) {
     return (
-      <div className="w-full max-w-5xl mx-auto space-y-10">
-        {/* Header Skeleton */}
-        <div className="text-center space-y-3">
-          <div className="h-10 bg-slate-200 rounded-xl w-48 mx-auto animate-pulse" />
-          <div className="h-4 bg-slate-200 rounded-lg w-96 mx-auto animate-pulse" />
-        </div>
-
-        {/* Status Card Skeleton */}
-        <div className="rounded-xl border border-border p-6 md:p-8 space-y-4 animate-pulse">
-          <div className="flex items-start gap-4">
-            <div className="h-10 w-10 bg-slate-200 rounded-lg flex-shrink-0" />
-            <div className="flex-1 space-y-2">
-              <div className="h-3 bg-slate-200 rounded w-20" />
-              <div className="h-6 bg-slate-200 rounded w-40" />
-              <div className="h-4 bg-slate-200 rounded w-56" />
-            </div>
-          </div>
-        </div>
-
-        {/* Plan & Time Grid Skeleton */}
-        <div className="grid gap-5 md:grid-cols-2 animate-pulse">
-          <div className="rounded-xl border border-border p-5 space-y-4">
-            <div className="h-3 bg-slate-200 rounded w-24" />
-            <div className="h-8 bg-slate-200 rounded w-32" />
-            <div className="h-4 bg-slate-200 rounded w-48" />
-            <div className="h-4 bg-slate-200 rounded w-32 mt-6 pt-4" />
-          </div>
-          <div className="rounded-xl border border-border p-5 space-y-4">
-            <div className="h-3 bg-slate-200 rounded w-24" />
-            <div className="h-16 bg-slate-200 rounded w-24 mx-auto" />
-          </div>
-        </div>
-
-        {/* Dates Grid Skeleton */}
-        <div className="grid gap-5 md:grid-cols-2 animate-pulse">
-          <div className="rounded-xl border border-border p-5 flex items-center gap-4">
-            <div className="h-5 w-5 bg-slate-200 rounded flex-shrink-0" />
-            <div className="flex-1 space-y-2">
-              <div className="h-3 bg-slate-200 rounded w-20" />
-              <div className="h-5 bg-slate-200 rounded w-40" />
-            </div>
-          </div>
-          <div className="rounded-xl border border-border p-5 flex items-center gap-4">
-            <div className="h-5 w-5 bg-slate-200 rounded flex-shrink-0" />
-            <div className="flex-1 space-y-2">
-              <div className="h-3 bg-slate-200 rounded w-20" />
-              <div className="h-5 bg-slate-200 rounded w-40" />
-            </div>
-          </div>
-        </div>
-
-        {/* Actions Skeleton */}
-        <div className="rounded-xl border border-border p-6 space-y-3 animate-pulse">
-          <div className="h-5 bg-slate-200 rounded w-20" />
-          <div className="space-y-3">
-            <div className="h-10 bg-slate-200 rounded-lg" />
-            <div className="h-10 bg-slate-200 rounded-lg" />
-          </div>
-        </div>
+      <div className="min-h-screen bg-background">
+        <AdminSkeleton />
       </div>
     );
   }

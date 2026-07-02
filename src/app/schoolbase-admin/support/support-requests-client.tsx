@@ -2,6 +2,8 @@
 
 import { getBackendUrl } from "@/lib/backend-url";
 
+import AdminSkeleton from "@/components/ui/skeleton";
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { AlertTriangle, Bell, Clock, Mail, MessageCircle } from "lucide-react";
@@ -222,11 +224,8 @@ export default function SupportRequestsClient({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand mx-auto"></div>
-          <p className="mt-3 text-muted">Loading support requests...</p>
-        </div>
+      <div className="py-12">
+        <AdminSkeleton />
       </div>
     );
   }

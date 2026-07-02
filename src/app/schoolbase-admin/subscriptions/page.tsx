@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import AdminPageShell from "@/components/admin-page-shell";
+import AdminSkeleton from "@/components/ui/skeleton";
 import SubscriptionsClient from "./subscriptions-client";
 
 export default function SubscriptionsPage() {
@@ -69,11 +70,8 @@ export default function SubscriptionsPage() {
           </>
         }
       >
-        <div className="px-3 py-6 sm:px-5 flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand mx-auto"></div>
-            <p className="mt-4 text-muted">Loading subscriptions...</p>
-          </div>
+        <div className="px-3 py-6 sm:px-5">
+          <AdminSkeleton />
         </div>
       </AdminPageShell>
     );

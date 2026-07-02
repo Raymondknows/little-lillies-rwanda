@@ -3,6 +3,7 @@
 import { getBackendUrl } from "@/lib/backend-url";
 import { useEffect, useState } from "react";
 import TeachersPageClient from "./teachers-client";
+import AdminSkeleton from "@/components/ui/skeleton";
 import SubscriptionModal from "@/components/subscription-modal";
 
 export default function AdminTeachersPage() {
@@ -84,8 +85,8 @@ export default function AdminTeachersPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-12">
-        <p className="text-muted">Loading teachers...</p>
+      <div className="min-h-screen bg-background">
+        <AdminSkeleton />
       </div>
     );
   }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
+import AdminSkeleton from "@/components/ui/skeleton";
 import Link from "next/link";
 import { Activity, AlertTriangle, Building2, CheckCircle2, Clock, Users, XCircle, Zap } from "lucide-react";
 import { SchoolTable, type SchoolRow } from "@/components/platform-admin/school-table";
@@ -172,11 +173,8 @@ export default function SchoolsViewSwitcher({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand mx-auto"></div>
-          <p className="mt-3 text-muted">Loading schools...</p>
-        </div>
+      <div className="py-12">
+        <AdminSkeleton />
       </div>
     );
   }

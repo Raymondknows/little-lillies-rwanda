@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { getBackendUrl } from "@/lib/backend-url";
 import SettingsPageClient from "./settings-client";
+import AdminSkeleton from "@/components/ui/skeleton";
 import SubscriptionModal from "@/components/subscription-modal";
 
 export default function SettingsPage() {
@@ -50,10 +51,8 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="p-6">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand"></div>
-        </div>
+      <div className="min-h-screen bg-background">
+        <AdminSkeleton />
       </div>
     );
   }

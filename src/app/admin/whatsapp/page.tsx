@@ -8,6 +8,7 @@ import { MessageCircle, Send, Mail, AlertCircle, CheckCircle, Clock, TrendingUp,
 import { WhatsAppIcon } from "@/components/ui/icons";
 import { UserGuide, type PageHelpGuide } from "@/components/ui/user-guide";
 import SubscriptionModal from "@/components/subscription-modal";
+import AdminSkeleton from "@/components/ui/skeleton";
 
 interface Notification {
   id: string;
@@ -223,8 +224,8 @@ export default function WhatsAppPage() {
 
   if (loading && !stats) {
     return (
-      <div>
-        <div className="text-muted">Loading communications...</div>
+      <div className="min-h-screen bg-background">
+        <AdminSkeleton />
       </div>
     );
   }

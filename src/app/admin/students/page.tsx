@@ -4,6 +4,7 @@ import { getBackendUrl } from "@/lib/backend-url";
 
 import { useEffect, useState } from "react";
 import StudentsPageClient from "./students-client";
+import AdminSkeleton from "@/components/ui/skeleton";
 import SubscriptionModal from "@/components/subscription-modal";
 
 export default function StudentsPage() {
@@ -74,7 +75,11 @@ export default function StudentsPage() {
   }, []);
 
   if (loading) {
-    return <div className="p-6">Loading...</div>;
+    return (
+      <div className="min-h-screen bg-background">
+        <AdminSkeleton />
+      </div>
+    );
   }
 
   if (subscriptionBlocked) {

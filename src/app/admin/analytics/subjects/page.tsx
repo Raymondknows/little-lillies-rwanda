@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import AdminSkeleton from "@/components/ui/skeleton";
 import { useRouter } from "next/navigation";
 import { BookOpen, Search, ChevronLeft, ChevronRight, Download } from "lucide-react";
 
@@ -81,11 +82,8 @@ export default function SubjectsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto" style={{ borderBottomColor: '#0A66C2' }}></div>
-          <p className="mt-4 text-slate-600">Loading subjects...</p>
-        </div>
+      <div className="min-h-screen bg-background">
+        <AdminSkeleton />
       </div>
     );
   }

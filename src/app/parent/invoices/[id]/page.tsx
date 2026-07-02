@@ -143,7 +143,19 @@ export default function InvoiceDetailPage() {
   const termName = invoice.feeSchedule?.term?.name || "Current Term";
   const academicYear = invoice.feeSchedule?.term?.academicYear?.name || "";
   const currency = school?.currency || "NGN";
-  const schoolLogo = resolveSchoolAssetUrl(school?.logoUrl);
+  let schoolLogo = resolveSchoolAssetUrl(school?.logoUrl);
+  if (schoolLogo === "/api/admin/school-logo" && school?.name && school?.logoUrl) {
+    // prefer public route with school id to avoid session-protected admin route
+    // invoice data includes school info from backend; use school id if available in logoUrl or data
+    // try to parse id from original logoUrl if possible, else use invoice school id from `school` object if present
+    // here `school` may not contain id in this shape; fallback to leaving as-is if we can't determine id
+    // If `school` has an `id` field, prefer that
+    // @ts-ignore - some responses include `id`
+    const maybeId = (school as any)?.id;
+    if (maybeId) {
+      schoolLogo = `/api/school-logo/${encodeURIComponent(maybeId)}`;
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background py-8 px-4 sm:px-8">

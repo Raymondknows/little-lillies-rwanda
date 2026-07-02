@@ -24,6 +24,11 @@ interface SchoolInfo {
   initials?: string;
   termCount?: number;
   principalComment?: string;
+  manualPaymentAccountName?: string | null;
+  manualPaymentAccountNumber?: string | null;
+  manualPaymentBankName?: string | null;
+  paymentInstructions?: string | null;
+  tagline?: string | null;
 }
 
 export default function SchoolPage() {
@@ -51,13 +56,15 @@ export default function SchoolPage() {
         setSchool(data);
 
         try {
-          const logoRes = await fetch("/api/admin/school-logo", {
-            credentials: "include",
-          });
+          if (data?.id) {
+            const logoRes = await fetch(`/api/school-logo/${encodeURIComponent(data.id)}`);
 
-          if (logoRes.ok) {
-            const blob = await logoRes.blob();
-            setSchoolLogoUrl(URL.createObjectURL(blob));
+            if (logoRes.ok) {
+              const blob = await logoRes.blob();
+              setSchoolLogoUrl(URL.createObjectURL(blob));
+            } else {
+              setSchoolLogoUrl(null);
+            }
           } else {
             setSchoolLogoUrl(null);
           }
@@ -139,10 +146,22 @@ export default function SchoolPage() {
   return (
     <div className="space-y-6 pb-8">
       <div className="rounded-3xl border border-border bg-surface p-6 shadow-sm md:p-8">
-        <div className="flex flex-col gap-3 border-l-4 border-brand pl-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted">School information</p>
-          <h1 className="text-3xl font-bold text-foreground md:text-4xl">{school.name}</h1>
-          {school.motto && <p className="max-w-3xl text-sm italic text-muted">{school.motto}</p>}
+        <div className="flex items-start justify-between gap-6">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted">School information</p>
+            <h1 className="text-3xl font-bold text-foreground md:text-4xl">{school.name}</h1>
+            {school.tagline ? (
+              <p className="max-w-3xl text-sm text-muted">{school.tagline}</p>
+            ) : school.motto ? (
+              <p className="max-w-3xl text-sm italic text-muted">{school.motto}</p>
+            ) : null}
+          </div>
+
+          <div className="text-right">
+            <p className="text-sm font-medium text-foreground">Contact</p>
+            <p className="text-xs text-muted">{school.email || 'Not set'}</p>
+            <p className="text-xs text-muted">{school.phone || 'Not set'}</p>
+          </div>
         </div>
       </div>
 
@@ -153,16 +172,16 @@ export default function SchoolPage() {
               <img
                 src={schoolLogoUrl}
                 alt="School Logo"
-                className="mx-auto h-28 w-28 rounded-2xl border border-border object-contain bg-background p-3 shadow-sm md:h-32 md:w-32"
+                className="mx-auto h-28 w-28 rounded-lg border border-border object-contain bg-surface p-3 shadow-sm md:h-32 md:w-32"
               />
             ) : (
-              <div className="mx-auto flex h-28 w-28 items-center justify-center rounded-2xl border border-border bg-background shadow-sm md:h-32 md:w-32">
+              <div className="mx-auto flex h-28 w-28 items-center justify-center rounded-lg border border-border bg-surface p-3 shadow-sm md:h-32 md:w-32">
                 <span className="text-4xl">🏫</span>
               </div>
             )}
 
             {school.principal && (
-              <div className="rounded-2xl border border-border bg-surface p-4 shadow-sm">
+              <div className="rounded-lg border border-border bg-surface p-5 shadow-sm transition hover:border-brand/50 hover:shadow-md">
                 <p className="mb-1 text-xs font-semibold uppercase text-muted">Principal</p>
                 <p className="text-sm font-medium text-foreground">{school.principal}</p>
               </div>
@@ -178,54 +197,86 @@ export default function SchoolPage() {
             </div>
 
             <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
+              <div className="rounded-lg border border-border bg-surface p-5 shadow-sm transition hover:border-brand/50 hover:shadow-md">
                 <p className="text-xs font-semibold uppercase text-muted">Address</p>
-                <p className="mt-1 text-sm font-medium text-foreground">{school.address}</p>
+                <p className="mt-1 text-sm font-medium text-foreground">{school.address || 'Not provided'}</p>
               </div>
-              <div>
+              <div className="rounded-lg border border-border bg-surface p-5 shadow-sm transition hover:border-brand/50 hover:shadow-md">
                 <p className="text-xs font-semibold uppercase text-muted">City</p>
                 <p className="mt-1 text-sm font-medium text-foreground">{school.city || "-"}</p>
               </div>
-              <div>
+              <div className="rounded-lg border border-border bg-surface p-5 shadow-sm transition hover:border-brand/50 hover:shadow-md">
                 <p className="text-xs font-semibold uppercase text-muted">Country</p>
                 <p className="mt-1 text-sm font-medium text-foreground">{school.country || "-"}</p>
               </div>
-              <div>
+              <div className="rounded-lg border border-border bg-surface p-5 shadow-sm transition hover:border-brand/50 hover:shadow-md">
                 <p className="text-xs font-semibold uppercase text-muted">Currency</p>
                 <p className="mt-1 text-sm font-medium text-foreground">{school.currency || "-"}</p>
               </div>
-              <div>
+              <div className="rounded-lg border border-border bg-surface p-5 shadow-sm transition hover:border-brand/50 hover:shadow-md">
                 <p className="text-xs font-semibold uppercase text-muted">Terms Per Session</p>
                 <p className="mt-1 text-sm font-medium text-foreground">{typeof school.termCount === "number" ? school.termCount : "-"}</p>
               </div>
-              <div>
+              <div className="rounded-lg border border-border bg-surface p-5 shadow-sm transition hover:border-brand/50 hover:shadow-md">
                 <p className="text-xs font-semibold uppercase text-muted">Contact information</p>
                 <p className="mt-1 text-sm font-medium text-foreground">Available below</p>
               </div>
             </div>
 
-            <div className="mt-6 space-y-3 rounded-2xl border border-border bg-background p-5">
-              <p className="text-xs font-semibold uppercase text-muted">Contact information</p>
-              {school.phone && (
-                <div className="flex items-center gap-3">
-                  <Phone className="h-4 w-4 flex-shrink-0 text-muted" />
-                  <div className="min-w-0">
-                    <p className="text-xs text-muted">Phone</p>
-                    <p className="text-sm text-foreground">{school.phone}</p>
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <div className="rounded-lg border border-border bg-surface p-5 shadow-sm transition hover:border-brand/50 hover:shadow-md">
+                <p className="text-xs font-semibold uppercase text-muted">Contact information</p>
+                <div className="mt-3 space-y-3 text-sm text-foreground">
+                  {school.phone ? (
+                    <div className="flex items-center gap-3">
+                      <Phone className="h-4 w-4 flex-shrink-0 text-muted" />
+                      <div className="min-w-0">
+                        <p className="text-xs text-muted">Phone</p>
+                        <p className="text-sm text-foreground">{school.phone}</p>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {school.email ? (
+                    <div className="flex items-center gap-3">
+                      <Mail className="h-4 w-4 flex-shrink-0 text-muted" />
+                      <div className="min-w-0">
+                        <p className="text-xs text-muted">Email</p>
+                        <a href={`mailto:${school.email}`} className="text-sm text-brand hover:opacity-80 truncate">
+                          {school.email}
+                        </a>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  <div>
+                    <p className="text-xs text-muted">Address</p>
+                    <p className="mt-1 text-sm font-medium text-foreground">{[school.address, school.city, school.country].filter(Boolean).join(', ') || 'Not provided'}</p>
                   </div>
                 </div>
-              )}
-              {school.email && (
-                <div className="flex items-center gap-3">
-                  <Mail className="h-4 w-4 flex-shrink-0 text-muted" />
-                  <div className="min-w-0">
-                    <p className="text-xs text-muted">Email</p>
-                    <a href={`mailto:${school.email}`} className="text-sm text-brand hover:opacity-80 truncate">
-                      {school.email}
-                    </a>
-                  </div>
+              </div>
+
+              <div className="rounded-lg border border-border bg-surface p-5 shadow-sm transition hover:border-brand/50 hover:shadow-md">
+                <p className="text-xs font-semibold uppercase text-muted">Account & Payments</p>
+                <div className="mt-3 space-y-3 text-sm text-foreground">
+                  <p className="text-xs text-muted">Bank account for manual payments</p>
+                  <p className="text-sm">
+                    <span className="font-medium">Account name:</span> {school.manualPaymentAccountName || 'Not provided'}
+                  </p>
+                  <p className="text-sm">
+                    <span className="font-medium">Bank:</span> {school.manualPaymentBankName || 'Not provided'}
+                  </p>
+                  <p className="text-sm">
+                    <span className="font-medium">Account number:</span> {school.manualPaymentAccountNumber || 'Not provided'}
+                  </p>
+                  {school.paymentInstructions ? (
+                    <div>
+                      <p className="text-xs text-muted mt-2">Payment notes</p>
+                      <p className="text-sm text-muted mt-1">{school.paymentInstructions}</p>
+                    </div>
+                  ) : null}
                 </div>
-              )}
+              </div>
             </div>
 
             <div className="mt-6 flex flex-wrap gap-3">

@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { UserGuide, type PageHelpGuide } from "@/components/ui/user-guide";
 import { WhatsAppIcon } from "@/components/ui/icons";
 import SubscriptionModal from "@/components/subscription-modal";
+import AdminSkeleton from "@/components/ui/skeleton";
 
 interface ClassData {
   id: string;
@@ -470,11 +471,8 @@ export default function AttendancePage() {
 
   if (classesLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand mx-auto"></div>
-          <p className="mt-4 text-muted">Loading...</p>
-        </div>
+      <div className="min-h-screen bg-background">
+        <AdminSkeleton />
       </div>
     );
   }

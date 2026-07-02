@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { PaystackPurchaseButton } from "@/components/paystack-purchase-button";
 import { Check, Zap, Users, BarChart3, MessageSquare } from "lucide-react";
 import { UserGuide, type PageHelpGuide } from "@/components/ui/user-guide";
+import AdminSkeleton from "@/components/ui/skeleton";
 
 interface Plan {
   id: string;
@@ -216,20 +217,8 @@ export default function SubscribePage() {
 
   if (loading) {
     return (
-      <div className="w-full max-w-5xl mx-auto px-6 py-10 space-y-6">
-        <div className="space-y-2">
-          <div className="h-6 w-64 bg-black/5 rounded animate-pulse" />
-          <div className="h-4 w-96 bg-black/5 rounded animate-pulse" />
-        </div>
-
-        <div className="grid gap-5 md:grid-cols-3">
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="h-72 rounded-xl border border-black/10 bg-black/5 animate-pulse"
-            />
-          ))}
-        </div>
+      <div className="min-h-screen bg-background">
+        <AdminSkeleton />
       </div>
     );
   }

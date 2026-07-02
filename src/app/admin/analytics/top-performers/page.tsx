@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { TrendingUp, Search, ChevronLeft, ChevronRight, Download } from "lucide-react";
 import SubscriptionModal from "@/components/subscription-modal";
+import AdminSkeleton from "@/components/ui/skeleton";
 
 interface TopPerformer {
   name: string;
@@ -84,11 +85,8 @@ export default function TopPerformersPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
-          <p className="mt-4 text-slate-600">Loading top performers...</p>
-        </div>
+      <div className="min-h-screen bg-background">
+        <AdminSkeleton />
       </div>
     );
   }

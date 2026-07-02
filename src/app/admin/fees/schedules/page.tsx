@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { getBackendUrl } from "@/lib/backend-url";
 import FeeSchedulesPageClient from "./schedules-client";
+import AdminSkeleton from "@/components/ui/skeleton";
 
 interface FeeScheduleItem {
   id: string;
@@ -69,14 +70,8 @@ export default function FeeSchedulesPage() {
 
   if (loading) {
     return (
-      <div className="p-6 space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Fee Schedules</h1>
-          <p className="mt-1 text-gray-600">Manage fee schedules for your school</p>
-        </div>
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        </div>
+      <div className="min-h-screen bg-background">
+        <AdminSkeleton />
       </div>
     );
   }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import ResultsPageClient from "./results-client";
+import AdminSkeleton from "@/components/ui/skeleton";
 import { useAssessmentData } from "@/lib/hooks/useAssessmentData";
 import SubscriptionModal from "@/components/subscription-modal";
 
@@ -14,8 +15,8 @@ export default function ResultsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-12">
-        <p className="text-muted">Loading results...</p>
+      <div className="min-h-screen bg-background">
+        <AdminSkeleton />
       </div>
     );
   }

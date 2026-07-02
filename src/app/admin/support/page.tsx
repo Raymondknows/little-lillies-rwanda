@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { getBackendUrl } from "@/lib/backend-url";
 import { UserGuide, type PageHelpGuide } from "@/components/ui/user-guide";
 import SupportRequestsClient from "./support-client";
+import AdminSkeleton from "@/components/ui/skeleton";
 import SubscriptionModal from "@/components/subscription-modal";
 
 const HELP_GUIDE: PageHelpGuide = {
@@ -133,10 +134,8 @@ export default function SupportPage() {
 
   if (loading) {
     return (
-      <div className="space-y-8">
-        <div className="rounded-lg border border-border bg-surface p-8 text-center">
-          <p className="text-muted">Loading support requests...</p>
-        </div>
+      <div className="min-h-screen bg-background">
+        <AdminSkeleton />
       </div>
     );
   }

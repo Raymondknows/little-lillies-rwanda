@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle, Trash2, Loader } from "lucide-react";
 import { UserGuide, type PageHelpGuide } from "@/components/ui/user-guide";
 import SubscriptionModal from "@/components/subscription-modal";
+import AdminSkeleton from "@/components/ui/skeleton";
 
 interface Announcement {
   id: string;
@@ -169,9 +170,8 @@ export default function WebsitePage() {
 
         {/* Loading state */}
         {loading && (
-          <div className="flex items-center justify-center py-12">
-            <Loader className="h-6 w-6 animate-spin text-brand" />
-            <span className="ml-2 text-muted">Loading announcements...</span>
+          <div className="min-h-screen bg-background">
+            <AdminSkeleton />
           </div>
         )}
 

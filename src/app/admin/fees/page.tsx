@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { WhatsAppIcon } from "@/components/ui/icons";
 import FeesPageClient from "./fees-client";
+import AdminSkeleton from "@/components/ui/skeleton";
 import SubscriptionModal from "@/components/subscription-modal";
 
 export default function FeesPage() {
@@ -152,8 +153,8 @@ export default function FeesPage() {
 
   if (loading) {
     return (
-      <div className="p-6">
-        <div className="text-muted">Loading fees data...</div>
+      <div className="min-h-screen bg-background">
+        <AdminSkeleton />
       </div>
     );
   }

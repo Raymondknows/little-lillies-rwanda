@@ -4,8 +4,9 @@ import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { BarChart3, TrendingUp, Users, BookOpen, AlertCircle, Activity, Download, Filter, Search, ChevronDown, ArrowRight } from "lucide-react";
 import SubscriptionModal from "@/components/subscription-modal";
+import AdminSkeleton from "@/components/ui/skeleton";
 
-// Skeleton Loader Components
+// NOTE: using shared AdminSkeleton for page-level loading
 function CardSkeleton() {
   return (
     <div className="rounded-lg border border-slate-200 p-6 bg-white animate-pulse">
@@ -255,52 +256,8 @@ export default function AnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6 pb-8">
-        {/* Header Skeleton */}
-        <div className="border-b border-slate-200 pb-6 animate-pulse">
-          <div className="h-10 bg-slate-200 rounded w-1/3 mb-3"></div>
-          <div className="h-4 bg-slate-200 rounded w-1/2"></div>
-        </div>
-
-        {/* Card Skeletons */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((i) => (
-            <CardSkeleton key={i} />
-          ))}
-        </div>
-
-        {/* Phase Tabs Skeleton */}
-        <div className="h-12 bg-slate-200 rounded animate-pulse"></div>
-
-        {/* Grade Distribution Skeleton */}
-        <DistributionSkeleton />
-
-        {/* Table Skeleton */}
-        <TableSkeleton />
-
-        {/* Subjects Skeleton */}
-        <div className="rounded-lg border border-slate-200 bg-white p-6 animate-pulse">
-          <div className="h-6 bg-slate-200 rounded w-32 mb-4"></div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-12 bg-slate-200 rounded"></div>
-            ))}
-          </div>
-        </div>
-
-        {/* Bottom sections Skeleton */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {[1, 2].map((i) => (
-            <div key={i} className="rounded-lg border border-slate-200 bg-white p-6 animate-pulse">
-              <div className="h-6 bg-slate-200 rounded w-32 mb-4"></div>
-              <div className="space-y-2">
-                {[1, 2, 3].map((j) => (
-                  <div key={j} className="h-12 bg-slate-200 rounded"></div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
+      <div className="min-h-screen bg-background">
+        <AdminSkeleton />
       </div>
     );
   }

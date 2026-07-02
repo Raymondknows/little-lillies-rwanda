@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
+import { WhatsAppIcon } from "@/components/ui/icons";
 import { Pagination } from "@/components/ui/pagination";
 import { UserGuide, type PageHelpGuide } from "@/components/ui/user-guide";
 import { pupilName } from "@/lib/format";
@@ -100,6 +101,8 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
   );
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [profileStudent, setProfileStudent] = useState<any | null>(null);
+  const [whatsAppConnected, setWhatsAppConnected] = useState<boolean | null>(null);
+  const [whatsAppStatusMessage, setWhatsAppStatusMessage] = useState<string | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -107,6 +110,31 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
       searchInputRef.current?.focus();
     }
   }, [isSearchOpen]);
+
+  useEffect(() => {
+    async function fetchWhatsAppStatus() {
+      try {
+        const res = await fetch(`/api/admin/whatsapp/status`, {
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setWhatsAppConnected(data?.session?.status === 'connected');
+          setWhatsAppStatusMessage(data?.session?.statusMessage || data?.session?.status || null);
+        } else {
+          setWhatsAppConnected(false);
+          setWhatsAppStatusMessage('Unable to retrieve WhatsApp status.');
+        }
+      } catch (err) {
+        console.error('Error loading WhatsApp status:', err);
+        setWhatsAppConnected(false);
+        setWhatsAppStatusMessage('Unable to retrieve WhatsApp status.');
+      }
+    }
+
+    fetchWhatsAppStatus();
+  }, []);
 
   const openProfileModal = (student: any) => {
     setProfileStudent(student);
@@ -217,6 +245,24 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
             </p>
           </div>
           <div className="flex flex-wrap gap-2 sm:justify-end sm:items-center">
+            {whatsAppConnected !== null && (
+              <div className="inline-flex items-center gap-3 rounded-full border px-4 py-2 shadow-sm transition-colors mr-2">
+                <span className={`inline-flex h-9 w-9 items-center justify-center rounded-full ${whatsAppConnected ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                  <WhatsAppIcon className="h-5 w-5" />
+                </span>
+                <div className="flex flex-col">
+                  <span className={`text-sm font-semibold ${whatsAppConnected ? 'text-foreground' : 'text-foreground'}`}>
+                    {whatsAppConnected ? 'WhatsApp connected' : 'WhatsApp disconnected'}
+                  </span>
+                  <span className="text-xs text-muted">
+                    {whatsAppConnected ? 'Ready to send school messages.' : 'Reconnect via settings.'}
+                  </span>
+                </div>
+                <span className={`inline-flex h-6 min-w-[2.25rem] items-center justify-center rounded-full px-2 text-xs font-semibold ${whatsAppConnected ? 'bg-emerald-600 text-white' : 'bg-amber-600 text-white'}`}>
+                  {whatsAppConnected ? 'On' : 'Off'}
+                </span>
+              </div>
+            )}
             {/* Animated Search Panel - slides out on same line */}
             <div className={`overflow-hidden transition-all duration-300 ease-out flex-shrink-0 ${isSearchOpen ? "w-72 opacity-100 translate-x-0" : "w-0 opacity-0 -translate-x-full"}`}>
               <input

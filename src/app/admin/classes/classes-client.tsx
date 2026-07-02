@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { UserGuide } from "@/components/ui/user-guide";
 import SubscriptionModal from "@/components/subscription-modal";
+import AdminSkeleton from "@/components/ui/skeleton";
 import { BookOpen, Users, Plus, Edit2, TrendingUp, LayoutGrid, ArrowUpRight } from "lucide-react";
 
 const CLASS_GUIDE = {
@@ -320,10 +321,8 @@ export default function ClassesPageClient({ classes: initialClasses }: { classes
   return (
     <>
       {loading && (
-        <div className="flex items-center justify-center p-12">
-          <div className="text-center">
-            <p className="text-muted">Loading classes...</p>
-          </div>
+        <div className="min-h-screen bg-background">
+          <AdminSkeleton />
         </div>
       )}
 

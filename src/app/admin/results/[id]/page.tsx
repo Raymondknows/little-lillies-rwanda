@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table2, ChevronRight, AlertCircle } from "lucide-react";
 import { AssessmentSetupWizard } from "@/components/admin/assessment-setup-wizard";
+import AdminSkeleton from "@/components/ui/skeleton";
 import { AssessmentActionsPanel } from "@/components/admin/assessment-actions-panel";
 import { ClassStatistics } from "@/components/admin/class-statistics";
 import { AuditTrail } from "@/components/admin/audit-trail";
@@ -331,8 +332,8 @@ export default function AssessmentDetailPage({
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-6xl px-3 py-4">
-        <div className="text-center text-muted">Loading assessment details...</div>
+      <div className="min-h-screen bg-background">
+        <AdminSkeleton />
       </div>
     );
   }

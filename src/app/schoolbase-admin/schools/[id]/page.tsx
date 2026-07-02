@@ -67,7 +67,12 @@ export default async function Page({ params }: { params?: Record<string, string>
     notFound();
   }
 
-  const logoUrl = resolveSchoolAssetUrl(school.logoUrl);
+  let logoUrl = resolveSchoolAssetUrl(school.logoUrl);
+
+  // If the stored value maps to the session-protected admin route, prefer the public school-logo route with id
+  if (logoUrl === "/api/admin/school-logo") {
+    logoUrl = `/api/school-logo/${encodeURIComponent(school.id)}`;
+  }
 
   return (
     <div className="space-y-6">

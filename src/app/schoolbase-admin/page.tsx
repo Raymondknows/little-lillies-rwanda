@@ -11,16 +11,30 @@ import {
   TrendingUp,
   AlertCircle,
   Calendar,
+  Plus,
+  Activity,
+  Mail,
+  Clock,
+  MessageCircle,
+  ShieldCheck,
+  Bell,
   ChevronLeft,
   ChevronRight,
-  Plus,
 } from "lucide-react";
+import AdminPageShell from "@/components/admin-page-shell";
 import { getBackendUrl } from "@/lib/backend-url";
 
 export default function PlatformOverviewPage() {
   const [stats, setStats] = useState<any>(null);
   const [schools, setSchools] = useState<any[]>([]);
+  const [activityLogs, setActivityLogs] = useState<any[]>([]);
+  const [emailLogs, setEmailLogs] = useState<any[]>([]);
+  const [trialSchools, setTrialSchools] = useState<any[]>([]);
+  const [supportRequests, setSupportRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dashboardMessage, setDashboardMessage] = useState<string | null>(null);
+  const [reminding, setReminding] = useState(false);
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [cardScroll, setCardScroll] = useState(0);
 
   useEffect(() => {
@@ -28,8 +42,7 @@ export default function PlatformOverviewPage() {
       try {
         const backendUrl = getBackendUrl();
 
-        // Fetch platform stats and schools in parallel
-        const [statsRes, schoolsRes] = await Promise.all([
+        const [statsRes, schoolsRes, activityRes, emailRes, trialRes, supportRes] = await Promise.all([
           fetch(`${backendUrl}/schoolbase-admin/api/stats`, {
             credentials: "include",
             headers: { "Content-Type": "application/json" },
@@ -38,13 +51,39 @@ export default function PlatformOverviewPage() {
             credentials: "include",
             headers: { "Content-Type": "application/json" },
           }),
+          fetch(`${backendUrl}/schoolbase-admin/api/audit-logs?limit=5`, {
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+          }),
+          fetch(`${backendUrl}/schoolbase-admin/api/email-logs?limit=5`, {
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+          }),
+          fetch(`${backendUrl}/schoolbase-admin/api/schools?status=TRIAL&limit=5`, {
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+          }),
+          fetch(`${backendUrl}/schoolbase-admin/api/support`, {
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+          }),
         ]);
 
-        const statsData = await statsRes.json();
-        const schoolsData = await schoolsRes.json();
+        const [statsData, schoolsData, activityData, emailData, trialData, supportData] = await Promise.all([
+          statsRes.json(),
+          schoolsRes.json(),
+          activityRes.json(),
+          emailRes.json(),
+          trialRes.json(),
+          supportRes.json(),
+        ]);
 
         setStats(statsData);
         setSchools(schoolsData.schools || []);
+        setActivityLogs(activityData.logs || []);
+        setEmailLogs(emailData.logs || []);
+        setTrialSchools(trialData.schools || []);
+        setSupportRequests(supportData.supportRequests || []);
         setLoading(false);
       } catch (err) {
         console.error("Error loading platform data:", err);
@@ -54,6 +93,31 @@ export default function PlatformOverviewPage() {
 
     loadData();
   }, []);
+
+  const sendSetupReminders = async () => {
+    setReminding(true);
+    setDashboardMessage(null);
+
+    try {
+      const backendUrl = getBackendUrl();
+      const response = await fetch(`${backendUrl}/schoolbase-admin/api/reminders`, {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({}),
+        });
+      const result = await response.json();
+      if (!response.ok) {
+        setDashboardMessage(result.message || "Failed to send reminders.");
+      } else {
+        setDashboardMessage(`Sent reminders to ${result.sentCount ?? result.total ?? "incomplete"} incomplete schools.`);
+      }
+    } catch (error) {
+      setDashboardMessage(error instanceof Error ? error.message : "Failed to send reminders.");
+    } finally {
+      setReminding(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -106,12 +170,19 @@ export default function PlatformOverviewPage() {
   ];
 
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-foreground">Platform Overview</h1>
-        <p className="mt-1 text-muted">Manage all schools and monitor platform health</p>
-      </div>
-
+    <AdminPageShell
+      title="Platform Overview"
+      subtitle="Manage all schools and monitor platform health"
+      actions={
+        <button
+          type="button"
+          onClick={() => setIsPanelOpen(true)}
+          className="inline-flex items-center justify-center rounded-xl bg-[#0A66C2] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0952a4]"
+        >
+          Open admin panel
+        </button>
+      }
+    >
       {/* Stats Cards */}
       <div className="mb-10 hidden sm:block pt-4">
         <div className="relative flex items-center gap-4">
@@ -182,7 +253,7 @@ export default function PlatformOverviewPage() {
       </div>
 
       {/* Quick Actions */}
-      <div className="mb-10 grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div className="mb-10 grid grid-cols-1 md:grid-cols-4 gap-3">
         <Link href="/schoolbase-admin/schools">
           <button className="w-full inline-flex items-center justify-center px-4 py-3 bg-brand text-white rounded-lg hover:bg-brand/90 transition-colors font-medium shadow-sm hover:shadow-md">
             <Building2 className="h-4 w-4 mr-2" />
@@ -191,17 +262,178 @@ export default function PlatformOverviewPage() {
         </Link>
         <Link href="/schoolbase-admin/email-center">
           <button className="w-full inline-flex items-center justify-center px-4 py-3 bg-brand text-white rounded-lg hover:bg-brand/90 transition-colors font-medium shadow-sm hover:shadow-md">
-            <Plus className="h-4 w-4 mr-2" />
+            <Mail className="h-4 w-4 mr-2" />
             Send Email
           </button>
         </Link>
         <Link href="/schoolbase-admin/support">
           <button className="w-full inline-flex items-center justify-center px-4 py-3 bg-brand text-white rounded-lg hover:bg-brand/90 transition-colors font-medium shadow-sm hover:shadow-md">
-            <HelpCircle className="h-4 w-4 mr-2" />
+            <MessageCircle className="h-4 w-4 mr-2" />
             View Support
           </button>
         </Link>
+        <button
+          type="button"
+          onClick={sendSetupReminders}
+          disabled={reminding}
+          className="w-full inline-flex items-center justify-center px-4 py-3 bg-[#0A66C2] text-white rounded-lg hover:bg-[#0952a4] transition-colors font-medium shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <Bell className="h-4 w-4 mr-2" />
+          Send setup reminders
+        </button>
       </div>
+
+      {isPanelOpen ? (
+        <div className="fixed inset-0 z-50 flex">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-300"
+            onClick={() => setIsPanelOpen(false)}
+          />
+          <div className={`relative ml-auto flex h-full w-full max-w-4xl flex-col overflow-hidden bg-surface shadow-2xl transition-transform duration-300 ease-out ${
+            isPanelOpen ? 'translate-x-0' : 'translate-x-full'
+          }`}>
+            <div className="flex items-center justify-between border-b border-border px-6 py-5">
+              <div>
+                <p className="text-xs uppercase tracking-[0.24em] text-muted">Feature panel</p>
+                <h2 className="text-2xl font-semibold text-foreground">Admin insights</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsPanelOpen(false)}
+                className="rounded-full p-2 text-muted transition hover:bg-border hover:text-foreground"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="overflow-y-auto p-6 space-y-6">
+              <div className="rounded-3xl border border-border bg-background p-6 shadow-sm">
+                <div className="flex items-center justify-between gap-4 mb-5">
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground">Recent activity</h3>
+                    <p className="text-sm text-muted">Audit events and school actions.</p>
+                  </div>
+                  <Link href="/schoolbase-admin/audit" className="text-sm font-semibold text-brand hover:text-brand/80">
+                    View all
+                  </Link>
+                </div>
+                <div className="grid gap-3">
+                  {activityLogs.length === 0 ? (
+                    <div className="rounded-2xl border border-border bg-surface p-4 text-sm text-muted">No activity recorded yet.</div>
+                  ) : (
+                    activityLogs.map((log: any) => (
+                      <div key={log.id} className="rounded-2xl border border-border bg-white p-4 shadow-sm">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">{log.event.replace(/_/g, ' ')}</p>
+                            <p className="mt-1 text-xs text-muted">{log.details}</p>
+                          </div>
+                          <p className="text-[11px] uppercase tracking-[0.18em] text-muted">
+                            {new Date(log.createdAt).toLocaleString()}
+                          </p>
+                        </div>
+                        {log.school?.name ? (
+                          <p className="mt-3 text-xs text-muted">School: {log.school.name}</p>
+                        ) : null}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              <div className="rounded-3xl border border-border bg-background p-6 shadow-sm">
+                <div className="flex items-center justify-between gap-4 mb-5">
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground">Recent emails</h3>
+                    <p className="text-sm text-muted">Latest outbound email events.</p>
+                  </div>
+                  <Link href="/schoolbase-admin/email-logs" className="text-sm font-semibold text-brand hover:text-brand/80">
+                    View logs
+                  </Link>
+                </div>
+                <div className="grid gap-3">
+                  {emailLogs.length === 0 ? (
+                    <div className="rounded-2xl border border-border bg-surface p-4 text-sm text-muted">No email activity recorded.</div>
+                  ) : (
+                    emailLogs.map((log: any) => (
+                      <div key={log.id} className="rounded-2xl border border-border bg-white p-4 shadow-sm">
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">{log.subject}</p>
+                            <p className="mt-1 text-xs text-muted">{log.emailType}</p>
+                          </div>
+                          <span className="text-[11px] uppercase tracking-[0.18em] text-muted">
+                            {new Date(log.sentAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <p className="mt-2 text-xs text-muted">{log.recipientEmail}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              <div className="rounded-3xl border border-border bg-background p-6 shadow-sm">
+                <div className="flex items-center justify-between gap-4 mb-5">
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground">Trial schools</h3>
+                    <p className="text-sm text-muted">Schools currently on trial.</p>
+                  </div>
+                  <Link href="/schoolbase-admin/schools?status=TRIAL" className="text-sm font-semibold text-brand hover:text-brand/80">
+                    View all
+                  </Link>
+                </div>
+                <div className="grid gap-3">
+                  {trialSchools.length === 0 ? (
+                    <div className="rounded-2xl border border-border bg-surface p-4 text-sm text-muted">No trial schools to show.</div>
+                  ) : (
+                    trialSchools.map((school: any) => (
+                      <div key={school.id} className="rounded-2xl border border-border bg-white p-4 shadow-sm">
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-semibold text-foreground">{school.name}</p>
+                            <p className="mt-1 text-xs text-muted">{school.country}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-semibold text-foreground">{school.userCount || 0} users</p>
+                            <p className="text-xs text-muted">
+                              Ends {school.trialEndsAt ? new Date(school.trialEndsAt).toLocaleDateString() : 'n/a'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              <div className="rounded-3xl border border-border bg-background p-6 shadow-sm">
+                <div className="flex items-center justify-between gap-4 mb-5">
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground">Open support requests</h3>
+                    <p className="text-sm text-muted">Recent tickets from schools.</p>
+                  </div>
+                  <Link href="/schoolbase-admin/support" className="text-sm font-semibold text-brand hover:text-brand/80">
+                    View all
+                  </Link>
+                </div>
+                <div className="grid gap-3">
+                  {supportRequests.length === 0 ? (
+                    <div className="rounded-2xl border border-border bg-surface p-4 text-sm text-muted">No open support requests at the moment.</div>
+                  ) : (
+                    supportRequests.slice(0, 5).map((request: any) => (
+                      <div key={request.id} className="rounded-2xl border border-border bg-white p-4 shadow-sm">
+                        <p className="text-sm font-semibold text-foreground">{request.subject}</p>
+                        <p className="mt-1 text-xs text-muted">{request.school?.name || 'Unknown school'} • {request.priority}</p>
+                        <p className="mt-2 text-xs text-muted line-clamp-2">{request.message}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {/* Recent Schools */}
       <div className="rounded-xl border border-border bg-surface p-6 shadow-sm hover:shadow-md transition-shadow">
@@ -255,6 +487,6 @@ export default function PlatformOverviewPage() {
           View all <ArrowUpRight className="h-3 w-3" />
         </Link>
       </div>
-    </div>
+    </AdminPageShell>
   );
 }

@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
+import AdminPageShell from "@/components/admin-page-shell";
 import SubscriptionsClient from "./subscriptions-client";
 
 export default function SubscriptionsPage() {
@@ -53,23 +55,48 @@ export default function SubscriptionsPage() {
 
   if (loading) {
     return (
-      <div className="px-3 py-6 sm:px-5 flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand mx-auto"></div>
-          <p className="mt-4 text-muted">Loading subscriptions...</p>
+      <AdminPageShell
+        title="Subscriptions"
+        subtitle="Manage school subscriptions and billing"
+        actions={
+          <>
+            <Link href="/schoolbase-admin/schools?status=TRIAL" className="inline-flex items-center justify-center rounded-xl border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground shadow-sm transition hover:bg-surface">
+              Trial schools
+            </Link>
+            <Link href="/schoolbase-admin/support" className="inline-flex items-center justify-center rounded-xl bg-[#0A66C2] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0952a4]">
+              Billing support
+            </Link>
+          </>
+        }
+      >
+        <div className="px-3 py-6 sm:px-5 flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand mx-auto"></div>
+            <p className="mt-4 text-muted">Loading subscriptions...</p>
+          </div>
         </div>
-      </div>
+      </AdminPageShell>
     );
   }
 
   return (
-    <div className="px-3 py-6 sm:px-5 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Subscriptions</h1>
-        <p className="mt-1 text-muted">Manage school subscriptions and billing</p>
+    <AdminPageShell
+      title="Subscriptions"
+      subtitle="Manage school subscriptions and billing"
+      actions={
+        <>
+          <Link href="/schoolbase-admin/schools?status=TRIAL" className="inline-flex items-center justify-center rounded-xl border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground shadow-sm transition hover:bg-surface">
+            Trial schools
+          </Link>
+          <Link href="/schoolbase-admin/support" className="inline-flex items-center justify-center rounded-xl bg-[#0A66C2] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0952a4]">
+            Billing support
+          </Link>
+        </>
+      }
+    >
+      <div className="px-3 py-6 sm:px-5 space-y-6">
+        <SubscriptionsClient schools={schools} payments={payments} />
       </div>
-
-      <SubscriptionsClient schools={schools} payments={payments} />
-    </div>
+    </AdminPageShell>
   );
 }

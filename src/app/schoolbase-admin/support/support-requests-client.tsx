@@ -4,7 +4,7 @@ import { getBackendUrl } from "@/lib/backend-url";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { AlertTriangle, Bell, Clock, Mail, MessageCircle } from "lucide-react";
 
 export type PlatformSupportRequestRow = {
   id: string;
@@ -185,6 +185,26 @@ export default function SupportRequestsClient({
     [requests, readRequestIds],
   );
 
+  const openCount = useMemo(
+    () => requests.filter((request) => request.status === "OPEN").length,
+    [requests],
+  );
+
+  const inProgressCount = useMemo(
+    () => requests.filter((request) => request.status === "IN_PROGRESS").length,
+    [requests],
+  );
+
+  const resolvedCount = useMemo(
+    () => requests.filter((request) => request.status === "RESOLVED").length,
+    [requests],
+  );
+
+  const closedCount = useMemo(
+    () => requests.filter((request) => request.status === "CLOSED").length,
+    [requests],
+  );
+
   const selectedRequest = selectedRequestId
     ? requests.find((request) => request.id === selectedRequestId) ?? null
     : null;
@@ -289,13 +309,63 @@ export default function SupportRequestsClient({
 
   return (
     <div className="space-y-2.5 sm:space-y-4">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {[
+          {
+            label: "Total tickets",
+            value: requests.length,
+            sub: "All support requests",
+            icon: MessageCircle,
+            iconClass: "bg-slate-100 text-slate-700",
+            href: "/schoolbase-admin/support",
+          },
+          {
+            label: "Open",
+            value: openCount,
+            sub: "Need response",
+            icon: Bell,
+            iconClass: "bg-emerald-100 text-emerald-700",
+            href: "/schoolbase-admin/support?status=OPEN",
+          },
+          {
+            label: "In progress",
+            value: inProgressCount,
+            sub: "Being handled",
+            icon: Clock,
+            iconClass: "bg-sky-100 text-sky-700",
+            href: "/schoolbase-admin/support?status=IN_PROGRESS",
+          },
+          {
+            label: "Unread",
+            value: unreadCount,
+            sub: "Unseen requests",
+            icon: Mail,
+            iconClass: "bg-orange-100 text-orange-700",
+            href: "/schoolbase-admin/support",
+          },
+        ].map((card) => {
+          const Icon = card.icon;
+          return (
+            <Link
+              key={card.label}
+              href={card.href}
+              className="group rounded-lg border border-border bg-surface p-5 shadow-sm transition hover:border-brand/50 hover:shadow-md"
+            >
+              <div className="flex items-start gap-3">
+                <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${card.iconClass}`}>
+                  <Icon className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">{card.label}</p>
+                  <p className="mt-3 text-3xl font-semibold text-foreground">{card.value}</p>
+                </div>
+              </div>
+              <p className="mt-4 text-xs text-muted">{card.sub}</p>
+            </Link>
+          );
+        })}
+      </div>
       <div className="space-y-3">
-        <div>
-          <h1 className="text-2xl font-semibold text-foreground sm:text-3xl">Support Center</h1>
-          <p className="mt-1 text-sm text-muted">
-            Review and respond to school support tickets from a single, focused workspace.
-          </p>
-        </div>
         <div className="grid gap-3 sm:grid-cols-[minmax(0,0.4fr)_220px]">
           <input
             value={search}
@@ -491,9 +561,14 @@ export default function SupportRequestsClient({
               {replySuccess ? <div className="rounded-2xl bg-emerald-50 p-3 text-sm text-emerald-700">{replySuccess}</div> : null}
 
               <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-                <Button type="button" disabled={busy} onClick={handleReply} className="w-full sm:w-auto">
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={handleReply}
+                  className="w-full sm:w-auto rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand/90 disabled:cursor-not-allowed disabled:opacity-50"
+                >
                   {busy ? "Sending reply..." : "Send reply"}
-                </Button>
+                </button>
               </div>
             </div>
           ) : (

@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import AdminPageShell from "@/components/admin-page-shell";
 import { getBackendUrl } from "@/lib/backend-url";
 import EmailCenterClient from "./email-center-client";
 
@@ -39,20 +41,23 @@ export default function EmailCenterPage() {
   }, []);
 
   return (
-    <div className="px-1.5 py-2.5 space-y-3 sm:px-2 sm:py-4 sm:space-y-4">
-      <div className="space-y-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-brand">
-            Platform
-          </span>
-        </div>
-        <h1 className="text-xl font-semibold text-foreground sm:text-2xl">Email Center</h1>
-        <p className="text-sm text-muted sm:text-base">
-          Send professional updates, reminders, and announcements to schools.
-        </p>
+    <AdminPageShell
+      title="Email Center"
+      subtitle="Send professional updates, reminders, and announcements to schools."
+      actions={
+        <>
+          <Link href="/schoolbase-admin/setup-reminders" className="inline-flex items-center justify-center rounded-xl border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground shadow-sm transition hover:bg-surface">
+            Setup reminders
+          </Link>
+          <Link href="/schoolbase-admin/support" className="inline-flex items-center justify-center rounded-xl bg-[#0A66C2] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0952a4]">
+            Support inbox
+          </Link>
+        </>
+      }
+    >
+      <div className="space-y-3 sm:space-y-4">
+        <EmailCenterClient initialSchools={schools} initialEmailLogs={[]} />
       </div>
-
-      <EmailCenterClient initialSchools={schools} initialEmailLogs={[]} />
-    </div>
+    </AdminPageShell>
   );
 }

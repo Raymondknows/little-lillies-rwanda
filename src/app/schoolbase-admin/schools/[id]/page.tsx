@@ -50,35 +50,20 @@ export default async function Page({ params }: { params?: Record<string, string>
   }
 
   const cookieHeader = (await headers()).get("cookie") || "";
-  const backendUrl = getBackendUrl();
-  let school: SchoolDetail | undefined;
-  let page = 1;
-  let hasMore = true;
+  const response = await fetch(`http://localhost:3000/schoolbase-admin/api/schools/${schoolId}`, {
+    headers: {
+      Cookie: cookieHeader,
+      "Content-Type": "application/json",
+    },
+    cache: "no-store",
+  });
 
-  while (hasMore && !school) {
-    const response = await fetch(`${backendUrl}/schoolbase-admin/api/schools?page=${page}&limit=100`, {
-      headers: {
-        Cookie: cookieHeader,
-        "Content-Type": "application/json",
-      },
-      cache: "no-store",
-    });
-
-    if (!response.ok) {
-      break;
-    }
-
-    const data = await response.json();
-    school = (data.schools || []).find((entry: SchoolDetail) => entry.id === schoolId) as SchoolDetail | undefined;
-
-    if (data.pagination && data.pagination.page >= data.pagination.pages) {
-      hasMore = false;
-    } else {
-      page += 1;
-    }
+  if (!response.ok) {
+    notFound();
   }
 
-  if (!school) {
+  const school = await response.json();
+  if (!school?.id) {
     notFound();
   }
 

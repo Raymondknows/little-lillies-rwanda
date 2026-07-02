@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { Activity, AlertTriangle, Building2, CheckCircle2, Clock, Users, XCircle, Zap } from "lucide-react";
 import { SchoolTable, type SchoolRow } from "@/components/platform-admin/school-table";
 import { resolveSchoolAssetUrl } from "@/lib/asset-urls";
 
@@ -38,17 +38,18 @@ function formatDate(date?: string | Date | null) {
 
 export default function SchoolsViewSwitcher({
   initialSchools,
-  title,
-  subtitle,
+  viewMode,
+  setViewMode,
 }: {
   initialSchools: SchoolRow[];
-  title?: string;
-  subtitle?: string;
+  viewMode: "list" | "grid";
+  setViewMode: (next: "list" | "grid") => void;
 }) {
-  const [view, setView] = useState<"list" | "grid">("list");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [verificationFilter, setVerificationFilter] = useState("ALL");
+  const [countryFilter, setCountryFilter] = useState("ALL");
+  const [sortBy, setSortBy] = useState<"NAME_ASC" | "REGISTERED_DESC" | "PLAN_ASC" | "STATUS_ASC" | "TRIAL_END_ASC" | "STUDENTS_DESC">("REGISTERED_DESC");
   const [schools, setSchools] = useState<SchoolRow[]>(initialSchools);
   const [loading, setLoading] = useState(true);
 
@@ -86,9 +87,45 @@ export default function SchoolsViewSwitcher({
     loadSchools();
   }, []);
 
+  const countries = useMemo(() => {
+    return Array.from(new Set(schools.map((school) => school.country).filter(Boolean))).sort();
+  }, [schools]);
+
+  const stats = useMemo(() => {
+    const summary = {
+      total: schools.length,
+      active: 0,
+      trial: 0,
+      suspended: 0,
+      cancelled: 0,
+      verified: 0,
+      unverified: 0,
+      pupils: 0,
+    };
+
+    schools.forEach((school) => {
+      summary[school.status.toLowerCase() as keyof typeof summary] =
+        (summary[school.status.toLowerCase() as keyof typeof summary] as number) + 1;
+      if (school.isVerified) summary.verified += 1;
+      else summary.unverified += 1;
+      summary.pupils += school.pupilCount ?? 0;
+    });
+
+    return summary;
+  }, [schools]);
+
+  const isExpiringSoon = (school: SchoolRow) => {
+    if (!school.trialEndsAt) return false;
+    const endDate = new Date(school.trialEndsAt);
+    const now = new Date();
+    const diffDays = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    return diffDays >= 0 && diffDays <= 14;
+  };
+
   const filteredSchools = useMemo(() => {
-    return schools.filter((school: any) => {
-      const searchValue = search.toLowerCase();
+    const searchValue = search.toLowerCase();
+
+    const filtered = schools.filter((school: any) => {
       const matchesSearch = [
         school.name,
         school.country,
@@ -105,12 +142,33 @@ export default function SchoolsViewSwitcher({
       const matchesStatus = statusFilter === "ALL" || school.status === statusFilter;
       const matchesVerification =
         verificationFilter === "ALL" ||
-        (verificationFilter === "VERIFIED" && (school as any).isVerified) ||
-        (verificationFilter === "UNVERIFIED" && !(school as any).isVerified);
+        (verificationFilter === "VERIFIED" && school.isVerified) ||
+        (verificationFilter === "UNVERIFIED" && !school.isVerified);
+      const matchesCountry = countryFilter === "ALL" || school.country === countryFilter;
 
-      return matchesSearch && matchesStatus && matchesVerification;
+      return matchesSearch && matchesStatus && matchesVerification && matchesCountry;
     });
-  }, [schools, search, statusFilter, verificationFilter]);
+
+    return filtered.sort((a, b) => {
+      switch (sortBy) {
+        case "NAME_ASC":
+          return a.name.localeCompare(b.name);
+        case "REGISTERED_DESC":
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        case "PLAN_ASC":
+          return a.plan.localeCompare(b.plan);
+        case "STATUS_ASC":
+          return a.status.localeCompare(b.status);
+        case "TRIAL_END_ASC":
+          return (a.trialEndsAt ? new Date(a.trialEndsAt).getTime() : 0) -
+            (b.trialEndsAt ? new Date(b.trialEndsAt).getTime() : 0);
+        case "STUDENTS_DESC":
+          return (b.pupilCount ?? 0) - (a.pupilCount ?? 0);
+        default:
+          return 0;
+      }
+    });
+  }, [schools, search, statusFilter, verificationFilter, countryFilter, sortBy]);
 
   if (loading) {
     return (
@@ -126,71 +184,147 @@ export default function SchoolsViewSwitcher({
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-        <div className="min-w-0">
-          {title ? <h1 className="text-3xl font-bold truncate">{title}</h1> : null}
-          {subtitle ? <p className="mt-1 text-muted">{subtitle}</p> : null}
-        </div>
-
-        <button
-          type="button"
-          onClick={() => setView(view === "list" ? "grid" : "list")}
-          className="inline-flex items-center rounded-full border border-border bg-slate-100 p-1 shadow-sm"
-          aria-label={`Switch to ${view === "list" ? "grid" : "list"} view`}
-        >
-          <span
-            className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
-              view === "list"
-                ? "bg-white text-brand shadow-sm"
-                : "bg-transparent text-foreground"
-            }`}
-          >
-            List
-          </span>
-          <span
-            className={`rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
-              view === "grid"
-                ? "bg-white text-brand shadow-sm"
-                : "bg-transparent text-foreground"
-            }`}
-          >
-            Grid
-          </span>
-        </button>
+        <div className="min-w-0" />
       </div>
 
-      {view === "grid" ? (
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search schools..."
-            className="min-w-[240px] rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-          />
-          <select
-            value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value)}
-            className="rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none"
-          >
-            <option value="ALL">All statuses</option>
-            <option value="TRIAL">Trial</option>
-            <option value="ACTIVE">Active</option>
-            <option value="SUSPENDED">Suspended</option>
-            <option value="CANCELLED">Cancelled</option>
-          </select>
-          <select
-            value={verificationFilter}
-            onChange={(event) => setVerificationFilter(event.target.value)}
-            className="rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none"
-          >
-            <option value="ALL">All verifications</option>
-            <option value="VERIFIED">Verified only</option>
-            <option value="UNVERIFIED">Unverified only</option>
-          </select>
-        </div>
-      ) : null}
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {[
+          {
+            label: "Total schools",
+            value: stats.total,
+            sub: "All registered schools",
+            icon: Building2,
+            iconClass: "bg-slate-100 text-slate-700",
+            href: "/schoolbase-admin/schools",
+          },
+          {
+            label: "Active",
+            value: stats.active,
+            sub: "Currently active",
+            icon: Users,
+            iconClass: "bg-emerald-100 text-emerald-700",
+            href: "/schoolbase-admin/schools",
+          },
+          {
+            label: "Trial",
+            value: stats.trial,
+            sub: "Currently on trial",
+            icon: Zap,
+            iconClass: "bg-sky-100 text-sky-700",
+            href: "/schoolbase-admin/schools?status=TRIAL",
+          },
+          {
+            label: "Students",
+            value: stats.pupils,
+            sub: "Total pupils",
+            icon: Activity,
+            iconClass: "bg-violet-100 text-violet-700",
+            href: "/schoolbase-admin/schools",
+          },
+          {
+            label: "Verified",
+            value: stats.verified,
+            sub: "Verified accounts",
+            icon: CheckCircle2,
+            iconClass: "bg-emerald-100 text-emerald-700",
+            href: "/schoolbase-admin/schools",
+          },
+          {
+            label: "Unverified",
+            value: stats.unverified,
+            sub: "Pending verification",
+            icon: AlertTriangle,
+            iconClass: "bg-amber-100 text-amber-800",
+            href: "/schoolbase-admin/schools",
+          },
+          {
+            label: "Suspended",
+            value: stats.suspended,
+            sub: "Suspended schools",
+            icon: Clock,
+            iconClass: "bg-orange-100 text-orange-700",
+            href: "/schoolbase-admin/schools",
+          },
+          {
+            label: "Cancelled",
+            value: stats.cancelled,
+            sub: "Cancelled accounts",
+            icon: XCircle,
+            iconClass: "bg-rose-100 text-rose-700",
+            href: "/schoolbase-admin/schools",
+          },
+        ].map((card) => {
+          const Icon = card.icon;
+          return (
+            <Link key={card.label} href={card.href} className="group rounded-lg border border-border bg-surface p-5 shadow-sm transition hover:border-brand/50 hover:shadow-md">
+              <div className="flex items-start gap-3">
+                <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${card.iconClass}`}>
+                  <Icon className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">{card.label}</p>
+                  <p className="mt-3 text-3xl font-semibold text-foreground">{card.value}</p>
+                </div>
+              </div>
+              <p className="mt-4 text-xs text-muted">{card.sub}</p>
+            </Link>
+          );
+        })}
+      </div>
 
-      {view === "list" ? (
-        <SchoolTable initialSchools={filteredSchools} />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <input
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="Search schools..."
+          className="min-w-[240px] rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+        />
+        <select
+          value={statusFilter}
+          onChange={(event) => setStatusFilter(event.target.value)}
+          className="rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none"
+        >
+          <option value="ALL">All statuses</option>
+          <option value="TRIAL">Trial</option>
+          <option value="ACTIVE">Active</option>
+          <option value="SUSPENDED">Suspended</option>
+          <option value="CANCELLED">Cancelled</option>
+        </select>
+        <select
+          value={countryFilter}
+          onChange={(event) => setCountryFilter(event.target.value)}
+          className="rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none"
+        >
+          <option value="ALL">All countries</option>
+          {countries.map((country) => (
+            <option key={country} value={country}>{country}</option>
+          ))}
+        </select>
+        <select
+          value={sortBy}
+          onChange={(event) => setSortBy(event.target.value as any)}
+          className="rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none"
+        >
+          <option value="REGISTERED_DESC">Newest registered</option>
+          <option value="NAME_ASC">Name</option>
+          <option value="PLAN_ASC">Plan</option>
+          <option value="STATUS_ASC">Status</option>
+          <option value="TRIAL_END_ASC">Trial ending soon</option>
+          <option value="STUDENTS_DESC">Students</option>
+        </select>
+        <select
+          value={verificationFilter}
+          onChange={(event) => setVerificationFilter(event.target.value)}
+          className="rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none"
+        >
+          <option value="ALL">All verifications</option>
+          <option value="VERIFIED">Verified only</option>
+          <option value="UNVERIFIED">Unverified only</option>
+        </select>
+      </div>
+
+      {viewMode === "list" ? (
+        <SchoolTable schools={filteredSchools} />
       ) : (
         <div className="grid gap-6 xl:grid-cols-2">
           {filteredSchools.length === 0 ? (

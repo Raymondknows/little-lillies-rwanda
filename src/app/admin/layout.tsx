@@ -1,11 +1,9 @@
 'use client';
 
-import { redirect, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import SharedLayout from '@/components/shared-layout';
 import PendingSchoolModal from '@/components/pending-school-modal';
 import SubscriptionModal from '@/components/subscription-modal';
-import { getBackendUrl } from '@/lib/backend-url';
 
 const nav = [
   { href: "/admin", label: "Dashboard", icon: "LayoutDashboard" },
@@ -31,20 +29,49 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [subscriptionBlocked, setSubscriptionBlocked] = useState<{ reason: string } | null>(null);
   const [session, setSession] = useState<any>(null);
   const [school, setSchool] = useState<any>(null);
 
+  async function exchangeImpersonationToken(impersonationToken: string) {
+    try {
+      const response = await fetch('/api/admin/impersonate', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: impersonationToken }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.error || data?.message || 'Impersonation exchange failed');
+      }
+      if (!data?.success) {
+        throw new Error(data?.error || data?.message || 'Impersonation exchange failed');
+      }
+      return data;
+    } catch (err) {
+      console.error('Impersonation exchange error:', err);
+      throw err;
+    }
+  }
+
   useEffect(() => {
     async function loadData() {
       try {
-        const backendUrl = getBackendUrl();
-        
+        if (typeof window !== 'undefined') {
+          const url = new URL(window.location.href);
+          const impersonationToken = url.searchParams.get('impersonate');
+          if (impersonationToken) {
+            await exchangeImpersonationToken(impersonationToken);
+            url.searchParams.delete('impersonate');
+            window.history.replaceState({}, '', url.toString());
+          }
+        }
+
         // Fetch session
-        const sessionRes = await fetch(`${backendUrl}/api/admin/verify`, {
+        const sessionRes = await fetch('/api/admin/verify', {
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
@@ -67,7 +94,7 @@ export default function AdminLayout({
         });
 
         // Fetch school
-        const schoolRes = await fetch(`${backendUrl}/api/admin/school/${sessionData.session.schoolId}`, {
+        const schoolRes = await fetch(`/api/admin/school/${sessionData.session.schoolId}`, {
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
         });
@@ -96,7 +123,7 @@ export default function AdminLayout({
     }
 
     loadData();
-  }, [router]);
+  }, []);
 
   if (loading) {
     return (

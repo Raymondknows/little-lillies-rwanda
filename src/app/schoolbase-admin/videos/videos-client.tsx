@@ -22,11 +22,16 @@ interface Video {
 
 export default function VideosClient({
   initialVideos,
+  showForm,
+  onShowForm,
+  onHideForm,
 }: {
   initialVideos: Video[];
+  showForm: boolean;
+  onShowForm: () => void;
+  onHideForm: () => void;
 }) {
   const [videos, setVideos] = useState<Video[]>(initialVideos);
-  const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
@@ -91,7 +96,7 @@ export default function VideosClient({
       featured: video.featured,
     });
     setEditingId(video.id);
-    setShowForm(true);
+    onShowForm();
     setError(null);
   };
 
@@ -147,7 +152,7 @@ export default function VideosClient({
       }
 
       handleReset();
-      setShowForm(false);
+      onHideForm();
     } catch (err: any) {
       setError(err.message || "Failed to save video");
     } finally {
@@ -208,39 +213,27 @@ export default function VideosClient({
 
   return (
     <div className="relative w-full space-y-2 px-0 sm:px-0 sm:space-y-4">
-      {/* Add/Edit Form */}
-      <div className="w-full rounded-2xl border border-border/70 bg-surface p-3 shadow-sm sm:p-4">
-        <div className="mb-3 flex flex-col gap-3 sm:mb-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-          <h2 className="flex items-center gap-2 break-words text-lg font-semibold text-foreground sm:text-xl">
-            <Plus className="h-5 w-5 text-brand" />
-            {editingId ? "Edit Video" : "Add New Video"}
-          </h2>
-          {!showForm ? (
+      {showForm && (
+        <div className="w-full rounded-2xl border border-border/70 bg-surface p-3 shadow-sm sm:p-4">
+          <div className="mb-3 flex flex-col gap-3 sm:mb-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+            <div className="flex items-center gap-2 text-foreground">
+              <Plus className="h-5 w-5 text-brand" />
+              <h2 className="text-lg font-semibold sm:text-xl">
+                {editingId ? "Edit Video" : "Add New Video"}
+              </h2>
+            </div>
             <Button
               onClick={() => {
                 handleReset();
-                setShowForm(true);
-              }}
-              className="w-full gap-2 sm:w-auto"
-            >
-              <Plus className="h-4 w-4" />
-              Add Video
-            </Button>
-          ) : (
-            <Button
-              onClick={() => {
-                handleReset();
-                setShowForm(false);
+                onHideForm();
               }}
               variant="outline"
               className="w-full sm:w-auto"
             >
               Cancel
             </Button>
-          )}
-        </div>
+          </div>
 
-        {showForm && (
           <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4 w-full">
             {error && (
               <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
@@ -354,8 +347,8 @@ export default function VideosClient({
                   : "Create Video"}
             </Button>
           </form>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Videos List */}
       <div className="w-full rounded-2xl border border-border/70 bg-surface p-3 shadow-sm sm:p-4">

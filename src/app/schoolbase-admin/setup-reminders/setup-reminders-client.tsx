@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { Bell, CheckCircle2, Mail, Zap } from "lucide-react";
 import { getBackendUrl } from "@/lib/backend-url";
 import { sendSetupCompletionRemindersAction, sendSetupCompletionReminder } from "@/app/schoolbase-admin/actions";
 import { Pagination } from "@/components/ui/pagination";
@@ -254,42 +255,61 @@ export default function SetupRemindersClient({
       )}
 
       {/* Stats Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-3xl border border-border bg-surface p-6 shadow-sm shadow-slate-200/50">
-          <div className="inline-flex rounded-full bg-brand/10 px-3 py-1 text-xs font-semibold text-brand">
-            Total schools
-          </div>
-          <p className="mt-4 text-4xl font-semibold text-foreground">
-            {initialSchools.length}
-          </p>
-        </div>
-
-        <div className="rounded-3xl border border-border bg-surface p-6 shadow-sm shadow-slate-200/50">
-          <div className="inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
-            Setup complete
-          </div>
-          <p className="mt-4 text-4xl font-semibold text-foreground">
-            {completeCount}
-          </p>
-        </div>
-
-        <div className="rounded-3xl border border-border bg-surface p-6 shadow-sm shadow-slate-200/50">
-          <div className="inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">
-            Incomplete setup
-          </div>
-          <p className="mt-4 text-4xl font-semibold text-foreground">
-            {incompleteSchools.length}
-          </p>
-        </div>
-
-        <div className="rounded-3xl border border-border bg-surface p-6 shadow-sm shadow-slate-200/50">
-          <div className="inline-flex rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-700">
-            Emails sent
-          </div>
-          <p className="mt-4 text-4xl font-semibold text-foreground">
-            {emailLogs.length}
-          </p>
-        </div>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {[
+          {
+            label: "Total schools",
+            value: schools.length,
+            sub: "Total registered schools",
+            icon: Zap,
+            iconClass: "bg-slate-100 text-slate-700",
+            href: "/schoolbase-admin/schools",
+          },
+          {
+            label: "Setup complete",
+            value: completeCount,
+            sub: "Schools with full setup",
+            icon: CheckCircle2,
+            iconClass: "bg-emerald-100 text-emerald-700",
+            href: "/schoolbase-admin/schools",
+          },
+          {
+            label: "Incomplete setup",
+            value: incompleteSchools.length,
+            sub: "Need reminders",
+            icon: Bell,
+            iconClass: "bg-amber-100 text-amber-800",
+            href: "/schoolbase-admin/setup-reminders",
+          },
+          {
+            label: "Emails sent",
+            value: emailLogs.length,
+            sub: "Setup reminder emails",
+            icon: Mail,
+            iconClass: "bg-sky-100 text-sky-700",
+            href: "/schoolbase-admin/setup-reminders",
+          },
+        ].map((card) => {
+          const Icon = card.icon;
+          return (
+            <Link
+              key={card.label}
+              href={card.href}
+              className="group rounded-lg border border-border bg-surface p-5 shadow-sm transition hover:border-brand/50 hover:shadow-md"
+            >
+              <div className="flex items-start gap-3">
+                <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${card.iconClass}`}>
+                  <Icon className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">{card.label}</p>
+                  <p className="mt-3 text-3xl font-semibold text-foreground">{card.value}</p>
+                </div>
+              </div>
+              <p className="mt-4 text-xs text-muted">{card.sub}</p>
+            </Link>
+          );
+        })}
       </div>
 
       {/* Schools Table Section */}

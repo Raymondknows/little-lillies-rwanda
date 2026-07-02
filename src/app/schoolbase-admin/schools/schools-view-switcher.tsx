@@ -181,6 +181,59 @@ export default function SchoolsViewSwitcher({
     );
   }
 
+  const filterControls = (
+    <div className="mb-4 flex flex-wrap items-center gap-1">
+      <input
+        value={search}
+        onChange={(event) => setSearch(event.target.value)}
+        placeholder="Search schools..."
+        className="max-w-[180px] rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+      />
+      <select
+        value={statusFilter}
+        onChange={(event) => setStatusFilter(event.target.value)}
+        className="max-w-[140px] rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none"
+      >
+        <option value="ALL">All statuses</option>
+        <option value="TRIAL">Trial</option>
+        <option value="ACTIVE">Active</option>
+        <option value="SUSPENDED">Suspended</option>
+        <option value="CANCELLED">Cancelled</option>
+      </select>
+      <select
+        value={countryFilter}
+        onChange={(event) => setCountryFilter(event.target.value)}
+        className="w-full max-w-[140px] rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none"
+      >
+        <option value="ALL">All countries</option>
+        {countries.map((country) => (
+          <option key={country} value={country}>{country}</option>
+        ))}
+      </select>
+      <select
+        value={verificationFilter}
+        onChange={(event) => setVerificationFilter(event.target.value)}
+        className="w-full max-w-[140px] rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none"
+      >
+        <option value="ALL">All verifications</option>
+        <option value="VERIFIED">Verified only</option>
+        <option value="UNVERIFIED">Unverified only</option>
+      </select>
+      <select
+        value={sortBy}
+        onChange={(event) => setSortBy(event.target.value as any)}
+        className="w-full max-w-[140px] rounded-xl border border-border bg-background px-3 py-2 text-sm outline-none"
+      >
+        <option value="REGISTERED_DESC">Newest registered</option>
+        <option value="NAME_ASC">Name</option>
+        <option value="PLAN_ASC">Plan</option>
+        <option value="STATUS_ASC">Status</option>
+        <option value="TRIAL_END_ASC">Trial ending soon</option>
+        <option value="STUDENTS_DESC">Students</option>
+      </select>
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
@@ -272,59 +325,8 @@ export default function SchoolsViewSwitcher({
         })}
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <input
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="Search schools..."
-          className="min-w-[240px] rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-        />
-        <select
-          value={statusFilter}
-          onChange={(event) => setStatusFilter(event.target.value)}
-          className="rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none"
-        >
-          <option value="ALL">All statuses</option>
-          <option value="TRIAL">Trial</option>
-          <option value="ACTIVE">Active</option>
-          <option value="SUSPENDED">Suspended</option>
-          <option value="CANCELLED">Cancelled</option>
-        </select>
-        <select
-          value={countryFilter}
-          onChange={(event) => setCountryFilter(event.target.value)}
-          className="rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none"
-        >
-          <option value="ALL">All countries</option>
-          {countries.map((country) => (
-            <option key={country} value={country}>{country}</option>
-          ))}
-        </select>
-        <select
-          value={sortBy}
-          onChange={(event) => setSortBy(event.target.value as any)}
-          className="rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none"
-        >
-          <option value="REGISTERED_DESC">Newest registered</option>
-          <option value="NAME_ASC">Name</option>
-          <option value="PLAN_ASC">Plan</option>
-          <option value="STATUS_ASC">Status</option>
-          <option value="TRIAL_END_ASC">Trial ending soon</option>
-          <option value="STUDENTS_DESC">Students</option>
-        </select>
-        <select
-          value={verificationFilter}
-          onChange={(event) => setVerificationFilter(event.target.value)}
-          className="rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none"
-        >
-          <option value="ALL">All verifications</option>
-          <option value="VERIFIED">Verified only</option>
-          <option value="UNVERIFIED">Unverified only</option>
-        </select>
-      </div>
-
       {viewMode === "list" ? (
-        <SchoolTable schools={filteredSchools} />
+        <SchoolTable schools={filteredSchools} filterControls={filterControls} />
       ) : (
         <div className="grid gap-6 xl:grid-cols-2">
           {filteredSchools.length === 0 ? (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useRef, useEffect } from "react";
+import { useMemo, useState, useRef, useEffect, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { resolveSchoolAssetUrl } from "@/lib/asset-urls";
@@ -144,15 +144,12 @@ function ActionMenu({
   );
 }
 
-export function SchoolTable({ schools }: { schools: SchoolRow[] }) {
+export function SchoolTable({ schools, filterControls }: { schools: SchoolRow[]; filterControls?: ReactNode }) {
   const [displaySchools, setDisplaySchools] = useState<SchoolRow[]>(schools);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("ALL");
-  const [verificationFilter, setVerificationFilter] = useState("ALL");
   const [quickFilter, setQuickFilter] = useState<"NONE" | "TRIAL_ENDING" | "UNVERIFIED" | "SUSPENDED">("NONE");
   const [selectedSchoolIds, setSelectedSchoolIds] = useState<Set<string>>(new Set());
   const selectAllCheckboxRef = useRef<HTMLInputElement | null>(null);
@@ -163,26 +160,7 @@ export function SchoolTable({ schools }: { schools: SchoolRow[] }) {
   }, [schools]);
 
   const filteredSchools = useMemo(() => {
-    const query = search.trim().toLowerCase();
     return displaySchools.filter((school) => {
-      const matchesSearch = [
-        school.name,
-        school.country,
-        school.plan,
-        school.email,
-        school.phone,
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase()
-        .includes(query);
-
-      const matchesStatus = statusFilter === "ALL" || school.status === statusFilter;
-      const matchesVerification =
-        verificationFilter === "ALL" ||
-        (verificationFilter === "VERIFIED" && school.isVerified) ||
-        (verificationFilter === "UNVERIFIED" && !school.isVerified);
-
       const matchesQuickFilter =
         quickFilter === "NONE" ||
         (quickFilter === "TRIAL_ENDING" && school.trialEndsAt && (() => {
@@ -193,9 +171,9 @@ export function SchoolTable({ schools }: { schools: SchoolRow[] }) {
         (quickFilter === "UNVERIFIED" && !school.isVerified) ||
         (quickFilter === "SUSPENDED" && school.status === "SUSPENDED");
 
-      return matchesSearch && matchesStatus && matchesVerification && matchesQuickFilter;
+      return matchesQuickFilter;
     });
-  }, [displaySchools, search, statusFilter, verificationFilter, quickFilter]);
+  }, [displaySchools, quickFilter]);
 
   const paginated = useMemo(() => {
     const start = (page - 1) * pageSize;
@@ -451,26 +429,47 @@ export function SchoolTable({ schools }: { schools: SchoolRow[] }) {
   return (
     <div className="rounded-3xl border border-border bg-surface p-6 shadow-sm shadow-slate-200/50">
       <div className="mb-6 flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-foreground">Schools management</h2>
-          <p className="mt-1 text-sm text-muted">
-            Manage schools across the platform with actions, status updates and impersonation.
-          </p>
-          <div className="mt-4 flex flex-wrap items-center gap-2 text-sm text-muted">
-            <span>{filteredSchools.length} schools</span>
-            <span className="px-2">•</span>
-            <span>{selectedCount} selected</span>
-            {quickFilter !== "NONE" ? (
-              <><span className="px-2">•</span><span>Quick filter: {quickFilter.replace("_", " ")}</span></>
-            ) : null}
-          </div>
+        <div className="mb-4 w-full">
+          {filterControls ?? (
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition ${quickFilter === "NONE" ? "bg-brand text-white" : "bg-background text-foreground border border-border"}`}
+                onClick={() => setQuickFilter("NONE")}
+              >
+                All
+              </button>
+              <button
+                type="button"
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition ${quickFilter === "TRIAL_ENDING" ? "bg-brand text-white" : "bg-background text-foreground border border-border"}`}
+                onClick={() => setQuickFilter("TRIAL_ENDING")}
+              >
+                Trials ending soon
+              </button>
+              <button
+                type="button"
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition ${quickFilter === "UNVERIFIED" ? "bg-brand text-white" : "bg-background text-foreground border border-border"}`}
+                onClick={() => setQuickFilter("UNVERIFIED")}
+              >
+                Unverified
+              </button>
+              <button
+                type="button"
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition ${quickFilter === "SUSPENDED" ? "bg-brand text-white" : "bg-background text-foreground border border-border"}`}
+                onClick={() => setQuickFilter("SUSPENDED")}
+              >
+                Suspended
+              </button>
+            </div>
+          )}
         </div>
-        <div className="grid gap-2 sm:flex sm:items-center">
+
+        <div className="flex flex-row flex-nowrap flex-1 min-w-0 items-center justify-end gap-1 overflow-x-auto pb-2 whitespace-nowrap sm:overflow-visible sm:pb-0">
           <button
             type="button"
             title={selectedCount > 0 ? `Export ${selectedCount} selected schools` : "Export all schools"}
             aria-label={selectedCount > 0 ? `Export ${selectedCount} selected schools` : "Export all schools"}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[#0A66C2] bg-[#0A66C2] text-white shadow-sm transition hover:bg-[#0952a4] hover:border-[#0952a4]"
+            className="inline-flex h-9 min-w-[36px] items-center justify-center rounded-xl border border-[#0A66C2] bg-[#0A66C2] px-2 text-white shadow-sm transition hover:bg-[#0952a4] hover:border-[#0952a4] sm:h-11 sm:min-w-[44px] sm:px-3"
             onClick={exportSelectedCsv}
           >
             <Download className="h-5 w-5" />
@@ -479,7 +478,7 @@ export function SchoolTable({ schools }: { schools: SchoolRow[] }) {
             type="button"
             title="Select all filtered schools"
             aria-label="Select all filtered schools"
-            className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[#0A66C2] bg-[#0A66C2] text-white shadow-sm transition hover:bg-[#0952a4] hover:border-[#0952a4]"
+            className="inline-flex h-9 min-w-[36px] items-center justify-center rounded-xl border border-[#0A66C2] bg-[#0A66C2] px-2 text-white shadow-sm transition hover:bg-[#0952a4] hover:border-[#0952a4] sm:h-11 sm:min-w-[44px] sm:px-3"
             onClick={selectAllFiltered}
           >
             <CheckSquare className="h-5 w-5" />
@@ -488,7 +487,7 @@ export function SchoolTable({ schools }: { schools: SchoolRow[] }) {
             type="button"
             title="Clear selection"
             aria-label="Clear selection"
-            className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[#0A66C2] bg-[#0A66C2] text-white shadow-sm transition hover:bg-[#0952a4] hover:border-[#0952a4] disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex h-9 min-w-[36px] items-center justify-center rounded-xl border border-[#0A66C2] bg-[#0A66C2] px-2 text-white shadow-sm transition hover:bg-[#0952a4] hover:border-[#0952a4] disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:min-w-[44px] sm:px-3"
             onClick={clearSelection}
             disabled={selectedCount === 0}
           >
@@ -498,7 +497,7 @@ export function SchoolTable({ schools }: { schools: SchoolRow[] }) {
             type="button"
             title="Send reminder to selected schools"
             aria-label="Send reminder to selected schools"
-            className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[#0A66C2] bg-[#0A66C2] text-white shadow-sm transition hover:bg-[#0952a4] hover:border-[#0952a4] disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex h-9 min-w-[36px] items-center justify-center rounded-xl border border-[#0A66C2] bg-[#0A66C2] px-2 text-white shadow-sm transition hover:bg-[#0952a4] hover:border-[#0952a4] disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:min-w-[44px] sm:px-3"
             onClick={sendBulkReminders}
             disabled={selectedCount === 0 || busy}
           >
@@ -508,7 +507,7 @@ export function SchoolTable({ schools }: { schools: SchoolRow[] }) {
             type="button"
             title="Send reminders to all incomplete schools"
             aria-label="Send reminders to all incomplete schools"
-            className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[#0A66C2] bg-[#0A66C2] text-white shadow-sm transition hover:bg-[#0952a4] hover:border-[#0952a4] disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex h-9 min-w-[36px] items-center justify-center rounded-xl border border-[#0A66C2] bg-[#0A66C2] px-2 text-white shadow-sm transition hover:bg-[#0952a4] hover:border-[#0952a4] disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:min-w-[44px] sm:px-3"
             onClick={sendReminderToIncompleteSchools}
             disabled={busy}
           >
@@ -518,7 +517,7 @@ export function SchoolTable({ schools }: { schools: SchoolRow[] }) {
             type="button"
             title="Suspend selected schools"
             aria-label="Suspend selected schools"
-            className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[#0A66C2] bg-[#0A66C2] text-white shadow-sm transition hover:bg-[#0952a4] hover:border-[#0952a4] disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex h-9 min-w-[36px] items-center justify-center rounded-xl border border-[#0A66C2] bg-[#0A66C2] px-2 text-white shadow-sm transition hover:bg-[#0952a4] hover:border-[#0952a4] disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:min-w-[44px] sm:px-3"
             onClick={() => performBulkAction("suspend")}
             disabled={selectedCount === 0 || busy}
           >
@@ -528,7 +527,7 @@ export function SchoolTable({ schools }: { schools: SchoolRow[] }) {
             type="button"
             title="Activate selected schools"
             aria-label="Activate selected schools"
-            className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[#0A66C2] bg-[#0A66C2] text-white shadow-sm transition hover:bg-[#0952a4] hover:border-[#0952a4] disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex h-9 min-w-[36px] items-center justify-center rounded-xl border border-[#0A66C2] bg-[#0A66C2] px-2 text-white shadow-sm transition hover:bg-[#0952a4] hover:border-[#0952a4] disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:min-w-[44px] sm:px-3"
             onClick={() => performBulkAction("activate")}
             disabled={selectedCount === 0 || busy}
           >
@@ -538,93 +537,13 @@ export function SchoolTable({ schools }: { schools: SchoolRow[] }) {
             type="button"
             title="Extend trial by 30 days for selected schools"
             aria-label="Extend trial by 30 days for selected schools"
-            className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[#0A66C2] bg-[#0A66C2] text-white shadow-sm transition hover:bg-[#0952a4] hover:border-[#0952a4] disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex h-9 min-w-[36px] items-center justify-center rounded-xl border border-[#0A66C2] bg-[#0A66C2] px-2 text-white shadow-sm transition hover:bg-[#0952a4] hover:border-[#0952a4] disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:min-w-[44px] sm:px-3"
             onClick={() => performBulkAction("extendTrial", { days: 30 })}
             disabled={selectedCount === 0 || busy}
           >
             <CalendarPlus className="h-5 w-5" />
           </button>
         </div>
-      </div>
-      <div className="mb-4 flex flex-wrap items-center gap-3">
-        <button
-          type="button"
-          className={`rounded-full px-4 py-2 text-sm font-semibold transition ${quickFilter === "NONE" ? "bg-brand text-white" : "bg-background text-foreground border border-border"}`}
-          onClick={() => setQuickFilter("NONE")}
-        >
-          All
-        </button>
-        <button
-          type="button"
-          className={`rounded-full px-4 py-2 text-sm font-semibold transition ${quickFilter === "TRIAL_ENDING" ? "bg-brand text-white" : "bg-background text-foreground border border-border"}`}
-          onClick={() => setQuickFilter("TRIAL_ENDING")}
-        >
-          Trials ending soon
-        </button>
-        <button
-          type="button"
-          className={`rounded-full px-4 py-2 text-sm font-semibold transition ${quickFilter === "UNVERIFIED" ? "bg-brand text-white" : "bg-background text-foreground border border-border"}`}
-          onClick={() => setQuickFilter("UNVERIFIED")}
-        >
-          Unverified
-        </button>
-        <button
-          type="button"
-          className={`rounded-full px-4 py-2 text-sm font-semibold transition ${quickFilter === "SUSPENDED" ? "bg-brand text-white" : "bg-background text-foreground border border-border"}`}
-          onClick={() => setQuickFilter("SUSPENDED")}
-        >
-          Suspended
-        </button>
-      </div>
-      <div className="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <input
-          value={search}
-          onChange={(event) => {
-            setSearch(event.target.value);
-            setPage(1);
-          }}
-          placeholder="Search schools..."
-          className="min-w-[240px] rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-        />
-        <select
-          value={statusFilter}
-          onChange={(event) => {
-            setStatusFilter(event.target.value);
-            setPage(1);
-          }}
-          className="rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none"
-        >
-          <option value="ALL">All statuses</option>
-          <option value="TRIAL">Trial</option>
-          <option value="ACTIVE">Active</option>
-          <option value="SUSPENDED">Suspended</option>
-          <option value="CANCELLED">Cancelled</option>
-        </select>
-        <select
-          value={verificationFilter}
-          onChange={(event) => {
-            setVerificationFilter(event.target.value);
-            setPage(1);
-          }}
-          className="rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none"
-        >
-          <option value="ALL">All verifications</option>
-          <option value="VERIFIED">Verified only</option>
-          <option value="UNVERIFIED">Unverified only</option>
-        </select>
-        <select
-          value={pageSize}
-          onChange={(event) => {
-            setPageSize(parseInt(event.target.value));
-            setPage(1);
-          }}
-          className="rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none"
-        >
-          <option value="10">10 per page</option>
-          <option value="20">20 per page</option>
-          <option value="50">50 per page</option>
-          <option value="100">100 per page</option>
-        </select>
       </div>
 
       {message ? (

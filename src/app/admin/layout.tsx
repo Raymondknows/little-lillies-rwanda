@@ -45,14 +45,27 @@ export default function AdminLayout({
       });
       const data = await response.json();
       if (!response.ok) {
+        console.error('Impersonation exchange failed:', {
+          status: response.status,
+          responseData: data,
+          impersonationToken,
+        });
         throw new Error(data?.error || data?.message || 'Impersonation exchange failed');
       }
       if (!data?.success) {
+        console.error('Impersonation exchange returned no success flag:', {
+          responseData: data,
+          impersonationToken,
+        });
         throw new Error(data?.error || data?.message || 'Impersonation exchange failed');
       }
+      console.log('[AdminLayout] Impersonation exchange succeeded:', {
+        schoolId: data.schoolId,
+        redirectUrl: data.redirectUrl,
+      });
       return data;
     } catch (err) {
-      console.error('Impersonation exchange error:', err);
+      console.error('Impersonation exchange error:', err, { impersonationToken });
       throw err;
     }
   }
@@ -93,8 +106,19 @@ export default function AdminLayout({
           role: sessionData.session.role,
         });
 
+        const schoolId = sessionData.session?.schoolId;
+        if (!schoolId) {
+          console.error('[AdminLayout] Verified session missing schoolId:', sessionData.session);
+          if (typeof window !== 'undefined') {
+            window.location.href = '/login';
+          }
+          return;
+        }
+
+        console.log('[AdminLayout] Loading school data for schoolId:', schoolId);
+
         // Fetch school
-        const schoolRes = await fetch(`/api/admin/school/${sessionData.session.schoolId}`, {
+        const schoolRes = await fetch(`/api/admin/school/${encodeURIComponent(schoolId)}`, {
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
         });

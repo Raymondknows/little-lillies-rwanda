@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
         sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         maxAge: 7 * 24 * 60 * 60, // 7 days
         path: '/',
-        domain: process.env.NODE_ENV === 'production' ? '.schoolbase.live' : 'localhost',
+        ...(process.env.NODE_ENV === 'production' ? { domain: '.schoolbase.live' } : {}),
       });
     }
 

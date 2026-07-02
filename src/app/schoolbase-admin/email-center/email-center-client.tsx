@@ -270,7 +270,6 @@ export default function EmailCenterClient({
 
   const fetchEmailLogs = async (page = currentPage, pageSize = itemsPerPage) => {
     try {
-      const backendUrl = getBackendUrl();
       const params = new URLSearchParams({
         page: String(page),
         limit: String(pageSize),
@@ -280,7 +279,7 @@ export default function EmailCenterClient({
         params.append('emailType', selectedEmailType);
       }
 
-      const response = await fetch(`${backendUrl}/schoolbase-admin/api/email-logs?${params}`, {
+      const response = await fetch(`/schoolbase-admin/api/email-logs?${params}`, {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',

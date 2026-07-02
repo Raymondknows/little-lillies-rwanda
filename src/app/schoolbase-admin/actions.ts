@@ -33,6 +33,8 @@ export async function platformAdminLogoutAction(formData?: FormData): Promise<an
 export async function sendPlatformCommunicationEmailAction(...args: any[]): Promise<any> {
   try {
     const backendUrl = getBackendUrl();
+    const cookieStore = await cookies();
+    const sessionCookie = cookieStore.get('schoolbase_session')?.value;
     
     const emailData = args[0] as {
       targetType: 'school' | 'segment';
@@ -45,8 +47,10 @@ export async function sendPlatformCommunicationEmailAction(...args: any[]): Prom
 
     const response = await fetch(`${backendUrl}/schoolbase-admin/api/emails/send`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(sessionCookie ? { Cookie: `schoolbase_session=${sessionCookie}` } : {}),
+      },
       body: JSON.stringify(emailData),
     });
 

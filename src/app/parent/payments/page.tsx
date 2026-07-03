@@ -54,10 +54,10 @@ export default function PaymentsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex min-h-screen items-center justify-center px-4 py-12">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand mx-auto"></div>
-          <p className="mt-4 text-muted">Loading payments...</p>
+          <p className="mt-4 text-sm text-muted">Loading payments…</p>
         </div>
       </div>
     );
@@ -72,94 +72,95 @@ export default function PaymentsPage() {
   };
 
   return (
-    <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground">Payment History</h1>
-        <p className="mt-1 text-muted">Track all your payments</p>
+    <div className="space-y-6 px-4 pb-12 pt-6 sm:px-6 lg:px-8">
+      {/* Header */}
+      <div>
+        <h1 className="text-4xl font-bold text-foreground">Payments</h1>
+        <p className="mt-2 text-muted">Track all your payments and receipts</p>
       </div>
 
       {error && (
-        <div className="rounded-lg border border-error bg-error/10 p-4 flex gap-3 mb-6">
-          <AlertCircle className="h-5 w-5 text-error flex-shrink-0 mt-0.5" />
-          <div>
-            <h3 className="font-semibold text-error">Error</h3>
-            <p className="text-sm text-error/80 mt-1">{error}</p>
+        <div className="rounded-3xl border border-red-200 bg-red-50 p-5 text-sm text-red-700 shadow-sm">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="mt-0.5 h-5 w-5 text-red-600" />
+            <div>
+              <p className="font-semibold text-red-900">Unable to load payments</p>
+              <p className="mt-1">{error}</p>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Summary */}
-      <div className="rounded-lg border border-border bg-surface p-6 mb-8">
-        <h2 className="text-lg font-semibold text-foreground mb-4">Payment Summary</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Summary Stats */}
+      <div className="rounded-3xl border border-border bg-surface p-5 shadow-sm">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
           <div>
-            <p className="text-xs text-muted uppercase tracking-wider mb-2">Total Payments</p>
-            <p className="text-3xl font-bold text-success">{formatMoney(totalPaid)}</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted">Total Paid</p>
+            <p className="mt-2 text-2xl font-bold text-success">{formatMoney(totalPaid)}</p>
           </div>
           <div>
-            <p className="text-xs text-muted uppercase tracking-wider mb-2">Number of Payments</p>
-            <p className="text-3xl font-bold text-brand">{payments.length}</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted">Count</p>
+            <p className="mt-2 text-2xl font-bold text-brand">{payments.length}</p>
           </div>
           <div>
-            <p className="text-xs text-muted uppercase tracking-wider mb-2">Latest Payment</p>
-            <p className="text-lg font-semibold text-foreground">
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted">Latest</p>
+            <p className="mt-2 text-lg font-semibold text-foreground">
               {payments.length > 0
-                ? new Date(payments[0].paidAt).toLocaleDateString()
-                : "No payments yet"}
+                ? new Date(payments[0].paidAt).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                  })
+                : "—"}
             </p>
           </div>
         </div>
       </div>
 
-      {/* Payment History Table */}
+      {/* Payments List */}
       {payments.length === 0 ? (
-        <div className="rounded-lg border border-border bg-surface p-12 text-center">
-          <CreditCard className="h-12 w-12 text-muted mx-auto mb-3" />
-          <p className="text-muted">No payments recorded yet</p>
+        <div className="rounded-3xl border border-border bg-surface p-12 text-center shadow-sm">
+          <CreditCard className="h-16 w-16 text-muted/40 mx-auto mb-4" />
+          <p className="text-lg text-muted">No payments recorded yet</p>
         </div>
       ) : (
-        <div className="rounded-lg border border-border bg-surface overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="px-6 py-3 text-left font-semibold text-foreground">Date</th>
-                  <th className="px-6 py-3 text-left font-semibold text-foreground">Description</th>
-                  <th className="px-6 py-3 text-left font-semibold text-foreground">Method</th>
-                  <th className="px-6 py-3 text-right font-semibold text-foreground">Amount</th>
-                  <th className="px-6 py-3 text-center font-semibold text-foreground">Reference</th>
-                  <th className="px-6 py-3 text-center font-semibold text-foreground">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {payments.map((payment) => (
-                  <tr key={payment.id} className="border-b border-border hover:bg-background/50">
-                    <td className="px-6 py-3 font-medium text-foreground">
-                      {new Date(payment.paidAt).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-3 text-foreground">School Fees</td>
-                    <td className="px-6 py-3">
-                      <span className="rounded-full border border-border bg-background px-2.5 py-1 text-[10px] uppercase tracking-wider font-medium text-muted">
-                        {methodLabels[payment.method] || payment.method}
-                      </span>
-                    </td>
-                    <td className="px-6 py-3 text-right font-bold text-success">
-                      {formatMoney(payment.amount)}
-                    </td>
-                    <td className="px-6 py-3 text-center text-muted text-xs">
-                      {payment.reference || "-"}
-                    </td>
-                    <td className="px-6 py-3 text-center">
-                      <button className="inline-flex items-center gap-2 text-brand hover:text-brand/80 text-xs font-semibold transition">
-                        <Download className="h-4 w-4" />
-                        Receipt
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        <div className="space-y-3">
+          {payments.map((payment) => (
+            <div
+              key={payment.id}
+              className="rounded-3xl border border-border bg-surface p-4 shadow-sm transition hover:shadow-md hover:border-brand/50"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
+                    <span className="inline-flex rounded-full bg-success/10 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-success">
+                      Paid
+                    </span>
+                    <span className="text-xs text-muted">
+                      {methodLabels[payment.method] || payment.method}
+                    </span>
+                  </div>
+                  <p className="text-sm text-foreground font-medium">School Fees</p>
+                  <p className="text-xs text-muted mt-1">
+                    Ref: {payment.reference || "—"}
+                  </p>
+                </div>
+                <div className="flex-shrink-0 text-right">
+                  <p className="text-lg font-bold text-success">{formatMoney(payment.amount)}</p>
+                  <p className="text-sm font-semibold text-foreground mt-2">
+                    {new Date(payment.paidAt).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })}
+                  </p>
+                  <button className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-brand hover:text-brand/80 transition">
+                    <Download className="h-3.5 w-3.5" />
+                    Receipt
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>

@@ -11,9 +11,6 @@ import {
   AlertCircle,
   Eye,
   Download,
-  ChevronLeft,
-  ChevronRight,
-  Plus,
 } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 import { getBackendUrl } from "@/lib/backend-url";
@@ -22,7 +19,6 @@ export default function ParentDashboardPage() {
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [cardScroll, setCardScroll] = useState(0);
 
   useEffect(() => {
     async function loadData() {
@@ -88,36 +84,36 @@ export default function ParentDashboardPage() {
 
   const stats = [
     {
-      label: "Outstanding Fees",
-      value: formatMoney(dashboardData?.outstandingFees || 0),
-      sub: dashboardData?.outstandingFees > 0 ? "Amount due for payment" : "All fees paid",
-      icon: CreditCard,
-      href: "/parent/invoices",
-      color: "bg-red-100",
-      iconColor: "text-red-600",
-    },
-    {
-      label: "My Children",
+      label: "Children",
       value: String(dashboardData?.childrenCount || 0),
-      sub: `${dashboardData?.childrenCount} child${dashboardData?.childrenCount !== 1 ? 'ren' : ''} registered`,
+      sub: `${dashboardData?.childrenCount} child${dashboardData?.childrenCount !== 1 ? 'ren' : ''}`,
       icon: Users,
       href: "/parent/children",
       color: "bg-blue-100",
       iconColor: "text-blue-600",
     },
     {
-      label: "Recent Results",
+      label: "Fees",
+      value: formatMoney(dashboardData?.outstandingFees || 0),
+      sub: dashboardData?.outstandingFees > 0 ? "Amount due" : "No balance",
+      icon: CreditCard,
+      href: "/parent/invoices",
+      color: "bg-red-100",
+      iconColor: "text-red-600",
+    },
+    {
+      label: "Results",
       value: String(dashboardData?.recentResults?.length || 0),
-      sub: "Latest academic results",
+      sub: "Available results",
       icon: BookOpen,
       href: "/parent/results",
       color: "bg-green-100",
       iconColor: "text-green-600",
     },
     {
-      label: "Announcements",
+      label: "News",
       value: String(dashboardData?.announcements?.length || 0),
-      sub: "School updates and notices",
+      sub: "School updates",
       icon: Bell,
       href: "/parent/publications",
       color: "bg-purple-100",
@@ -139,69 +135,23 @@ export default function ParentDashboardPage() {
         </p>
       </div>
 
-      {/* Stats Cards - Desktop with Navigation */}
-      <div className="mb-10 hidden sm:block pt-4">
-        <div className="relative flex items-center gap-4">
-          {/* Left Navigation Arrow */}
-          <button
-            onClick={() => setCardScroll(Math.max(0, cardScroll - 1))}
-            disabled={cardScroll === 0}
-            className="flex-shrink-0 rounded-full p-2 bg-brand text-white shadow-lg transition-all hover:bg-brand/90 hover:shadow-xl disabled:opacity-30 disabled:cursor-not-allowed"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-
-          {/* Cards Container */}
-          <div className="grid grid-cols-4 gap-3 flex-1">
-            {stats.map((stat, idx) => {
-              const IconComponent = stat.icon;
-              return (
-                <Link key={idx} href={stat.href}>
-                  <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md h-full cursor-pointer hover:border-brand/50 flex flex-col">
-                    <div className="flex items-start gap-3">
-                      <div className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg ${stat.color} shadow-sm`}>
-                        <IconComponent className={`h-4 w-4 ${stat.iconColor}`} />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-xs text-muted">{stat.label}</p>
-                        <p className="mt-1 text-lg font-bold text-foreground">{stat.value}</p>
-                      </div>
-                      <ArrowUpRight className="h-3 w-3 text-muted opacity-0 transition-opacity group-hover:opacity-100 flex-shrink-0" />
-                    </div>
-                    <p className="mt-2 text-[11px] text-muted">{stat.sub}</p>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-
-          {/* Right Navigation Arrow */}
-          <button
-            onClick={() => setCardScroll(Math.min(1, cardScroll + 1))}
-            disabled={cardScroll >= 1}
-            className="flex-shrink-0 rounded-full p-2 bg-brand text-white shadow-lg transition-all hover:bg-brand/90 hover:shadow-xl disabled:opacity-30 disabled:cursor-not-allowed"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </button>
-        </div>
-      </div>
-
-      {/* Stats Cards - Mobile */}
-      <div className="sm:hidden mb-10">
+      {/* Mobile-first icon menu */}
+      <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {stats.map((stat, idx) => {
           const IconComponent = stat.icon;
           return (
-            <Link key={idx} href={stat.href} className="block mb-3">
-              <div className="group rounded-lg border border-border bg-surface p-5 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50 flex items-start gap-4">
-                <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg ${stat.color} shadow-sm`}>
-                  <IconComponent className={`h-5 w-5 ${stat.iconColor}`} />
+            <Link key={idx} href={stat.href} className="group block">
+              <div className="h-full rounded-3xl border border-border bg-surface p-4 shadow-sm transition hover:shadow-md hover:border-brand/50 cursor-pointer flex flex-col items-center text-center gap-3">
+                <div className={`flex h-14 w-14 items-center justify-center rounded-3xl ${stat.color} shadow-sm`}>
+                  <IconComponent className={`h-6 w-6 ${stat.iconColor}`} />
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm text-muted font-medium">{stat.label}</p>
-                  <p className="mt-1.5 text-xl font-bold text-foreground">{stat.value}</p>
+                <div>
+                  <p className="text-sm font-semibold text-foreground">{stat.label}</p>
                   <p className="mt-1 text-xs text-muted">{stat.sub}</p>
                 </div>
-                <ArrowUpRight className="h-4 w-4 text-muted opacity-0 transition-opacity group-hover:opacity-100 flex-shrink-0 mt-1" />
+                <span className="mt-auto rounded-full bg-brand/10 px-3 py-1 text-[11px] font-semibold text-brand">
+                  {stat.value}
+                </span>
               </div>
             </Link>
           );

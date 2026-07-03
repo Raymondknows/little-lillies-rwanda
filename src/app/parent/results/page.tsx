@@ -207,41 +207,43 @@ export default function ParentResultsPage() {
         <p className="mt-1 text-sm text-slate-600">View your child's grades and assessment performance</p>
       </div>
 
-      <div className="rounded-lg border border-slate-200 bg-white p-6 hover:shadow-sm transition-shadow print:hidden">
+      <div className="rounded-3xl border border-slate-200 bg-white p-5 hover:shadow-sm transition-shadow print:hidden">
         <div className="flex items-center gap-3 mb-4">
           <Filter className="h-5 w-5 text-slate-600" />
           <h2 className="font-semibold text-slate-900">Filter Results</h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-slate-900 mb-3">Select Child:</label>
-            <div className="flex flex-wrap gap-2">
-              {children.map((child) => (
-                <button
-                  key={child.id}
-                  type="button"
-                  onClick={() => {
-                    setSelectedChildId(child.id);
-                    setSelectedTerm(null);
-                    setResults([]);
-                    setSelectedAssessmentId(null);
-                    setReportCardData(null);
-                  }}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    selectedChild?.id === child.id
-                      ? "bg-blue-600 text-white shadow-sm"
-                      : "bg-slate-100 text-slate-900 border border-slate-200 hover:border-slate-300"
-                  }`}
-                >
-                  {child.firstName} {child.lastName}
-                </button>
-              ))}
+            <label className="block text-sm font-semibold text-slate-900 mb-3">Select Child</label>
+            <div className="overflow-x-auto pb-1">
+              <div className="flex gap-2 min-w-[max-content]">
+                {children.map((child) => (
+                  <button
+                    key={child.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedChildId(child.id);
+                      setSelectedTerm(null);
+                      setResults([]);
+                      setSelectedAssessmentId(null);
+                      setReportCardData(null);
+                    }}
+                    className={`rounded-full px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
+                      selectedChild?.id === child.id
+                        ? "bg-brand text-white shadow-sm"
+                        : "bg-slate-100 text-slate-900 border border-slate-200 hover:border-slate-300"
+                    }`}
+                  >
+                    {child.firstName}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-slate-900 mb-3">Select Term:</label>
+            <label className="block text-sm font-semibold text-slate-900 mb-3">Select Term</label>
             <select
               value={selectedTerm?.id || ""}
               onChange={(event) => {
@@ -255,7 +257,7 @@ export default function ParentResultsPage() {
                 setSelectedAssessmentId(null);
                 setReportCardData(null);
               }}
-              className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
             >
               <option value="">Latest Term</option>
               {terms.map((term) => (
@@ -269,7 +271,7 @@ export default function ParentResultsPage() {
       </div>
 
       {selectedChild && (
-        <div className="space-y-6 rounded-lg border border-slate-200 bg-white p-6 hover:shadow-sm transition-shadow print:border-0 print:bg-transparent print:p-0 print:rounded-none print:shadow-none">
+        <div className="space-y-6 rounded-3xl border border-slate-200 bg-white p-5 hover:shadow-sm transition-shadow print:border-0 print:bg-transparent print:p-0 print:rounded-none print:shadow-none">
           <div className="flex items-center gap-3 border-b border-slate-200 pb-4 print:hidden">
             <GraduationCap className="h-5 w-5 text-slate-600" />
             <div>
@@ -281,7 +283,7 @@ export default function ParentResultsPage() {
           </div>
 
           {results.length === 0 ? (
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-12 text-center print:hidden">
+            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-10 text-center print:hidden">
               <GraduationCap className="h-12 w-12 text-slate-400 mx-auto mb-3" />
               <p className="text-slate-600">
                 {selectedTerm ? `No results available for ${selectedTerm.name}` : "No results available yet"}
@@ -289,30 +291,36 @@ export default function ParentResultsPage() {
             </div>
           ) : (
             <>
-              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 print:hidden">
+              <div className="space-y-3 print:hidden">
                 {results.map((result) => (
                   <button
                     key={result.assessmentId}
                     type="button"
                     onClick={() => setSelectedAssessmentId(result.assessmentId)}
-                    className={`rounded-lg border p-4 text-left transition ${
+                    className={`w-full rounded-3xl border p-4 text-left transition ${
                       selectedAssessmentId === result.assessmentId
                         ? "border-brand bg-brand/5 shadow-sm"
                         : "border-slate-200 bg-white hover:border-slate-300"
                     }`}
                   >
-                    <p className="text-sm font-semibold text-slate-900">{result.subject}</p>
-                    <p className="mt-1 text-xs text-slate-600">
-                      CA {result.caScore ?? "—"} · Test {result.testScore ?? "—"} · Exam {result.examScore ?? "—"}
-                    </p>
-                    <p className="mt-2 text-xs font-medium text-brand">
-                      Total: {result.totalScore ?? "—"} · Grade: {result.grade || "—"}
-                    </p>
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-base font-semibold text-slate-900 truncate">{result.subject}</p>
+                        <p className="text-sm text-slate-600 mt-1 truncate">
+                          CA {result.caScore ?? "—"} · Test {result.testScore ?? "—"} · Exam {result.examScore ?? "—"}
+                        </p>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-slate-400" />
+                    </div>
+                    <div className="mt-3 flex items-center justify-between gap-3 text-sm font-medium text-brand">
+                      <span>Total: {result.totalScore ?? "—"}</span>
+                      <span>Grade: {result.grade || "—"}</span>
+                    </div>
                   </button>
                 ))}
               </div>
 
-              <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700 print:hidden">
+              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700 print:hidden">
                 <p className="font-semibold text-slate-900">Selected report card</p>
                 <p className="mt-1">
                   {selectedAssessment

@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { BookOpen, CreditCard, AlertCircle, Users, Clock, CheckCircle, XCircle } from "lucide-react";
+import { BookOpen, CreditCard, AlertCircle, Users, Clock, CheckCircle, XCircle, TrendingUp } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 import { getBackendUrl } from "@/lib/backend-url";
+import ParentPageShell from "@/components/parent-page-shell";
 
 interface AttendanceData {
   todayStatus: string | null;
@@ -16,65 +17,109 @@ interface AttendanceData {
 export default function ChildrenPage() {
   const [children, setChildren] = useState<any[]>([]);
   const [attendance, setAttendance] = useState<Record<string, AttendanceData>>({});
+  const [schoolHours, setSchoolHours] = useState<{ start: string; end: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function loadData() {
+  const loadData = async () => {
+    try {
+      const backendUrl = getBackendUrl();
+      
+      const res = await fetch(`${backendUrl}/api/parent/children`, {
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to load children');
+      }
+
+      const data = await res.json();
+      setChildren(data.children || []);
+
+      // Load school info to get school hours
       try {
-        const backendUrl = getBackendUrl();
-        
-        const res = await fetch(`${backendUrl}/api/parent/children`, {
+        const schoolRes = await fetch(`${backendUrl}/api/parent/school`, {
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
         });
-
-        if (!res.ok) {
-          throw new Error('Failed to load children');
-        }
-
-        const data = await res.json();
-        setChildren(data.children || []);
-
-        // Fetch attendance for each child
-        const attendanceData: Record<string, AttendanceData> = {};
-        for (const child of data.children || []) {
-          try {
-            const attendanceRes = await fetch(`${backendUrl}/api/parent/attendance/${child.id}`, {
-              credentials: 'include',
-              headers: { 'Content-Type': 'application/json' },
-            });
-            if (attendanceRes.ok) {
-              const attendanceInfo = await attendanceRes.json();
-              attendanceData[child.id] = attendanceInfo;
-              console.log(`Attendance for ${child.id}:`, attendanceInfo);
-            } else {
-              console.warn(`Attendance endpoint returned ${attendanceRes.status} for child ${child.id}`);
-            }
-          } catch (err) {
-            console.error(`Error loading attendance for child ${child.id}:`, err);
+        if (schoolRes.ok) {
+          const schoolData = await schoolRes.json();
+          if (schoolData?.schoolHours) {
+            setSchoolHours(schoolData.schoolHours);
           }
         }
-        setAttendance(attendanceData);
-        setLoading(false);
       } catch (err) {
-        console.error("Error loading children:", err);
-        setError(err instanceof Error ? err.message : 'Failed to load children');
-        setLoading(false);
+        console.error('Error loading school info:', err);
       }
-    }
 
+      // Fetch attendance for each child
+      const attendanceData: Record<string, AttendanceData> = {};
+      for (const child of data.children || []) {
+        try {
+          const attendanceRes = await fetch(`${backendUrl}/api/parent/attendance/${child.id}?days=30`, {
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+          });
+          if (attendanceRes.ok) {
+            const attendanceInfo = await attendanceRes.json();
+            attendanceData[child.id] = attendanceInfo;
+            console.log(`Attendance for ${child.id}:`, attendanceInfo);
+          } else {
+            console.warn(`Attendance endpoint returned ${attendanceRes.status} for child ${child.id}`);
+          }
+        } catch (err) {
+          console.error(`Error loading attendance for child ${child.id}:`, err);
+        }
+      }
+      setAttendance(attendanceData);
+      setLoading(false);
+    } catch (err) {
+      console.error("Error loading children:", err);
+      setError(err instanceof Error ? err.message : 'Failed to load children');
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     loadData();
   }, []);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand mx-auto"></div>
-          <p className="mt-4 text-muted">Loading children...</p>
+      <ParentPageShell onRefresh={loadData}>
+        <div className="space-y-6">
+          {/* Header skeleton */}
+          <div className="space-y-2">
+            <div className="h-10 w-48 bg-slate-200 rounded-lg animate-pulse"></div>
+            <div className="h-5 w-64 bg-slate-100 rounded animate-pulse"></div>
+          </div>
+          
+          {/* Card skeletons */}
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="rounded-3xl border border-border bg-surface overflow-hidden space-y-4 p-4 sm:p-5">
+              {/* Header */}
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 bg-slate-200 rounded-3xl animate-pulse"></div>
+                <div className="flex-1 space-y-2">
+                  <div className="h-5 w-32 bg-slate-200 rounded animate-pulse"></div>
+                  <div className="h-4 w-48 bg-slate-100 rounded animate-pulse"></div>
+                </div>
+              </div>
+              
+              {/* Stats */}
+              <div className="grid grid-cols-3 gap-3">
+                {[1, 2, 3].map((j) => (
+                  <div key={j} className="rounded-3xl bg-white p-3">
+                    <div className="h-3 w-16 bg-slate-100 rounded mb-2 mx-auto animate-pulse"></div>
+                    <div className="h-6 w-20 bg-slate-200 rounded mx-auto animate-pulse"></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
-      </div>
+      </ParentPageShell>
     );
   }
 
@@ -104,8 +149,41 @@ export default function ChildrenPage() {
     return status;
   };
 
+  const isWeekend = (date: Date) => {
+    const day = date.getDay();
+    return day === 0 || day === 6; // Sunday = 0, Saturday = 6
+  };
+
+  const getSmartStatusMessage = (status: string | null, schoolHours: { start: string; end: string } | null) => {
+    if (status) {
+      return formatStatus(status);
+    }
+
+    // Check if today is weekend
+    const today = new Date();
+    if (isWeekend(today)) {
+      return 'No school today';
+    }
+
+    // Check if school day has ended
+    if (schoolHours?.end) {
+      const [endHour, endMin] = schoolHours.end.split(':').map(Number);
+      const endTime = new Date();
+      endTime.setHours(endHour, endMin, 0, 0);
+      
+      if (new Date() > endTime) {
+        return 'Not marked';
+      } else {
+        return 'Waiting...';
+      }
+    }
+
+    return 'Not marked';
+  };
+
+
   return (
-    <div className="space-y-6 px-4 pb-12 pt-6 sm:px-6 lg:px-8">
+    <ParentPageShell onRefresh={loadData}>
       <div>
         <h1 className="text-4xl font-bold text-foreground">My Children</h1>
         <p className="mt-2 text-muted">
@@ -184,10 +262,80 @@ export default function ChildrenPage() {
                         <span className="text-sm">{formatStatus(childAttendance.todayStatus)}</span>
                       </div>
                     ) : (
-                      <p className="text-xs text-muted font-medium">Not marked</p>
+                      <p className="text-xs text-muted font-medium">{getSmartStatusMessage(null, schoolHours)}</p>
                     )}
                   </div>
                 </div>
+
+                {/* Attendance History Chart */}
+                {childAttendance?.recentRecords && childAttendance.recentRecords.length > 0 && (
+                  <div className="p-4 sm:p-5 border-t border-border">
+                    <div className="flex items-center gap-2 mb-4">
+                      <TrendingUp className="h-5 w-5 text-brand" />
+                      <p className="text-sm font-semibold text-foreground">Attendance Trend</p>
+                    </div>
+                    <div className="bg-gradient-to-br from-brand/5 to-brand/10 rounded-2xl p-4 border border-brand/20">
+                      <div className="flex items-end justify-between gap-0.5 h-28">
+                        {childAttendance.recentRecords.slice(0, 30).reverse().map((record, idx) => {
+                          const dateObj = new Date(record.date);
+                          const dayLabel = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                          let height = 0;
+                          let barColor = 'bg-brand/40';
+                          let bgColor = 'bg-brand/10';
+                          
+                          if (record.status === 'PRESENT') {
+                            height = 100;
+                            barColor = 'bg-brand';
+                            bgColor = 'bg-brand/10';
+                          } else if (record.status === 'LATE') {
+                            height = 75;
+                            barColor = 'bg-brand/70';
+                            bgColor = 'bg-brand/5';
+                          } else if (record.status === 'EXCUSED') {
+                            height = 50;
+                            barColor = 'bg-brand/50';
+                            bgColor = 'bg-brand/5';
+                          } else if (record.status === 'ABSENT') {
+                            height = 20;
+                            barColor = 'bg-error/60';
+                            bgColor = 'bg-error/5';
+                          }
+                          
+                          return (
+                            <div key={idx} className="flex-1 flex flex-col items-center gap-1">
+                              <div className="w-full flex items-end justify-center h-24">
+                                <div
+                                  className={`w-full rounded-t-md ${barColor} transition-all hover:opacity-80 cursor-pointer shadow-sm`}
+                                  style={{ height: `${height}%`, minHeight: height > 0 ? '2px' : '0px' }}
+                                  title={`${dateObj.toLocaleDateString()}: ${record.status}`}
+                                />
+                              </div>
+                              <p className="text-[8px] text-muted font-medium text-center leading-tight">{dateObj.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' })}</p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div className="mt-4 pt-3 border-t border-brand/20 flex gap-4 text-[11px]">
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-3 h-3 rounded-sm bg-brand"></div>
+                          <span className="text-muted">Present</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-3 h-3 rounded-sm bg-brand/70"></div>
+                          <span className="text-muted">Late</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-3 h-3 rounded-sm bg-brand/50"></div>
+                          <span className="text-muted">Excused</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-3 h-3 rounded-sm bg-error/60"></div>
+                          <span className="text-muted">Absent</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Actions */}
                 <div className="p-4 sm:p-5 space-y-3">
@@ -211,6 +359,6 @@ export default function ChildrenPage() {
           })}
         </div>
       )}
-    </div>
+    </ParentPageShell>
   );
 }

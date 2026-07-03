@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { BookOpen, AlertCircle, X } from "lucide-react";
 import { getBackendUrl } from "@/lib/backend-url";
-
+import ParentPageShell from "@/components/parent-page-shell";
 interface Announcement {
   id: string;
   title: string;
@@ -20,41 +20,50 @@ export default function PublicationsPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null);
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const backendUrl = getBackendUrl();
-        
-        const res = await fetch(`${backendUrl}/api/parent/announcements`, {
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-        });
+  const loadData = async () => {
+    try {
+      const backendUrl = getBackendUrl();
+      
+      const res = await fetch(`${backendUrl}/api/parent/announcements`, {
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
 
-        if (!res.ok) {
-          throw new Error('Failed to load publications');
-        }
-
-        const data = await res.json();
-        setAnnouncements(data.announcements || []);
-        setLoading(false);
-      } catch (err) {
-        console.error("Error loading publications:", err);
-        setError(err instanceof Error ? err.message : 'Failed to load publications');
-        setLoading(false);
+      if (!res.ok) {
+        throw new Error('Failed to load publications');
       }
-    }
 
+      const data = await res.json();
+      setAnnouncements(data.announcements || []);
+      setLoading(false);
+    } catch (err) {
+      console.error("Error loading publications:", err);
+      setError(err instanceof Error ? err.message : 'Failed to load publications');
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     loadData();
   }, []);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand mx-auto"></div>
-          <p className="mt-4 text-muted">Loading publications...</p>
+      <ParentPageShell onRefresh={loadData}>
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <div className="h-10 w-48 bg-slate-200 rounded-lg animate-pulse"></div>
+            <div className="h-5 w-64 bg-slate-100 rounded animate-pulse"></div>
+          </div>
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="rounded-3xl border border-border bg-surface p-4 space-y-3 animate-pulse">
+              <div className="h-5 w-32 bg-slate-200 rounded"></div>
+              <div className="h-4 w-48 bg-slate-100 rounded"></div>
+              <div className="h-20 w-full bg-slate-100 rounded"></div>
+            </div>
+          ))}
         </div>
-      </div>
+      </ParentPageShell>
     );
   }
 
@@ -72,7 +81,7 @@ export default function PublicationsPage() {
   };
 
   return (
-    <div className="space-y-8">
+    <ParentPageShell onRefresh={loadData}>
       {/* Header */}
       <div className="space-y-3">
         <div>
@@ -212,6 +221,6 @@ export default function PublicationsPage() {
           </div>
         </div>
       )}
-    </div>
+    </ParentPageShell>
   );
 }

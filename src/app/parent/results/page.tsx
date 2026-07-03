@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AlertCircle, ChevronRight, Filter, GraduationCap } from "lucide-react";
 import { getBackendUrl } from "@/lib/backend-url";
+import ParentPageShell from "@/components/parent-page-shell";
 import { WaecReportCard } from "@/components/teacher/waec-report-card";
 
 interface Result {
@@ -42,32 +43,32 @@ export default function ParentResultsPage() {
   const [reportLoading, setReportLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchChildren = async () => {
-      try {
-        setLoading(true);
-        const backendUrl = getBackendUrl();
-        const response = await fetch(`${backendUrl}/api/parent/children`, {
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-        });
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const backendUrl = getBackendUrl();
+      const response = await fetch(`${backendUrl}/api/parent/children`, {
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+      });
 
-        if (!response.ok) throw new Error("Failed to fetch children");
+      if (!response.ok) throw new Error("Failed to fetch children");
 
-        const data = await response.json();
-        setChildren(data.children || []);
+      const data = await response.json();
+      setChildren(data.children || []);
 
-        if (data.children?.length > 0) {
-          setSelectedChildId(data.children[0].id);
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load data");
-      } finally {
-        setLoading(false);
+      if (data.children?.length > 0) {
+        setSelectedChildId(data.children[0].id);
       }
-    };
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load data");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchChildren();
+  useEffect(() => {
+    loadData();
   }, []);
 
   useEffect(() => {
@@ -170,12 +171,26 @@ export default function ParentResultsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto" />
-          <p className="mt-4 text-slate-600">Loading results...</p>
+      <ParentPageShell onRefresh={loadData}>
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <div className="h-10 w-48 bg-slate-200 rounded-lg animate-pulse"></div>
+            <div className="h-5 w-64 bg-slate-100 rounded animate-pulse"></div>
+          </div>
+          <div className="rounded-3xl border border-slate-200 bg-white p-5 space-y-4 animate-pulse">
+            <div className="h-5 w-32 bg-slate-200 rounded"></div>
+            {[1, 2].map((i) => (
+              <div key={i} className="h-10 w-24 bg-slate-100 rounded inline-block mr-2"></div>
+            ))}
+          </div>
+          {[1, 2].map((i) => (
+            <div key={i} className="rounded-3xl border border-slate-200 bg-white p-5 space-y-3 animate-pulse">
+              <div className="h-5 w-40 bg-slate-200 rounded"></div>
+              <div className="h-16 w-full bg-slate-100 rounded"></div>
+            </div>
+          ))}
         </div>
-      </div>
+      </ParentPageShell>
     );
   }
 
@@ -193,15 +208,17 @@ export default function ParentResultsPage() {
 
   if (children.length === 0) {
     return (
-      <div className="rounded-lg border border-slate-200 bg-slate-50 p-12 text-center">
-        <GraduationCap className="h-12 w-12 text-slate-400 mx-auto mb-3" />
-        <p className="text-slate-600">No children linked to this account</p>
-      </div>
+      <ParentPageShell onRefresh={loadData}>
+        <div className="rounded-lg border border-slate-200 bg-slate-50 p-12 text-center">
+          <GraduationCap className="h-12 w-12 text-slate-400 mx-auto mb-3" />
+          <p className="text-slate-600">No children linked to this account</p>
+        </div>
+      </ParentPageShell>
     );
   }
 
   return (
-    <div className="space-y-6 pb-8">
+    <ParentPageShell onRefresh={loadData}>
       <div className="border-b border-slate-200 pb-6 print:hidden">
         <h1 className="text-4xl font-bold text-slate-900">Academic Results</h1>
         <p className="mt-1 text-sm text-slate-600">View your child's grades and assessment performance</p>
@@ -372,6 +389,6 @@ export default function ParentResultsPage() {
           )}
         </div>
       )}
-    </div>
+    </ParentPageShell>
   );
 }

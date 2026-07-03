@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Phone, Mail, MapPin, AlertCircle } from "lucide-react";
 import { getBackendUrl } from "@/lib/backend-url";
+import ParentPageShell from "@/components/parent-page-shell";
 
 interface SchoolInfo {
   id: string;
@@ -38,49 +39,49 @@ export default function SchoolPage() {
   const [error, setError] = useState<string | null>(null);
   const [calling, setCalling] = useState(false);
 
-  useEffect(() => {
-    async function loadData() {
+  const loadData = async () => {
+    try {
+      const backendUrl = getBackendUrl();
+      
+      const res = await fetch(`${backendUrl}/api/parent/school`, {
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to load school information');
+      }
+
+      const data = await res.json();
+      setSchool(data);
+
       try {
-        const backendUrl = getBackendUrl();
-        
-        const res = await fetch(`${backendUrl}/api/parent/school`, {
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-        });
+        if (data?.id) {
+          const logoRes = await fetch(`/api/school-logo/${encodeURIComponent(data.id)}`);
 
-        if (!res.ok) {
-          throw new Error('Failed to load school information');
-        }
-
-        const data = await res.json();
-        setSchool(data);
-
-        try {
-          if (data?.id) {
-            const logoRes = await fetch(`/api/school-logo/${encodeURIComponent(data.id)}`);
-
-            if (logoRes.ok) {
-              const blob = await logoRes.blob();
-              setSchoolLogoUrl(URL.createObjectURL(blob));
-            } else {
-              setSchoolLogoUrl(null);
-            }
+          if (logoRes.ok) {
+            const blob = await logoRes.blob();
+            setSchoolLogoUrl(URL.createObjectURL(blob));
           } else {
             setSchoolLogoUrl(null);
           }
-        } catch (logoErr) {
-          console.error("Error loading school logo:", logoErr);
+        } else {
           setSchoolLogoUrl(null);
         }
-
-        setLoading(false);
-      } catch (err) {
-        console.error("Error loading school:", err);
-        setError(err instanceof Error ? err.message : 'Failed to load school information');
-        setLoading(false);
+      } catch (logoErr) {
+        console.error("Error loading school logo:", logoErr);
+        setSchoolLogoUrl(null);
       }
-    }
 
+      setLoading(false);
+    } catch (err) {
+      console.error("Error loading school:", err);
+      setError(err instanceof Error ? err.message : 'Failed to load school information');
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     loadData();
   }, []);
 
@@ -104,12 +105,25 @@ export default function SchoolPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center px-4 py-12">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand mx-auto"></div>
-          <p className="mt-4 text-sm text-muted">Loading school information…</p>
+      <ParentPageShell onRefresh={loadData}>
+        <div className="space-y-6">
+          <div className="flex items-end gap-3">
+            <div className="h-20 w-20 bg-slate-200 rounded-2xl animate-pulse"></div>
+            <div className="space-y-2 flex-1">
+              <div className="h-4 w-24 bg-slate-100 rounded animate-pulse"></div>
+              <div className="h-8 w-48 bg-slate-200 rounded animate-pulse"></div>
+            </div>
+          </div>
+          <div className="rounded-3xl border border-border bg-surface p-6 space-y-6 animate-pulse">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="space-y-3">
+                <div className="h-5 w-32 bg-slate-200 rounded"></div>
+                <div className="h-4 w-48 bg-slate-100 rounded"></div>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      </ParentPageShell>
     );
   }
 
@@ -142,7 +156,7 @@ export default function SchoolPage() {
   const contactLabel = school.email || school.phone ? 'Reach out to the school directly' : 'No direct contact details provided';
 
   return (
-    <div className="px-4 pb-12 pt-6 sm:px-6 lg:px-8">
+    <ParentPageShell onRefresh={loadData} className="px-3 pb-12 pt-6 sm:px-6 lg:px-8">
       {/* Header */}
       <div className="mb-4 flex items-end gap-3">
         <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-2xl bg-background border border-border/30">
@@ -185,10 +199,10 @@ export default function SchoolPage() {
       </div>
 
       {/* Main Card Container */}
-      <div className="rounded-3xl border border-border bg-surface p-6 shadow-sm space-y-6">
+      <div className="rounded-3xl border border-border bg-surface p-4 sm:p-6 shadow-sm space-y-6">
         {/* Contact Details */}
         <div>
-          <p className="text-sm font-semibold text-foreground mb-4">Contact Details</p>
+          <p className="text-lg font-bold text-foreground mb-5 tracking-tight">Contact Details</p>
           <div className="space-y-4">
             {school.phone ? (
               <div className="flex items-start gap-3">
@@ -231,7 +245,7 @@ export default function SchoolPage() {
 
         {/* School Info */}
         <div>
-          <p className="text-sm font-semibold text-foreground mb-4">School Information</p>
+          <p className="text-lg font-bold text-foreground mb-5 tracking-tight">School Information</p>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted">Terms per year</p>
@@ -255,7 +269,7 @@ export default function SchoolPage() {
           <>
             <div className="border-t border-border/50" />
             <div>
-              <p className="text-sm font-semibold text-foreground mb-3">Principal's Message</p>
+              <p className="text-lg font-bold text-foreground mb-5 tracking-tight">Principal's Message</p>
               <p className="text-sm leading-6 text-foreground/80">{school.principalComment}</p>
             </div>
           </>
@@ -266,7 +280,7 @@ export default function SchoolPage() {
           <>
             <div className="border-t border-border/50" />
             <div>
-              <p className="text-sm font-semibold text-foreground mb-4">Bank Transfer Details</p>
+              <p className="text-lg font-bold text-foreground mb-5 tracking-tight">Bank Transfer Details</p>
               <div className="space-y-3">
                 {school.manualPaymentAccountName ? (
                   <div>
@@ -300,6 +314,6 @@ export default function SchoolPage() {
           </>
         ) : null}
       </div>
-    </div>
+    </ParentPageShell>
   );
 }

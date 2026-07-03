@@ -3,6 +3,7 @@
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import SharedLayout from '@/components/shared-layout';
+import ParentSkeleton from '@/components/parent-skeleton';
 import { getBackendUrl } from '@/lib/backend-url';
 
 const nav = [
@@ -97,14 +98,7 @@ export default function ParentLayout({
   }
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand mx-auto"></div>
-          <p className="mt-4 text-muted">Loading...</p>
-        </div>
-      </div>
-    );
+    return <ParentSkeleton />;
   }
 
   return (

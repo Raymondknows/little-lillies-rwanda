@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { CreditCard, AlertCircle, Download } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 import { getBackendUrl } from "@/lib/backend-url";
+import ParentPageShell from "@/components/parent-page-shell";
 
 interface Payment {
   id: string;
@@ -21,45 +22,61 @@ export default function PaymentsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const backendUrl = getBackendUrl();
-        
-        const res = await fetch(`${backendUrl}/api/parent/payments`, {
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-        });
+  const loadData = async () => {
+    try {
+      const backendUrl = getBackendUrl();
+      
+      const res = await fetch(`${backendUrl}/api/parent/payments`, {
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
 
-        if (!res.ok) {
-          throw new Error('Failed to load payments');
-        }
-
-        const data = await res.json();
-        const paymentsList = data.payments || [];
-        setPayments(paymentsList);
-        
-        const total = paymentsList.reduce((sum: number, p: Payment) => sum + p.amount, 0);
-        setTotalPaid(total);
-        setLoading(false);
-      } catch (err) {
-        console.error("Error loading payments:", err);
-        setError(err instanceof Error ? err.message : 'Failed to load payments');
-        setLoading(false);
+      if (!res.ok) {
+        throw new Error('Failed to load payments');
       }
-    }
 
+      const data = await res.json();
+      const paymentsList = data.payments || [];
+      setPayments(paymentsList);
+      
+      const total = paymentsList.reduce((sum: number, p: Payment) => sum + p.amount, 0);
+      setTotalPaid(total);
+      setLoading(false);
+    } catch (err) {
+      console.error("Error loading payments:", err);
+      setError(err instanceof Error ? err.message : 'Failed to load payments');
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     loadData();
   }, []);
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center px-4 py-12">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand mx-auto"></div>
-          <p className="mt-4 text-sm text-muted">Loading payments…</p>
+      <ParentPageShell onRefresh={loadData}>
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <div className="h-10 w-48 bg-slate-200 rounded-lg animate-pulse"></div>
+            <div className="h-5 w-64 bg-slate-100 rounded animate-pulse"></div>
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="rounded-3xl bg-surface p-5 border border-border space-y-2">
+                <div className="h-4 w-16 bg-slate-100 rounded animate-pulse"></div>
+                <div className="h-6 w-20 bg-slate-200 rounded animate-pulse"></div>
+              </div>
+            ))}
+          </div>
+          {[1, 2].map((i) => (
+            <div key={i} className="rounded-3xl border border-border bg-surface p-4 space-y-3 animate-pulse">
+              <div className="h-5 w-32 bg-slate-200 rounded"></div>
+              <div className="h-4 w-48 bg-slate-100 rounded"></div>
+            </div>
+          ))}
         </div>
-      </div>
+      </ParentPageShell>
     );
   }
 
@@ -72,7 +89,7 @@ export default function PaymentsPage() {
   };
 
   return (
-    <div className="space-y-6 px-4 pb-12 pt-6 sm:px-6 lg:px-8">
+    <ParentPageShell onRefresh={loadData}>
       {/* Header */}
       <div>
         <h1 className="text-4xl font-bold text-foreground">Payments</h1>
@@ -163,6 +180,6 @@ export default function PaymentsPage() {
           ))}
         </div>
       )}
-    </div>
+    </ParentPageShell>
   );
 }

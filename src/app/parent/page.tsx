@@ -14,63 +14,81 @@ import {
 } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 import { getBackendUrl } from "@/lib/backend-url";
+import ParentPageShell from "@/components/parent-page-shell";
 
 export default function ParentDashboardPage() {
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const backendUrl = getBackendUrl();
-        
-        // Fetch dashboard data
-        const dashRes = await fetch(`${backendUrl}/api/parent/dashboard`, {
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-        });
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const backendUrl = getBackendUrl();
+      
+      // Fetch dashboard data
+      const dashRes = await fetch(`${backendUrl}/api/parent/dashboard`, {
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
 
-        if (!dashRes.ok) {
-          throw new Error('Failed to load dashboard');
-        }
-
-        const data = await dashRes.json();
-        
-        setDashboardData({
-          guardianName: data.guardianName || 'Parent',
-          childrenCount: data.children?.length || 0,
-          outstandingFees: data.outstandingFees || 0,
-          children: data.children || [],
-          recentResults: data.recentResults || [],
-          announcements: data.announcements || [],
-          attendance: data.attendance || {},
-        });
-        setLoading(false);
-      } catch (err) {
-        console.error("Error loading dashboard:", err);
-        setError(err instanceof Error ? err.message : 'Failed to load dashboard');
-        setLoading(false);
+      if (!dashRes.ok) {
+        throw new Error('Failed to load dashboard');
       }
-    }
 
+      const data = await dashRes.json();
+      
+      setDashboardData({
+        guardianName: data.guardianName || 'Parent',
+        childrenCount: data.children?.length || 0,
+        outstandingFees: data.outstandingFees || 0,
+        children: data.children || [],
+        recentResults: data.recentResults || [],
+        announcements: data.announcements || [],
+        attendance: data.attendance || {},
+      });
+      setLoading(false);
+    } catch (err) {
+      console.error("Error loading dashboard:", err);
+      setError(err instanceof Error ? err.message : 'Failed to load dashboard');
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     loadData();
   }, []);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand mx-auto"></div>
-          <p className="mt-4 text-muted">Loading dashboard...</p>
+      <ParentPageShell onRefresh={loadData}>
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <div className="h-10 w-48 bg-slate-200 rounded-lg animate-pulse"></div>
+            <div className="h-5 w-64 bg-slate-100 rounded animate-pulse"></div>
+          </div>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="rounded-3xl bg-surface p-5 border border-border space-y-2">
+                <div className="h-3 w-16 bg-slate-100 rounded mx-auto animate-pulse"></div>
+                <div className="h-6 w-20 bg-slate-200 rounded mx-auto animate-pulse"></div>
+              </div>
+            ))}
+          </div>
+          {[1, 2].map((i) => (
+            <div key={i} className="rounded-3xl border border-border bg-surface p-5 space-y-3 animate-pulse">
+              <div className="h-5 w-32 bg-slate-200 rounded"></div>
+              <div className="h-4 w-48 bg-slate-100 rounded"></div>
+            </div>
+          ))}
         </div>
-      </div>
+      </ParentPageShell>
     );
   }
 
   if (error) {
     return (
-      <div>
+      <ParentPageShell onRefresh={loadData}>
         <div className="rounded-lg border border-error bg-error/10 p-4 flex gap-3">
           <AlertCircle className="h-5 w-5 text-error flex-shrink-0 mt-0.5" />
           <div>
@@ -78,7 +96,7 @@ export default function ParentDashboardPage() {
             <p className="text-sm text-error/80 mt-1">{error}</p>
           </div>
         </div>
-      </div>
+      </ParentPageShell>
     );
   }
 
@@ -122,7 +140,7 @@ export default function ParentDashboardPage() {
   ];
 
   return (
-    <div>
+    <ParentPageShell onRefresh={loadData}>
       {/* Page Header */}
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-foreground">
@@ -310,6 +328,6 @@ export default function ParentDashboardPage() {
           </Link>
         </div>
       )}
-    </div>
+    </ParentPageShell>
   );
 }

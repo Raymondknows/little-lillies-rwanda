@@ -106,9 +106,16 @@ export default function InvoiceDetailPage() {
   if (loading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand mx-auto" />
-          <p className="mt-4 text-muted">Loading invoice...</p>
+        <div className="w-full max-w-2xl space-y-4 px-4">
+          <div className="h-8 w-32 bg-slate-200 rounded-lg animate-pulse"></div>
+          <div className="space-y-3">
+            <div className="h-6 w-full bg-slate-100 rounded animate-pulse"></div>
+            <div className="h-6 w-3/4 bg-slate-100 rounded animate-pulse"></div>
+          </div>
+          <div className="rounded-lg border border-slate-200 p-4 space-y-3 animate-pulse">
+            <div className="h-5 w-24 bg-slate-200 rounded"></div>
+            <div className="h-20 w-full bg-slate-100 rounded"></div>
+          </div>
         </div>
       </div>
     );

@@ -156,7 +156,7 @@ export default function SchoolPage() {
   const contactLabel = school.email || school.phone ? 'Reach out to the school directly' : 'No direct contact details provided';
 
   return (
-    <ParentPageShell onRefresh={loadData} className="px-3 pb-12 pt-6 sm:px-6 lg:px-8">
+    <ParentPageShell onRefresh={loadData} className="px-0 pb-12 pt-6 sm:px-2 md:px-4 lg:px-8">
       {/* Header */}
       <div className="mb-4 flex items-end gap-3">
         <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-2xl bg-background border border-border/30">

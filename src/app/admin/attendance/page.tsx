@@ -105,7 +105,7 @@ const HELP_GUIDE: PageHelpGuide = {
     },
     {
       title: "Send Absence Notifications",
-      description: "Alert parents when students are absent.",
+      description: "Alert parents when students are absent",
       tips: [
         "Configure notification settings in your school settings",
         "Notifications are sent via WhatsApp or Email automatically",

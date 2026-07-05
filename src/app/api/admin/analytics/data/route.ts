@@ -4,17 +4,24 @@ import { buildApiUrl } from '@/lib/api-client';
 
 export async function GET(request: NextRequest) {
   try {
-    const params = new URL(request.url).searchParams;
-    let backendUrl = buildApiUrl('/admin/analytics/data');
+    const params = request.nextUrl.searchParams;
+    const backendUrl = new URL(buildApiUrl('/admin/analytics/data'));
 
-    if (!params.get('schoolId')) {
+    ['termId', 'phase', 'classId', 'sectionId'].forEach((key) => {
+      const value = params.get(key);
+      if (value) {
+        backendUrl.searchParams.set(key, value);
+      }
+    });
+
+    if (!backendUrl.searchParams.has('schoolId')) {
       const schoolId = await getCurrentSchoolId();
       if (schoolId) {
-        backendUrl += `?schoolId=${encodeURIComponent(schoolId)}`;
+        backendUrl.searchParams.set('schoolId', schoolId);
       }
     }
 
-    const resp = await fetch(backendUrl, {
+    const resp = await fetch(backendUrl.toString(), {
       headers: {
         cookie: request.headers.get('cookie') || '',
       },

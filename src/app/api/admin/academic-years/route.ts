@@ -10,7 +10,7 @@ export async function GET(req: Request) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const response = await fetch(`${API_BASE}/api/admin/terms`, {
+    const response = await fetch(`${API_BASE}/api/admin/academic-years`, {
       headers: {
         "x-school-id": schoolId,
         cookie: req.headers.get("cookie") || "",
@@ -19,14 +19,14 @@ export async function GET(req: Request) {
 
     if (!response.ok) {
       // Fallback: return empty if backend endpoint doesn't exist yet
-      return Response.json({ terms: [] });
+      return Response.json({ academicYears: [] });
     }
 
     const data = await response.json();
     return Response.json(data);
   } catch (error) {
-    console.error("Error fetching terms:", error);
+    console.error("Error fetching academic years:", error);
     // Return empty array on error (fallback)
-    return Response.json({ terms: [] });
+    return Response.json({ academicYears: [] });
   }
 }

@@ -285,6 +285,8 @@ export default function AdminDashboardPage() {
       sub: `${dashboardData?.attentionCount || 0} invoices need attention`,
       href: "/admin/fees",
       icon: CreditCard,
+      color: "bg-blue-100",
+      iconColor: "text-blue-600",
     },
     {
       label: "Active pupils",
@@ -292,6 +294,8 @@ export default function AdminDashboardPage() {
       sub: `${dashboardData?.classCount || 0} classes`,
       href: "/admin/students",
       icon: Users,
+      color: "bg-purple-100",
+      iconColor: "text-purple-600",
     },
     {
       label: "Classes",
@@ -299,6 +303,8 @@ export default function AdminDashboardPage() {
       sub: "Manage grade groups and sections",
       href: "/admin/classes",
       icon: Layers,
+      color: "bg-amber-100",
+      iconColor: "text-amber-600",
     },
     {
       label: "Recent payments",
@@ -306,6 +312,8 @@ export default function AdminDashboardPage() {
       sub: "Latest transactions",
       href: "/admin/fees",
       icon: TrendingUp,
+      color: "bg-emerald-100",
+      iconColor: "text-emerald-600",
     },
   ];
 
@@ -393,8 +401,8 @@ export default function AdminDashboardPage() {
                 <Link key={idx} href={stat.href}>
                   <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md h-full cursor-pointer hover:border-brand/50 flex flex-col">
                     <div className="flex items-start gap-3">
-                      <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
-                        <IconComponent className="h-4 w-4 text-brand" />
+                      <div className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg ${stat.color} shadow-sm`}>
+                        <IconComponent className={`h-4 w-4 ${stat.iconColor}`} />
                       </div>
                       <div className="flex-1">
                         <p className="text-xs text-muted">{stat.label}</p>
@@ -427,8 +435,8 @@ export default function AdminDashboardPage() {
           return (
             <Link key={idx} href={stat.href} className="block mb-3">
               <div className="group rounded-lg border border-border bg-surface p-5 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50 flex items-start gap-4">
-                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
-                  <IconComponent className="h-5 w-5 text-brand" />
+                <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg ${stat.color} shadow-sm`}>
+                  <IconComponent className={`h-5 w-5 ${stat.iconColor}`} />
                 </div>
                 <div className="flex-1">
                   <p className="text-sm text-muted font-medium">{stat.label}</p>

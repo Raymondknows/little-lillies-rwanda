@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { getBackendUrl } from "../../../lib/backend-url";
 import { Button } from "../../../components/ui/button";
 import { Badge } from "../../../components/ui/badge";
@@ -97,8 +97,11 @@ export default function PromotionsPageClient({
     setSelectedPupilIds(previewData.pupils.map((pupil: any) => pupil.id));
   }, [previewData]);
 
-  const handlePreview = async () => {
+  const handlePreview = useCallback(async () => {
     if (!selectedAcademicYearId || !selectedTermId || !selectedClassId) {
+      setPreviewData(null);
+      setDecisions({});
+      setSelectedPupilIds([]);
       setError('Select academic year, term and class before previewing promotions.');
       return;
     }
@@ -106,6 +109,9 @@ export default function PromotionsPageClient({
     setLoading(true);
     setError(null);
     setSuccessMessage(null);
+    setPreviewData(null);
+    setDecisions({});
+    setSelectedPupilIds([]);
 
     try {
       const backendUrl = getBackendUrl();
@@ -142,10 +148,12 @@ export default function PromotionsPageClient({
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load preview');
       setPreviewData(null);
+      setDecisions({});
+      setSelectedPupilIds([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedAcademicYearId, selectedTermId, selectedClassId]);
 
   const handleDecisionChange = (pupilId: string, field: 'decision' | 'toClassId' | 'rationale', value: string) => {
     setDecisions((prev) => ({
@@ -157,6 +165,17 @@ export default function PromotionsPageClient({
       },
     }));
   };
+
+  useEffect(() => {
+    if (!selectedAcademicYearId || !selectedTermId || !selectedClassId) {
+      setPreviewData(null);
+      setDecisions({});
+      setSelectedPupilIds([]);
+      return;
+    }
+
+    void handlePreview();
+  }, [selectedAcademicYearId, selectedTermId, selectedClassId, handlePreview]);
 
   const selectedPupilDecisions = useMemo(() => {
     if (!previewData) return [] as Array<{ id: string; decision: string; toClassId: string; rationale: string }>;
@@ -261,6 +280,7 @@ export default function PromotionsPageClient({
       setPreviewData(null);
       setDecisions({});
       setHistory([]);
+      void fetchHistory();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Promotion apply failed');
     } finally {
@@ -270,7 +290,8 @@ export default function PromotionsPageClient({
 
   const fetchHistory = async () => {
     if (!selectedAcademicYearId || !selectedTermId) {
-      setHistoryError('Select academic year and term to load history.');
+      setHistory([]);
+      setHistoryError(null);
       return;
     }
 
@@ -304,6 +325,14 @@ export default function PromotionsPageClient({
       setHistoryLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!selectedAcademicYearId || !selectedTermId) {
+      return;
+    }
+
+    void fetchHistory();
+  }, [selectedAcademicYearId, selectedTermId, selectedClassId]);
 
   const currentTermLabel = termOptions.find((term: Term) => term.id === selectedTermId)?.name || 'Term';
   const currentYearLabel = selectedYear?.name || 'Academic Year';
@@ -562,7 +591,7 @@ export default function PromotionsPageClient({
             <p className="text-sm text-muted">View historical promotion records for the selected year and term.</p>
           </div>
           <Button variant="secondary" onClick={fetchHistory} disabled={historyLoading || !selectedAcademicYearId || !selectedTermId}>
-            Load history
+            Refresh history
           </Button>
         </div>
 

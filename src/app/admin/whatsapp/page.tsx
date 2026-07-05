@@ -290,8 +290,8 @@ export default function WhatsAppPage() {
           {/* Total Sent */}
           <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50 flex flex-col">
             <div className="flex items-start gap-3">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
-                <TrendingUp className="h-4 w-4 text-brand" />
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-blue-100 shadow-sm">
+                <TrendingUp className="h-4 w-4 text-blue-600" />
               </div>
               <div className="flex-1">
                 <p className="text-xs text-muted">Total Sent</p>
@@ -305,8 +305,8 @@ export default function WhatsAppPage() {
           {/* Successful */}
           <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50 flex flex-col">
             <div className="flex items-start gap-3">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
-                <CheckCircle className="h-4 w-4 text-brand" />
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-100 shadow-sm">
+                <CheckCircle className="h-4 w-4 text-emerald-600" />
               </div>
               <div className="flex-1">
                 <p className="text-xs text-muted">Successful</p>
@@ -320,8 +320,8 @@ export default function WhatsAppPage() {
           {/* Failed */}
           <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50 flex flex-col">
             <div className="flex items-start gap-3">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
-                <AlertCircle className="h-4 w-4 text-brand" />
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-amber-100 shadow-sm">
+                <AlertCircle className="h-4 w-4 text-amber-600" />
               </div>
               <div className="flex-1">
                 <p className="text-xs text-muted">Failed</p>
@@ -335,8 +335,8 @@ export default function WhatsAppPage() {
           {/* Pending */}
           <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50 flex flex-col">
             <div className="flex items-start gap-3">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
-                <Clock className="h-4 w-4 text-brand" />
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-purple-100 shadow-sm">
+                <Clock className="h-4 w-4 text-purple-600" />
               </div>
               <div className="flex-1">
                 <p className="text-xs text-muted">Pending</p>
@@ -350,8 +350,8 @@ export default function WhatsAppPage() {
           {/* Channel Breakdown */}
           <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50 flex flex-col">
             <div className="flex items-start gap-3">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
-                <MessageCircle className="h-4 w-4 text-brand" />
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-rose-100 shadow-sm">
+                <MessageCircle className="h-4 w-4 text-rose-600" />
               </div>
               <div className="flex-1">
                 <p className="text-xs text-muted">By Channel</p>
@@ -372,8 +372,8 @@ export default function WhatsAppPage() {
         <div className="sm:hidden space-y-3">
           <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50">
             <div className="flex items-start gap-3">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
-                <TrendingUp className="h-4 w-4 text-brand" />
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-blue-100 shadow-sm">
+                <TrendingUp className="h-4 w-4 text-blue-600" />
               </div>
               <div className="flex-1">
                 <p className="text-xs text-muted">Total Sent</p>
@@ -384,8 +384,8 @@ export default function WhatsAppPage() {
           </div>
           <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50">
             <div className="flex items-start gap-3">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
-                <CheckCircle className="h-4 w-4 text-brand" />
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-100 shadow-sm">
+                <CheckCircle className="h-4 w-4 text-emerald-600" />
               </div>
               <div className="flex-1">
                 <p className="text-xs text-muted">Successful</p>
@@ -396,8 +396,8 @@ export default function WhatsAppPage() {
           </div>
           <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50">
             <div className="flex items-start gap-3">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
-                <AlertCircle className="h-4 w-4 text-brand" />
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-amber-100 shadow-sm">
+                <AlertCircle className="h-4 w-4 text-amber-600" />
               </div>
               <div className="flex-1">
                 <p className="text-xs text-muted">Failed</p>

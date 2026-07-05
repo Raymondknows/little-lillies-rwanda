@@ -32,9 +32,17 @@ export type ParentSession = {
   exp?: number;
 };
 
+function getSessionTokenFromJar(jar: Awaited<ReturnType<typeof cookies>>): string | undefined {
+  return (
+    jar.get(SESSION_COOKIE)?.value ||
+    jar.get("schoolbase_staff")?.value ||
+    jar.get("staff_session")?.value
+  );
+}
+
 export async function getStaffSession(): Promise<StaffSession | null> {
   const jar = await cookies();
-  const token = jar.get(SESSION_COOKIE)?.value;
+  const token = getSessionTokenFromJar(jar);
   if (!token) return null;
   try {
     const { payload } = await jwtVerify(token, secret());

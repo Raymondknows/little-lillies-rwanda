@@ -78,6 +78,15 @@ interface Term {
   id: string;
   name: string;
   sortOrder: number;
+  academicYearId: string;
+  isCurrent?: boolean;
+}
+
+interface AcademicYear {
+  id: string;
+  name: string;
+  isCurrent: boolean;
+  terms?: Term[];
 }
 
 const PHASE_CONFIG = {
@@ -85,6 +94,15 @@ const PHASE_CONFIG = {
   PRIMARY: { label: "Primary", color: "bg-blue-100 text-blue-800" },
   SECONDARY: { label: "Secondary", color: "bg-green-100 text-green-800" },
   ALL: { label: "All Phases", color: "bg-gray-100 text-gray-800" },
+};
+
+const GRADE_COLOR_MAP: Record<string, string> = {
+  A: '#0A66C2',
+  B: '#0F766E',
+  C: '#EAAB0C',
+  D: '#EA580C',
+  E: '#C2410C',
+  F: '#BE123C',
 };
 
 const PHASE_ORDER = ["ALL", "EARLY_YEARS", "PRIMARY", "SECONDARY"];
@@ -106,9 +124,13 @@ const emptyAnalyticsData = (): AnalyticsData => ({
 export default function AnalyticsPage() {
   const router = useRouter();
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
-  const [terms, setTerms] = useState<Term[]>([]);
+  const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
+  const [selectedAcademicYearId, setSelectedAcademicYearId] = useState<string>("");
   const [selectedTermId, setSelectedTermId] = useState<string>("");
+  const [allSections, setAllSections] = useState<Array<{ id: string; name: string; phase: string }>>([]);
+  const [selectedSectionId, setSelectedSectionId] = useState<string>("");
   const [loading, setLoading] = useState(true);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [subscriptionBlocked, setSubscriptionBlocked] = useState<{ reason: string } | null>(null);
   const [activePhase, setActivePhase] = useState("ALL");
@@ -116,39 +138,82 @@ export default function AnalyticsPage() {
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Fetch terms on mount
+  // Memoized filtered terms based on selected academic year
+  const filteredTerms = useMemo(() => {
+    if (!selectedAcademicYearId) return [];
+    const year = academicYears.find((y) => y.id === selectedAcademicYearId);
+    return year?.terms?.sort((a, b) => a.sortOrder - b.sortOrder) || [];
+  }, [academicYears, selectedAcademicYearId]);
+
+  // Fetch academic years and sections on mount
   useEffect(() => {
-    const fetchTerms = async () => {
+    const fetchInitialData = async () => {
       try {
         setLoading(true);
-        const response = await fetch("/api/admin/terms", {
+        // Fetch academic years (which include terms)
+        const yearsResponse = await fetch("/api/admin/academic-years", {
           credentials: "include",
           headers: { "Content-Type": "application/json" },
         });
-        if (!response.ok) throw new Error("Failed to fetch terms");
-        const data = await response.json();
-        setTerms(data.terms || []);
-        if (data.terms && data.terms.length > 0) {
-          setSelectedTermId(data.terms[0].id);
-        } else {
-          setSelectedTermId("");
-          setAnalytics(emptyAnalyticsData());
+        if (yearsResponse.ok) {
+          const yearsData = await yearsResponse.json();
+          const years = (yearsData.academicYears || []).sort(
+            (a: AcademicYear, b: AcademicYear) => {
+              if (a.isCurrent !== b.isCurrent) return a.isCurrent ? -1 : 1;
+              return b.name.localeCompare(a.name);
+            }
+          );
+          setAcademicYears(years);
+
+          // Set default academic year
+          const defaultYear = years.find((y: AcademicYear) => y.isCurrent) || years[0];
+          if (defaultYear) {
+            setSelectedAcademicYearId(defaultYear.id);
+            // Set default term from the selected year
+            const defaultTerm = defaultYear.terms?.[0];
+            if (defaultTerm) {
+              setSelectedTermId(defaultTerm.id);
+            }
+          }
+        }
+
+        // Fetch all classes/sections
+        const classesResponse = await fetch("/api/admin/classes/data", {
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+        });
+        if (classesResponse.ok) {
+          const classesData = await classesResponse.json();
+          setAllSections(classesData.classes || []);
         }
       } catch (err) {
-        console.error("Error fetching terms:", err);
-        setError(err instanceof Error ? err.message : "Failed to load terms");
+        console.error("Error fetching initial data:", err);
+        setError(err instanceof Error ? err.message : "Failed to load data");
         setAnalytics(emptyAnalyticsData());
       } finally {
         setLoading(false);
       }
     };
-    fetchTerms();
+    fetchInitialData();
   }, []);
 
-  // Fetch analytics when term or phase changes
+  // Update term when academic year changes
+  useEffect(() => {
+    if (!selectedAcademicYearId) {
+      setSelectedTermId("");
+      return;
+    }
+    const terms = filteredTerms;
+    if (terms.length > 0 && !terms.some((t) => t.id === selectedTermId)) {
+      setSelectedTermId(terms[0].id);
+    }
+  }, [selectedAcademicYearId, filteredTerms]);
+
+
+  // Fetch analytics when term, phase, or section changes
   useEffect(() => {
     if (!selectedTermId) {
-      setLoading(false);
+      setAnalyticsLoading(false);
       setError(null);
       setAnalytics(emptyAnalyticsData());
       return;
@@ -156,12 +221,20 @@ export default function AnalyticsPage() {
 
     const fetchAnalytics = async () => {
       try {
-        setLoading(true);
+        setAnalyticsLoading(true);
         setError(null);
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-        
-        const url = `/api/admin/analytics/data?termId=${selectedTermId}&phase=${activePhase}`;
+
+        const query = new URLSearchParams({
+          termId: selectedTermId,
+          phase: activePhase,
+        });
+        if (selectedSectionId) {
+          query.set('classId', selectedSectionId);
+        }
+
+        const url = `/api/admin/analytics/data?${query.toString()}`;
         const response = await fetch(url, {
           credentials: "include",
           headers: { "Content-Type": "application/json" },
@@ -184,6 +257,8 @@ export default function AnalyticsPage() {
         }
         
         const data = await response.json();
+        
+        console.log('[ANALYTICS] Response:', { classes: data.classes?.length, subjects: data.subjects?.length, results: data.schoolAnalytics?.totalResults });
         
         // Validate and set analytics with defaults if data is incomplete
         if (data && data.schoolAnalytics) {
@@ -214,12 +289,12 @@ export default function AnalyticsPage() {
         }
         setAnalytics(emptyAnalyticsData());
       } finally {
-        setLoading(false);
+        setAnalyticsLoading(false);
       }
     };
 
     fetchAnalytics();
-  }, [selectedTermId, activePhase]);
+  }, [selectedTermId, activePhase, selectedSectionId]);
 
   // Filter classes by phase
   const filteredClasses = useMemo(() => {
@@ -254,7 +329,12 @@ export default function AnalyticsPage() {
     setCurrentPage(1);
   };
 
-  if (loading) {
+  const handleSectionChange = (sectionId: string) => {
+    setSelectedSectionId(sectionId);
+    setCurrentPage(1);
+  };
+
+  if (loading && academicYears.length === 0) {
     return (
       <div className="min-h-screen bg-background">
         <AdminSkeleton />
@@ -266,13 +346,13 @@ export default function AnalyticsPage() {
     return <SubscriptionModal reason={subscriptionBlocked.reason} />;
   }
 
-  if (terms.length === 0) {
+  if (academicYears.length === 0) {
     return (
       <div className="rounded-lg border border-yellow-300 bg-yellow-50 p-6 flex gap-3">
         <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
         <div>
-          <h3 className="font-semibold text-yellow-900">No Academic Terms</h3>
-          <p className="text-sm text-yellow-700 mt-1">Please create an academic term first before viewing analytics.</p>
+          <h3 className="font-semibold text-yellow-900">No Academic Years</h3>
+          <p className="text-sm text-yellow-700 mt-1">Please create an academic year first before viewing analytics.</p>
         </div>
       </div>
     );
@@ -282,26 +362,67 @@ export default function AnalyticsPage() {
     return (
       <div className="space-y-6 pb-8">
         <div className="border-b border-slate-200 pb-6">
-          <div className="flex items-start justify-between gap-4 mb-4">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between mb-4">
             <div>
               <h1 className="text-4xl font-bold text-slate-900">School Analytics</h1>
               <p className="mt-1 text-sm text-slate-600">Real-time performance insights and academic metrics</p>
             </div>
-            <div className="min-w-[220px]">
-              <label className="block text-sm font-medium text-slate-900 mb-2">Select Term</label>
-              <select
-                value={selectedTermId}
-                onChange={(e) => setSelectedTermId(e.target.value)}
-                className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 bg-white"
-                style={{ '--tw-ring-color': '#0A66C2' } as React.CSSProperties}
-              >
-                <option value="">Choose a term...</option>
-                {terms.map((term) => (
-                  <option key={term.id} value={term.id}>
-                    {term.name}
-                  </option>
-                ))}
-              </select>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 w-full lg:w-auto lg:max-w-[720px]">
+              <div>
+                <label className="block text-sm font-medium text-slate-900 mb-2">Academic Year</label>
+                <select
+                  value={selectedAcademicYearId}
+                  onChange={(e) => setSelectedAcademicYearId(e.target.value)}
+                  disabled={analyticsLoading}
+                  className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 bg-white disabled:bg-slate-50 disabled:text-slate-500"
+                  style={{ '--tw-ring-color': '#0A66C2' } as React.CSSProperties}
+                >
+                  <option value="">Choose a year...</option>
+                  {academicYears.map((year) => (
+                    <option key={year.id} value={year.id}>
+                      {year.name}{year.isCurrent ? ' (Current)' : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {filteredTerms.length > 0 && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Term</label>
+                  <select
+                    value={selectedTermId}
+                    onChange={(e) => setSelectedTermId(e.target.value)}
+                    disabled={analyticsLoading}
+                    className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 bg-white disabled:bg-slate-50 disabled:text-slate-500"
+                    style={{ '--tw-ring-color': '#0A66C2' } as React.CSSProperties}
+                  >
+                    <option value="">Choose a term...</option>
+                    {filteredTerms.map((term) => (
+                      <option key={term.id} value={term.id}>
+                        {term.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              {allSections.length > 0 && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Class</label>
+                  <select
+                    value={selectedSectionId}
+                    onChange={(e) => handleSectionChange(e.target.value)}
+                    disabled={analyticsLoading || !selectedTermId}
+                    className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 bg-white disabled:bg-slate-50 disabled:text-slate-500"
+                    style={{ '--tw-ring-color': '#0A66C2' } as React.CSSProperties}
+                  >
+                    <option value="">All classes</option>
+                    {allSections.map((section) => (
+                      <option key={section.id} value={section.id}>
+                        {section.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -353,26 +474,67 @@ export default function AnalyticsPage() {
       <div className="space-y-6 pb-8">
         {/* Header with Term Dropdown */}
         <div className="border-b border-slate-200 pb-6">
-          <div className="flex items-start justify-between gap-4 mb-4">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between mb-4">
             <div>
               <h1 className="text-4xl font-bold text-slate-900">School Analytics</h1>
               <p className="mt-1 text-sm text-slate-600">Real-time performance insights and academic metrics</p>
             </div>
-            <div className="min-w-[220px]">
-              <label className="block text-sm font-medium text-slate-900 mb-2">Select Term</label>
-              <select
-                value={selectedTermId}
-                onChange={(e) => setSelectedTermId(e.target.value)}
-                className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 bg-white"
-                style={{ '--tw-ring-color': '#0A66C2' } as React.CSSProperties}
-              >
-                <option value="">Choose a term...</option>
-                {terms.map((term) => (
-                  <option key={term.id} value={term.id}>
-                    {term.name}
-                  </option>
-                ))}
-              </select>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 w-full lg:w-auto lg:max-w-[720px]">
+              <div>
+                <label className="block text-sm font-medium text-slate-900 mb-2">Academic Year</label>
+                <select
+                  value={selectedAcademicYearId}
+                  onChange={(e) => setSelectedAcademicYearId(e.target.value)}
+                  disabled={analyticsLoading}
+                  className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 bg-white disabled:bg-slate-50 disabled:text-slate-500"
+                  style={{ '--tw-ring-color': '#0A66C2' } as React.CSSProperties}
+                >
+                  <option value="">Choose a year...</option>
+                  {academicYears.map((year) => (
+                    <option key={year.id} value={year.id}>
+                      {year.name}{year.isCurrent ? ' (Current)' : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {filteredTerms.length > 0 && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Term</label>
+                  <select
+                    value={selectedTermId}
+                    onChange={(e) => setSelectedTermId(e.target.value)}
+                    disabled={analyticsLoading}
+                    className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 bg-white disabled:bg-slate-50 disabled:text-slate-500"
+                    style={{ '--tw-ring-color': '#0A66C2' } as React.CSSProperties}
+                  >
+                    <option value="">Choose a term...</option>
+                    {filteredTerms.map((term: Term) => (
+                      <option key={term.id} value={term.id}>
+                        {term.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              {allSections.length > 0 && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Class</label>
+                  <select
+                    value={selectedSectionId}
+                    onChange={(e) => handleSectionChange(e.target.value)}
+                    disabled={analyticsLoading || !selectedTermId}
+                    className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 bg-white disabled:bg-slate-50 disabled:text-slate-500"
+                    style={{ '--tw-ring-color': '#0A66C2' } as React.CSSProperties}
+                  >
+                    <option value="">All classes</option>
+                    {allSections.map((section) => (
+                      <option key={section.id} value={section.id}>
+                        {section.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -406,72 +568,125 @@ export default function AnalyticsPage() {
 
   return (
     <div className="space-y-6 pb-8">
-      {/* Header with Term Dropdown */}
+      {/* Header with Academic Year, Term, and Class Dropdowns */}
       <div className="border-b border-slate-200 pb-6">
-        <div className="flex items-start justify-between gap-4 mb-4">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between mb-4">
           <div>
             <h1 className="text-4xl font-bold text-slate-900">School Analytics</h1>
             <p className="mt-1 text-sm text-slate-600">Real-time performance insights and academic metrics</p>
           </div>
-          <div className="min-w-[220px]">
-            <label className="block text-sm font-medium text-slate-900 mb-2">Select Term</label>
-            <select
-              value={selectedTermId}
-              onChange={(e) => setSelectedTermId(e.target.value)}
-              className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 bg-white"
-              style={{ '--tw-ring-color': '#0A66C2' } as React.CSSProperties}
-            >
-              <option value="">Choose a term...</option>
-              {terms.map((term) => (
-                <option key={term.id} value={term.id}>
-                  {term.name}
-                </option>
-              ))}
-            </select>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 w-full lg:w-auto lg:max-w-[720px]">
+            <div>
+              <label className="block text-sm font-medium text-slate-900 mb-2">Academic Year</label>
+              <select
+                value={selectedAcademicYearId}
+                onChange={(e) => setSelectedAcademicYearId(e.target.value)}
+                disabled={analyticsLoading}
+                className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 bg-white disabled:bg-slate-50 disabled:text-slate-500"
+                style={{ '--tw-ring-color': '#0A66C2' } as React.CSSProperties}
+              >
+                  <option value="">Choose a year...</option>
+                  {academicYears.map((year) => (
+                    <option key={year.id} value={year.id}>
+                      {year.name}{year.isCurrent ? ' (Current)' : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {filteredTerms.length > 0 && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Term</label>
+                  <select
+                    value={selectedTermId}
+                    onChange={(e) => setSelectedTermId(e.target.value)}
+                    disabled={analyticsLoading}
+                    className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 bg-white disabled:bg-slate-50 disabled:text-slate-500"
+                    style={{ '--tw-ring-color': '#0A66C2' } as React.CSSProperties}
+                  >
+                    <option value="">Choose a term...</option>
+                    {filteredTerms.map((term: Term) => (
+                      <option key={term.id} value={term.id}>
+                        {term.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              {allSections.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-slate-900 mb-2">Class</label>
+                <select
+                  value={selectedSectionId}
+                  onChange={(e) => handleSectionChange(e.target.value)}
+                  disabled={analyticsLoading || !selectedTermId}
+                  className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 bg-white disabled:bg-slate-50 disabled:text-slate-500"
+                  style={{ '--tw-ring-color': '#0A66C2' } as React.CSSProperties}
+                >
+                  <option value="">All classes</option>
+                  {allSections.map((section) => (
+                    <option key={section.id} value={section.id}>
+                      {section.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* Quick Action Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* School Average */}
-        <div className="rounded-lg border border-slate-200 p-6 hover:shadow-md transition-shadow" style={{ backgroundColor: '#F0F5FF' }}>
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-sm font-medium text-slate-600">School Average</p>
-            <TrendingUp className="w-5 h-5" style={{ color: '#0A66C2' }} />
+        <div className="group rounded-lg border border-border bg-surface p-5 shadow-sm transition hover:border-brand/50 hover:shadow-md">
+          <div className="flex items-start gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-100 text-blue-800">
+              <TrendingUp className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">School Average</p>
+              <p className="mt-3 text-3xl font-semibold text-foreground">{schoolAnalytics.schoolAverage.toFixed(1)}</p>
+            </div>
           </div>
-          <p className="text-4xl font-bold" style={{ color: '#0A66C2' }}>{schoolAnalytics.schoolAverage.toFixed(1)}</p>
-          <p className="text-xs mt-2" style={{ color: '#0A66C2' }}>Out of 100</p>
+          <p className="mt-4 text-xs text-muted">Out of 100</p>
         </div>
 
-        {/* Pass Rate */}
-        <div className="rounded-lg border border-slate-200 p-6 hover:shadow-md transition-shadow" style={{ backgroundColor: '#F0FFF4' }}>
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-sm font-medium text-slate-600">Pass Rate</p>
-            <Activity className="w-5 h-5 text-green-600" />
+        <div className="group rounded-lg border border-border bg-surface p-5 shadow-sm transition hover:border-brand/50 hover:shadow-md">
+          <div className="flex items-start gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
+              <Activity className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Pass Rate</p>
+              <p className="mt-3 text-3xl font-semibold text-foreground">{schoolAnalytics.passRate.toFixed(1)}%</p>
+            </div>
           </div>
-          <p className="text-4xl font-bold text-green-900">{schoolAnalytics.passRate.toFixed(1)}%</p>
-          <p className="text-xs text-green-700 mt-2">Passing students</p>
+          <p className="mt-4 text-xs text-muted">Passing students</p>
         </div>
 
-        {/* Total Results */}
-        <div className="rounded-lg border border-slate-200 p-6 hover:shadow-md transition-shadow" style={{ backgroundColor: '#F5F0FF' }}>
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-sm font-medium text-slate-600">Total Results</p>
-            <BarChart3 className="w-5 h-5 text-purple-600" />
+        <div className="group rounded-lg border border-border bg-surface p-5 shadow-sm transition hover:border-brand/50 hover:shadow-md">
+          <div className="flex items-start gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-purple-100 text-purple-800">
+              <BarChart3 className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Total Results</p>
+              <p className="mt-3 text-3xl font-semibold text-foreground">{schoolAnalytics.totalResults}</p>
+            </div>
           </div>
-          <p className="text-4xl font-bold text-purple-900">{schoolAnalytics.totalResults}</p>
-          <p className="text-xs text-purple-700 mt-2">Published assessments</p>
+          <p className="mt-4 text-xs text-muted">Published assessments</p>
         </div>
 
-        {/* Subjects Count */}
-        <div className="rounded-lg border border-slate-200 bg-gradient-to-br from-orange-50 to-orange-100 p-6 hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-sm font-medium text-slate-600">Subjects</p>
-            <BookOpen className="w-5 h-5 text-orange-600" />
+        <div className="group rounded-lg border border-border bg-surface p-5 shadow-sm transition hover:border-brand/50 hover:shadow-md">
+          <div className="flex items-start gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-orange-100 text-orange-800">
+              <BookOpen className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Subjects</p>
+              <p className="mt-3 text-3xl font-semibold text-foreground">{subjects.length}</p>
+            </div>
           </div>
-          <p className="text-4xl font-bold text-orange-900">{subjects.length}</p>
-          <p className="text-xs text-orange-700 mt-2">Total subjects</p>
+          <p className="mt-4 text-xs text-muted">Total subjects</p>
         </div>
       </div>
 
@@ -485,15 +700,17 @@ export default function AnalyticsPage() {
               <button
                 key={phase}
                 onClick={() => handlePhaseChange(phase)}
-                className={`px-6 py-4 font-medium text-sm whitespace-nowrap border-b-2 transition-colors ${
+                className={`px-6 py-4 font-medium text-sm whitespace-nowrap border-b-2 transition-colors flex items-center gap-2 ${
                   activePhase === phase
-                    ? 'border-transparent text-white bg-white'
+                    ? 'text-white'
                     : 'border-transparent text-slate-600 hover:text-slate-900'
                 }`}
-                style={activePhase === phase ? { backgroundColor: '#0A66C2', color: 'white', borderColor: '#0A66C2' } : {}}
+                style={activePhase === phase ? { backgroundColor: '#0A66C2', color: 'white', borderBottomColor: '#0A66C2' } : {}}
               >
                 {phaseLabel}
-                <span className="ml-2 inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 text-xs font-semibold">
+                <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold ${
+                  activePhase === phase ? 'bg-blue-700 text-white' : 'bg-slate-200 text-slate-700'
+                }`}>
                   {count}
                 </span>
               </button>
@@ -531,7 +748,7 @@ export default function AnalyticsPage() {
                 <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all"
-                    style={{ width: `${percentage}%`, backgroundColor: '#0A66C2' }}
+                    style={{ width: `${percentage}%`, backgroundColor: GRADE_COLOR_MAP[grade] || '#0A66C2' }}
                   />
                 </div>
               </div>
@@ -539,87 +756,89 @@ export default function AnalyticsPage() {
           })}
         </div>
       </div>
-
-      {/* Classes Overview with Filters */}
-      <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
-        <div className="bg-slate-50 px-6 py-4 border-b border-slate-200">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Users className="h-5 w-5 text-slate-600" />
-              <h2 className="text-lg font-semibold text-slate-900">Classes</h2>
-              <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-200 text-xs font-bold text-slate-700">
-                {filteredClasses.length}
-              </span>
+      {/* Classes and Subjects Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Classes Overview with Filters */}
+        <div className="group rounded-lg border border-border bg-surface shadow-sm transition hover:border-brand/50 hover:shadow-md overflow-hidden">
+          <div className="bg-surface px-6 py-4 border-b border-border">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Users className="h-5 w-5 text-slate-600" />
+                <h2 className="text-lg font-semibold text-slate-900">Classes</h2>
+                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-200 text-xs font-bold text-slate-700">
+                  {filteredClasses.length}
+                </span>
+              </div>
+              <button onClick={() => router.push("/admin/analytics/classes")} className="flex items-center gap-2 px-4 py-2 text-sm text-white rounded-lg transition font-medium" style={{ backgroundColor: '#0A66C2' }}>
+                <span>View All</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
             </div>
-            <button onClick={() => router.push("/admin/analytics/classes")} className="flex items-center gap-2 px-4 py-2 text-sm text-white rounded-lg transition font-medium" style={{ backgroundColor: '#0A66C2' }}>
+          </div>
+
+          {/* Classes Table - Show only 3 */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50">
+                  <th className="px-6 py-3 text-left font-semibold text-slate-900">Class Name</th>
+                  <th className="px-6 py-3 text-left font-semibold text-slate-900">Phase</th>
+                  <th className="px-6 py-3 text-right font-semibold text-slate-900">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedClasses.slice(0, 3).length > 0 ? (
+                  paginatedClasses.slice(0, 3).map((cls, idx) => (
+                    <tr key={idx} className="border-b border-slate-200 hover:bg-slate-50 transition">
+                      <td className="px-6 py-3 font-medium text-slate-900">{cls.name}</td>
+                      <td className="px-6 py-3">
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${PHASE_CONFIG[cls.phase as keyof typeof PHASE_CONFIG]?.color || 'bg-gray-100 text-gray-800'}`}>
+                          {PHASE_CONFIG[cls.phase as keyof typeof PHASE_CONFIG]?.label || cls.phase}
+                        </span>
+                      </td>
+                      <td className="px-6 py-3 text-right">
+                        <button className="font-medium text-sm" style={{ color: '#0A66C2' }}>
+                          View Details →
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={3} className="px-6 py-8 text-center text-slate-600">
+                      No classes found
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Subjects Overview */}
+        <div className="rounded-lg border border-slate-200 bg-white overflow-hidden shadow-sm transition hover:shadow-md">
+          <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <BookOpen className="h-5 w-5 text-slate-600" />
+              <h2 className="text-lg font-semibold text-slate-900">Subjects ({subjects.length})</h2>
+            </div>
+            <button onClick={() => router.push("/admin/analytics/subjects")} className="flex items-center gap-2 px-4 py-2 text-sm text-white rounded-lg transition font-medium" style={{ backgroundColor: '#0A66C2' }}>
               <span>View All</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
-        </div>
-
-        {/* Classes Table - Show only 3 */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-slate-200 bg-slate-50">
-                <th className="px-6 py-3 text-left font-semibold text-slate-900">Class Name</th>
-                <th className="px-6 py-3 text-left font-semibold text-slate-900">Phase</th>
-                <th className="px-6 py-3 text-right font-semibold text-slate-900">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginatedClasses.slice(0, 3).length > 0 ? (
-                paginatedClasses.slice(0, 3).map((cls, idx) => (
-                  <tr key={idx} className="border-b border-slate-200 hover:bg-slate-50 transition">
-                    <td className="px-6 py-3 font-medium text-slate-900">{cls.name}</td>
-                    <td className="px-6 py-3">
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${PHASE_CONFIG[cls.phase as keyof typeof PHASE_CONFIG]?.color || 'bg-gray-100 text-gray-800'}`}>
-                        {PHASE_CONFIG[cls.phase as keyof typeof PHASE_CONFIG]?.label || cls.phase}
-                      </span>
-                    </td>
-                    <td className="px-6 py-3 text-right">
-                      <button className="font-medium text-sm" style={{ color: '#0A66C2' }}>
-                        View Details →
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={3} className="px-6 py-8 text-center text-slate-600">
-                    No classes found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Subjects Overview */}
-      <div className="rounded-lg border border-slate-200 bg-white p-6 hover:shadow-sm transition-shadow">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <BookOpen className="h-5 w-5 text-slate-600" />
-            <h2 className="text-lg font-semibold text-slate-900">Subjects ({subjects.length})</h2>
+          <div className="divide-y divide-slate-200">
+            {subjects.length > 0 ? (
+              subjects.slice(0, 3).map((subject) => (
+                <div key={subject.id} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50 transition">
+                  <p className="text-sm font-medium text-slate-900">{subject.name}</p>
+                  <ChevronDown className="w-4 h-4 text-slate-400" />
+                </div>
+              ))
+            ) : (
+              <div className="px-6 py-4 text-sm text-slate-600">No subjects available</div>
+            )}
           </div>
-          <button onClick={() => router.push("/admin/analytics/subjects")} className="flex items-center gap-2 px-4 py-2 text-sm text-white rounded-lg transition font-medium" style={{ backgroundColor: '#0A66C2' }}>
-            <span>View All</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {subjects.length > 0 ? (
-            subjects.slice(0, 3).map((subject) => (
-              <div key={subject.id} className="flex items-center justify-between p-3 border border-slate-100 rounded-lg hover:bg-slate-50 transition">
-                <p className="text-sm font-medium text-slate-900">{subject.name}</p>
-                <ChevronDown className="w-4 h-4 text-slate-400" />
-              </div>
-            ))
-          ) : (
-            <p className="text-sm text-slate-600 col-span-full">No subjects available</p>
-          )}
         </div>
       </div>
 

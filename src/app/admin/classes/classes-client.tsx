@@ -344,8 +344,8 @@ export default function ClassesPageClient({ classes: initialClasses }: { classes
           <div className="hidden sm:grid grid-cols-3 gap-4">
             <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md h-full cursor-pointer hover:border-brand/50 flex flex-col">
               <div className="flex items-start gap-3">
-                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
-                  <LayoutGrid className="h-4 w-4 text-brand" />
+                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-blue-100 shadow-sm">
+                  <LayoutGrid className="h-4 w-4 text-blue-600" />
                 </div>
                 <div className="flex-1">
                   <p className="text-xs text-muted">Total Classes</p>
@@ -358,8 +358,8 @@ export default function ClassesPageClient({ classes: initialClasses }: { classes
 
             <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md h-full cursor-pointer hover:border-brand/50 flex flex-col">
               <div className="flex items-start gap-3">
-                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
-                  <Users className="h-4 w-4 text-brand" />
+                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-purple-100 shadow-sm">
+                  <Users className="h-4 w-4 text-purple-600" />
                 </div>
                 <div className="flex-1">
                   <p className="text-xs text-muted">Total Students</p>
@@ -372,8 +372,8 @@ export default function ClassesPageClient({ classes: initialClasses }: { classes
 
             <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md h-full cursor-pointer hover:border-brand/50 flex flex-col">
               <div className="flex items-start gap-3">
-                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
-                  <BookOpen className="h-4 w-4 text-brand" />
+                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-amber-100 shadow-sm">
+                  <BookOpen className="h-4 w-4 text-amber-600" />
                 </div>
                 <div className="flex-1">
                   <p className="text-xs text-muted">Total Subjects</p>
@@ -389,8 +389,8 @@ export default function ClassesPageClient({ classes: initialClasses }: { classes
           <div className="sm:hidden space-y-3">
             <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50">
               <div className="flex items-start gap-3">
-                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
-                  <LayoutGrid className="h-4 w-4 text-brand" />
+                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-blue-100 shadow-sm">
+                  <LayoutGrid className="h-4 w-4 text-blue-600" />
                 </div>
                 <div className="flex-1">
                   <p className="text-xs text-muted">Total Classes</p>
@@ -403,8 +403,8 @@ export default function ClassesPageClient({ classes: initialClasses }: { classes
 
             <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50">
               <div className="flex items-start gap-3">
-                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
-                  <Users className="h-4 w-4 text-brand" />
+                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-purple-100 shadow-sm">
+                  <Users className="h-4 w-4 text-purple-600" />
                 </div>
                 <div className="flex-1">
                   <p className="text-xs text-muted">Total Students</p>
@@ -417,8 +417,8 @@ export default function ClassesPageClient({ classes: initialClasses }: { classes
 
             <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50">
               <div className="flex items-start gap-3">
-                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
-                  <BookOpen className="h-4 w-4 text-brand" />
+                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-amber-100 shadow-sm">
+                  <BookOpen className="h-4 w-4 text-amber-600" />
                 </div>
                 <div className="flex-1">
                   <p className="text-xs text-muted">Total Subjects</p>

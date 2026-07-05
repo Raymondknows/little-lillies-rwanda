@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState, useMemo } from 'react';
 import { AlertCircle, BookOpen, TrendingUp, CheckCircle, Grid3X3, List } from 'lucide-react';
 import { getBackendUrl } from '@/lib/backend-url';
@@ -270,12 +271,12 @@ export default function SubjectsPage() {
                   {subject.code && <p className="text-xs text-muted mt-1">Code: {subject.code}</p>}
                 </div>
               </div>
-              <a
-                href={`#`}
+              <Link
+                href="/teacher/results"
                 className="inline-flex items-center justify-center rounded-lg bg-brand px-4 py-2 text-xs font-medium text-white hover:bg-brand/90 transition-colors w-full"
               >
                 View Results
-              </a>
+              </Link>
             </div>
           ))}
         </div>
@@ -298,12 +299,12 @@ export default function SubjectsPage() {
                   <td className="px-4 py-3 font-medium text-foreground">{subject.name}</td>
                   <td className="px-4 py-3 text-muted text-sm">{subject.code || '—'}</td>
                   <td className="px-4 py-3">
-                    <a
-                      href={`#`}
+                    <Link
+                      href="/teacher/results"
                       className="inline-flex items-center justify-center rounded-full border border-border bg-white px-3 py-1 text-xs font-semibold text-brand transition hover:bg-brand/5"
                     >
                       Results
-                    </a>
+                    </Link>
                   </td>
                 </tr>
               ))}
@@ -326,12 +327,12 @@ export default function SubjectsPage() {
                   {subject.code && <p className="text-xs text-muted mt-1">Code: {subject.code}</p>}
                 </div>
               </div>
-              <a
-                href={`#`}
+              <Link
+                href="/teacher/results"
                 className="inline-flex items-center justify-center rounded-full border border-border bg-white px-2.5 py-1 text-xs font-semibold text-brand transition hover:bg-brand/5"
               >
                 Results
-              </a>
+              </Link>
             </div>
           ))}
         </div>

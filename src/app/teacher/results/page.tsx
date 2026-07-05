@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from 'next/navigation';
 import TeacherResultsEnhancedClient from "./results-client";
 import { useAssessmentData } from "@/lib/hooks/useAssessmentData";
 import SubscriptionModal from "@/components/subscription-modal";
@@ -9,6 +10,8 @@ export default function ResultsPage() {
   const { data, loading, error, subscriptionBlocked } = useAssessmentData({
     endpoint: "/api/teacher/assessments",
   });
+  const searchParams = useSearchParams();
+  const initialSubject = searchParams?.get('subject') ?? undefined;
 
   const assessments = data?.assessments || [];
   const sessions = data?.sessions || [];
@@ -32,5 +35,5 @@ export default function ResultsPage() {
     );
   }
 
-  return <TeacherResultsEnhancedClient assessments={assessments} sessions={sessions} />;
+  return <TeacherResultsEnhancedClient assessments={assessments} sessions={sessions} initialSubject={initialSubject} />;
 }

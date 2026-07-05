@@ -94,13 +94,15 @@ interface Assessment {
 export default function TeacherResultsEnhancedClient({
   assessments,
   sessions = [],
+  initialSubject,
 }: {
   assessments: Assessment[];
   sessions?: any[];
+  initialSubject?: string | null;
 }) {
   const [activePhase, setActivePhase] = useState("ALL");
   const [activeStatus, setActiveStatus] = useState("ALL");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(initialSubject ?? "");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedSession, setSelectedSession] = useState(() => getDefaultSessionOption(assessments, sessions));
   const [selectedTerm, setSelectedTerm] = useState(() => getDefaultTermOption(assessments, getDefaultSessionOption(assessments, sessions)));
@@ -229,6 +231,16 @@ export default function TeacherResultsEnhancedClient({
           Manage, review, and publish student assessment results with professional reporting
         </p>
       </div>
+
+      {filteredAssessments.length === 0 && (searchQuery || initialSubject) && (
+        <div className="rounded-lg border border-border bg-yellow-50 p-4">
+          <p className="text-sm text-amber-900 font-semibold">No assessments found for "{searchQuery || initialSubject}"</p>
+          <p className="text-sm text-amber-900 mt-1">If you expected to see an assessment for this subject, it may not have been created yet. Contact your administrator or check the assessments list.</p>
+          <div className="mt-3">
+            <Link href="/teacher/results" className="inline-flex items-center gap-2 rounded-lg bg-white border border-border px-3 py-2 text-sm font-medium text-brand hover:bg-brand/5">View all assessments</Link>
+          </div>
+        </div>
+      )}
 
       {/* Quick Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

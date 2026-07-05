@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Fragment, useEffect, useState, use } from "react";
+import { Fragment, use, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, Save, AlertCircle, CheckCircle } from "lucide-react";
@@ -74,10 +75,53 @@ export default function TeacherSubjectScoresPage({
     typeof subjectId === "string" ? decodeURIComponent(subjectId) : ""
   );
 
+  const router = useRouter();
+
+  const fetchAssessment = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(
+        `/api/teacher/assessments/${id}?subjectId=${encodeURIComponent(subjectId)}`
+      );
+      if (!response.ok) throw new Error("Failed to fetch assessment");
+      const data = await response.json();
+      setAssessment(data.assessment);
+
+      const seenPupils = new Set<string>();
+      const uniqueResults: AssessmentResult[] = [];
+
+      data.assessment.results.forEach((result: AssessmentResult) => {
+        if (!seenPupils.has(result.pupilId)) {
+          seenPupils.add(result.pupilId);
+          uniqueResults.push(result);
+        }
+      });
+
+      const initialScores: Record<string, ScoreEntry> = {};
+      uniqueResults.forEach((result: AssessmentResult) => {
+        initialScores[result.pupilId] = {
+          pupilId: result.pupilId,
+          caScore: result.caScore,
+          testScore: result.testScore,
+          examScore: result.examScore,
+        };
+      });
+
+      setResults(uniqueResults);
+      setScores(initialScores);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unknown error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     const fetchSubjectName = async () => {
       try {
-        const response = await fetch("/api/teacher/subjects");
+        const response = await fetch(
+          `/api/teacher/subjects?assessmentId=${encodeURIComponent(id)}`
+        );
         if (!response.ok) return;
 
         const data = await response.json();
@@ -90,45 +134,6 @@ export default function TeacherSubjectScoresPage({
         }
       } catch {
         // Keep the fallback label based on the ID.
-      }
-    };
-
-    const fetchAssessment = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(
-          `/api/teacher/assessments/${id}?subjectId=${encodeURIComponent(subjectId)}`
-        );
-        if (!response.ok) throw new Error("Failed to fetch assessment");
-        const data = await response.json();
-        setAssessment(data.assessment);
-
-        const seenPupils = new Set<string>();
-        const uniqueResults: AssessmentResult[] = [];
-
-        data.assessment.results.forEach((result: AssessmentResult) => {
-          if (!seenPupils.has(result.pupilId)) {
-            seenPupils.add(result.pupilId);
-            uniqueResults.push(result);
-          }
-        });
-
-        const initialScores: Record<string, ScoreEntry> = {};
-        uniqueResults.forEach((result: AssessmentResult) => {
-          initialScores[result.pupilId] = {
-            pupilId: result.pupilId,
-            caScore: result.caScore,
-            testScore: result.testScore,
-            examScore: result.examScore,
-          };
-        });
-
-        setResults(uniqueResults);
-        setScores(initialScores);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Unknown error");
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -227,9 +232,7 @@ export default function TeacherSubjectScoresPage({
       }
 
       setMessage({ type: "success", text: "Scores saved successfully!" });
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
+      await fetchAssessment();
     } catch (err) {
       setMessage({
         type: "error",

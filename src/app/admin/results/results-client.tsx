@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   FileText,
   CheckCircle2,
@@ -12,6 +13,7 @@ import Link from "next/link";
 import { PublishButton } from "@/components/admin/publish-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ErrorModal } from "@/components/ui/error-modal";
 import { UserGuide } from "@/components/ui/user-guide";
 import { resultStatusLabel } from "@/lib/format";
 
@@ -131,6 +133,7 @@ const getDefaultTermOption = (assessments: any[], selectedSession: string) => {
 };
 
 export default function ResultsPageClient({ assessments, sessions = [] }: { assessments: any[]; sessions?: any[] }) {
+  const router = useRouter();
   const [activePhase, setActivePhase] = useState("ALL");
   const [activeStatus, setActiveStatus] = useState("ALL");
   const [selectedSession, setSelectedSession] = useState(() => getDefaultSessionOption(assessments, sessions));
@@ -139,6 +142,12 @@ export default function ResultsPageClient({ assessments, sessions = [] }: { asse
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [approvingId, setApprovingId] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalMessage, setModalMessage] = useState<string | null>(null);
+  const [modalTitle, setModalTitle] = useState<string | undefined>(undefined);
+  const [modalType, setModalType] = useState<'success' | 'error'>('error');
+  const [modalDetails, setModalDetails] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     if (isSearchOpen && searchInputRef.current) {
@@ -397,6 +406,15 @@ export default function ResultsPageClient({ assessments, sessions = [] }: { asse
         {filteredAssessments.length} assessment{filteredAssessments.length !== 1 ? "s" : ""}
         {searchQuery && <span className="hidden sm:inline"> matching "{searchQuery}"</span>}
       </div>
+      <ErrorModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title={modalTitle}
+        message={modalMessage || ''}
+        details={modalDetails}
+        type={modalType}
+        confirmLabel={modalType === 'success' ? 'Okay' : 'Review'}
+      />
 
       {/* Assessments Table */}
       {paginatedAssessments.length > 0 ? (
@@ -471,6 +489,52 @@ export default function ResultsPageClient({ assessments, sessions = [] }: { asse
                             {isPublished ? "View" : "Manage"}
                             <ChevronRight className="w-3 h-3" />
                           </Link>
+                            {a.status === 'DRAFT' && (
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                onClick={async () => {
+                                  setApprovingId(a.id);
+                                  try {
+                                                            const res = await fetch(`/api/admin/assessments/${a.id}/approve`, {
+                                      method: 'POST',
+                                      credentials: 'include',
+                                      headers: {
+                                        'Content-Type': 'application/json',
+                                      },
+                                    });
+                                    const responseBody = await res.json().catch(() => null);
+                                    if (!res.ok) {
+                                      const errText = responseBody?.error || responseBody?.message || 'Failed to approve';
+                                      const details = responseBody?.details?.reason || undefined;
+                                      setModalTitle('Approval Failed');
+                                      setModalType('error');
+                                      setModalMessage(errText);
+                                      setModalDetails(details);
+                                      setModalOpen(true);
+                                      throw new Error(errText);
+                                    }
+
+                                    setModalTitle('Approval Complete');
+                                    setModalType('success');
+                                    setModalMessage('Assessment approved and ready to publish.');
+                                    setModalDetails(undefined);
+                                    setModalOpen(true);
+                                    setApprovingId(null);
+                                    router.refresh();
+                                  } catch (err) {
+                                    if (!(err instanceof Error && err.message === 'Failed to approve')) {
+                                      // error already surfaced in modal
+                                    }
+                                    setApprovingId(null);
+                                  }
+                                }}
+                                disabled={approvingId === a.id}
+                                className="text-xs sm:text-sm"
+                              >
+                                Approve
+                              </Button>
+                            )}
                           {isApproved && <PublishButton assessmentId={a.id} />}
                         </div>
                       </td>

@@ -43,7 +43,16 @@ export function AssessmentActionsPanel({
 
   const canLockResults = isConfigured && (status === 'VALIDATED' || validationPassed || workflowState === 'VALIDATED');
   const canUnlockResults = status === 'LOCKED' || workflowState === 'LOCKED';
+  const canApproveResults = isConfigured && status === 'DRAFT' && (workflowState === 'VALIDATED' || validationPassed);
   const canPublishResults = isConfigured && status === 'APPROVED';
+
+  const approveTitle = !isConfigured
+    ? 'Locked until assessment configuration is complete'
+    : status !== 'DRAFT'
+    ? 'Only draft assessments can be approved'
+    : !(workflowState === 'VALIDATED' || validationPassed)
+    ? 'Assessment must be validated before it can be approved'
+    : undefined;
 
   const lockTitle = !isConfigured
     ? 'Locked until assessment configuration is complete'
@@ -67,6 +76,7 @@ export function AssessmentActionsPanel({
     try {
       const response = await fetch(endpoint, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'x-school-id': schoolId,
           'Content-Type': 'application/json',
@@ -207,6 +217,17 @@ export function AssessmentActionsPanel({
         >
           <AlertCircle size={18} />
           Validate
+        </Button>
+
+        <Button
+          onClick={() => handleAction('Approve Results', `/api/admin/assessments/${assessmentId}/approve`)}
+          disabled={loading || !canApproveResults}
+          variant="default"
+          className="h-10 whitespace-nowrap px-4"
+          title={approveTitle}
+        >
+          <CheckCircle size={18} />
+          Approve Results
         </Button>
 
         <Button

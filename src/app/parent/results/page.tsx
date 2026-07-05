@@ -43,10 +43,11 @@ export default function ParentResultsPage() {
   const [reportLoading, setReportLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const backendUrl = getBackendUrl();
+
   const loadData = async () => {
     try {
       setLoading(true);
-      const backendUrl = getBackendUrl();
       const response = await fetch(`${backendUrl}/api/parent/children`, {
         credentials: "include",
         headers: { "Content-Type": "application/json" },

@@ -1,45 +1,61 @@
 "use client";
 
 import { useState } from "react";
-import { useTransition } from "react";
 import { Button } from "@/components/ui/button";
+import { ErrorModal } from "@/components/ui/error-modal";
 import { Bell, AlertCircle, CheckCircle2 } from "lucide-react";
 
 export function PublishButton({ assessmentId }: { assessmentId: string }) {
-  const [pending, startTransition] = useTransition();
-  const [showValidation, setShowValidation] = useState(false);
+  const [pending, setPending] = useState(false);
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalTitle, setModalTitle] = useState<string | undefined>(undefined);
+  const [modalType, setModalType] = useState<'success' | 'error'>('error');
+  const [modalDetails, setModalDetails] = useState<string | undefined>(undefined);
 
   const handlePublish = async () => {
-    setShowValidation(true);
-    startTransition(async () => {
-      try {
-        setStatus('idle');
-        setMessage(null);
+    setPending(true);
+    try {
+      setStatus('idle');
+      setMessage(null);
+      setModalOpen(false);
 
-        const response = await fetch(`/api/admin/assessments/${assessmentId}/publish`, {
-          method: 'POST',
-          credentials: 'include',
-        });
+      const response = await fetch(`/api/admin/assessments/${assessmentId}/publish`, {
+        method: 'POST',
+        credentials: 'include',
+      });
 
-        const data = await response.json().catch(() => ({}));
+      const data = await response.json().catch(() => null);
 
-        if (!response.ok) {
-          const errorText = data?.error || 'Failed to publish assessment';
-          setStatus('error');
-          setMessage(errorText);
-          return;
-        }
-
-        setStatus('success');
-        setMessage('Published successfully');
-        setTimeout(() => setShowValidation(false), 2000);
-      } catch (error) {
+      if (!response.ok) {
+        const errorText = data?.details?.reason || data?.error || 'Failed to publish assessment';
         setStatus('error');
-        setMessage(error instanceof Error ? error.message : 'Failed to publish assessment');
+        setMessage(errorText);
+        setModalType('error');
+        setModalTitle('Publish Failed');
+        setModalDetails(data?.details?.reason || undefined);
+        setModalOpen(true);
+        return;
       }
-    });
+
+      setStatus('success');
+      setMessage('Published successfully');
+      setModalType('success');
+      setModalTitle('Published');
+      setModalDetails(undefined);
+      setModalOpen(true);
+    } catch (error) {
+      const errorText = error instanceof Error ? error.message : 'Failed to publish assessment';
+      setStatus('error');
+      setMessage(errorText);
+      setModalType('error');
+      setModalTitle('Publish Failed');
+      setModalDetails(undefined);
+      setModalOpen(true);
+    } finally {
+      setPending(false);
+    }
   };
 
   return (
@@ -53,24 +69,15 @@ export function PublishButton({ assessmentId }: { assessmentId: string }) {
         {pending ? 'Publishing…' : status === 'success' ? 'Published!' : 'Publish to parents'}
       </Button>
 
-      {showValidation && message && (
-        <div
-          className={`rounded-lg border p-3 text-sm ${
-            status === 'error'
-              ? 'border-destructive bg-destructive/10 text-destructive'
-              : 'border-success bg-success/10 text-success'
-          }`}
-        >
-          <div className="flex items-center gap-2">
-            {status === 'error' ? (
-              <AlertCircle className="h-4 w-4 flex-shrink-0" />
-            ) : (
-              <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
-            )}
-            <span>{message}</span>
-          </div>
-        </div>
-      )}
+      <ErrorModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title={modalTitle}
+        message={message || ''}
+        details={modalDetails}
+        type={modalType}
+        confirmLabel={modalType === 'success' ? 'Okay' : 'Review'}
+      />
     </div>
   );
 }

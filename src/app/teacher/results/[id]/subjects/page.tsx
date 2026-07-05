@@ -25,7 +25,7 @@ export default function TeacherSubjectsPage({
     const fetchSubjects = async () => {
       try {
         setLoading(true);
-        const response = await fetch("/api/teacher/subjects");
+        const response = await fetch(`/api/teacher/subjects?assessmentId=${encodeURIComponent(id)}`);
         if (!response.ok) throw new Error("Failed to fetch subjects");
         const data = await response.json();
         setSubjects(data.subjects || []);

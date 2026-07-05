@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, use } from "react";
+import { use, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, Save, AlertCircle } from "lucide-react";
@@ -65,45 +66,47 @@ export default function TeacherScoreEntryPage({
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-  useEffect(() => {
-    const fetchAssessment = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(`/api/teacher/assessments/${id}`);
-        if (!response.ok) throw new Error("Failed to fetch assessment");
-        const data = await response.json();
-        setAssessment(data.assessment);
+  const router = useRouter();
 
-        const uniquePupils: Record<string, Pupil> = {};
-        const initialScores: Record<string, ScoreEntry> = {};
+  const fetchAssessment = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/teacher/assessments/${id}`);
+      if (!response.ok) throw new Error("Failed to fetch assessment");
+      const data = await response.json();
+      setAssessment(data.assessment);
 
-        data.assessment.results.forEach((result: any) => {
-          const pupilId = result.pupilId;
-          if (!uniquePupils[pupilId]) {
-            uniquePupils[pupilId] = {
-              id: pupilId,
-              name: result.pupilName,
-              admissionNo: result.admissionNo,
-            };
-          }
+      const uniquePupils: Record<string, Pupil> = {};
+      const initialScores: Record<string, ScoreEntry> = {};
 
-          initialScores[pupilId] = {
-            pupilId,
-            caScore: result.caScore,
-            testScore: result.testScore,
-            examScore: result.examScore,
+      data.assessment.results.forEach((result: any) => {
+        const pupilId = result.pupilId;
+        if (!uniquePupils[pupilId]) {
+          uniquePupils[pupilId] = {
+            id: pupilId,
+            name: result.pupilName,
+            admissionNo: result.admissionNo,
           };
-        });
+        }
 
-        setPupils(Object.values(uniquePupils));
-        setScores(initialScores);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Unknown error");
-      } finally {
-        setLoading(false);
-      }
-    };
+        initialScores[pupilId] = {
+          pupilId,
+          caScore: result.caScore,
+          testScore: result.testScore,
+          examScore: result.examScore,
+        };
+      });
 
+      setPupils(Object.values(uniquePupils));
+      setScores(initialScores);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unknown error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchAssessment();
   }, [id]);
 
@@ -180,9 +183,7 @@ export default function TeacherScoreEntryPage({
       }
 
       setMessage({ type: "success", text: "Scores saved successfully" });
-      setTimeout(() => {
-        window.location.reload();
-      }, 1500);
+      await fetchAssessment();
     } catch (err) {
       setMessage({
         type: "error",
@@ -338,7 +339,7 @@ export default function TeacherScoreEntryPage({
 
           {isDraft && (
             <div className="flex justify-end gap-3">
-              <Button variant="outline" onClick={() => window.location.reload()}>
+              <Button variant="outline" onClick={() => router.push(`/teacher/results/${id}`)}>
                 Cancel
               </Button>
               <Button onClick={handleSave} disabled={saving} className="gap-2 bg-brand hover:bg-brand-dark">

@@ -422,7 +422,7 @@ export default function AssessmentDetailPage({
             assessmentId={id}
             onSetupComplete={() => {
               setShowSetupWizard(false);
-              window.location.reload();
+              fetchAssessment();
             }}
             onCancel={() => setShowSetupWizard(false)}
           />
@@ -554,10 +554,6 @@ export default function AssessmentDetailPage({
           {assessment.status === "PUBLISHED" && (
             <div className="rounded-lg border border-green-200 bg-green-50 p-4">
               <p className="text-sm text-green-700 font-medium">✓ Published to Parents</p>
-              <p className="text-sm text-green-600 mt-1">
-                Results were published on{" "}
-                {new Date(assessment.publishedAt || "").toLocaleDateString()}
-              </p>
             </div>
           )}
         </div>

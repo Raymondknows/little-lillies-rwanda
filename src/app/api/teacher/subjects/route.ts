@@ -5,7 +5,10 @@ export async function GET(request: NextRequest) {
   try {
     const backendUrl = getBackendUrl();
     
-    const response = await fetch(`${backendUrl}/api/teacher/subjects`, {
+    const proxyUrl = new URL(`${backendUrl}/api/teacher/subjects`);
+    proxyUrl.search = request.nextUrl.search;
+
+    const response = await fetch(proxyUrl.toString(), {
       method: 'GET',
       credentials: 'include',
       headers: {

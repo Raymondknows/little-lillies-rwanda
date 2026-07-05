@@ -31,6 +31,8 @@ interface Assessment {
     examScore: number | null;
     totalScore: number | null;
     grade: string | null;
+    classPosition?: number | null;
+    lockedAt?: string | null;
     pupil: {
       id: string;
       firstName: string;
@@ -119,21 +121,21 @@ export default function AssessmentDetailPage({
   const [showSetupWizard, setShowSetupWizard] = useState(false);
   const [broadsheetGroups, setBroadsheetGroups] = useState<ClassBroadsheetGroup[]>([]);
 
-  useEffect(() => {
-    const fetchAssessment = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(`/api/admin/results/${id}`);
-        if (!response.ok) throw new Error("Failed to fetch assessment");
-        const data = await response.json();
-        setAssessment(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Unknown error");
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchAssessment = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`/api/admin/results/${id}`);
+      if (!response.ok) throw new Error("Failed to fetch assessment");
+      const data = await response.json();
+      setAssessment(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unknown error");
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchAssessment();
   }, [id]);
 
@@ -360,6 +362,25 @@ export default function AssessmentDetailPage({
   }));
   const isConfigured = Boolean(assessment.componentData);
 
+  const deriveWorkflowState = (assessment: Assessment) => {
+    if (!isConfigured) return 'DRAFT';
+
+    const results = assessment.results;
+    const hasScores = results.some((r) => r.totalScore !== null && r.totalScore !== undefined);
+    const hasGrades = results.some((r) => r.grade !== null && r.grade !== undefined);
+    const hasPositions = results.some((r) => r.classPosition !== null && r.classPosition !== undefined);
+    const hasLockedResults = results.some((r) => r.lockedAt !== null && r.lockedAt !== undefined);
+
+    if (assessment.status === 'PUBLISHED') return 'PUBLISHED';
+    if (hasLockedResults) return 'LOCKED';
+    if (!hasScores) return 'CONFIGURED';
+    if (!hasGrades) return 'SCORED';
+    if (!hasPositions) return 'GRADED';
+    return 'POSITIONED';
+  };
+
+  const workflowState = deriveWorkflowState(assessment);
+
   return (
     <div className="mx-auto max-w-7xl px-3 py-4">
       <Link href="/admin/results" className="text-sm font-medium text-brand hover:underline print:hidden">
@@ -371,13 +392,21 @@ export default function AssessmentDetailPage({
           <h1 className="text-2xl font-bold">{assessment.name}</h1>
           <p className="text-muted">{assessment.term.name}</p>
         </div>
-        <Badge
-          variant={
-            assessment.status === "PUBLISHED" ? "success" : assessment.status === "APPROVED" ? "brand" : "default"
-          }
-        >
-          {assessment.status}
-        </Badge>
+        <div className="flex flex-wrap items-center gap-2">
+          {workflowState === 'LOCKED' && (
+            <Badge variant="warning" className="flex items-center gap-1">
+              <AlertCircle className="h-3 w-3" />
+              Locked
+            </Badge>
+          )}
+          <Badge
+            variant={
+              assessment.status === "PUBLISHED" ? "success" : assessment.status === "APPROVED" ? "brand" : "default"
+            }
+          >
+            {assessment.status}
+          </Badge>
+        </div>
       </div>
 
       {error && (
@@ -460,7 +489,7 @@ export default function AssessmentDetailPage({
       {activeTab === "overview" && (
         <div className="mt-6 space-y-6">
           {/* Setup Wizard Prompt */}
-          {assessment.status === "DRAFT" && !showSetupWizard && (
+          {assessment.status === "DRAFT" && !isConfigured && !showSetupWizard && (
             <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
               <div className="flex items-start gap-3">
                 <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
@@ -488,6 +517,7 @@ export default function AssessmentDetailPage({
               status={assessment.status}
               schoolId={assessment.schoolId}
               isConfigured={isConfigured}
+              workflowState={workflowState}
               onStatusChange={(newStatus) => {
                 setAssessment({ ...assessment, status: newStatus });
               }}

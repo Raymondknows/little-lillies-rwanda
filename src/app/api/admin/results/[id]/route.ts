@@ -16,6 +16,7 @@ export async function GET(
     const response = await fetch(buildApiUrl(`/admin/results/${id}`), {
       headers: {
         "x-school-id": session.schoolId,
+        cookie: req.headers.get('cookie') || '',
       },
     });
 

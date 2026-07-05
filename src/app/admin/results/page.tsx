@@ -12,6 +12,7 @@ export default function ResultsPage() {
   });
 
   const assessments = data?.assessments || [];
+  const sessions = data?.sessions || [];
 
   if (loading) {
     return (
@@ -33,5 +34,5 @@ export default function ResultsPage() {
     );
   }
 
-  return <ResultsPageClient assessments={assessments} />;
+  return <ResultsPageClient assessments={assessments} sessions={sessions} />;
 }

@@ -34,12 +34,48 @@ const PHASE_ORDER = ["ALL", "EARLY_YEARS", "PRIMARY", "SECONDARY"];
 const STATUS_ORDER = ["ALL", "PUBLISHED", "APPROVED", "DRAFT"];
 const ITEMS_PER_PAGE = 15;
 
+const getSessionValue = (assessment: any) =>
+  assessment.sessionName || assessment.term?.academicYear?.name || "No session";
+
+const getDefaultSessionOption = (assessments: Assessment[], sessions: any[] = []) => {
+  const currentSession = sessions.find((session) => session.isCurrent);
+  if (currentSession?.name) {
+    return currentSession.name;
+  }
+
+  const currentSessionAssessment = assessments.find(
+    (assessment) => assessment.term?.academicYear?.isCurrent === true
+  );
+
+  return currentSessionAssessment ? getSessionValue(currentSessionAssessment) : "ALL";
+};
+
+const getDefaultTermOption = (assessments: Assessment[], selectedSession: string) => {
+  const matchingAssessments = assessments.filter((assessment) => {
+    if (selectedSession === "ALL") return true;
+    return getSessionValue(assessment) === selectedSession;
+  });
+
+  const currentTermAssessment = matchingAssessments.find(
+    (assessment) => assessment.term?.academicYear?.isCurrent === true && assessment.term?.id
+  );
+
+  if (currentTermAssessment?.term?.id) {
+    return String(currentTermAssessment.term.id);
+  }
+
+  const firstTermAssessment = matchingAssessments.find((assessment) => assessment.term?.id);
+  return firstTermAssessment ? String(firstTermAssessment.term.id) : "ALL";
+};
+
 interface Assessment {
   id: string;
   name: string;
   phase: string;
   status: ResultStatus;
-  term: { name: string };
+  isLocked?: boolean;
+  canEdit?: boolean;
+  term: { id?: string; name: string; academicYear?: { name?: string; isCurrent?: boolean } };
   _count?: { results: number };
   studentCount?: number;
   entryCount?: number;
@@ -57,25 +93,49 @@ interface Assessment {
 
 export default function TeacherResultsEnhancedClient({
   assessments,
+  sessions = [],
 }: {
   assessments: Assessment[];
+  sessions?: any[];
 }) {
   const [activePhase, setActivePhase] = useState("ALL");
   const [activeStatus, setActiveStatus] = useState("ALL");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedTerm, setSelectedTerm] = useState("ALL");
+  const [selectedSession, setSelectedSession] = useState(() => getDefaultSessionOption(assessments, sessions));
+  const [selectedTerm, setSelectedTerm] = useState(() => getDefaultTermOption(assessments, getDefaultSessionOption(assessments, sessions)));
 
-  // Extract unique terms
+  const sessionOptions = useMemo(() => {
+    const uniqueSessions = Array.from(
+      new Set(
+        (sessions.length > 0
+          ? sessions.map((session: any) => session.name).filter(Boolean)
+          : assessments.map(getSessionValue)
+        ).filter(Boolean)
+      )
+    );
+
+    return [{ value: "ALL", label: "All Sessions" }, ...uniqueSessions.map((value) => ({ value, label: value }))];
+  }, [assessments, sessions]);
+
   const uniqueTerms = useMemo(() => {
-    const terms = new Map<string, string>();
-    assessments.forEach((a) => {
-      if (a.term?.name && !terms.has(a.term.name)) {
-        terms.set(a.term.name, a.term.name);
+    const matchingAssessments = assessments.filter((assessment) => {
+      if (selectedSession === "ALL") return true;
+      return getSessionValue(assessment) === selectedSession;
+    });
+
+    const terms = new Map<string, { value: string; label: string }>();
+    matchingAssessments.forEach((assessment) => {
+      if (assessment.term?.id && assessment.term?.name) {
+        terms.set(String(assessment.term.id), {
+          value: String(assessment.term.id),
+          label: assessment.term.name,
+        });
       }
     });
-    return ["ALL", ...Array.from(terms.keys())];
-  }, [assessments]);
+
+    return [{ value: "ALL", label: "All Terms" }, ...Array.from(terms.values())];
+  }, [assessments, selectedSession]);
 
   // Calculate stats for quick stat cards
   const stats = useMemo(() => {
@@ -103,8 +163,12 @@ export default function TeacherResultsEnhancedClient({
       filtered = filtered.filter((a) => a.status === activeStatus);
     }
 
+    if (selectedSession !== "ALL") {
+      filtered = filtered.filter((a) => getSessionValue(a) === selectedSession);
+    }
+
     if (selectedTerm !== "ALL") {
-      filtered = filtered.filter((a) => a.term?.name === selectedTerm);
+      filtered = filtered.filter((a) => String(a.term?.id) === selectedTerm);
     }
 
     if (searchQuery.trim()) {
@@ -122,7 +186,7 @@ export default function TeacherResultsEnhancedClient({
     }
 
     return filtered;
-  }, [assessments, activePhase, activeStatus, selectedTerm, searchQuery]);
+  }, [assessments, activePhase, activeStatus, selectedSession, selectedTerm, searchQuery]);
 
   // Pagination
   const totalPages = Math.ceil(filteredAssessments.length / ITEMS_PER_PAGE);
@@ -253,8 +317,45 @@ export default function TeacherResultsEnhancedClient({
           </div>
         </div>
 
-        {/* Status & Term Dropdowns */}
+        {/* Session, Term & Status Dropdowns */}
         <div className="flex gap-3 flex-wrap">
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-muted">Session:</label>
+            <select
+              value={selectedSession}
+              onChange={(e) => {
+                setSelectedSession(e.target.value);
+                setSelectedTerm("ALL");
+                handleFilterChange();
+              }}
+              className="rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground hover:bg-background focus:outline-none focus:ring-2 focus:ring-brand transition"
+            >
+              {sessionOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-muted">Term:</label>
+            <select
+              value={selectedTerm}
+              onChange={(e) => {
+                setSelectedTerm(e.target.value);
+                handleFilterChange();
+              }}
+              className="rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground hover:bg-background focus:outline-none focus:ring-2 focus:ring-brand transition"
+            >
+              {uniqueTerms.map((term) => (
+                <option key={term.value} value={term.value}>
+                  {term.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div className="flex items-center gap-2">
             <label className="text-sm font-medium text-muted">Status:</label>
             <select
@@ -276,24 +377,6 @@ export default function TeacherResultsEnhancedClient({
               })}
             </select>
           </div>
-
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-muted">Term:</label>
-            <select
-              value={selectedTerm}
-              onChange={(e) => {
-                setSelectedTerm(e.target.value);
-                handleFilterChange();
-              }}
-              className="rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground hover:bg-background focus:outline-none focus:ring-2 focus:ring-brand transition"
-            >
-              {uniqueTerms.map((term) => (
-                <option key={term} value={term}>
-                  {term === "ALL" ? "All Terms" : term}
-                </option>
-              ))}
-            </select>
-          </div>
         </div>
       </div>
 
@@ -312,6 +395,7 @@ export default function TeacherResultsEnhancedClient({
             const progress = calculateProgress(assessment);
             const isPublished = assessment.status === "PUBLISHED";
             const isDraft = assessment.status === "DRAFT";
+            const isLocked = Boolean(assessment.isLocked);
             const phaseConfig = PHASE_CONFIG[assessment.phase as keyof typeof PHASE_CONFIG];
             const statusConfig = STATUS_CONFIG[assessment.status as keyof typeof STATUS_CONFIG];
             const StatusIcon = statusConfig.icon;
@@ -329,15 +413,23 @@ export default function TeacherResultsEnhancedClient({
                         {assessment.term?.name}
                       </p>
                     </div>
-                    <Badge
-                      variant={
-                        isPublished ? "success" : assessment.status === "APPROVED" ? "brand" : "default"
-                      }
-                      className="flex items-center gap-1 ml-2"
-                    >
-                      <StatusIcon className="w-3 h-3" />
-                      {resultStatusLabel(assessment.status)}
-                    </Badge>
+                    <div className="flex flex-wrap items-center justify-end gap-2 ml-2">
+                      {isLocked && (
+                        <Badge variant="warning" className="flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3" />
+                          Locked
+                        </Badge>
+                      )}
+                      <Badge
+                        variant={
+                          isPublished ? "success" : assessment.status === "APPROVED" ? "brand" : "default"
+                        }
+                        className="flex items-center gap-1"
+                      >
+                        <StatusIcon className="w-3 h-3" />
+                        {resultStatusLabel(assessment.status)}
+                      </Badge>
+                    </div>
                   </div>
 
                   {/* Phase Badge */}

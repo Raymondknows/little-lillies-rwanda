@@ -73,11 +73,16 @@ const RESULTS_GUIDE = {
   videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ"
 };
 
-const PHASE_CONFIG = {
-  EARLY_YEARS: { label: "Early Years" },
-  PRIMARY: { label: "Primary" },
-  SECONDARY: { label: "Secondary" },
-  ALL: { label: "All Phases" },
+type PhaseConfigItem = {
+  label: string;
+  color: string;
+};
+
+const PHASE_CONFIG: Record<"EARLY_YEARS" | "PRIMARY" | "SECONDARY" | "ALL", PhaseConfigItem> = {
+  EARLY_YEARS: { label: "Early Years", color: "bg-purple-100 text-purple-800" },
+  PRIMARY: { label: "Primary", color: "bg-blue-100 text-blue-800" },
+  SECONDARY: { label: "Secondary", color: "bg-green-100 text-green-800" },
+  ALL: { label: "All Phases", color: "bg-gray-100 text-gray-800" },
 };
 
 const STATUS_CONFIG = {
@@ -91,9 +96,45 @@ const PHASE_ORDER = ["ALL", "EARLY_YEARS", "PRIMARY", "SECONDARY"];
 const STATUS_ORDER = ["ALL", "PUBLISHED", "APPROVED", "DRAFT"];
 const ITEMS_PER_PAGE = 20;
 
-export default function ResultsPageClient({ assessments }: { assessments: any[] }) {
+const getSessionValue = (assessment: any) =>
+  assessment.sessionName || assessment.term?.academicYear?.name || "No session";
+
+const getDefaultSessionOption = (assessments: any[], sessions: any[] = []) => {
+  const currentSession = sessions.find((session) => session.isCurrent);
+  if (currentSession?.name) {
+    return currentSession.name;
+  }
+
+  const currentSessionAssessment = assessments.find(
+    (assessment) => assessment.term?.academicYear?.isCurrent === true
+  );
+
+  return currentSessionAssessment ? getSessionValue(currentSessionAssessment) : "ALL";
+};
+
+const getDefaultTermOption = (assessments: any[], selectedSession: string) => {
+  const matchingAssessments = assessments.filter((assessment) => {
+    if (selectedSession === "ALL") return true;
+    return getSessionValue(assessment) === selectedSession;
+  });
+
+  const currentTermAssessment = matchingAssessments.find(
+    (assessment) => assessment.term?.academicYear?.isCurrent === true && assessment.term?.id
+  );
+
+  if (currentTermAssessment?.term?.id) {
+    return String(currentTermAssessment.term.id);
+  }
+
+  const firstTermAssessment = matchingAssessments.find((assessment) => assessment.term?.id);
+  return firstTermAssessment ? String(firstTermAssessment.term.id) : "ALL";
+};
+
+export default function ResultsPageClient({ assessments, sessions = [] }: { assessments: any[]; sessions?: any[] }) {
   const [activePhase, setActivePhase] = useState("ALL");
   const [activeStatus, setActiveStatus] = useState("ALL");
+  const [selectedSession, setSelectedSession] = useState(() => getDefaultSessionOption(assessments, sessions));
+  const [selectedTerm, setSelectedTerm] = useState(() => getDefaultTermOption(assessments, getDefaultSessionOption(assessments, sessions)));
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -105,13 +146,56 @@ export default function ResultsPageClient({ assessments }: { assessments: any[] 
     }
   }, [isSearchOpen]);
 
-  // Filter by phase, status, and search
+  const sessionOptions = useMemo(() => {
+    const uniqueSessions = Array.from(
+      new Set(
+        (sessions.length > 0
+          ? sessions.map((session: any) => session.name).filter(Boolean)
+          : assessments.map(getSessionValue)
+        ).filter(Boolean)
+      )
+    );
+
+    return [{ value: "ALL", label: "All Sessions" }, ...uniqueSessions.map((value) => ({ value, label: value }))];
+  }, [assessments, sessions]);
+
+  const termOptions = useMemo(() => {
+    const matchingAssessments = assessments.filter((assessment) => {
+      if (selectedSession === "ALL") return true;
+      return getSessionValue(assessment) === selectedSession;
+    });
+
+    const uniqueTerms = Array.from(
+      new Map(
+        matchingAssessments
+          .filter((assessment) => assessment.term?.id || assessment.term?.name)
+          .map((assessment) => {
+            const termId = assessment.term?.id ? String(assessment.term.id) : "no-term";
+            return [termId, { value: termId, label: assessment.term?.name || "No term" }];
+          })
+      ).values()
+    );
+
+    return [{ value: "ALL", label: "All Terms" }, ...uniqueTerms];
+  }, [assessments, selectedSession]);
+
+  // Filter by phase, status, session, term, and search
   const filteredAssessments = useMemo(() => {
     let filtered = assessments;
 
     // Filter by phase
     if (activePhase !== "ALL") {
       filtered = filtered.filter((a) => a.phase === activePhase);
+    }
+
+    // Filter by session
+    if (selectedSession !== "ALL") {
+      filtered = filtered.filter((a) => getSessionValue(a) === selectedSession);
+    }
+
+    // Filter by term
+    if (selectedTerm !== "ALL") {
+      filtered = filtered.filter((a) => String(a.term?.id) === selectedTerm);
     }
 
     // Filter by status
@@ -130,7 +214,7 @@ export default function ResultsPageClient({ assessments }: { assessments: any[] 
     }
 
     return filtered;
-  }, [assessments, activePhase, activeStatus, searchQuery]);
+  }, [assessments, activePhase, activeStatus, selectedSession, selectedTerm, searchQuery]);
 
   // Pagination
   const totalPages = Math.ceil(filteredAssessments.length / ITEMS_PER_PAGE);
@@ -151,6 +235,17 @@ export default function ResultsPageClient({ assessments }: { assessments: any[] 
 
   const handleStatusChange = (status: string) => {
     setActiveStatus(status);
+    handleFilterChange();
+  };
+
+  const handleSessionChange = (session: string) => {
+    setSelectedSession(session);
+    setSelectedTerm("ALL");
+    handleFilterChange();
+  };
+
+  const handleTermChange = (term: string) => {
+    setSelectedTerm(term);
     handleFilterChange();
   };
 
@@ -243,27 +338,55 @@ export default function ResultsPageClient({ assessments }: { assessments: any[] 
           </div>
         </div>
 
-        {/* Status Dropdown */}
-        <div className="flex items-center gap-2">
-          <label className="text-sm font-medium text-muted">Status:</label>
-          <select
-            value={activeStatus}
-            onChange={(e) => {
-              setActiveStatus(e.target.value);
-              handleFilterChange();
-            }}
-            className="rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground hover:bg-background focus:outline-none focus:ring-2 focus:ring-brand transition"
-          >
-            {STATUS_ORDER.map((status) => {
-              const count = getStatusStats(status);
-              const config = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG];
-              return (
-                <option key={status} value={status}>
-                  {config.label} ({count})
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 shadow-sm">
+            <label className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Session</label>
+            <select
+              value={selectedSession}
+              onChange={(e) => handleSessionChange(e.target.value)}
+              className="rounded-md bg-transparent text-sm font-medium text-foreground outline-none"
+            >
+              {sessionOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
                 </option>
-              );
-            })}
-          </select>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 shadow-sm">
+            <label className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Term</label>
+            <select
+              value={selectedTerm}
+              onChange={(e) => handleTermChange(e.target.value)}
+              className="rounded-md bg-transparent text-sm font-medium text-foreground outline-none"
+            >
+              {termOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 shadow-sm">
+            <label className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Status</label>
+            <select
+              value={activeStatus}
+              onChange={(e) => handleStatusChange(e.target.value)}
+              className="rounded-md bg-transparent text-sm font-medium text-foreground outline-none"
+            >
+              {STATUS_ORDER.map((status) => {
+                const count = getStatusStats(status);
+                const config = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG];
+                return (
+                  <option key={status} value={status}>
+                    {config.label} ({count})
+                  </option>
+                );
+              })}
+            </select>
+          </div>
         </div>
       </div>
 
@@ -294,6 +417,7 @@ export default function ResultsPageClient({ assessments }: { assessments: any[] 
                 {paginatedAssessments.map((a, index) => {
                   const isPublished = a.status === "PUBLISHED";
                   const isApproved = a.status === "APPROVED";
+                  const isLocked = Boolean(a.isLocked);
                   const statusConfig = STATUS_CONFIG[a.status as keyof typeof STATUS_CONFIG];
                   const StatusIcon = statusConfig.icon;
 
@@ -302,8 +426,17 @@ export default function ResultsPageClient({ assessments }: { assessments: any[] 
                       key={a.id}
                       className={`border-t border-border transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/80'} hover:bg-slate-100/70`}
                     >
-                      <td className="px-3 py-1.5 font-medium text-foreground truncate sm:px-4">
-                        {a.name}
+                      <td className="px-3 py-1.5 sm:px-4">
+                        <div className="min-w-0">
+                          <p className="truncate font-medium text-foreground">{a.name}</p>
+                          <p className="mt-1 text-[11px] text-muted">
+                            {a.sessionName ? `${a.sessionName}` : "Session not set"}
+                            {a.term?.name ? ` • ${a.term.name}` : ""}
+                          </p>
+                          <span className={`mt-2 inline-flex rounded-full px-2 py-1 text-[10px] font-semibold ${PHASE_CONFIG[a.phase as keyof typeof PHASE_CONFIG]?.color || "bg-gray-100 text-gray-800"}`}>
+                            {PHASE_CONFIG[a.phase as keyof typeof PHASE_CONFIG]?.label || a.phase}
+                          </span>
+                        </div>
                       </td>
                       <td className="px-3 py-1.5 text-muted truncate sm:px-4">
                         {a.term?.name || "—"}
@@ -312,14 +445,22 @@ export default function ResultsPageClient({ assessments }: { assessments: any[] 
                         {a._count.results}
                       </td>
                       <td className="px-3 py-1.5 sm:px-4">
-                        <Badge
-                          variant={
-                            isPublished ? "success" : isApproved ? "brand" : "default"
-                          }
-                        >
-                          <StatusIcon className="w-3 h-3 mr-1 inline" />
-                          {resultStatusLabel(a.status)}
-                        </Badge>
+                        <div className="flex flex-wrap items-center gap-2">
+                          {isLocked && (
+                            <Badge variant="warning" className="flex items-center gap-1">
+                              <AlertCircle className="w-3 h-3" />
+                              Locked
+                            </Badge>
+                          )}
+                          <Badge
+                            variant={
+                              isPublished ? "success" : isApproved ? "brand" : "default"
+                            }
+                          >
+                            <StatusIcon className="w-3 h-3 mr-1 inline" />
+                            {resultStatusLabel(a.status)}
+                          </Badge>
+                        </div>
                       </td>
                       <td className="px-3 py-1.5 sm:px-4">
                         <div className="flex items-center gap-2 flex-wrap">
@@ -345,6 +486,7 @@ export default function ResultsPageClient({ assessments }: { assessments: any[] 
             {paginatedAssessments.map((a, index) => {
               const isPublished = a.status === "PUBLISHED";
               const isApproved = a.status === "APPROVED";
+              const isLocked = Boolean(a.isLocked);
               const statusConfig = STATUS_CONFIG[a.status as keyof typeof STATUS_CONFIG];
               const StatusIcon = statusConfig.icon;
 
@@ -356,18 +498,34 @@ export default function ResultsPageClient({ assessments }: { assessments: any[] 
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{a.name}</p>
-                      <p className="text-xs text-muted mt-1">{a.term?.name || "—"}</p>
+                      <div className="min-w-0">
+                        <p className="font-medium text-sm truncate">{a.name}</p>
+                        <p className="text-xs text-muted mt-1">
+                          {a.sessionName ? `${a.sessionName}` : "Session not set"}
+                          {a.term?.name ? ` • ${a.term.name}` : ""}
+                        </p>
+                        <span className={`mt-2 inline-flex rounded-full px-2 py-1 text-[10px] font-semibold ${PHASE_CONFIG[a.phase as keyof typeof PHASE_CONFIG]?.color || "bg-gray-100 text-gray-800"}`}>
+                          {PHASE_CONFIG[a.phase as keyof typeof PHASE_CONFIG]?.label || a.phase}
+                        </span>
+                      </div>
                     </div>
                     <div className="flex-shrink-0 text-right ml-2">
-                      <Badge
-                        variant={
-                          isPublished ? "success" : isApproved ? "brand" : "default"
-                        }
-                      >
-                        <StatusIcon className="w-3 h-3 mr-1 inline" />
-                        {resultStatusLabel(a.status)}
-                      </Badge>
+                      <div className="flex flex-wrap justify-end gap-2">
+                        {isLocked && (
+                          <Badge variant="warning" className="flex items-center gap-1">
+                            <AlertCircle className="w-3 h-3" />
+                            Locked
+                          </Badge>
+                        )}
+                        <Badge
+                          variant={
+                            isPublished ? "success" : isApproved ? "brand" : "default"
+                          }
+                        >
+                          <StatusIcon className="w-3 h-3 mr-1 inline" />
+                          {resultStatusLabel(a.status)}
+                        </Badge>
+                      </div>
                     </div>
                   </div>
                 </Link>

@@ -32,6 +32,8 @@ interface Assessment {
   id: string;
   name: string;
   status: string;
+  isLocked?: boolean;
+  canEdit?: boolean;
   components?: AssessmentComponent[];
   results: Array<{
     pupilId: string;
@@ -146,9 +148,15 @@ export default function TeacherScoreEntryPage({
     setMessage(null);
 
     try {
-      const entries = Object.values(scores).filter(
-        (entry) => entry.caScore !== null || entry.testScore !== null || entry.examScore !== null
-      );
+      const entries = Object.values(scores)
+        .map((entry) => {
+          const computedTotal = calculateTotal(entry.caScore, entry.testScore, entry.examScore);
+          return {
+            ...entry,
+            ...(computedTotal !== null ? { totalScore: parseFloat(computedTotal) } : {}),
+          };
+        })
+        .filter((entry) => entry.caScore !== null || entry.testScore !== null || entry.examScore !== null);
 
       const backendUrl = getBackendUrl();
       const res = await fetch(`${backendUrl}/api/teacher/results`, {
@@ -157,10 +165,7 @@ export default function TeacherScoreEntryPage({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           assessmentId: id,
-          entries: entries.map((entry) => ({
-            ...entry,
-            totalScore: parseFloat(calculateTotal(entry.caScore, entry.testScore, entry.examScore) || "0"),
-          })),
+          entries,
         }),
       });
 
@@ -213,7 +218,9 @@ export default function TeacherScoreEntryPage({
     );
   }
 
-  const isDraft = assessment.status === "DRAFT";
+  const isLocked = Boolean(assessment?.isLocked);
+  const canEdit = Boolean(assessment?.canEdit);
+  const isDraft = assessment.status === "DRAFT" && canEdit && !isLocked;
 
   return (
     <div className="mx-auto max-w-7xl px-3 py-4">
@@ -252,7 +259,9 @@ export default function TeacherScoreEntryPage({
           <div>
             <h3 className="font-semibold text-amber-900">Assessment Locked</h3>
             <p className="text-sm text-amber-800 mt-1">
-              This assessment is no longer in draft status. Score entry is disabled.
+              {isLocked
+                ? "This assessment is locked and score entry is disabled."
+                : "This assessment is no longer in draft status. Score entry is disabled."}
             </p>
           </div>
         </div>

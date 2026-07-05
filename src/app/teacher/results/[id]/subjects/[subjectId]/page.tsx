@@ -39,6 +39,8 @@ interface Assessment {
   name: string;
   phase: string;
   status: string;
+  isLocked?: boolean;
+  canEdit?: boolean;
   components?: AssessmentComponent[];
   results: AssessmentResult[];
 }
@@ -178,12 +180,16 @@ export default function TeacherSubjectScoresPage({
 
     try {
       const entries = Object.entries(scores)
-        .map(([pupilId, entry]) => ({
-          pupilId,
-          caScore: entry.caScore,
-          testScore: entry.testScore,
-          examScore: entry.examScore,
-        }))
+        .map(([pupilId, entry]) => {
+          const computedTotal = calculateTotal(entry.caScore, entry.testScore, entry.examScore);
+          return {
+            pupilId,
+            caScore: entry.caScore,
+            testScore: entry.testScore,
+            examScore: entry.examScore,
+            ...(computedTotal !== null ? { totalScore: parseFloat(computedTotal) } : {}),
+          };
+        })
         .filter(
           (entry) =>
             entry.caScore !== null || entry.testScore !== null || entry.examScore !== null
@@ -261,6 +267,9 @@ export default function TeacherSubjectScoresPage({
   }
 
   const isPublished = assessment.status === "PUBLISHED";
+  const isLocked = Boolean(assessment.isLocked);
+  const canEdit = Boolean(assessment.canEdit);
+  const readOnly = isPublished || !canEdit || isLocked;
   const phaseLabel = assessment.phase.replace(/_/g, " ");
 
   const groupedResults = Array.from(
@@ -337,10 +346,12 @@ export default function TeacherSubjectScoresPage({
         </div>
       )}
 
-      {isPublished && (
+      {(isPublished || isLocked) && (
         <div className="mb-4 p-4 rounded-lg border border-amber-200 bg-amber-50">
           <p className="text-sm text-amber-700">
-            This assessment is published and cannot be edited.
+            {isLocked
+              ? "This assessment is locked and cannot be edited."
+              : "This assessment is published and cannot be edited."}
           </p>
         </div>
       )}
@@ -438,7 +449,7 @@ export default function TeacherSubjectScoresPage({
                                     onChange={(e) =>
                                       handleScoreChange(result.pupilId, field, e.target.value)
                                     }
-                                    disabled={isPublished}
+                                    disabled={readOnly}
                                     className="w-16 px-2 py-1 rounded border border-border bg-background text-center text-sm focus:outline-none focus:ring-2 focus:ring-brand"
                                   />
                                 </td>
@@ -463,7 +474,7 @@ export default function TeacherSubjectScoresPage({
             </Link>
             <Button
               onClick={handleSave}
-              disabled={saving || isPublished}
+              disabled={saving || readOnly}
               className="bg-brand hover:bg-brand/90 text-white"
             >
               {saving ? "Saving..." : <Save className="w-4 h-4 mr-2" />}

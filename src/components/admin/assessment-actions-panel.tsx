@@ -14,10 +14,12 @@ import {
   Eye,
   RefreshCw,
 } from 'lucide-react';
+import { ErrorModal } from '@/components/ui/error-modal';
 
 interface AssessmentActionsProps {
   assessmentId: string;
   status: string;
+  workflowState?: string;
   schoolId: string;
   isConfigured: boolean;
   onStatusChange?: (newStatus: string) => void;
@@ -26,6 +28,7 @@ interface AssessmentActionsProps {
 export function AssessmentActionsPanel({
   assessmentId,
   status,
+  workflowState,
   schoolId,
   isConfigured,
   onStatusChange,
@@ -34,7 +37,29 @@ export function AssessmentActionsPanel({
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [validationResult, setValidationResult] = useState<any>(null);
   const [showValidation, setShowValidation] = useState(false);
+  const [validationPassed, setValidationPassed] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [shouldReloadOnClose, setShouldReloadOnClose] = useState(false);
 
+  const canLockResults = isConfigured && (status === 'VALIDATED' || validationPassed || workflowState === 'VALIDATED');
+  const canUnlockResults = status === 'LOCKED' || workflowState === 'LOCKED';
+  const canPublishResults = isConfigured && status === 'APPROVED';
+
+  const lockTitle = !isConfigured
+    ? 'Locked until assessment configuration is complete'
+    : !(status === 'VALIDATED' || validationPassed || workflowState === 'VALIDATED')
+    ? 'Assessment must be validated before results can be locked'
+    : undefined;
+
+  const unlockTitle = !(status === 'LOCKED' || workflowState === 'LOCKED')
+    ? 'Assessment must be locked before results can be unlocked'
+    : undefined;
+
+  const publishTitle = !isConfigured
+    ? 'Locked until assessment configuration is complete'
+    : status !== 'APPROVED'
+    ? 'Assessment must be approved before results can be published'
+    : undefined;
   const handleAction = async (action: string, endpoint: string) => {
     setLoading(true);
     setMessage(null);
@@ -48,33 +73,73 @@ export function AssessmentActionsPanel({
         },
       });
 
+      const data = await response.json();
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || error.error || `Failed to ${action}`);
+        throw new Error(data.message || data.error || `Failed to ${action}`);
       }
 
-      const data = await response.json();
-      setMessage({ type: 'success', text: `${action} completed successfully` });
+      // Friendly, school-like success copy when backend message is absent
+      const successText =
+        data?.message || `${action} completed successfully.`;
 
-      if (data.validation) {
-        setValidationResult(data.validation);
+      const validationPayload = data?.validation ??
+        (data && typeof data === 'object' && ('isValid' in data || 'errors' in data || 'warnings' in data || 'blockers' in data)
+          ? data
+          : null);
+
+      if (validationPayload) {
+        setValidationResult(validationPayload);
+        setShowValidation(true);
+        setShowModal(true);
+        setShouldReloadOnClose(false);
+      } else {
+        setMessage({ type: 'success', text: successText });
+        setShowModal(true);
+        setShouldReloadOnClose(Boolean(data.success));
       }
 
       if (onStatusChange && data.status) {
         onStatusChange(data.status);
       }
 
-      // Refresh after 2 seconds
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
-    } catch (error) {
-      setMessage({
-        type: 'error',
-        text: error instanceof Error ? error.message : 'An error occurred',
-      });
+      if (data.workflowState) {
+        setValidationPassed(data.workflowState === 'VALIDATED');
+      }
+
+      if (data.success && validationPayload) {
+        setShouldReloadOnClose(false);
+      }
+    } catch (err) {
+      const text = err instanceof Error ? err.message : 'An error occurred';
+      setMessage({ type: 'error', text });
+      setShowModal(true);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const validationIssues = Array.isArray(validationResult?.errors)
+    ? validationResult.errors.filter((e: any) => e?.message)
+    : [];
+
+  const modalMessage = message?.text ?? (
+    validationResult
+      ? validationResult.isValid
+        ? 'Validation passed. The assessment is ready for the next step.'
+        : 'This assessment is not ready yet. Please ask teachers to complete the pending steps below before results can proceed.'
+      : ''
+  );
+
+  const modalDetails = validationIssues.length > 0
+    ? `${validationIssues.map((e: any) => `• ${e.message}`).join('\n')}`
+    : undefined;
+
+  const modalType = message?.type === 'success' || validationResult?.isValid ? 'success' : 'error';
+
+  const handleModalClose = () => {
+    setShowModal(false);
+    if (shouldReloadOnClose) {
+      window.location.reload();
     }
   };
 
@@ -90,42 +155,16 @@ export function AssessmentActionsPanel({
         </div>
       </div>
 
-      {/* Messages */}
-      {message && (
-        <div
-          className={`rounded-lg p-4 ${
-            message.type === 'success'
-              ? 'border border-green-200 bg-green-50 text-green-700'
-              : 'border border-red-200 bg-red-50 text-red-700'
-          }`}
-        >
-          <p className="text-sm font-medium">{message.text}</p>
-        </div>
-      )}
-
-      {/* Validation Results */}
-      {showValidation && validationResult && (
-        <div className="space-y-2 rounded-lg border border-yellow-200 bg-yellow-50 p-4">
-          <h3 className="font-semibold text-yellow-900">Validation Results</h3>
-          {validationResult.isValid ? (
-            <p className="flex items-center gap-2 text-green-700">
-              <CheckCircle size={18} />
-              All validations passed!
-            </p>
-          ) : (
-            <ul className="space-y-2">
-              {validationResult.errors?.map((error: any, idx: number) => (
-                <li key={idx} className="flex gap-2 text-sm text-yellow-900">
-                  <AlertCircle size={16} className="mt-0.5 flex-shrink-0" />
-                  <span>
-                    {error.field}: {error.message}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
+      {/* Modal feedback */}
+      <ErrorModal
+        isOpen={showModal}
+        onClose={handleModalClose}
+        type={modalType}
+        title={validationResult ? (validationResult.isValid ? 'Validation Passed' : 'Pending Action Required') : (message?.type === 'success' ? 'Completed Successfully' : undefined)}
+        message={modalMessage}
+        details={modalDetails}
+        confirmLabel={validationResult && validationResult.isValid ? 'Understood' : (message?.type === 'success' ? 'Understood' : 'Review items')}
+      />
 
       {/* Action Buttons - All managed by backend state machine */}
       <div className="flex flex-wrap gap-2">
@@ -160,24 +199,7 @@ export function AssessmentActionsPanel({
         </Button>
 
         <Button
-          onClick={async () => {
-            setLoading(true);
-            try {
-              const response = await fetch(`/api/results/validate/${assessmentId}`, {
-                method: 'POST',
-                headers: { 'x-school-id': schoolId },
-              });
-              const data = await response.json();
-              setValidationResult(data);
-            } catch (error) {
-              setMessage({
-                type: 'error',
-                text: 'Failed to validate',
-              });
-            } finally {
-              setLoading(false);
-            }
-          }}
+          onClick={() => handleAction('Validate', `/api/results/validate/${assessmentId}`)}
           disabled={loading || !isConfigured}
           variant="outline"
           className="h-10 whitespace-nowrap px-4"
@@ -194,10 +216,10 @@ export function AssessmentActionsPanel({
               `/api/results/lock/${assessmentId}`
             )
           }
-            disabled={loading || !isConfigured}
+          disabled={loading || !canLockResults}
           variant="outline"
           className="h-10 whitespace-nowrap px-4"
-            title={!isConfigured ? 'Locked until assessment configuration is complete' : undefined}
+          title={lockTitle}
         >
           <Lock size={18} />
           Lock Results
@@ -210,10 +232,10 @@ export function AssessmentActionsPanel({
               `/api/results/unlock/${assessmentId}`
             )
           }
-            disabled={loading || !isConfigured}
+          disabled={loading || !canUnlockResults}
           variant="outline"
           className="h-10 whitespace-nowrap px-4"
-            title={!isConfigured ? 'Locked until assessment configuration is complete' : undefined}
+          title={unlockTitle}
         >
           <Unlock size={18} />
           Unlock Results
@@ -223,12 +245,12 @@ export function AssessmentActionsPanel({
           onClick={() =>
             handleAction(
               'Publish Results',
-              `/api/results/publish/${assessmentId}`
+              `/api/admin/assessments/${assessmentId}/publish`
             )
           }
-            disabled={loading || !isConfigured}
+          disabled={loading || !canPublishResults}
           className="h-10 whitespace-nowrap px-4 bg-green-600 hover:bg-green-700"
-            title={!isConfigured ? 'Locked until assessment configuration is complete' : undefined}
+          title={publishTitle}
         >
           <Send size={18} />
           Publish Results

@@ -31,7 +31,10 @@ export async function POST(
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(
-        { error: errorData.error || `Backend returned ${response.status}` },
+        {
+          error: errorData.error || `Backend returned ${response.status}`,
+          message: errorData.message || errorData.error || `Backend returned ${response.status}`,
+        },
         { status: response.status }
       );
     }

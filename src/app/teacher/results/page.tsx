@@ -11,7 +11,7 @@ export default function ResultsPage() {
   });
 
   const assessments = data?.assessments || [];
-
+  const sessions = data?.sessions || [];
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
@@ -32,5 +32,5 @@ export default function ResultsPage() {
     );
   }
 
-  return <TeacherResultsEnhancedClient assessments={assessments} />;
+  return <TeacherResultsEnhancedClient assessments={assessments} sessions={sessions} />;
 }

@@ -20,6 +20,7 @@ export async function POST(
         method: "POST",
         headers: {
           "x-school-id": session.schoolId,
+          cookie: req.headers.get('cookie') || '',
         },
       }
     );

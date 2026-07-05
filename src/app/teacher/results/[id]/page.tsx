@@ -31,6 +31,8 @@ interface Assessment {
   name: string;
   phase: string;
   status: string;
+  isLocked?: boolean;
+  canEdit?: boolean;
   results: AssessmentResult[];
   subjects?: string[];
 }
@@ -87,6 +89,8 @@ export default function TeacherAssessmentDetailPage({
   }
 
   const isPublished = assessment.status === "PUBLISHED";
+  const isLocked = Boolean(assessment.isLocked);
+  const canEdit = Boolean(assessment.canEdit);
   const hasResults = assessment.results && assessment.results.length > 0;
 
   const groupedResults: GroupedAssessmentResult[] = [];
@@ -182,7 +186,7 @@ export default function TeacherAssessmentDetailPage({
           >
             {resultStatusLabel(assessment.status as "DRAFT" | "APPROVED" | "PUBLISHED")}
           </Badge>
-          {assessment.status === "DRAFT" && (
+          {canEdit && (
             <>
               <Link href={`/teacher/results/${id}/subjects`}>
                 <Button className="gap-2">
@@ -218,6 +222,12 @@ export default function TeacherAssessmentDetailPage({
           <p className="text-sm text-green-600 mt-1">
             Results have been published and are visible to parents.
           </p>
+        </div>
+      )}
+
+      {isLocked && (
+        <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4">
+          <p className="text-sm font-medium text-amber-800">This assessment is locked and cannot be edited.</p>
         </div>
       )}
 

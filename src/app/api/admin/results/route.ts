@@ -15,6 +15,7 @@ export async function POST(req: Request) {
       headers: {
         "Content-Type": "application/json",
         "x-school-id": session.schoolId,
+        cookie: req.headers.get('cookie') || '',
       },
       body: JSON.stringify(body),
     });

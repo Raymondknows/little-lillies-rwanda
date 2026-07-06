@@ -5,6 +5,7 @@ import { CreditCard, AlertCircle, Download } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 import { getBackendUrl } from "@/lib/backend-url";
 import ParentPageShell from "@/components/parent-page-shell";
+import { useParentSchool } from "../parent-school-context";
 
 interface Payment {
   id: string;
@@ -21,6 +22,9 @@ export default function PaymentsPage() {
   const [totalPaid, setTotalPaid] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const { school: parentSchool } = useParentSchool();
+  const currency = parentSchool?.currency || "NGN";
 
   const loadData = async () => {
     try {
@@ -113,7 +117,7 @@ export default function PaymentsPage() {
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted">Total Paid</p>
-            <p className="mt-2 text-2xl font-bold text-success">{formatMoney(totalPaid)}</p>
+            <p className="mt-2 text-2xl font-bold text-success">{formatMoney(totalPaid, currency)}</p>
           </div>
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted">Count</p>
@@ -162,7 +166,7 @@ export default function PaymentsPage() {
                   </p>
                 </div>
                 <div className="flex-shrink-0 text-right">
-                  <p className="text-lg font-bold text-success">{formatMoney(payment.amount)}</p>
+                  <p className="text-lg font-bold text-success">{formatMoney(payment.amount, currency)}</p>
                   <p className="text-sm font-semibold text-foreground mt-2">
                     {new Date(payment.paidAt).toLocaleDateString('en-US', {
                       month: 'short',

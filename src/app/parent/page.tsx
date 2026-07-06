@@ -15,6 +15,7 @@ import {
 import { formatMoney } from "@/lib/format";
 import { getBackendUrl } from "@/lib/backend-url";
 import ParentPageShell from "@/components/parent-page-shell";
+import { useParentSchool } from "./parent-school-context";
 
 export default function ParentDashboardPage() {
   const [dashboardData, setDashboardData] = useState<any>(null);
@@ -58,6 +59,9 @@ export default function ParentDashboardPage() {
   useEffect(() => {
     loadData();
   }, []);
+
+  const { school: parentSchool } = useParentSchool();
+  const currency = parentSchool?.currency || "NGN";
 
   if (loading) {
     return (
@@ -112,7 +116,7 @@ export default function ParentDashboardPage() {
     },
     {
       label: "Fees",
-      value: formatMoney(dashboardData?.outstandingFees || 0),
+      value: formatMoney(dashboardData?.outstandingFees || 0, currency),
       sub: dashboardData?.outstandingFees > 0 ? "Amount due" : "No balance",
       icon: CreditCard,
       href: "/parent/invoices",

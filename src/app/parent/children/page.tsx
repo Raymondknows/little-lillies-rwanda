@@ -6,6 +6,7 @@ import { BookOpen, CreditCard, AlertCircle, Users, Clock, CheckCircle, XCircle, 
 import { formatMoney } from "@/lib/format";
 import { getBackendUrl } from "@/lib/backend-url";
 import ParentPageShell from "@/components/parent-page-shell";
+import { useParentSchool } from "../parent-school-context";
 
 interface AttendanceData {
   todayStatus: string | null;
@@ -84,6 +85,9 @@ export default function ChildrenPage() {
   useEffect(() => {
     loadData();
   }, []);
+
+  const { school: parentSchool } = useParentSchool();
+  const currency = parentSchool?.currency || "NGN";
 
   if (loading) {
     return (
@@ -243,7 +247,7 @@ export default function ChildrenPage() {
                   <div className="rounded-3xl bg-white p-3 text-center">
                     <p className="text-[10px] uppercase tracking-[0.25em] text-muted mb-2">Fee Due</p>
                     <p className={`text-lg font-semibold ${child.outstandingFee > 0 ? 'text-error' : 'text-success'}`}>
-                      {formatMoney(child.outstandingFee || 0)}
+                      {formatMoney(child.outstandingFee || 0, currency)}
                     </p>
                   </div>
                   <div className="rounded-3xl bg-white p-3 text-center">

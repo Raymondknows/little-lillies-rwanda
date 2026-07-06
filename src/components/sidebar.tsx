@@ -7,6 +7,7 @@ import { AppLogo } from "@/components/app-logo";
 import { Button } from "@/components/ui/button";
 import { LogoutButton } from "@/components/logout-button";
 import {
+  Home,
   LayoutDashboard,
   BookOpen,
   BookMarked,
@@ -43,6 +44,7 @@ type NavItem = {
 };
 
 const icons: Record<string, any> = {
+  Home,
   LayoutDashboard,
   BookOpen,
   BookMarked,

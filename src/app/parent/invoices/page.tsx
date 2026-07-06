@@ -6,6 +6,7 @@ import { CreditCard, AlertCircle, Eye, Filter } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 import { getBackendUrl } from "@/lib/backend-url";
 import ParentPageShell from "@/components/parent-page-shell";
+import { useParentSchool } from "../parent-school-context";
 
 interface Invoice {
   id: string;
@@ -75,6 +76,9 @@ export default function InvoicesPage() {
     .filter(inv => inv.status === "PAID")
     .reduce((sum, inv) => sum + (inv.amountDue || 0), 0);
 
+  const { school: parentSchool } = useParentSchool();
+  const currency = parentSchool?.currency || "NGN";
+
   if (loading) {
     return (
       <ParentPageShell onRefresh={loadData}>
@@ -124,17 +128,17 @@ export default function InvoicesPage() {
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div className="rounded-3xl border border-border bg-surface p-4 text-center">
           <p className="text-[10px] uppercase tracking-[0.3em] text-muted">Outstanding</p>
-          <p className="mt-3 text-xl font-semibold text-error">{formatMoney(totalOutstanding)}</p>
+          <p className="mt-3 text-xl font-semibold text-error">{formatMoney(totalOutstanding, currency)}</p>
           <p className="text-xs text-muted mt-1">{invoices.filter(inv => ["SENT", "PART_PAID", "OVERDUE"].includes(inv.status)).length} pending</p>
         </div>
         <div className="rounded-3xl border border-border bg-surface p-4 text-center">
           <p className="text-[10px] uppercase tracking-[0.3em] text-muted">Paid</p>
-          <p className="mt-3 text-xl font-semibold text-success">{formatMoney(totalPaid)}</p>
+          <p className="mt-3 text-xl font-semibold text-success">{formatMoney(totalPaid, currency)}</p>
           <p className="text-xs text-muted mt-1">{invoices.filter(inv => inv.status === "PAID").length} paid</p>
         </div>
         <div className="rounded-3xl border border-border bg-surface p-4 text-center">
           <p className="text-[10px] uppercase tracking-[0.3em] text-muted">Total</p>
-          <p className="mt-3 text-xl font-semibold text-brand">{formatMoney(totalOutstanding + totalPaid)}</p>
+          <p className="mt-3 text-xl font-semibold text-brand">{formatMoney(totalOutstanding + totalPaid, currency)}</p>
           <p className="text-xs text-muted mt-1">{invoices.length} invoices</p>
         </div>
         <div className="rounded-3xl border border-border bg-surface p-4 text-center">
@@ -214,7 +218,7 @@ export default function InvoicesPage() {
                       <p className="text-sm text-muted mt-1 truncate">{invoice.description || "School Fees"}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-base font-semibold text-foreground">{formatMoney(invoice.amountDue || 0)}</p>
+                      <p className="text-base font-semibold text-foreground">{formatMoney(invoice.amountDue || 0, currency)}</p>
                       <p className="text-xs text-muted mt-1">Amount</p>
                     </div>
                   </div>
@@ -244,7 +248,7 @@ export default function InvoicesPage() {
       {totalOutstanding > 0 && (
         <div className="rounded-xl border-2 border-amber-200 bg-amber-50 p-6">
           <h3 className="font-bold text-lg text-amber-900">Payment Reminder</h3>
-          <p className="text-amber-800 mt-2">You have an outstanding balance of <span className="font-bold">{formatMoney(totalOutstanding)}</span> due. Please make payment as soon as possible to avoid late fees.</p>
+          <p className="text-amber-800 mt-2">You have an outstanding balance of <span className="font-bold">{formatMoney(totalOutstanding, currency)}</span> due. Please make payment as soon as possible to avoid late fees.</p>
           <button className="mt-4 px-6 py-2.5 bg-brand text-white rounded-lg font-semibold hover:bg-brand/90 shadow-sm transition-colors">
             Make Payment
           </button>

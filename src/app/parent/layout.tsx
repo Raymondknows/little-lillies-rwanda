@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import SharedLayout from '@/components/shared-layout';
 import ParentSkeleton from '@/components/parent-skeleton';
 import { getBackendUrl } from '@/lib/backend-url';
+import { ParentSchoolProvider } from './parent-school-context';
 
 const nav = [
   { href: "/parent", label: "Dashboard", icon: "Home" },
@@ -102,12 +103,14 @@ export default function ParentLayout({
   }
 
   return (
-    <SharedLayout
-      navItems={nav}
-      school={school}
-      session={session}
-    >
-      {children}
-    </SharedLayout>
+    <ParentSchoolProvider school={school}>
+      <SharedLayout
+        navItems={nav}
+        school={school}
+        session={session}
+      >
+        {children}
+      </SharedLayout>
+    </ParentSchoolProvider>
   );
 }

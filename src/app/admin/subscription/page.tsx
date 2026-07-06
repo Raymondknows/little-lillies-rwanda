@@ -23,12 +23,12 @@ interface SubscriptionStatus {
 const planDetails: Record<string, { description: string; price: string; accent: string }> = {
   STARTER: {
     description: "Perfect for small schools",
-    price: "₦35,000/month",
+    price: "₦35,000 / term",
     accent: "from-blue-500 to-blue-600",
   },
   GROWTH: {
     description: "For growing institutions",
-    price: "₦45,000/month",
+    price: "₦45,000 / term",
     accent: "from-green-500 to-green-600",
   },
   ENTERPRISE: {
@@ -156,6 +156,19 @@ export default function SubscriptionPage() {
     group: { amountMinor: 0, priceLabel: "Talk to us" },
   });
 
+  const getCountryPlanKey = (plan: string) => {
+    switch (plan) {
+      case 'STARTER':
+        return 'starter';
+      case 'GROWTH':
+        return 'standard';
+      case 'ENTERPRISE':
+        return 'group';
+      default:
+        return 'starter';
+    }
+  };
+
   useEffect(() => {
     async function loadSubscription() {
       try {
@@ -179,11 +192,11 @@ export default function SubscriptionPage() {
         setCurrency(resolvedCurrency);
 
         if (configData?.plans) {
-          setCountryPlans({
-            starter: configData.plans.starter || countryPlans.starter,
-            standard: configData.plans.standard || countryPlans.standard,
-            group: configData.plans.group || countryPlans.group,
-          });
+          setCountryPlans((prevPlans) => ({
+            starter: configData.plans.starter || prevPlans.starter,
+            standard: configData.plans.standard || prevPlans.standard,
+            group: configData.plans.group || prevPlans.group,
+          }));
         }
 
         console.log('[Subscription] Response status:', response.status);
@@ -317,7 +330,12 @@ export default function SubscriptionPage() {
 
   const status = subscription.subscriptionStatus;
   const config = statusConfig[status] || statusConfig.PENDING;
-  const planConfig = planDetails[subscription.currentPlan] || planDetails.FREE;
+  const planKey = getCountryPlanKey(subscription.currentPlan);
+  const priceLabel = countryPlans[planKey]?.priceLabel || planDetails[subscription.currentPlan]?.price || planDetails.FREE.price;
+  const planConfig = {
+    ...planDetails[subscription.currentPlan] || planDetails.FREE,
+    price: priceLabel,
+  };
   const isActivePlan = status === "ACTIVE" || status === "ACTIVE_PAID";
   const activePlanDate = subscription.subscriptionExpiresAt || subscription.trialEndsAt;
   const activePlanLabel = isActivePlan ? "Plan Active" : "Trial Expires";

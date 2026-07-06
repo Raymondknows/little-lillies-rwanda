@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import VideoTutorialDetailsClient from "./video-tutorial-details-client";
+import VideoPlayerClient from "./video-player-client";
 import { getBackendUrl } from "@/lib/backend-url";
 import { getEmbedUrl } from "@/lib/video-embed-url";
 import { VideoBreadcrumb } from "@/components/video-tutorials/video-breadcrumb";
@@ -148,7 +149,7 @@ export default async function VideoTutorialPage(props: {
       <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
         {/* Header Background */}
         <div className="bg-gradient-to-br from-blue-50 via-brand/5 to-slate-50 pt-8 pb-4">
-          <div className="max-w-6xl mx-auto px-6">
+          <div className="max-w-screen-2xl mx-auto px-6">
             <VideoBreadcrumb
               items={[
                 { label: "Video Tutorials", href: "/video-tutorials" },
@@ -160,32 +161,18 @@ export default async function VideoTutorialPage(props: {
         </div>
 
         {/* Main Content */}
-        <div className="max-w-6xl mx-auto px-6 py-8">
+        <div className="max-w-screen-2xl mx-auto px-6 py-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Main Column */}
             <div className="lg:col-span-2 space-y-8">
               {/* Video Player */}
               <div className="rounded-2xl overflow-hidden shadow-lg backdrop-blur-sm border border-white/20">
-                <div className="aspect-video bg-black flex items-center justify-center relative group">
-                  {video.videoUrl ? (
-                    <iframe
-                      width="100%"
-                      height="100%"
-                      src={getEmbedUrl(video.videoUrl)}
-                      title={video.title}
-                      frameBorder="0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                      className="w-full h-full"
-                    />
-                  ) : (
-                    <div className="text-center text-slate-400 flex flex-col items-center gap-3">
-                      <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center">
-                        <span className="text-2xl">▶</span>
-                      </div>
-                      <p>Video player unavailable</p>
-                    </div>
-                  )}
+                <div>
+                  <VideoPlayerClient
+                    videoUrl={video.videoUrl}
+                    title={video.title}
+                    embedUrl={getEmbedUrl(video.videoUrl)}
+                  />
                 </div>
               </div>
 

@@ -106,13 +106,12 @@ export default async function HomePage() {
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted">
             Collect fees, remind parents on WhatsApp, publish results, and give
-            your school a beautiful website, all in one place. Live in{" "}
-            <strong className="text-foreground">48 hours</strong>.
+            your school a beautiful website, all in one place. <strong className="text-foreground">Register and start using immediately</strong> — includes a <strong className="text-foreground">7-day free trial</strong>.
           </p>
           <div className="mt-10 flex flex-wrap gap-4" id="start">
             <Button href="#buy">Subscribe</Button>
-            <Button variant="secondary" href="/demo">
-              See demo school site
+            <Button variant="secondary" href="/signup">
+              Get started
             </Button>
           </div>
         </div>

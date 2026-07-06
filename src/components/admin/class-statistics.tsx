@@ -1,9 +1,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Download, TrendingUp } from 'lucide-react';
+import { Download, TrendingUp, Activity, Users, BarChart3 } from 'lucide-react';
+
+const GRADE_COLOR_MAP: Record<string, string> = {
+  A: '#0A66C2',
+  B: '#0F766E',
+  C: '#EAAB0C',
+  D: '#EA580C',
+  E: '#C2410C',
+  F: '#BE123C',
+};
 
 interface ClassStatisticsProps {
   assessmentId: string;
@@ -78,9 +86,12 @@ export function ClassStatistics({ assessmentId, schoolId }: ClassStatisticsProps
   const { statistics } = stats;
 
   return (
-    <div className="space-y-6 rounded-lg border border-gray-200 bg-white p-6">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Class Statistics</h3>
+    <div className="space-y-6 rounded-lg border border-border bg-surface p-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 className="text-lg font-semibold text-foreground">Class Statistics</h3>
+          <p className="text-sm text-muted">Detailed class performance analytics</p>
+        </div>
         <Button
           onClick={() => {
             const response = fetch(`/api/pdf-reports/ranking/${assessmentId}`, {
@@ -105,128 +116,132 @@ export function ClassStatistics({ assessmentId, schoolId }: ClassStatisticsProps
         </Button>
       </div>
 
-      {/* Key Metrics Grid */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-          <p className="text-sm font-medium text-blue-600">Total Students</p>
-          <p className="text-2xl font-bold text-blue-900">{stats.totalStudents}</p>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="group rounded-lg border border-border bg-surface p-5 shadow-sm transition hover:border-brand/50 hover:shadow-md">
+          <div className="flex items-start gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-100 text-blue-800">
+              <TrendingUp className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Average Score</p>
+              <p className="mt-3 text-3xl font-semibold text-foreground">{statistics.averageScore.toFixed(1)}</p>
+            </div>
+          </div>
+          <p className="mt-4 text-xs text-muted">Class average</p>
         </div>
 
-        <div className="rounded-lg border border-green-200 bg-green-50 p-4">
-          <p className="text-sm font-medium text-green-600">Pass Rate</p>
-          <p className="text-2xl font-bold text-green-900">
-            {statistics.passRate.toFixed(1)}%
-          </p>
-          <p className="text-xs text-green-700">
-            {statistics.passCount} of {stats.totalStudents} passed
-          </p>
+        <div className="group rounded-lg border border-border bg-surface p-5 shadow-sm transition hover:border-brand/50 hover:shadow-md">
+          <div className="flex items-start gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
+              <Activity className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Pass Rate</p>
+              <p className="mt-3 text-3xl font-semibold text-foreground">{statistics.passRate.toFixed(1)}%</p>
+            </div>
+          </div>
+          <p className="mt-4 text-xs text-muted">{statistics.passCount} passed</p>
         </div>
 
-        <div className="rounded-lg border border-purple-200 bg-purple-50 p-4">
-          <p className="text-sm font-medium text-purple-600">Average Score</p>
-          <p className="text-2xl font-bold text-purple-900">
-            {statistics.averageScore.toFixed(2)}
-          </p>
+        <div className="group rounded-lg border border-border bg-surface p-5 shadow-sm transition hover:border-brand/50 hover:shadow-md">
+          <div className="flex items-start gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-purple-100 text-purple-800">
+              <Users className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Total Students</p>
+              <p className="mt-3 text-3xl font-semibold text-foreground">{stats.totalStudents}</p>
+            </div>
+          </div>
+          <p className="mt-4 text-xs text-muted">Students with results</p>
         </div>
-      </div>
 
-      {/* Score Range */}
-      <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-        <h4 className="mb-4 font-semibold text-gray-900">Score Distribution</h4>
-        <div className="space-y-3">
-          <div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Highest Score</span>
-              <span className="font-semibold text-gray-900">
-                {statistics.highestScore.toFixed(2)}
-              </span>
+        <div className="group rounded-lg border border-border bg-surface p-5 shadow-sm transition hover:border-brand/50 hover:shadow-md">
+          <div className="flex items-start gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-orange-100 text-orange-800">
+              <BarChart3 className="h-5 w-5" />
             </div>
-            <div className="h-2 rounded-full bg-gray-200">
-              <div
-                className="h-2 rounded-full bg-green-500"
-                style={{
-                  width: `${(statistics.highestScore / 100) * 100}%`,
-                }}
-              />
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Median Score</p>
+              <p className="mt-3 text-3xl font-semibold text-foreground">{statistics.medianScore.toFixed(1)}</p>
             </div>
           </div>
-
-          <div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Average</span>
-              <span className="font-semibold text-gray-900">
-                {statistics.averageScore.toFixed(2)}
-              </span>
-            </div>
-            <div className="h-2 rounded-full bg-gray-200">
-              <div
-                className="h-2 rounded-full bg-blue-500"
-                style={{
-                  width: `${(statistics.averageScore / 100) * 100}%`,
-                }}
-              />
-            </div>
-          </div>
-
-          <div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Median</span>
-              <span className="font-semibold text-gray-900">
-                {statistics.medianScore.toFixed(2)}
-              </span>
-            </div>
-            <div className="h-2 rounded-full bg-gray-200">
-              <div
-                className="h-2 rounded-full bg-yellow-500"
-                style={{
-                  width: `${(statistics.medianScore / 100) * 100}%`,
-                }}
-              />
-            </div>
-          </div>
-
-          <div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Lowest Score</span>
-              <span className="font-semibold text-gray-900">
-                {statistics.lowestScore.toFixed(2)}
-              </span>
-            </div>
-            <div className="h-2 rounded-full bg-gray-200">
-              <div
-                className="h-2 rounded-full bg-red-500"
-                style={{
-                  width: `${(statistics.lowestScore / 100) * 100}%`,
-                }}
-              />
-            </div>
-          </div>
+          <p className="mt-4 text-xs text-muted">Middle score</p>
         </div>
       </div>
 
-      {/* Grade Distribution */}
-      {Object.keys(statistics.gradeDistribution).length > 0 && (
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-          <h4 className="mb-4 font-semibold text-gray-900">Grade Distribution</h4>
-          <div className="flex flex-wrap gap-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(420px,1.4fr)]">
+        <div className="group rounded-lg border border-border bg-surface p-5 shadow-sm transition hover:border-brand/50 hover:shadow-md">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-muted">Score Range</p>
+              <p className="text-3xl font-semibold text-foreground mt-2">
+                {(statistics.highestScore - statistics.lowestScore).toFixed(1)}
+              </p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-lg border border-border bg-background p-3 text-center">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">High</p>
+                <p className="text-lg font-semibold text-foreground mt-2">
+                  {statistics.highestScore.toFixed(1)}
+                </p>
+              </div>
+              <div className="rounded-lg border border-border bg-background p-3 text-center">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Low</p>
+                <p className="text-lg font-semibold text-foreground mt-2">
+                  {statistics.lowestScore.toFixed(1)}
+                </p>
+              </div>
+              <div className="rounded-lg border border-border bg-background p-3 text-center">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Avg.</p>
+                <p className="text-lg font-semibold text-foreground mt-2">
+                  {statistics.averageScore.toFixed(1)}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="group rounded-lg border border-border bg-surface p-6 shadow-sm transition hover:border-brand/50 hover:shadow-md overflow-hidden">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <BarChart3 className="h-5 w-5 text-slate-600" />
+              <h2 className="text-lg font-semibold text-slate-900">Grade Distribution</h2>
+            </div>
+            <div className="text-sm text-slate-600">
+              Total: <span className="font-semibold text-slate-900">{stats.totalResults}</span>
+            </div>
+          </div>
+
+          <div className="space-y-4">
             {Object.entries(statistics.gradeDistribution)
               .sort(([a], [b]) => a.localeCompare(b))
-              .map(([grade, count]) => (
-                <Badge key={grade} variant="secondary" className="text-base">
-                  {grade}: {count}
-                </Badge>
-              ))}
+              .map(([grade, count]) => {
+                const maxGradeCount = Math.max(...Object.values(statistics.gradeDistribution), 0);
+                const percentageOfMax = maxGradeCount > 0 ? (count / maxGradeCount) * 100 : 0;
+                const totalPercentage = stats.totalResults > 0 ? (count / stats.totalResults) * 100 : 0;
+                return (
+                  <div key={grade}>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-semibold text-slate-900">Grade {grade}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-slate-600">{count} students</span>
+                        <span className="text-xs text-slate-500">({totalPercentage.toFixed(1)}%)</span>
+                      </div>
+                    </div>
+                    <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-300"
+                        style={{
+                          width: `${percentageOfMax}%`,
+                          backgroundColor: GRADE_COLOR_MAP[grade] || '#0A66C2',
+                        }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
           </div>
-        </div>
-      )}
-
-      {/* Additional Stats */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="rounded-lg border border-gray-200 p-4">
-          <p className="text-sm text-gray-600">Standard Deviation</p>
-          <p className="text-xl font-semibold text-gray-900">
-            {statistics.standardDeviation.toFixed(2)}
-          </p>
         </div>
       </div>
     </div>

@@ -12,6 +12,8 @@ import SubscriptionModal from "@/components/subscription-modal";
 export default function AdminDashboardPage() {
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [schoolName, setSchoolName] = useState<string>('');
+  const [detectedCountryName, setDetectedCountryName] = useState<string | null>(null);
+  const [detectedCurrency, setDetectedCurrency] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [subscriptionBlocked, setSubscriptionBlocked] = useState<{ reason: string; schoolName?: string } | null>(null);
@@ -127,6 +129,20 @@ export default function AdminDashboardPage() {
             teachersRes.json(),
           ]);
 
+          let countryConfig: any = null;
+          try {
+            const countryRes = await fetch("/api/country/config");
+            if (countryRes.ok) {
+              countryConfig = await countryRes.json();
+            }
+          } catch (err) {
+            console.error('[Dashboard] Country config fetch error:', err);
+          }
+
+          const dashboardCurrency = countryConfig?.data?.currency || feesData.currency || "NGN";
+          const dashboardCountryName = countryConfig?.data?.name || null;
+          const dashboardCountryCode = countryConfig?.country || null;
+
           // Get WhatsApp connection status if available
           try {
             const whatsappRes = await fetch(`/api/admin/whatsapp/status`, {
@@ -205,8 +221,10 @@ export default function AdminDashboardPage() {
           recentPupils,
           recentTeachers,
           recentAnnouncements: announcements,
-          currency: 'NGN',
+          currency: dashboardCurrency,
         });
+        setDetectedCountryName(dashboardCountryName);
+        setDetectedCurrency(countryConfig?.data?.currency || dashboardCurrency);
         setSchoolName(schoolNameToUse);
         setLoading(false);
         } catch (timeoutErr: unknown) {
@@ -281,7 +299,7 @@ export default function AdminDashboardPage() {
   const stats = [
     {
       label: "Outstanding fees",
-      value: formatMoney(dashboardData?.outstanding || 0),
+      value: formatMoney(dashboardData?.outstanding || 0, dashboardData?.currency || "NGN"),
       sub: `${dashboardData?.attentionCount || 0} invoices need attention`,
       href: "/admin/fees",
       icon: CreditCard,
@@ -319,7 +337,7 @@ export default function AdminDashboardPage() {
 
   return (
     <div>
-      <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <div className="mb-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">
             Good morning, {schoolName || 'Dashboard'}
@@ -351,38 +369,9 @@ export default function AdminDashboardPage() {
         )}
       </div>
 
-      {/* Stats Cards with Quick Actions Overlay */}
-      <div className="mb-10 relative">
-        {/* Quick Actions - Positioned on top right */}
-        <div className="absolute top-0 right-0 flex gap-2 flex-wrap justify-end z-10">
-          <Link href="/admin/students/new">
-            <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand text-white text-xs font-medium hover:bg-brand/90 transition-colors shadow-sm hover:shadow-md">
-              <Plus className="h-3.5 w-3.5" />
-              <span>Student</span>
-            </button>
-          </Link>
-          <Link href="/admin/teachers/">
-            <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand text-white text-xs font-medium hover:bg-brand/90 transition-colors shadow-sm hover:shadow-md">
-              <Plus className="h-3.5 w-3.5" />
-              <span>Teacher</span>
-            </button>
-          </Link>
-          <Link href="/admin/fees/">
-            <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand text-white text-xs font-medium hover:bg-brand/90 transition-colors shadow-sm hover:shadow-md">
-              <Plus className="h-3.5 w-3.5" />
-              <span>Invoice</span>
-            </button>
-          </Link>
-          <Link href="/admin/website/">
-            <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-brand text-white text-xs font-medium hover:bg-brand/90 transition-colors shadow-sm hover:shadow-md">
-              <Plus className="h-3.5 w-3.5" />
-              <span>Announce</span>
-            </button>
-          </Link>
-        </div>
-
-        {/* Stats Cards */}
-      <div className="mb-10 hidden sm:block pt-12">
+      {/* Stats Cards */}
+      <div className="mb-6 pt-8">
+        <div className="mb-6 hidden sm:block">
         <div className="relative flex items-center gap-4">
           {/* Left Navigation Arrow */}
           <button
@@ -449,6 +438,37 @@ export default function AdminDashboardPage() {
           );
         })}
       </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="mb-10">
+        <h3 className="text-sm font-semibold text-foreground mb-3">Quick Actions</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <Link href="/admin/fees">
+            <button className="w-full inline-flex items-center justify-center px-4 py-3 bg-brand text-white rounded-lg hover:bg-brand/90 transition-colors font-medium shadow-sm hover:shadow-md">
+              <CreditCard className="h-4 w-4 mr-2" />
+              Fees
+            </button>
+          </Link>
+          <Link href="/admin/students">
+            <button className="w-full inline-flex items-center justify-center px-4 py-3 bg-brand text-white rounded-lg hover:bg-brand/90 transition-colors font-medium shadow-sm hover:shadow-md">
+              <Users className="h-4 w-4 mr-2" />
+              Students
+            </button>
+          </Link>
+          <Link href="/admin/teachers">
+            <button className="w-full inline-flex items-center justify-center px-4 py-3 bg-brand text-white rounded-lg hover:bg-brand/90 transition-colors font-medium shadow-sm hover:shadow-md">
+              <BookOpen className="h-4 w-4 mr-2" />
+              Teachers
+            </button>
+          </Link>
+          <Link href="/admin/website">
+            <button className="w-full inline-flex items-center justify-center px-4 py-3 bg-brand text-white rounded-lg hover:bg-brand/90 transition-colors font-medium shadow-sm hover:shadow-md">
+              <MessageSquare className="h-4 w-4 mr-2" />
+              Announcements
+            </button>
+          </Link>
+        </div>
       </div>
 
       {/* Grid of sections - Responsive: 1 col mobile, 2 col tablet, 2 col desktop */}

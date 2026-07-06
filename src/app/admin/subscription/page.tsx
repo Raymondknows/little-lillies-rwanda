@@ -147,15 +147,44 @@ export default function SubscriptionPage() {
   const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [countryCode, setCountryCode] = useState("NG");
+  const [countryName, setCountryName] = useState("Nigeria");
+  const [currency, setCurrency] = useState("NGN");
+  const [countryPlans, setCountryPlans] = useState<Record<string, { amountMinor: number; priceLabel: string }>>({
+    starter: { amountMinor: 3500000, priceLabel: "₦35,000 / term" },
+    standard: { amountMinor: 4500000, priceLabel: "₦45,000 / term" },
+    group: { amountMinor: 0, priceLabel: "Talk to us" },
+  });
 
   useEffect(() => {
     async function loadSubscription() {
       try {
         console.log('[Subscription] Loading subscription status...');
-        const response = await fetch("/api/admin/subscription/status", {
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-        });
+        const [countryResponse, response] = await Promise.all([
+          fetch("/api/country/config", { credentials: 'include', headers: { 'Content-Type': 'application/json' } }),
+          fetch("/api/admin/subscription/status", {
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        ]);
+
+        const countryConfig = await countryResponse.json().catch(() => null);
+        const configData = countryConfig?.data;
+        const resolvedCountryCode = countryConfig?.country || "NG";
+        const resolvedCountryName = configData?.name || "Nigeria";
+        const resolvedCurrency = configData?.currency || "NGN";
+
+        setCountryCode(resolvedCountryCode);
+        setCountryName(resolvedCountryName);
+        setCurrency(resolvedCurrency);
+
+        if (configData?.plans) {
+          setCountryPlans({
+            starter: configData.plans.starter || countryPlans.starter,
+            standard: configData.plans.standard || countryPlans.standard,
+            group: configData.plans.group || countryPlans.group,
+          });
+        }
 
         console.log('[Subscription] Response status:', response.status);
 
@@ -184,6 +213,8 @@ export default function SubscriptionPage() {
     loadSubscription();
   }, []);
 
+  const paymentProvider = countryCode === "NG" ? "Paystack" : "Flutterwave";
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -206,6 +237,15 @@ export default function SubscriptionPage() {
           <p className="text-sm text-muted mt-2">
             Manage your school's subscription plan and billing
           </p>
+        </div>
+
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="rounded-full border border-border bg-surface px-4 py-2 text-sm text-muted">
+            Current market: <span className="font-semibold text-foreground">{countryName}</span> · <span className="font-semibold text-brand">{currency}</span>
+          </div>
+          <div className="rounded-full border border-border bg-surface px-4 py-2 text-sm font-medium text-muted">
+            Payment provider: <span className="font-semibold text-foreground">{paymentProvider}</span>
+          </div>
         </div>
 
         {/* Error Card */}
@@ -298,6 +338,15 @@ export default function SubscriptionPage() {
         <p className="text-sm text-muted mt-2">
           Manage your school's subscription plan and billing
         </p>
+      </div>
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="rounded-full border border-border bg-surface px-4 py-2 text-sm text-muted">
+          Current market: <span className="font-semibold text-foreground">{countryName}</span> · <span className="font-semibold text-brand">{currency}</span>
+        </div>
+        <div className="rounded-full border border-border bg-surface px-4 py-2 text-sm font-medium text-muted">
+          Payment provider: <span className="font-semibold text-foreground">{paymentProvider}</span>
+        </div>
       </div>
 
       {/* Premium Status Hero Card */}

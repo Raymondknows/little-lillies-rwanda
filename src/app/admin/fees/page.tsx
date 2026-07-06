@@ -67,12 +67,25 @@ export default function FeesPage() {
         }
 
         const feesData = await response.json();
+
+        let countryConfig: any = null;
+        try {
+          const countryRes = await fetch("/api/country/config");
+          if (countryRes.ok) {
+            countryConfig = await countryRes.json();
+          }
+        } catch (err) {
+          console.error("[Fees] Country config fetch error:", err);
+        }
+
+        const feesCurrency = feesData.currency || countryConfig?.data?.currency || "NGN";
+
         setSchoolName(schoolNameToUse);
         setData({
           invoices: feesData.invoices || [],
           outstanding: feesData.outstanding || 0,
           terms: feesData.terms || [],
-          currency: feesData.currency || "NGN",
+          currency: feesCurrency,
         });
 
         try {

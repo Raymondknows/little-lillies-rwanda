@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { PaystackPurchaseButton } from "@/components/paystack-purchase-button";
+import { FlutterwavePurchaseButton } from "@/components/flutterwave-purchase-button";
 import { Check, Zap, Users, BarChart3, MessageSquare } from "lucide-react";
 import { UserGuide, type PageHelpGuide } from "@/components/ui/user-guide";
 import AdminSkeleton from "@/components/ui/skeleton";
@@ -139,6 +140,8 @@ export default function SubscribePage() {
   const [plans, setPlans] = useState<Plan[]>(defaultPlans);
   const [selectedPlan, setSelectedPlan] = useState<Plan>(defaultPlans[1]);
   const [currency, setCurrency] = useState("NGN");
+  const [countryCode, setCountryCode] = useState("NG");
+  const [countryName, setCountryName] = useState("Nigeria");
 
   const [adminName, setAdminName] = useState("");
   const [adminEmail, setAdminEmail] = useState("");
@@ -163,17 +166,24 @@ export default function SubscribePage() {
 
         const configData = countryData?.data;
 
-        if (configData?.plans) {
-          if (configData.currency) setCurrency(configData.currency);
+        const resolvedCountryCode = countryData?.country || "NG";
+        const resolvedCountryName = configData?.name || "Nigeria";
+        const resolvedCurrency = configData?.currency || "NGN";
 
-          setPlans((prev) =>
-            prev.map((p) => ({
-              ...p,
-              amountMinor:
-                configData.plans[p.id]?.amountMinor ?? p.amountMinor,
-              priceLabel:
-                configData.plans[p.id]?.priceLabel ?? p.priceLabel,
-            }))
+        setCountryCode(resolvedCountryCode);
+        setCountryName(resolvedCountryName);
+        setCurrency(resolvedCurrency);
+
+        if (configData?.plans) {
+          const updatedPlans = defaultPlans.map((p) => ({
+            ...p,
+            amountMinor: configData.plans[p.id]?.amountMinor ?? p.amountMinor,
+            priceLabel: configData.plans[p.id]?.priceLabel ?? p.priceLabel,
+          }));
+
+          setPlans(updatedPlans);
+          setSelectedPlan((current) =>
+            updatedPlans.find((plan) => plan.id === current.id) ?? updatedPlans[1]
           );
         }
 
@@ -215,6 +225,8 @@ export default function SubscribePage() {
     };
   }, []);
 
+  const paymentProvider = countryCode === "NG" ? "Paystack" : "Flutterwave";
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -231,6 +243,15 @@ export default function SubscribePage() {
         <p className="text-sm text-muted mt-2">
           Select the right plan for your school and unlock SchoolBase features
         </p>
+      </div>
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="rounded-full border border-border bg-surface px-4 py-2 text-sm text-muted">
+          Pricing shown for <span className="font-semibold text-foreground">{countryName}</span> · <span className="font-semibold text-brand">{currency}</span>
+        </div>
+        <div className="rounded-full border border-border bg-surface px-4 py-2 text-sm font-medium text-muted">
+          Payment provider: <span className="font-semibold text-foreground">{paymentProvider}</span>
+        </div>
       </div>
 
       <div className="flex justify-end">
@@ -319,20 +340,38 @@ export default function SubscribePage() {
                 {selectedPlan.name}
               </span>
             </p>
+            <p className="mt-2 text-sm text-muted">
+              Prices are displayed in {currency} for {countryName}. Checkout uses {paymentProvider} for this market.
+            </p>
           </div>
 
-          <PaystackPurchaseButton
-            amountMinor={selectedPlan.amountMinor}
-            currency={currency}
-            email={adminEmail}
-            name={adminName}
-            plan={selectedPlan.id}
-            schoolName={schoolName}
-            slug={schoolSlug}
-            phone=""
-            disabled={!adminName || !adminEmail || !schoolName || !isValidEmail(adminEmail)}
-            isSubscription={true}
-          />
+          {countryCode === "NG" ? (
+            <PaystackPurchaseButton
+              amountMinor={selectedPlan.amountMinor}
+              currency={currency}
+              email={adminEmail}
+              name={adminName}
+              plan={selectedPlan.id}
+              schoolName={schoolName}
+              slug={schoolSlug}
+              phone=""
+              disabled={!adminName || !adminEmail || !schoolName || !isValidEmail(adminEmail)}
+              isSubscription={true}
+            />
+          ) : (
+            <FlutterwavePurchaseButton
+              amountMinor={selectedPlan.amountMinor}
+              currency={currency}
+              email={adminEmail}
+              name={adminName}
+              plan={selectedPlan.id}
+              schoolName={schoolName}
+              slug={schoolSlug}
+              phone=""
+              disabled={!adminName || !adminEmail || !schoolName || !isValidEmail(adminEmail)}
+              isSubscription={true}
+            />
+          )}
         </div>
       )}
 

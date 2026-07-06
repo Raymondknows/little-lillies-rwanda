@@ -16,8 +16,8 @@
       "currency": "GHS",
       "timezone": "Africa/Accra",
       "plans": {
-        "starter": { "amountMinor": 300000, "priceLabel": "GHS300 / term" },
-        "standard": { "amountMinor": 400000, "priceLabel": "GHS400 / term" },
+        "starter": { "amountMinor": 45000, "priceLabel": "GHS450 / term" },
+        "standard": { "amountMinor": 60000, "priceLabel": "GHS600 / term" },
         "group": { "amountMinor": 0, "priceLabel": "Talk to us" }
       }
     },
@@ -26,8 +26,8 @@
       "currency": "KES",
       "timezone": "Africa/Nairobi",
       "plans": {
-        "starter": { "amountMinor": 35000, "priceLabel": "KES35,000 / term" },
-        "standard": { "amountMinor": 45000, "priceLabel": "KES45,000 / term" },
+        "starter": { "amountMinor": 434800, "priceLabel": "KES4,348.00 / term" },
+        "standard": { "amountMinor": 652200, "priceLabel": "KES6,522.00 / term" },
         "group": { "amountMinor": 0, "priceLabel": "Talk to us" }
       }
     },
@@ -36,8 +36,8 @@
       "currency": "UGX",
       "timezone": "Africa/Kampala",
       "plans": {
-        "starter": { "amountMinor": 35000000, "priceLabel": "UGX35,000,000 / term" },
-        "standard": { "amountMinor": 45000000, "priceLabel": "UGX45,000,000 / term" },
+        "starter": { "amountMinor": 21383600, "priceLabel": "UGX213,836.00 / term" },
+        "standard": { "amountMinor": 32075400, "priceLabel": "UGX320,754.00 / term" },
         "group": { "amountMinor": 0, "priceLabel": "Talk to us" }
       }
     },
@@ -46,8 +46,8 @@
       "currency": "ZAR",
       "timezone": "Africa/Johannesburg",
       "plans": {
-        "starter": { "amountMinor": 350000, "priceLabel": "R3,500 / term" },
-        "standard": { "amountMinor": 450000, "priceLabel": "R4,500 / term" },
+        "starter": { "amountMinor": 755600, "priceLabel": "R7,556.00 / term" },
+        "standard": { "amountMinor": 1133400, "priceLabel": "R11,334.00 / term" },
         "group": { "amountMinor": 0, "priceLabel": "Talk to us" }
       }
     }

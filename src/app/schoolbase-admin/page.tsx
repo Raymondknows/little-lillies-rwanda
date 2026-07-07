@@ -25,6 +25,14 @@ import AdminPageShell from "@/components/admin-page-shell";
 import AdminSkeleton from "@/components/ui/skeleton";
 import { getBackendUrl } from "@/lib/backend-url";
 
+function getActivityTitle(log: any) {
+  const raw = log?.event ?? log?.action;
+  if (typeof raw === "string" && raw.trim()) {
+    return raw.replace(/_/g, " ");
+  }
+  return "Platform activity";
+}
+
 export default function PlatformOverviewPage() {
   const [stats, setStats] = useState<any>(null);
   const [schools, setSchools] = useState<any[]>([]);
@@ -322,11 +330,11 @@ export default function PlatformOverviewPage() {
                       <div key={log.id} className="rounded-2xl border border-border bg-white p-4 shadow-sm">
                         <div className="flex items-start justify-between gap-3">
                           <div>
-                            <p className="text-sm font-semibold text-foreground">{log.event.replace(/_/g, ' ')}</p>
-                            <p className="mt-1 text-xs text-muted">{log.details}</p>
+                            <p className="text-sm font-semibold text-foreground">{getActivityTitle(log)}</p>
+                            <p className="mt-1 text-xs text-muted">{log.details || "No additional details provided."}</p>
                           </div>
                           <p className="text-[11px] uppercase tracking-[0.18em] text-muted">
-                            {new Date(log.createdAt).toLocaleString()}
+                            {log.createdAt ? new Date(log.createdAt).toLocaleString() : "—"}
                           </p>
                         </div>
                         {log.school?.name ? (

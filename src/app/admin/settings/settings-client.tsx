@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ErrorModal } from "@/components/ui/error-modal";
 import { Building2, MapPin, DollarSign, FileText, Upload, Save, AlertCircle, Zap, X } from "lucide-react";
 import { UserGuide, type PageHelpGuide } from "@/components/ui/user-guide";
 import countriesData from "../../../../config/countries.json";
@@ -101,7 +102,9 @@ export default function SettingsPageClient({
   const [uploading, setUploading] = useState<{ [key: string]: boolean }>({});
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showSuccess, setShowSuccess] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successModalTitle, setSuccessModalTitle] = useState<string | undefined>("Success");
+  const [successModalMessage, setSuccessModalMessage] = useState<string>("Your settings were saved successfully.");
   const [status, setStatus] = useState<any>(null);
 
   useEffect(() => {
@@ -191,8 +194,9 @@ export default function SettingsPageClient({
         throw new Error(data?.message || "Failed to save settings");
       }
 
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 5000);
+      setShowSuccessModal(true);
+      setSuccessModalTitle("Settings Saved");
+      setSuccessModalMessage("Your school settings were updated successfully.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save settings");
     } finally {
@@ -318,11 +322,14 @@ export default function SettingsPageClient({
         </div>
       )}
 
-      {showSuccess && (
-        <div className="rounded-lg border border-green-200 bg-green-50 p-4">
-          <p className="text-sm font-medium text-green-700">✓ Settings saved successfully</p>
-        </div>
-      )}
+      <ErrorModal
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        title={successModalTitle}
+        message={successModalMessage}
+        type="success"
+        confirmLabel="Okay"
+      />
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-6">

@@ -441,7 +441,7 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
                         <button
                           type="button"
                           onClick={() => router.push(`/admin/students/${p.id}`)}
-                          className="rounded-full border border-border bg-white px-1.5 py-0.5 text-xs font-semibold text-foreground transition hover:bg-surface"
+                          className="rounded-lg bg-brand px-2 py-1 text-xs font-semibold text-white transition hover:bg-brand/90"
                         >
                           View
                         </button>
@@ -479,7 +479,7 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
                       <button
                         type="button"
                         onClick={() => router.push(`/admin/students/${p.id}`)}
-                        className="rounded-full border border-border bg-white px-1.5 py-0.5 text-xs font-semibold text-foreground transition hover:bg-surface"
+                        className="rounded-lg bg-brand px-2 py-1 text-xs font-semibold text-white transition hover:bg-brand/90"
                       >
                         View
                       </button>

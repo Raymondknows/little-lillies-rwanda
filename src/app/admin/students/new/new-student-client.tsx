@@ -218,9 +218,9 @@ export default function NewStudentClient() {
   };
 
   return (
-    <div className="mx-auto max-w-[1400px] px-6 pb-16 pt-4">
-      <div className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur-sm py-3">
-        <div className="mx-auto flex max-w-[1400px] items-center gap-4">
+    <div className="mx-auto max-w-[1400px] px-6 pb-16 pt-0">
+      <div className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur-sm py-1.5">
+        <div className="mx-auto flex max-w-[1400px] items-center gap-2">
           <div className="flex-1">
             <h1 className="text-2xl font-semibold tracking-tight text-foreground">Add Student</h1>
             <p className="mt-0.5 text-sm text-slate-600 max-w-2xl">Quickly register a student — all fields visible on a single page.</p>
@@ -262,7 +262,7 @@ export default function NewStudentClient() {
         </div>
       </div>
 
-      <form id="new-student-form" onSubmit={handleSubmit} className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <form id="new-student-form" onSubmit={handleSubmit} className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Error Alert */}
         {error && (
           <div className="lg:col-span-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
@@ -272,7 +272,7 @@ export default function NewStudentClient() {
 
         {/* Left: photo card (sticky) */}
         <div className="lg:col-span-1">
-          <div className="rounded-[28px] border border-border bg-white p-5 shadow-sm lg:sticky lg:top-28">
+          <div className="rounded-xl border border-border bg-white p-4 shadow-sm lg:sticky lg:top-28">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold text-slate-900">Profile photo</p>
@@ -283,9 +283,9 @@ export default function NewStudentClient() {
               </div>
             </div>
 
-            <div className="mt-5 rounded-3xl border border-dashed border-border/70 bg-slate-50 p-4 text-center">
+            <div className="mt-4 rounded-2xl border border-dashed border-border/70 bg-slate-50 p-3 text-center">
               {photoPreview ? (
-                <img src={photoPreview} alt="Selected student photo" className="mx-auto h-40 w-40 rounded-3xl object-cover" />
+                <img src={photoPreview} alt="Selected student photo" className="mx-auto h-40 w-40 rounded-2xl object-cover" />
               ) : (
                 <div className="flex h-40 items-center justify-center rounded-3xl bg-slate-100 text-slate-500">
                   <span className="text-sm">No photo selected</span>
@@ -299,7 +299,7 @@ export default function NewStudentClient() {
             </label>
             <p className="mt-3 text-xs leading-5 text-slate-500">JPG, PNG or WEBP. Keep the file under 4MB and use a square image for best layout.</p>
 
-            <div className="mt-6 text-sm text-slate-600">
+            <div className="mt-4 text-sm text-slate-600">
               <p className="mt-2">Admission number: <span className="font-semibold">{nextAdmissionNo}</span></p>
             </div>
           </div>
@@ -308,8 +308,8 @@ export default function NewStudentClient() {
         {/* Right: main form fields */}
         <div className="lg:col-span-2">
           {/* Top row: Admission details */}
-          <div className="rounded-[32px] border border-slate-200 bg-white p-6 mb-6">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="rounded-lg border border-slate-200 bg-white p-3 mb-3">
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
               <label className="text-sm font-semibold text-slate-800">
                 Admission number
                 <input name="admissionNo" defaultValue={nextAdmissionNo} readOnly className="mt-2 w-full rounded-2xl border border-border bg-slate-100 px-4 py-3 text-sm text-slate-600" />
@@ -343,9 +343,9 @@ export default function NewStudentClient() {
           </div>
 
           {/* Section 1: Student Information */}
-          <div className="rounded-[32px] border border-slate-200 bg-white p-6 mb-6">
+          <div className="rounded-lg border border-slate-200 bg-white p-3 mb-3">
             <h3 className="text-lg font-semibold text-slate-900">Student information</h3>
-            <div className="mt-5 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
               <label className="text-sm font-semibold text-slate-800">
                 Surname *
                 <input name="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} required className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
@@ -392,9 +392,9 @@ export default function NewStudentClient() {
           </div>
 
           {/* Section 2: Parent / Guardian Information */}
-          <div className="rounded-[32px] border border-slate-200 bg-white p-6 mb-6">
+          <div className="rounded-lg border border-slate-200 bg-white p-3 mb-3">
             <h3 className="text-lg font-semibold text-slate-900">Parent / Guardian information</h3>
-            <div className="mt-5 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
               <label className="text-sm font-semibold text-slate-800">
                 First name
                 <input name="guardianFirst" value={guardianFirst} onChange={(e) => setGuardianFirst(e.target.value)} className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
@@ -439,8 +439,8 @@ export default function NewStudentClient() {
           </div>
 
           {/* Section 3: Medical Information (collapsible) */}
-          <div className="rounded-[32px] border border-slate-200 bg-white p-0 mb-6">
-            <button type="button" onClick={() => setMedicalOpen((v) => !v)} className="w-full flex items-center justify-between p-6 text-left hover:bg-slate-50 transition">
+          <div className="rounded-lg border border-slate-200 bg-white p-0 mb-3">
+            <button type="button" onClick={() => setMedicalOpen((v) => !v)} className="w-full flex items-center justify-between p-4 text-left hover:bg-slate-50 transition">
               <div className="flex items-center gap-3">
                 <ChevronDown className={`h-5 w-5 text-slate-600 transition-transform ${medicalOpen ? 'rotate-180' : ''}`} />
                 <div>
@@ -451,8 +451,8 @@ export default function NewStudentClient() {
             </button>
 
             {medicalOpen ? (
-              <div className="border-t border-slate-200 p-6">
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <div className="border-t border-slate-200 p-3">
+                <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
                   <label className="text-sm font-semibold text-slate-800">
                     Blood group
                     <input name="bloodGroup" value={bloodGroup} onChange={(e) => setBloodGroup(e.target.value)} className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
@@ -473,8 +473,8 @@ export default function NewStudentClient() {
           </div>
 
           {/* Section 4: Previous School (collapsible) */}
-          <div className="rounded-[32px] border border-slate-200 bg-white p-0 mb-6">
-            <button type="button" onClick={() => setPreviousOpen((v) => !v)} className="w-full flex items-center justify-between p-6 text-left hover:bg-slate-50 transition">
+          <div className="rounded-lg border border-slate-200 bg-white p-0 mb-3">
+            <button type="button" onClick={() => setPreviousOpen((v) => !v)} className="w-full flex items-center justify-between p-4 text-left hover:bg-slate-50 transition">
               <div className="flex items-center gap-3">
                 <ChevronDown className={`h-5 w-5 text-slate-600 transition-transform ${previousOpen ? 'rotate-180' : ''}`} />
                 <div>
@@ -485,8 +485,8 @@ export default function NewStudentClient() {
             </button>
 
             {previousOpen ? (
-              <div className="border-t border-slate-200 p-6">
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <div className="border-t border-slate-200 p-4">
+                <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
                   <label className="text-sm font-semibold text-slate-800">
                     Previous school
                     <input name="previousSchool" value={previousSchool} onChange={(e) => setPreviousSchool(e.target.value)} className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />

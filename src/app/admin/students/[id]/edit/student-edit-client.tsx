@@ -194,9 +194,9 @@ export default function StudentEditClient({ studentId }: { studentId: string }) 
   }
 
   return (
-    <div className="mx-auto max-w-[1400px] px-6 pb-16 pt-4">
-      <div className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur-sm py-3 -mx-6 px-6 mb-6">
-        <div className="flex items-center gap-4">
+    <div className="mx-auto max-w-[1400px] px-6 pb-16 pt-0">
+      <div className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur-sm py-1.5 -mx-6 px-6 mb-4">
+        <div className="flex items-center gap-3">
           <Link href={`/admin/students/${studentId}`}>
             <ChevronLeft className="h-5 w-5 text-muted hover:text-foreground transition" />
           </Link>
@@ -220,7 +220,7 @@ export default function StudentEditClient({ studentId }: { studentId: string }) 
         </div>
       </div>
 
-      <form id="edit-student-form" onSubmit={handleSubmit} className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <form id="edit-student-form" onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Error Alert */}
         {error && (
           <div className="lg:col-span-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
@@ -230,7 +230,7 @@ export default function StudentEditClient({ studentId }: { studentId: string }) 
 
         {/* Left: photo card (sticky) */}
         <div className="lg:col-span-1">
-          <div className="rounded-[28px] border border-border bg-white p-5 shadow-sm lg:sticky lg:top-28">
+          <div className="rounded-xl border border-border bg-white p-4 shadow-sm lg:sticky lg:top-28">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold text-slate-900">Profile photo</p>
@@ -267,10 +267,10 @@ export default function StudentEditClient({ studentId }: { studentId: string }) 
         </div>
 
         {/* Right: main form fields */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-2">
           {/* Admission Details */}
-          <div className="rounded-[32px] border border-slate-200 bg-white p-6">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="rounded-lg border border-slate-200 bg-white p-4">
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
               <label className="text-sm font-semibold text-slate-800">
                 Class *
                 <select name="classId" value={classId} onChange={(e) => setClassId(e.target.value)} required className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10">
@@ -299,9 +299,9 @@ export default function StudentEditClient({ studentId }: { studentId: string }) 
           </div>
 
           {/* Student Information */}
-          <div className="rounded-[32px] border border-slate-200 bg-white p-6">
-            <h3 className="text-lg font-semibold text-slate-900 mb-5">Student information</h3>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="rounded-lg border border-slate-200 bg-white p-4 mb-3">
+            <h3 className="text-lg font-semibold text-slate-900 mb-4">Student information</h3>
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
               <label className="text-sm font-semibold text-slate-800">
                 Surname *
                 <input name="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} required className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
@@ -348,9 +348,9 @@ export default function StudentEditClient({ studentId }: { studentId: string }) 
           </div>
 
           {/* Parent / Guardian Information */}
-          <div className="rounded-[32px] border border-slate-200 bg-white p-6">
-            <h3 className="text-lg font-semibold text-slate-900 mb-5">Parent / Guardian information</h3>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="rounded-lg border border-slate-200 bg-white p-4 mb-3">
+            <h3 className="text-lg font-semibold text-slate-900 mb-4">Parent / Guardian information</h3>
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
               <label className="text-sm font-semibold text-slate-800">
                 First name
                 <input name="guardianFirst" value={guardianFirst} onChange={(e) => setGuardianFirst(e.target.value)} className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
@@ -395,8 +395,8 @@ export default function StudentEditClient({ studentId }: { studentId: string }) 
           </div>
 
           {/* Medical Information (collapsible) */}
-          <div className="rounded-[32px] border border-slate-200 bg-white p-0">
-            <button type="button" onClick={() => setMedicalOpen((v) => !v)} className="w-full flex items-center justify-between p-6 text-left hover:bg-slate-50 transition">
+          <div className="rounded-lg border border-slate-200 bg-white p-0 mb-3">
+            <button type="button" onClick={() => setMedicalOpen((v) => !v)} className="w-full flex items-center justify-between p-4 text-left hover:bg-slate-50 transition">
               <div className="flex items-center gap-3">
                 <ChevronDown className={`h-5 w-5 text-slate-600 transition-transform ${medicalOpen ? "rotate-180" : ""}`} />
                 <div>
@@ -407,8 +407,8 @@ export default function StudentEditClient({ studentId }: { studentId: string }) 
             </button>
 
             {medicalOpen && (
-              <div className="border-t border-slate-200 p-6">
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <div className="border-t border-slate-200 p-4">
+                <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
                   <label className="text-sm font-semibold text-slate-800">
                     Blood group
                     <input name="bloodGroup" value={bloodGroup} onChange={(e) => setBloodGroup(e.target.value)} className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
@@ -429,8 +429,8 @@ export default function StudentEditClient({ studentId }: { studentId: string }) 
           </div>
 
           {/* Previous School (collapsible) */}
-          <div className="rounded-[32px] border border-slate-200 bg-white p-0">
-            <button type="button" onClick={() => setPreviousOpen((v) => !v)} className="w-full flex items-center justify-between p-6 text-left hover:bg-slate-50 transition">
+          <div className="rounded-lg border border-slate-200 bg-white p-0 mb-3">
+            <button type="button" onClick={() => setPreviousOpen((v) => !v)} className="w-full flex items-center justify-between p-4 text-left hover:bg-slate-50 transition">
               <div className="flex items-center gap-3">
                 <ChevronDown className={`h-5 w-5 text-slate-600 transition-transform ${previousOpen ? "rotate-180" : ""}`} />
                 <div>
@@ -441,8 +441,8 @@ export default function StudentEditClient({ studentId }: { studentId: string }) 
             </button>
 
             {previousOpen && (
-              <div className="border-t border-slate-200 p-6">
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <div className="border-t border-slate-200 p-4">
+                <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
                   <label className="text-sm font-semibold text-slate-800">
                     Previous school
                     <input name="previousSchool" value={previousSchool} onChange={(e) => setPreviousSchool(e.target.value)} className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />

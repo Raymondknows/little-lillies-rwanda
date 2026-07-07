@@ -144,9 +144,7 @@ export function ErrorModal({
               type="button"
               onClick={() => {
                 action.onClick();
-                setAnimateState("exit");
-                playCloseTone();
-                setTimeout(() => onClose(), ANIMATION_MS);
+                onClose();
               }}
               className="flex-1 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors hover:bg-slate-100"
               style={{ borderColor: BUTTON_BG, color: BUTTON_BG }}
@@ -160,9 +158,7 @@ export function ErrorModal({
               if (isSuccess && onSuccessAction) {
                 onSuccessAction();
               }
-              setAnimateState("exit");
-              playCloseTone();
-              setTimeout(() => onClose(), ANIMATION_MS);
+              onClose();
             }}
             className="flex-1 rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-colors hover:opacity-90"
             style={{ background: BUTTON_BG }}

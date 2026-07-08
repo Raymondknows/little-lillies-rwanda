@@ -82,7 +82,7 @@ export function FlutterwavePurchaseButton({
         disabled={disabled || loading}
         className="w-full bg-[#F5A623] hover:bg-[#D98D00] text-white font-bold py-3 px-4 rounded-lg transition-all duration-200"
       >
-        {loading ? "Processing…" : "Pay with Flutterwave"}
+        {loading ? "Processing…" : "Pay now"}
       </Button>
       {error ? <p className="text-xs text-red-600 font-medium">{error}</p> : null}
     </div>

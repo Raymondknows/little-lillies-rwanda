@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { PaystackPurchaseButton } from "@/components/paystack-purchase-button";
 import { FlutterwavePurchaseButton } from "@/components/flutterwave-purchase-button";
-import { Check, Zap, Users, BarChart3, MessageSquare } from "lucide-react";
+import { Check, Zap, Users, BarChart3, MessageSquare, Globe, CreditCard, ToggleRight } from "lucide-react";
 import { UserGuide, type PageHelpGuide } from "@/components/ui/user-guide";
 import AdminSkeleton from "@/components/ui/skeleton";
 
@@ -245,22 +245,42 @@ export default function SubscribePage() {
         </p>
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="rounded-full border border-border bg-surface px-4 py-2 text-sm text-muted">
-          Pricing shown for <span className="font-semibold text-foreground">{countryName}</span> · <span className="font-semibold text-brand">{currency}</span>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+        {/* Pricing Location */}
+        <div className="rounded-full border border-border bg-surface px-4 py-2 text-sm text-muted flex items-center gap-2">
+          <div className="relative group">
+            <Globe size={16} color="#0A66C2" className="cursor-help flex-shrink-0" />
+            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-foreground text-background text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+              Pricing shown for
+            </div>
+          </div>
+          <span className="font-semibold text-foreground">{countryName} · {currency}</span>
         </div>
-        <div className="rounded-full border border-border bg-surface px-4 py-2 text-sm font-medium text-muted">
-          Payment provider: <span className="font-semibold text-foreground">{paymentProvider}</span>
-        </div>
-      </div>
 
-      <div className="flex justify-end">
+        {/* Payment Provider */}
+        <div className="rounded-full border border-border bg-surface px-4 py-2 text-sm font-medium text-muted flex items-center gap-2">
+          <div className="relative group">
+            <CreditCard size={16} color="#0A66C2" className="cursor-help flex-shrink-0" />
+            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-foreground text-background text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+              Payment provider
+            </div>
+          </div>
+          <span className="font-semibold text-foreground">{paymentProvider}</span>
+        </div>
+
+        {/* Alternative Payment Toggle */}
         <button
           type="button"
           onClick={() => setShowBankPanel((prev) => !prev)}
-          className="rounded-full border border-border bg-surface px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-surface/90"
+          className="rounded-full border border-border bg-surface px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-surface/90 flex items-center gap-2"
         >
-          {showBankPanel ? "Hide alternative payment" : "Show alternative payment"}
+          <div className="relative group">
+            <ToggleRight size={16} color="#0A66C2" className="cursor-help flex-shrink-0" />
+            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-foreground text-background text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+              {showBankPanel ? "Hide alternative payment" : "Show alternative payment"}
+            </div>
+          </div>
+          <span>{showBankPanel ? "Hide alternative payment" : "Show alternative payment"}</span>
         </button>
       </div>
 

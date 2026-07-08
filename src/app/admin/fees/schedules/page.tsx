@@ -50,7 +50,24 @@ export default function FeeSchedulesPage() {
         }
 
         const result = await response.json();
-        setData(result);
+
+        // Fetch country config to get currency from country selection modal
+        let countryConfig: any = null;
+        try {
+          const countryRes = await fetch("/api/country/config");
+          if (countryRes.ok) {
+            countryConfig = await countryRes.json();
+          }
+        } catch (err) {
+          console.error("[Fee Schedules] Country config fetch error:", err);
+        }
+
+        const schedulesCurrency = countryConfig?.data?.currency || result.currency || "NGN";
+
+        setData({
+          ...result,
+          currency: schedulesCurrency,
+        });
 
         // Check for success redirect
         if (new URLSearchParams(window.location.search).get("success") === "1") {

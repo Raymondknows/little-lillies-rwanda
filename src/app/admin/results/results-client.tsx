@@ -8,6 +8,8 @@ import {
   AlertCircle,
   Clock,
   ChevronRight,
+  Trash2,
+  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 import { PublishButton } from "@/components/admin/publish-button";
@@ -148,6 +150,12 @@ export default function ResultsPageClient({ assessments, sessions = [] }: { asse
   const [modalTitle, setModalTitle] = useState<string | undefined>(undefined);
   const [modalType, setModalType] = useState<'success' | 'error'>('error');
   const [modalDetails, setModalDetails] = useState<string | undefined>(undefined);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deletingAssessmentId, setDeletingAssessmentId] = useState<string | null>(null);
+  const [deletingAssessmentName, setDeletingAssessmentName] = useState<string>("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteAnimateState, setDeleteAnimateState] = useState<"enter" | "exit">("enter");
+  const [deletedAssessmentIds, setDeletedAssessmentIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (isSearchOpen && searchInputRef.current) {
@@ -192,6 +200,9 @@ export default function ResultsPageClient({ assessments, sessions = [] }: { asse
   const filteredAssessments = useMemo(() => {
     let filtered = assessments;
 
+    // Filter out deleted assessments
+    filtered = filtered.filter((a) => !deletedAssessmentIds.has(a.id));
+
     // Filter by phase
     if (activePhase !== "ALL") {
       filtered = filtered.filter((a) => a.phase === activePhase);
@@ -223,7 +234,7 @@ export default function ResultsPageClient({ assessments, sessions = [] }: { asse
     }
 
     return filtered;
-  }, [assessments, activePhase, activeStatus, selectedSession, selectedTerm, searchQuery]);
+  }, [assessments, activePhase, activeStatus, selectedSession, selectedTerm, searchQuery, deletedAssessmentIds]);
 
   // Pagination
   const totalPages = Math.ceil(filteredAssessments.length / ITEMS_PER_PAGE);
@@ -261,6 +272,61 @@ export default function ResultsPageClient({ assessments, sessions = [] }: { asse
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
     handleFilterChange();
+  };
+
+  const openDeleteModal = (assessmentId: string, assessmentName: string) => {
+    setDeletingAssessmentId(assessmentId);
+    setDeletingAssessmentName(assessmentName);
+    setDeleteAnimateState("enter");
+    setDeleteModalOpen(true);
+    playOpenTone();
+  };
+
+  const handleDeleteAssessment = async () => {
+    if (!deletingAssessmentId) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/admin/assessments/${deletingAssessmentId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setModalTitle('Delete Failed');
+        setModalType('error');
+        setModalMessage(data.error || 'Failed to delete assessment');
+        setModalDetails(data.reason);
+        setModalOpen(true);
+      } else {
+        playCloseTone();
+        setDeleteModalOpen(false);
+        setDeletedAssessmentIds((prev) => {
+          const next = new Set(prev);
+          if (deletingAssessmentId) next.add(deletingAssessmentId);
+          return next;
+        });
+        setDeletingAssessmentId(null);
+        setDeletingAssessmentName("");
+        setModalTitle('Assessment Deleted');
+        setModalType('success');
+        setModalMessage(`"${data.deletedId === deletingAssessmentId ? deletingAssessmentName : 'The assessment'}" has been permanently deleted`);
+        setModalDetails(undefined);
+        setModalOpen(true);
+      }
+    } catch (error) {
+      setModalTitle('Delete Error');
+      setModalType('error');
+      setModalMessage(error instanceof Error ? error.message : 'An error occurred');
+      setModalOpen(true);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const getPhaseStats = (phase: string) => {
@@ -536,6 +602,16 @@ export default function ResultsPageClient({ assessments, sessions = [] }: { asse
                               </Button>
                             )}
                           {isApproved && <PublishButton assessmentId={a.id} />}
+                          {a.status === 'DRAFT' && (
+                            <button
+                              type="button"
+                              onClick={() => openDeleteModal(a.id, a.name)}
+                              className="text-xs sm:text-sm font-medium flex items-center gap-1 px-3 py-1.5 rounded-lg transition border border-red-300 bg-red-50 text-red-600 hover:bg-red-100"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                              Delete
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -658,7 +734,215 @@ export default function ResultsPageClient({ assessments, sessions = [] }: { asse
         </div>
       )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteModalOpen && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4">
+          <style>{`
+            @keyframes sb_modal_enter { from { transform: translateX(36px) scale(.98); opacity: 0 } to { transform: translateX(0) scale(1); opacity: 1 } }
+            @keyframes sb_modal_exit  { from { transform: translateX(0) scale(1); opacity: 1 } to { transform: translateX(36px) scale(.98); opacity: 0 } }
+          `}</style>
+
+          <div
+            className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_50px_rgba(220,38,38,0.16)]"
+            style={{
+              animation: `${deleteAnimateState === "enter" ? "sb_modal_enter" : "sb_modal_exit"} 320ms cubic-bezier(.2,.9,.2,1)`,
+            }}
+          >
+            {/* Header */}
+            <div
+              className="border-b border-slate-100 px-6 py-5"
+              style={{ background: "linear-gradient(90deg, rgba(220,38,38,0.12), rgba(220,38,38,0.04))" }}
+            >
+              <div className="flex items-start gap-3">
+                <div
+                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/70 shadow-sm"
+                  style={{ background: "rgba(220,38,38,0.12)" }}
+                >
+                  <AlertCircle className="h-6 w-6" style={{ color: "#DC2626" }} />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-slate-900">Delete Assessment?</h2>
+                  <p className="mt-1 text-sm text-slate-600">
+                    This action cannot be undone.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="px-6 py-5">
+              <p className="text-sm leading-6 text-slate-700">
+                You are about to permanently delete <strong>"{deletingAssessmentName}"</strong>.
+              </p>
+              <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3">
+                <p className="text-xs text-red-700">
+                  <strong>Warning:</strong> The assessment will be completely removed from the system.
+                </p>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setDeleteAnimateState("exit");
+                  playCloseTone();
+                  setTimeout(() => {
+                    setDeleteModalOpen(false);
+                    setDeletingAssessmentId(null);
+                  }, 320);
+                }}
+                disabled={isDeleting}
+                className="flex-1 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-slate-100 disabled:opacity-50 text-slate-700"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteAssessment}
+                disabled={isDeleting}
+                className="flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors text-white disabled:opacity-50 flex items-center justify-center gap-2"
+                style={{ background: "#DC2626", "--hover-color": "#991B1B" } as any}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "#991B1B")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "#DC2626")}
+              >
+                {isDeleting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    Delete Permanently
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Status Modal */}
+      {modalOpen && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4">
+          <style>{`
+            @keyframes sb_modal_enter { from { transform: translateX(36px) scale(.98); opacity: 0 } to { transform: translateX(0) scale(1); opacity: 1 } }
+            @keyframes sb_modal_exit  { from { transform: translateX(0) scale(1); opacity: 1 } to { transform: translateX(36px) scale(.98); opacity: 0 } }
+          `}</style>
+
+          <div
+            className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_50px_rgba(10,102,194,0.16)]"
+            style={{
+              animation: `sb_modal_enter 320ms cubic-bezier(.2,.9,.2,1)`,
+            }}
+          >
+            {/* Header */}
+            <div
+              className="border-b border-slate-100 px-6 py-5"
+              style={{ background: "linear-gradient(90deg, rgba(10,102,194,0.12), rgba(10,102,194,0.04))" }}
+            >
+              <div className="flex items-start gap-3">
+                <div
+                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/70 shadow-sm"
+                  style={{ background: modalType === 'success' ? "rgba(16,185,129,0.12)" : "rgba(10,102,194,0.12)" }}
+                >
+                  {modalType === 'success' ? (
+                    <Sparkles className="h-6 w-6" style={{ color: "#0A66C2" }} />
+                  ) : (
+                    <AlertCircle className="h-6 w-6" style={{ color: "#0A66C2" }} />
+                  )}
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-slate-900">
+                    {modalTitle || (modalType === 'success' ? 'All set' : 'Something went wrong')}
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-600">
+                    {modalType === 'success' ? 'Your request was completed successfully.' : 'Please review the details below.'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="px-6 py-5">
+              <p className="text-sm leading-6 text-slate-700">{modalMessage}</p>
+              {modalDetails && (
+                <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                  <p className="text-xs text-slate-700">{modalDetails}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="border-t border-slate-100 bg-slate-50 px-6 py-4">
+              <button
+                onClick={() => setModalOpen(false)}
+                className="w-full rounded-lg px-4 py-2.5 font-medium text-sm transition-colors text-white"
+                style={{ background: "#0A66C2" }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "#084B8A")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "#0A66C2")}
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <UserGuide guide={RESULTS_GUIDE} />
     </>
   );
+}
+
+// Sound effects for modals
+function playOpenTone() {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const now = ctx.currentTime;
+
+    const playTone = (freq: number, duration: number, gain: number, delay = 0) => {
+      const osc = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, now + delay);
+      gainNode.gain.setValueAtTime(0.0001, now + delay);
+      gainNode.gain.exponentialRampToValueAtTime(gain, now + delay + 0.01);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, now + delay + duration);
+      osc.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      osc.start(now + delay);
+      osc.stop(now + delay + duration);
+    };
+
+    playTone(880, 0.16, 0.05, 0);
+    playTone(1174, 0.16, 0.05, 0.08);
+
+    setTimeout(() => ctx.close(), 700);
+  } catch (e) {
+    // ignore
+  }
+}
+
+function playCloseTone() {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = "sine";
+    o.frequency.value = 420;
+    g.gain.value = 0.0001;
+    o.connect(g);
+    g.connect(ctx.destination);
+    const now = ctx.currentTime;
+    g.gain.linearRampToValueAtTime(0.045, now + 0.01);
+    o.start(now);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+    o.stop(now + 0.24);
+    setTimeout(() => ctx.close(), 500);
+  } catch (e) {
+    // ignore
+  }
 }

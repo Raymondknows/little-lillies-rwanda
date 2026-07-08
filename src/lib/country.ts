@@ -1,7 +1,8 @@
 import { jwtVerify, SignJWT } from "jose";
+import countriesJson from "../../config/countries.json";
 
 const COOKIE_NAME = "country_v1";
-export const SUPPORTED_COUNTRIES = ["NG", "GH", "KE", "UG", "ZA"];
+export const SUPPORTED_COUNTRIES = Object.keys((countriesJson as any).countries || {}).sort();
 
 export function parseCookies(cookieHeader?: string | null) {
   const obj: Record<string, string> = {};

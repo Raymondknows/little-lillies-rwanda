@@ -78,7 +78,7 @@ export default function FeesPage() {
           console.error("[Fees] Country config fetch error:", err);
         }
 
-        const feesCurrency = feesData.currency || countryConfig?.data?.currency || "NGN";
+        const feesCurrency = countryConfig?.data?.currency || feesData.currency || "NGN";
 
         setSchoolName(schoolNameToUse);
         setData({

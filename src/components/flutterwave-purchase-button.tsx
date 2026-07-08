@@ -36,7 +36,10 @@ export function FlutterwavePurchaseButton({
     setLoading(true);
 
     try {
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+      const appUrl =
+        typeof window !== "undefined"
+          ? window.location.origin
+          : process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
       const redirectUrl = `${appUrl}${isSubscription ? "/admin/subscription-success" : "/purchase/success"}`;
 
       const response = await fetch("/api/flutterwave/init", {

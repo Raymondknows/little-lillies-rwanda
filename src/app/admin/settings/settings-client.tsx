@@ -78,16 +78,13 @@ export default function SettingsPageClient({
         const config = await response.json();
         if (!mounted) return;
 
-        if (!school.country) {
-          setCountry(config.country || "NG");
-        }
-
-        if (!school.currency) {
-          setCurrency(config.data?.currency || "NGN");
-        }
+        const resolvedCountry = config.country || school.country || "NG";
+        const resolvedCurrency = config.data?.currency || school.currency || "NGN";
+        setCountry(resolvedCountry);
+        setCurrency(resolvedCurrency);
 
         setDetectedCountryName(config.data?.name || null);
-        setDetectedCurrency(config.data?.currency || null);
+        setDetectedCurrency(resolvedCurrency || null);
       } catch (err) {
         console.error("Error loading country config:", err);
       }
@@ -173,8 +170,6 @@ export default function SettingsPageClient({
         body: JSON.stringify({
           name: name.trim(),
           initials: initials.trim().toUpperCase(),
-          country,
-          currency,
           address: address.trim() || null,
           email: email.trim() || null,
           phone: phone.trim() || null,
@@ -387,18 +382,16 @@ export default function SettingsPageClient({
                 <label className="block text-sm font-medium text-foreground mb-2">Country *</label>
                 <select
                   value={country}
-                  onChange={(e) => {
-                    const nextCountry = e.target.value;
-                    setCountry(nextCountry);
-                    const nextCurrency = (countriesData as any).countries[nextCountry]?.currency ?? currency;
-                    setCurrency(nextCurrency);
-                  }}
-                  className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand/50"
+                  disabled
+                  className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground opacity-80 cursor-not-allowed focus:outline-none"
                 >
                   {Object.entries(countriesData.countries).map(([code, data]) => (
                     <option key={code} value={code}>{(data as any).name}</option>
                   ))}
                 </select>
+                <p className="mt-2 text-xs text-muted">
+                  This market is locked to the country selected when you first visited SchoolBase. To change it, contact support so we can help you update it safely.
+                </p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">Currency</label>

@@ -224,7 +224,7 @@ export default function AdminDashboardPage() {
           currency: dashboardCurrency,
         });
         setDetectedCountryName(dashboardCountryName);
-        setDetectedCurrency(countryConfig?.data?.currency || dashboardCurrency);
+        setDetectedCurrency(dashboardCurrency);
         setSchoolName(schoolNameToUse);
         setLoading(false);
         } catch (timeoutErr: unknown) {

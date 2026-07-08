@@ -21,33 +21,33 @@
         "group": { "amountMinor": 0, "priceLabel": "Talk to us" }
       }
     },
-    "KE": {
-      "name": "Kenya",
-      "currency": "KES",
-      "timezone": "Africa/Nairobi",
+    "SL": {
+      "name": "Sierra Leone",
+      "currency": "SLE",
+      "timezone": "Africa/Freetown",
       "plans": {
-        "starter": { "amountMinor": 434800, "priceLabel": "KES4,348.00 / term" },
-        "standard": { "amountMinor": 652200, "priceLabel": "KES6,522.00 / term" },
+        "starter": { "amountMinor": 450000, "priceLabel": "Le 450,000 / term" },
+        "standard": { "amountMinor": 600000, "priceLabel": "Le 600,000 / term" },
         "group": { "amountMinor": 0, "priceLabel": "Talk to us" }
       }
     },
-    "UG": {
-      "name": "Uganda",
-      "currency": "UGX",
-      "timezone": "Africa/Kampala",
+    "LR": {
+      "name": "Liberia",
+      "currency": "LRD",
+      "timezone": "Africa/Monrovia",
       "plans": {
-        "starter": { "amountMinor": 21383600, "priceLabel": "UGX213,836.00 / term" },
-        "standard": { "amountMinor": 32075400, "priceLabel": "UGX320,754.00 / term" },
+        "starter": { "amountMinor": 450000, "priceLabel": "L$450,000 / term" },
+        "standard": { "amountMinor": 600000, "priceLabel": "L$600,000 / term" },
         "group": { "amountMinor": 0, "priceLabel": "Talk to us" }
       }
     },
-    "ZA": {
-      "name": "South Africa",
-      "currency": "ZAR",
-      "timezone": "Africa/Johannesburg",
+    "GM": {
+      "name": "The Gambia",
+      "currency": "GMD",
+      "timezone": "Africa/Banjul",
       "plans": {
-        "starter": { "amountMinor": 755600, "priceLabel": "R7,556.00 / term" },
-        "standard": { "amountMinor": 1133400, "priceLabel": "R11,334.00 / term" },
+        "starter": { "amountMinor": 450000, "priceLabel": "D450,000 / term" },
+        "standard": { "amountMinor": 600000, "priceLabel": "D600,000 / term" },
         "group": { "amountMinor": 0, "priceLabel": "Talk to us" }
       }
     }

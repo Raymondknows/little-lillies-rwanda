@@ -1,14 +1,25 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import countriesJson from "../../config/countries.json";
 
-const COUNTRIES = [
-  { code: "NG", name: "Nigeria", emoji: "🇳🇬" },
-  { code: "GH", name: "Ghana", emoji: "🇬🇭" },
-  { code: "KE", name: "Kenya", emoji: "🇰🇪" },
-  { code: "UG", name: "Uganda", emoji: "🇺🇬" },
-  { code: "ZA", name: "South Africa", emoji: "🇿🇦" },
-];
+const COUNTRY_EMOJIS: Record<string, string> = {
+  NG: "🇳🇬",
+  GH: "🇬🇭",
+  SL: "🇸🇱",
+  LR: "🇱🇷",
+  GM: "🇬🇲",
+};
+
+const COUNTRY_ORDER = ["NG", "GH", "SL", "LR", "GM"];
+
+const COUNTRIES = Object.entries((countriesJson as any).countries || {})
+  .sort(([a], [b]) => COUNTRY_ORDER.indexOf(a) - COUNTRY_ORDER.indexOf(b))
+  .map(([code, config]: [string, any]) => ({
+    code,
+    name: config.name,
+    emoji: COUNTRY_EMOJIS[code] || "🌍",
+  }));
 
 export function CountrySelectModal() {
   const [open, setOpen] = useState(false);
@@ -91,7 +102,7 @@ export function CountrySelectModal() {
               Select your country.
             </h3>
             <p className="mt-2 text-sm leading-6 text-slate-600">
-              Choose the country you are buying from so we can personalize your experience.
+              Choose the country you are buying from so we can personalize your pricing, currency, and onboarding experience. This only affects your current browsing experience and pricing preview.
             </p>
           </div>
           <button

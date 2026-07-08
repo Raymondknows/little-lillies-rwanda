@@ -11,6 +11,7 @@ import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { AppLogo } from "@/components/app-logo";
 import { CountrySelectModal } from "@/components/country-select-modal";
+import { OfferPopup } from "@/components/offer-popup";
 import countriesJson from "../../config/countries.json";
 import { getCountryFromHeaders } from "@/lib/country";
 import { getParentSession, getStaffSession } from "@/lib/auth";
@@ -254,6 +255,7 @@ export default async function HomePage() {
         </div>
       </section>
       <CountrySelectModal />
+      <OfferPopup />
     </div>
   );
 }

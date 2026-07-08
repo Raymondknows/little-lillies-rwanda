@@ -22,8 +22,16 @@ interface Assessment {
   componentData?: string | null;
   publishedAt?: string;
   term: {
+    id?: string;
     name: string;
+    sortOrder?: number;
+    academicYear?: {
+      id: string;
+      name: string;
+      isCurrent: boolean;
+    } | null;
   };
+  classId?: string | null;
   results: Array<{
     pupilId: string;
     caScore: number | null;
@@ -51,6 +59,22 @@ interface Assessment {
     } | null;
     subject?: string | null;
   }>;
+  thirdTermHistory?: {
+    terms: Array<{ id: string; name: string; sortOrder: number }>;
+    entries: Array<{
+      pupilId: string;
+      pupilName: string;
+      admissionNo?: string | null;
+      terms: Array<{
+        termId: string;
+        termName: string;
+        sortOrder: number;
+        totalScore: number | null;
+        examScore: number | null;
+        subjectCount: number;
+      }>;
+    }>;
+  } | null;
   _count: { results: number };
 }
 
@@ -120,6 +144,9 @@ export default function AssessmentDetailPage({
   const [activeTab, setActiveTab] = useState("overview");
   const [showSetupWizard, setShowSetupWizard] = useState(false);
   const [broadsheetGroups, setBroadsheetGroups] = useState<ClassBroadsheetGroup[]>([]);
+  const [historicalTotalsInput, setHistoricalTotalsInput] = useState<Record<string, string>>({});
+  const [isSavingHistoricalTotals, setIsSavingHistoricalTotals] = useState(false);
+  const [historicalTotalsError, setHistoricalTotalsError] = useState<string | null>(null);
 
   const fetchAssessment = async () => {
     try {
@@ -141,6 +168,15 @@ export default function AssessmentDetailPage({
 
   useEffect(() => {
     if (!assessment) return;
+
+    const inputValues: Record<string, string> = {};
+    assessment.thirdTermHistory?.entries.forEach((entry) => {
+      entry.terms.forEach((termRow) => {
+        if (termRow.totalScore === null) {
+          inputValues[`${entry.pupilId}:${termRow.termId}`] = '';
+        }
+      });
+    });
 
         const groups = new Map<
       string,
@@ -272,6 +308,7 @@ export default function AssessmentDetailPage({
       .sort((a, b) => a.className.localeCompare(b.className));
 
     setBroadsheetGroups(classGroups);
+    setHistoricalTotalsInput(inputValues);
 
   }, [assessment]);
 
@@ -329,6 +366,57 @@ export default function AssessmentDetailPage({
       setError(err instanceof Error ? err.message : "Failed to return to draft");
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const handleHistoricalTotalChange = (key: string, value: string) => {
+    setHistoricalTotalsInput((current) => ({
+      ...current,
+      [key]: value,
+    }));
+  };
+
+  const saveHistoricalTotals = async () => {
+    if (!assessment) return;
+    setIsSavingHistoricalTotals(true);
+    setHistoricalTotalsError(null);
+
+    try {
+      const payload = Object.entries(historicalTotalsInput)
+        .filter(([, value]) => value.trim() !== '')
+        .map(([key, value]) => {
+          const [pupilId, termId] = key.split(':');
+          return {
+            academicYearId: assessment.term.academicYear?.id,
+            termId,
+            classId: assessment.classId ?? assessment.results[0]?.pupil.class?.id ?? '',
+            studentId: pupilId,
+            totalScore: Number(value),
+          };
+        });
+
+      if (payload.length === 0) {
+        setHistoricalTotalsError('Enter at least one historical total to save.');
+        return;
+      }
+
+      const response = await fetch('/api/admin/results/historical-totals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => null);
+        throw new Error(errorBody?.error || 'Failed to save historical totals');
+      }
+
+      await fetchAssessment();
+      setHistoricalTotalsError(null);
+    } catch (err) {
+      setHistoricalTotalsError(err instanceof Error ? err.message : 'Failed to save historical totals');
+    } finally {
+      setIsSavingHistoricalTotals(false);
     }
   };
 
@@ -561,14 +649,150 @@ export default function AssessmentDetailPage({
 
       {/* Scores Tab */}
       {activeTab === "scores" && (
-        <div className="mt-6 space-y-4">
-          <div>
-            <h2 className="text-lg font-semibold">Assessment Scores</h2>
-            <p className="text-sm text-muted">
-              Saved pupil results are displayed grouped by class. Totals and grades reflect stored assessment results, not editable inputs.
-            </p>
+        <>
+          <div className="mt-6 space-y-4">
+            <div>
+              <h2 className="text-lg font-semibold">Assessment Scores</h2>
+              <p className="text-sm text-muted">
+                Saved pupil results are displayed grouped by class. Totals and grades reflect stored assessment results, not editable inputs.
+              </p>
+            </div>
           </div>
-        </div>
+
+          {assessment.term?.sortOrder === 3 && (
+            <div className="mt-6 rounded-lg border border-border bg-surface p-4">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h3 className="text-base font-semibold">Third Term Historical Totals</h3>
+                  <p className="text-sm text-muted">
+                    These totals are aggregated from published results in previous terms for the same academic year.
+                  </p>
+                </div>
+                {assessment.thirdTermHistory?.terms?.length ? (
+                  <div className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
+                    {assessment.thirdTermHistory.terms.length} previous term{assessment.thirdTermHistory.terms.length === 1 ? '' : 's'} included
+                  </div>
+                ) : null}
+              </div>
+
+              {assessment.thirdTermHistory?.entries?.length ? (
+                <div className="mt-4 overflow-x-auto">
+                  <table className="w-full text-left text-sm">
+                    <thead className="border-b border-border bg-background text-muted">
+                      <tr>
+                        <th className="px-4 py-3 font-medium">Student</th>
+                        {assessment.thirdTermHistory.terms.map((term) => (
+                          <Fragment key={term.id}>
+                            <th className="px-4 py-3 font-medium text-center">
+                              {term.name} Total
+                            </th>
+                            <th className="px-4 py-3 font-medium text-center">
+                              {term.name} Exam
+                            </th>
+                          </Fragment>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {assessment.thirdTermHistory.entries.map((row) => (
+                        <tr key={row.pupilId} className="border-t border-border hover:bg-background/50">
+                          <td className="px-4 py-3 font-medium">{row.pupilName}</td>
+                          {row.terms.map((termRow) => (
+                            <Fragment key={termRow.termId}>
+                              <td className="px-4 py-3 text-center">
+                                {termRow.totalScore !== null ? termRow.totalScore : '—'}
+                              </td>
+                              <td className="px-4 py-3 text-center">
+                                {termRow.examScore !== null ? termRow.examScore : '—'}
+                              </td>
+                            </Fragment>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="mt-4 rounded-lg border border-dashed border-slate-200 bg-white p-4 text-sm text-slate-600">
+                  No published results were found for Term 1 or Term 2 in the current academic year.
+                </div>
+              )}
+
+              {assessment.thirdTermHistory?.entries.some((row) =>
+                row.terms.some((term) => term.totalScore === null)
+              ) && assessment.status !== 'PUBLISHED' ? (
+                <div className="mt-6 rounded-lg border border-border bg-surface p-4">
+                  <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h4 className="text-sm font-semibold">Manual historical totals</h4>
+                      <p className="text-sm text-muted">
+                        Enter missing Term 1 / Term 2 totals for students that do not have published results.
+                      </p>
+                    </div>
+                    <Button
+                      onClick={saveHistoricalTotals}
+                      disabled={isSavingHistoricalTotals}
+                    >
+                      {isSavingHistoricalTotals ? 'Saving...' : 'Save missing totals'}
+                    </Button>
+                  </div>
+
+                  {historicalTotalsError ? (
+                    <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                      {historicalTotalsError}
+                    </div>
+                  ) : null}
+
+                  <div className="mt-4 overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                      <thead className="border-b border-border bg-background text-muted">
+                        <tr>
+                          <th className="px-4 py-3 font-medium">Student</th>
+                          {assessment.thirdTermHistory.terms.map((term) => (
+                            <th key={term.id} className="px-4 py-3 font-medium text-center">
+                              {term.name} Total
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {assessment.thirdTermHistory.entries.map((row) => (
+                          <tr key={row.pupilId} className="border-t border-border hover:bg-background/50">
+                            <td className="px-4 py-3 font-medium">{row.pupilName}</td>
+                            {row.terms.map((termRow) => {
+                              const inputKey = `${row.pupilId}:${termRow.termId}`;
+                              const editedValue = historicalTotalsInput[inputKey] ?? '';
+                              return (
+                                <td key={termRow.termId} className="px-4 py-3 text-center">
+                                  {termRow.totalScore !== null ? (
+                                    <span className="font-medium">{termRow.totalScore}</span>
+                                  ) : (
+                                    <input
+                                      type="number"
+                                      inputMode="decimal"
+                                      step="0.1"
+                                      min="0"
+                                      value={editedValue}
+                                      onChange={(event) =>
+                                        handleHistoricalTotalChange(inputKey, event.target.value)
+                                      }
+                                      className="mx-auto w-24 rounded border border-border bg-white px-2 py-1 text-sm text-center focus:border-brand focus:outline-none"
+                                      placeholder="—"
+                                    />
+                                  )}
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          )}
+        </>
       )}
 
       {/* Results Summary Table */}

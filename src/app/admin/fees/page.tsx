@@ -140,14 +140,14 @@ export default function FeesPage() {
     }
   };
 
-  const handleSendReminders = async () => {
+  const handleSendReminders = async (invoiceId?: string) => {
     try {
       const backendUrl = getBackendUrl();
       const response = await fetch(`${backendUrl}/api/admin/fees/invoices/send-reminders`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
+        body: JSON.stringify(invoiceId ? { invoiceId } : {}),
       });
 
       if (!response.ok) {

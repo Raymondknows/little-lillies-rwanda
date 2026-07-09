@@ -112,7 +112,7 @@ export default function FeesPageClient({
   currency?: string;
   terms?: TermItem[];
   onIssueBills?: (termId: string) => Promise<void>;
-  onSendReminders?: () => Promise<void>;
+  onSendReminders?: (invoiceId?: string) => Promise<void>;
   whatsAppConnected?: boolean | null;
   whatsAppStatusMessage?: string | null;
 }) {
@@ -136,6 +136,7 @@ export default function FeesPageClient({
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("CASH");
   const [paymentReference, setPaymentReference] = useState("");
   const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
+  const [sendingReminderInvoiceId, setSendingReminderInvoiceId] = useState<string | null>(null);
   
   // Issue bills and send reminders state
   const [issuingBills, setIssuingBills] = useState(false);
@@ -244,6 +245,17 @@ export default function FeesPageClient({
     setPaymentAmount(((invoice.amountDue - invoice.amountPaid) / 100).toFixed(0));
     setPaymentMethod("CASH");
     setPaymentReference("");
+  };
+
+  const handleSendReminderForInvoice = async (invoice: Invoice) => {
+    if (!invoice.id) return;
+
+    setSendingReminderInvoiceId(invoice.id);
+    try {
+      await onSendReminders?.(invoice.id);
+    } finally {
+      setSendingReminderInvoiceId(null);
+    }
   };
 
   // Calculate summary statistics
@@ -816,15 +828,25 @@ export default function FeesPageClient({
                         <td className={`px-4 py-2 text-right font-semibold ${invoiceStatusClass(inv.status)}`}>{formatStatMoney(balance)}</td>
                         <td className="px-4 py-2"><Badge variant={inv.status === "PAID" ? "success" : inv.status === "OVERDUE" ? "error" : inv.status === "PART_PAID" ? "warning" : "secondary"}>{invoiceStatusLabel(inv.status)}</Badge></td>
                         <td className="px-4 py-2 flex flex-wrap gap-1">
-                          <Link href={`/admin/fees/${inv.id}`} className="rounded-full border border-border bg-white px-2 py-0.5 text-xs font-semibold text-brand transition hover:bg-brand/5">View</Link>
+                          <Link href={`/admin/fees/${inv.id}`} className="rounded-full border border-[#0A66C2] bg-[#0A66C2] px-2 py-0.5 text-xs font-semibold text-white transition hover:bg-[#0A66C2]/90">View</Link>
                           {balance > 0 ? (
-                            <button
-                              type="button"
-                              onClick={() => selectInvoiceForPayment(inv)}
-                              className="rounded-full border border-border bg-surface px-2 py-0.5 text-xs font-semibold text-foreground transition hover:bg-background"
-                            >
-                              Pay
-                            </button>
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => handleSendReminderForInvoice(inv)}
+                                disabled={sendingReminderInvoiceId === inv.id}
+                                className="rounded-full border border-[#0A66C2] bg-white px-2 py-0.5 text-xs font-semibold text-[#0A66C2] transition hover:bg-[#0A66C2]/5 disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                {sendingReminderInvoiceId === inv.id ? "Sending..." : "Remind"}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => selectInvoiceForPayment(inv)}
+                                className="rounded-full border border-[#0A66C2] bg-white px-2 py-0.5 text-xs font-semibold text-[#0A66C2] transition hover:bg-[#0A66C2]/5"
+                              >
+                                Pay
+                              </button>
+                            </>
                           ) : null}
                         </td>
                       </tr>
@@ -869,17 +891,27 @@ export default function FeesPageClient({
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      <Link href={`/admin/fees/${inv.id}`} className="rounded-full border border-border bg-white px-1.5 py-0.5 text-xs font-semibold text-brand transition hover:bg-brand/5">
+                      <Link href={`/admin/fees/${inv.id}`} className="rounded-full border border-[#0A66C2] bg-[#0A66C2] px-1.5 py-0.5 text-xs font-semibold text-white transition hover:bg-[#0A66C2]/90">
                         View
                       </Link>
                       {balance > 0 ? (
-                        <button
-                          type="button"
-                          onClick={() => selectInvoiceForPayment(inv)}
-                          className="rounded-full border border-border bg-surface px-1.5 py-0.5 text-xs font-semibold text-foreground transition hover:bg-background"
-                        >
-                          Pay
-                        </button>
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => handleSendReminderForInvoice(inv)}
+                            disabled={sendingReminderInvoiceId === inv.id}
+                            className="rounded-full border border-[#0A66C2] bg-white px-1.5 py-0.5 text-xs font-semibold text-[#0A66C2] transition hover:bg-[#0A66C2]/5 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {sendingReminderInvoiceId === inv.id ? "Sending..." : "Remind"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => selectInvoiceForPayment(inv)}
+                            className="rounded-full border border-[#0A66C2] bg-white px-1.5 py-0.5 text-xs font-semibold text-[#0A66C2] transition hover:bg-[#0A66C2]/5"
+                          >
+                            Pay
+                          </button>
+                        </>
                       ) : null}
                     </div>
                   </div>

@@ -5,8 +5,9 @@ import { Fragment, use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, Save, AlertCircle, CheckCircle } from "lucide-react";
+import { ChevronLeft, Save, AlertCircle } from "lucide-react";
 import { getBackendUrl } from "@/lib/backend-url";
+import { ErrorModal } from "@/components/ui/error-modal";
 
 interface ScoreEntry {
   pupilId: string;
@@ -67,13 +68,14 @@ export default function TeacherSubjectScoresPage({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
   const [subjectName, setSubjectName] = useState<string>(
     typeof subjectId === "string" ? decodeURIComponent(subjectId) : ""
   );
+
+  const [saveModalOpen, setSaveModalOpen] = useState(false);
+  const [saveModalType, setSaveModalType] = useState<"success" | "error">("success");
+  const [saveModalTitle, setSaveModalTitle] = useState("Scores saved");
+  const [saveModalMessage, setSaveModalMessage] = useState("");
 
   const router = useRouter();
 
@@ -181,7 +183,6 @@ export default function TeacherSubjectScoresPage({
   const handleSave = async () => {
     if (!assessment) return;
     setSaving(true);
-    setMessage(null);
 
     try {
       const entries = Object.entries(scores)
@@ -201,10 +202,10 @@ export default function TeacherSubjectScoresPage({
         );
 
       if (entries.length === 0) {
-        setMessage({
-          type: "error",
-          text: "Please enter at least one score before saving",
-        });
+        setSaveModalType("error");
+        setSaveModalTitle("Nothing to save");
+        setSaveModalMessage("Please enter at least one score before saving.");
+        setSaveModalOpen(true);
         setSaving(false);
         return;
       }
@@ -231,13 +232,17 @@ export default function TeacherSubjectScoresPage({
         }
       }
 
-      setMessage({ type: "success", text: "Scores saved successfully!" });
+      setSaveModalType("success");
+      setSaveModalTitle("Scores saved");
+      setSaveModalMessage("Scores were saved successfully for this subject.");
+      setSaveModalOpen(true);
       await fetchAssessment();
     } catch (err) {
-      setMessage({
-        type: "error",
-        text: err instanceof Error ? err.message : "Failed to save scores",
-      });
+      const message = err instanceof Error ? err.message : "Failed to save scores";
+      setSaveModalType("error");
+      setSaveModalTitle("Save failed");
+      setSaveModalMessage(message);
+      setSaveModalOpen(true);
     } finally {
       setSaving(false);
     }
@@ -326,28 +331,14 @@ export default function TeacherSubjectScoresPage({
         </div>
       </div>
 
-      {message && (
-        <div
-          className={`mb-4 p-4 rounded-lg border flex items-start gap-3 ${
-            message.type === "success"
-              ? "border-green-200 bg-green-50"
-              : "border-red-200 bg-red-50"
-          }`}
-        >
-          {message.type === "success" ? (
-            <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
-          ) : (
-            <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
-          )}
-          <p
-            className={`text-sm ${
-              message.type === "success" ? "text-green-700" : "text-red-700"
-            }`}
-          >
-            {message.text}
-          </p>
-        </div>
-      )}
+      <ErrorModal
+        isOpen={saveModalOpen}
+        onClose={() => setSaveModalOpen(false)}
+        title={saveModalTitle}
+        message={saveModalMessage}
+        type={saveModalType}
+        confirmLabel={saveModalType === "success" ? "Done" : "Review"}
+      />
 
       {(isPublished || isLocked) && (
         <div className="mb-4 p-4 rounded-lg border border-amber-200 bg-amber-50">

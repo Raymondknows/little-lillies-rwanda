@@ -19,6 +19,31 @@ interface ReportCard {
   classTotal: number;
   subjectPosition: number | null;
   subjectTotal: number;
+  term?: {
+    name: string;
+    session?: string;
+    sortOrder?: number | null;
+  };
+  thirdTermHistory?: {
+    terms: Array<{
+      id: string;
+      name: string;
+      sortOrder: number;
+    }>;
+    entries: Array<{
+      subjectId: string | null;
+      subjectName: string;
+      currentTotal: number | null;
+      cumulativeTotal: number | null;
+      previousTotals: Array<{
+        termId: string;
+        termName: string;
+        sortOrder: number;
+        totalScore: number | null;
+        examScore: number | null;
+      }>;
+    }>;
+  } | null;
 }
 
 interface Assessment {
@@ -255,6 +280,44 @@ export default function ParentReportCardPage({
             </div>
           </div>
         </div>
+
+        {report.term?.sortOrder === 3 && report.thirdTermHistory?.entries?.length ? (
+          <div className="mt-8">
+            <h2 className="text-lg font-semibold mb-4">Third Term Cumulative History</h2>
+            <div className="overflow-x-auto rounded-lg border border-border">
+              <table className="min-w-full text-sm">
+                <thead className="bg-slate-50 text-left text-slate-700">
+                  <tr>
+                    <th className="border-b border-border px-3 py-2 font-semibold">Subject</th>
+                    {report.thirdTermHistory.terms.map((term) => (
+                      <th key={term.id} className="border-b border-border px-3 py-2 text-center font-semibold">{term.name}</th>
+                    ))}
+                    <th className="border-b border-border px-3 py-2 text-center font-semibold">Term 3</th>
+                    <th className="border-b border-border px-3 py-2 text-center font-semibold">Cumulative</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {report.thirdTermHistory.entries.map((entry, index) => (
+                    <tr key={`${entry.subjectName}-${index}`} className="border-t border-border">
+                      <td className="px-3 py-2 font-medium">{entry.subjectName}</td>
+                      {entry.previousTotals.map((termTotal) => (
+                        <td key={`${entry.subjectName}-${termTotal.termId}`} className="px-3 py-2 text-center text-slate-700">
+                          {termTotal.totalScore !== null ? termTotal.totalScore.toFixed(1) : '—'}
+                        </td>
+                      ))}
+                      <td className="px-3 py-2 text-center text-slate-700">
+                        {entry.currentTotal !== null ? entry.currentTotal.toFixed(1) : '—'}
+                      </td>
+                      <td className="px-3 py-2 text-center font-semibold text-slate-900">
+                        {entry.cumulativeTotal !== null ? entry.cumulativeTotal.toFixed(1) : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : null}
 
         {/* Footer */}
         <div className="mt-8 border-t border-gray-200 pt-6 text-center text-xs text-muted print:text-black">

@@ -43,6 +43,7 @@ interface ReportCardData {
   term: {
     name: string;
     session: string;
+    sortOrder?: number | null;
   };
   assessment?: {
     name: string;
@@ -76,6 +77,26 @@ interface ReportCardData {
     teacherComment?: string;
     promotionStatus?: string;
   };
+  thirdTermHistory?: {
+    terms: Array<{
+      id: string;
+      name: string;
+      sortOrder: number;
+    }>;
+    entries: Array<{
+      subjectId: string | null;
+      subjectName: string;
+      currentTotal: number | null;
+      cumulativeTotal: number | null;
+      previousTotals: Array<{
+        termId: string;
+        termName: string;
+        sortOrder: number;
+        totalScore: number | null;
+        examScore: number | null;
+      }>;
+    }>;
+  } | null;
 }
 
 interface SchoolConfig {
@@ -332,6 +353,44 @@ export function WaecReportCard({
               </table>
             </div>
           </div>
+
+          {data.term.sortOrder === 3 && data.thirdTermHistory?.entries?.length ? (
+            <div className="mb-6">
+              <p className="text-xs font-bold text-gray-900 mb-2">THIRD TERM CUMULATIVE HISTORY</p>
+              <div className="overflow-x-auto border border-gray-300 rounded">
+                <table className="w-full text-[10px] border-collapse">
+                  <thead>
+                    <tr className="bg-gray-100 text-gray-900">
+                      <th className="border border-gray-300 p-1 text-left font-semibold">Subject</th>
+                      {data.thirdTermHistory.terms.map((term) => (
+                        <th key={term.id} className="border border-gray-300 p-1 text-center font-semibold">{term.name}</th>
+                      ))}
+                      <th className="border border-gray-300 p-1 text-center font-semibold">Term 3</th>
+                      <th className="border border-gray-300 p-1 text-center font-semibold">Cumulative</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.thirdTermHistory.entries.map((entry, idx) => (
+                      <tr key={`${entry.subjectName}-${idx}`} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                        <td className="border border-gray-300 p-1 font-medium text-gray-900">{entry.subjectName}</td>
+                        {entry.previousTotals.map((termTotal) => (
+                          <td key={`${entry.subjectName}-${termTotal.termId}`} className="border border-gray-300 p-1 text-center text-gray-900">
+                            {termTotal.totalScore !== null ? termTotal.totalScore.toFixed(1) : '—'}
+                          </td>
+                        ))}
+                        <td className="border border-gray-300 p-1 text-center text-gray-900">
+                          {entry.currentTotal !== null ? entry.currentTotal.toFixed(1) : '—'}
+                        </td>
+                        <td className="border border-gray-300 p-1 text-center font-semibold text-gray-900">
+                          {entry.cumulativeTotal !== null ? entry.cumulativeTotal.toFixed(1) : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : null}
 
           <div className="grid grid-cols-4 gap-2 mb-6 text-xs">
             <div className="border-2 border-gray-400 p-2 text-center bg-blue-50">

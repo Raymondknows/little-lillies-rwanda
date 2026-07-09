@@ -12,6 +12,7 @@ import { AssessmentActionsPanel } from "@/components/admin/assessment-actions-pa
 import { ClassStatistics } from "@/components/admin/class-statistics";
 import { AuditTrail } from "@/components/admin/audit-trail";
 import { AdminReportsTab } from "@/components/admin/admin-reports-tab";
+import { ErrorModal } from "@/components/ui/error-modal";
 
 interface Assessment {
   id: string;
@@ -65,13 +66,14 @@ interface Assessment {
       pupilId: string;
       pupilName: string;
       admissionNo?: string | null;
+      subjectId: string | null;
+      subjectName: string;
       terms: Array<{
         termId: string;
         termName: string;
         sortOrder: number;
         totalScore: number | null;
         examScore: number | null;
-        subjectCount: number;
       }>;
     }>;
   } | null;
@@ -147,6 +149,11 @@ export default function AssessmentDetailPage({
   const [historicalTotalsInput, setHistoricalTotalsInput] = useState<Record<string, string>>({});
   const [isSavingHistoricalTotals, setIsSavingHistoricalTotals] = useState(false);
   const [historicalTotalsError, setHistoricalTotalsError] = useState<string | null>(null);
+  const [historicalTotalsSuccess, setHistoricalTotalsSuccess] = useState<string | null>(null);
+  const [saveModalOpen, setSaveModalOpen] = useState(false);
+  const [saveModalType, setSaveModalType] = useState<"success" | "error">("success");
+  const [saveModalTitle, setSaveModalTitle] = useState("Historical totals saved");
+  const [saveModalMessage, setSaveModalMessage] = useState("");
 
   const fetchAssessment = async () => {
     try {
@@ -173,12 +180,14 @@ export default function AssessmentDetailPage({
     assessment.thirdTermHistory?.entries.forEach((entry) => {
       entry.terms.forEach((termRow) => {
         if (termRow.totalScore === null) {
-          inputValues[`${entry.pupilId}:${termRow.termId}`] = '';
+          const subjectKey = entry.subjectId ? `id:${entry.subjectId}` : `name:${entry.subjectName}`;
+          const inputKey = `${entry.pupilId}|||${subjectKey}|||${termRow.termId}`;
+          inputValues[inputKey] = '';
         }
       });
     });
 
-        const groups = new Map<
+    const groups = new Map<
       string,
       {
         className: string;
@@ -201,8 +210,9 @@ export default function AssessmentDetailPage({
         ? `${result.pupil.class.name}${result.pupil.class.arm ? ` ${result.pupil.class.arm}` : ''}`
         : 'Class not assigned';
 
-      const subjectId = result.subjectRef?.id ?? result.subject ?? `unknown-${result.pupilId}-${result.subjectRef?.name ?? result.subject ?? 'general'}`;
+const subjectId = result.subjectRef?.id ?? null;
       const subjectName = result.subjectRef?.name || result.subject || 'General';
+      const subjectKey = subjectId ? `id:${subjectId}` : `name:${subjectName}`;
 
       const group = groups.get(className) ?? {
         className,
@@ -374,24 +384,42 @@ export default function AssessmentDetailPage({
       ...current,
       [key]: value,
     }));
+    if (historicalTotalsSuccess) {
+      setHistoricalTotalsSuccess(null);
+    }
   };
 
   const saveHistoricalTotals = async () => {
     if (!assessment) return;
     setIsSavingHistoricalTotals(true);
     setHistoricalTotalsError(null);
+    setHistoricalTotalsSuccess(null);
 
     try {
+      const academicYearId = assessment.term.academicYear?.id;
+      const classId = assessment.classId ?? assessment.results[0]?.pupil.class?.id;
+      if (!academicYearId || !classId) {
+        setHistoricalTotalsError('Cannot save historical totals without an academic year and class.');
+        return;
+      }
+
       const payload = Object.entries(historicalTotalsInput)
         .filter(([, value]) => value.trim() !== '')
         .map(([key, value]) => {
-          const [pupilId, termId] = key.split(':');
+          const [pupilId, subjectKey, termId] = key.split('|||');
+          const subjectId = subjectKey?.startsWith('id:') ? subjectKey.substring(3) : null;
+          const subject = subjectId ? null : subjectKey?.startsWith('name:') ? subjectKey.substring(5) : subjectKey;
+          const parsedScore = Number(value);
+
           return {
-            academicYearId: assessment.term.academicYear?.id,
+            academicYearId,
             termId,
-            classId: assessment.classId ?? assessment.results[0]?.pupil.class?.id ?? '',
+            classId,
             studentId: pupilId,
-            totalScore: Number(value),
+            subjectId,
+            subject,
+            schoolId: assessment.schoolId,
+            totalScore: Number.isNaN(parsedScore) ? 0 : parsedScore,
           };
         });
 
@@ -402,7 +430,11 @@ export default function AssessmentDetailPage({
 
       const response = await fetch('/api/admin/results/historical-totals', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-school-id': assessment.schoolId,
+        },
+        credentials: 'include',
         body: JSON.stringify(payload),
       });
 
@@ -413,8 +445,18 @@ export default function AssessmentDetailPage({
 
       await fetchAssessment();
       setHistoricalTotalsError(null);
+      setHistoricalTotalsSuccess(`Saved ${payload.length} historical total${payload.length === 1 ? '' : 's'} successfully.`);
+      setSaveModalType("success");
+      setSaveModalTitle("Historical totals saved");
+      setSaveModalMessage(`Saved ${payload.length} historical total${payload.length === 1 ? '' : 's'} successfully for this assessment.`);
+      setSaveModalOpen(true);
     } catch (err) {
-      setHistoricalTotalsError(err instanceof Error ? err.message : 'Failed to save historical totals');
+      const message = err instanceof Error ? err.message : 'Failed to save historical totals';
+      setHistoricalTotalsError(message);
+      setSaveModalType("error");
+      setSaveModalTitle("Save failed");
+      setSaveModalMessage(message);
+      setSaveModalOpen(true);
     } finally {
       setIsSavingHistoricalTotals(false);
     }
@@ -468,6 +510,35 @@ export default function AssessmentDetailPage({
   };
 
   const workflowState = deriveWorkflowState(assessment);
+  const isThirdTerm = assessment.term?.sortOrder === 3;
+  const canShowThirdTermHistory = isThirdTerm && Boolean(assessment.thirdTermHistory?.terms?.length);
+  const currentResultLookup = new Map<string, (typeof assessment.results)[number]>();
+
+  assessment.results.forEach((result) => {
+    const subjectId = result.subjectRef?.id ?? null;
+    const subjectName = result.subjectRef?.name || result.subject || 'General';
+    const subjectKey = subjectId ? `id:${subjectId}` : `name:${subjectName}`;
+    currentResultLookup.set(`${result.pupilId}|||${subjectKey}`, result);
+  });
+
+  const thirdTermResultRows = (assessment.thirdTermHistory?.entries ?? []).map((row) => {
+    const subjectKey = row.subjectId ? `id:${row.subjectId}` : `name:${row.subjectName}`;
+    const currentResult = currentResultLookup.get(`${row.pupilId}|||${subjectKey}`);
+
+    return {
+      ...row,
+      currentResult,
+      firstTerm: row.terms.find((term) => term.sortOrder === 1) ?? null,
+      secondTerm: row.terms.find((term) => term.sortOrder === 2) ?? null,
+      thirdTermCa: currentResult?.caScore ?? null,
+      thirdTermExam: currentResult?.examScore ?? null,
+      thirdTermTotal: currentResult ? resolveResultTotal(currentResult) : null,
+    };
+  });
+  const canEditHistorical = assessment.status !== 'PUBLISHED';
+  const hasMissingHistoricalTotals = thirdTermResultRows.some(
+    (row) => row.firstTerm?.totalScore === null || row.secondTerm?.totalScore === null
+  );
 
   return (
     <div className="mx-auto max-w-7xl px-3 py-4">
@@ -610,6 +681,22 @@ export default function AssessmentDetailPage({
                 setAssessment({ ...assessment, status: newStatus });
               }}
             />
+
+            {canShowThirdTermHistory && (
+              <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h3 className="font-semibold text-blue-900">Third Term historical totals</h3>
+                    <p className="text-sm text-blue-800 mt-1">
+                      Enter missing Term 1 / Term 2 totals for this Third Term assessment from the Scores tab.
+                    </p>
+                  </div>
+                  <Button onClick={() => setActiveTab('scores')} variant="outline" className="h-10">
+                    Open Scores
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
 
           {!isConfigured && (
@@ -675,40 +762,81 @@ export default function AssessmentDetailPage({
                 ) : null}
               </div>
 
-              {assessment.thirdTermHistory?.entries?.length ? (
+              {thirdTermResultRows.length ? (
                 <div className="mt-4 overflow-x-auto">
-                  <table className="w-full text-left text-sm">
+                  <table className="w-full min-w-[860px] text-left text-sm">
                     <thead className="border-b border-border bg-background text-muted">
                       <tr>
-                        <th className="px-4 py-3 font-medium">Student</th>
-                        {assessment.thirdTermHistory.terms.map((term) => (
-                          <Fragment key={term.id}>
-                            <th className="px-4 py-3 font-medium text-center">
-                              {term.name} Total
-                            </th>
-                            <th className="px-4 py-3 font-medium text-center">
-                              {term.name} Exam
-                            </th>
-                          </Fragment>
-                        ))}
+                        <th className="px-3 py-3 font-medium">Student</th>
+                        <th className="px-3 py-3 font-medium">Subject</th>
+                        <th className="px-3 py-3 font-medium text-center">First Term</th>
+                        <th className="px-3 py-3 font-medium text-center">Second Term</th>
+                        <th className="px-3 py-3 font-medium text-center">Third Term CA</th>
+                        <th className="px-3 py-3 font-medium text-center">Third Term Exam</th>
+                        <th className="px-3 py-3 font-medium text-center">Third Term Total</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {assessment.thirdTermHistory.entries.map((row) => (
-                        <tr key={row.pupilId} className="border-t border-border hover:bg-background/50">
-                          <td className="px-4 py-3 font-medium">{row.pupilName}</td>
-                          {row.terms.map((termRow) => (
-                            <Fragment key={termRow.termId}>
-                              <td className="px-4 py-3 text-center">
-                                {termRow.totalScore !== null ? termRow.totalScore : '—'}
-                              </td>
-                              <td className="px-4 py-3 text-center">
-                                {termRow.examScore !== null ? termRow.examScore : '—'}
-                              </td>
-                            </Fragment>
-                          ))}
-                        </tr>
-                      ))}
+                      {thirdTermResultRows.map((row) => {
+                        const firstTermInputKey = `${row.pupilId}|||${row.subjectId ? `id:${row.subjectId}` : `name:${row.subjectName}`}|||${row.firstTerm?.termId ?? ''}`;
+                        const secondTermInputKey = `${row.pupilId}|||${row.subjectId ? `id:${row.subjectId}` : `name:${row.subjectName}`}|||${row.secondTerm?.termId ?? ''}`;
+                        const firstTermValue = row.firstTerm?.totalScore ?? null;
+                        const secondTermValue = row.secondTerm?.totalScore ?? null;
+                        const firstTermEditedValue = historicalTotalsInput[firstTermInputKey] ?? '';
+                        const secondTermEditedValue = historicalTotalsInput[secondTermInputKey] ?? '';
+
+                        return (
+                          <tr key={`${row.pupilId}:${row.subjectId ?? row.subjectName}`} className="border-t border-border hover:bg-background/50">
+                            <td className="px-3 py-3 font-medium">{row.pupilName}</td>
+                            <td className="px-3 py-3 text-sm text-muted">{row.subjectName}</td>
+                            <td className="px-3 py-3 text-center">
+                              {firstTermValue !== null ? (
+                                <span className="inline-flex items-center gap-1 font-medium text-gray-900">
+                                  {firstTermValue}
+                                  <span className="text-[10px] text-gray-500">🔒</span>
+                                </span>
+                              ) : canEditHistorical ? (
+                                <input
+                                  type="number"
+                                  inputMode="decimal"
+                                  step="0.1"
+                                  min="0"
+                                  value={firstTermEditedValue}
+                                  onChange={(event) => handleHistoricalTotalChange(firstTermInputKey, event.target.value)}
+                                  className="mx-auto w-24 rounded border border-border bg-white px-2 py-1 text-sm text-center focus:border-brand focus:outline-none"
+                                  placeholder="—"
+                                />
+                              ) : (
+                                <span className="text-muted">—</span>
+                              )}
+                            </td>
+                            <td className="px-3 py-3 text-center">
+                              {secondTermValue !== null ? (
+                                <span className="inline-flex items-center gap-1 font-medium text-gray-900">
+                                  {secondTermValue}
+                                  <span className="text-[10px] text-gray-500">🔒</span>
+                                </span>
+                              ) : canEditHistorical ? (
+                                <input
+                                  type="number"
+                                  inputMode="decimal"
+                                  step="0.1"
+                                  min="0"
+                                  value={secondTermEditedValue}
+                                  onChange={(event) => handleHistoricalTotalChange(secondTermInputKey, event.target.value)}
+                                  className="mx-auto w-24 rounded border border-border bg-white px-2 py-1 text-sm text-center focus:border-brand focus:outline-none"
+                                  placeholder="—"
+                                />
+                              ) : (
+                                <span className="text-muted">—</span>
+                              )}
+                            </td>
+                            <td className="px-3 py-3 text-center text-gray-900">{row.thirdTermCa !== null ? row.thirdTermCa : '—'}</td>
+                            <td className="px-3 py-3 text-center text-gray-900">{row.thirdTermExam !== null ? row.thirdTermExam : '—'}</td>
+                            <td className="px-3 py-3 text-center font-semibold text-gray-900">{row.thirdTermTotal !== null ? row.thirdTermTotal : '—'}</td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -718,13 +846,11 @@ export default function AssessmentDetailPage({
                 </div>
               )}
 
-              {assessment.thirdTermHistory?.entries.some((row) =>
-                row.terms.some((term) => term.totalScore === null)
-              ) && assessment.status !== 'PUBLISHED' ? (
+              {canEditHistorical && hasMissingHistoricalTotals ? (
                 <div className="mt-6 rounded-lg border border-border bg-surface p-4">
                   <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <h4 className="text-sm font-semibold">Manual historical totals</h4>
+                      <h4 className="text-sm font-semibold">Save missing historical totals</h4>
                       <p className="text-sm text-muted">
                         Enter missing Term 1 / Term 2 totals for students that do not have published results.
                       </p>
@@ -743,51 +869,11 @@ export default function AssessmentDetailPage({
                     </div>
                   ) : null}
 
-                  <div className="mt-4 overflow-x-auto">
-                    <table className="w-full text-left text-sm">
-                      <thead className="border-b border-border bg-background text-muted">
-                        <tr>
-                          <th className="px-4 py-3 font-medium">Student</th>
-                          {assessment.thirdTermHistory.terms.map((term) => (
-                            <th key={term.id} className="px-4 py-3 font-medium text-center">
-                              {term.name} Total
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {assessment.thirdTermHistory.entries.map((row) => (
-                          <tr key={row.pupilId} className="border-t border-border hover:bg-background/50">
-                            <td className="px-4 py-3 font-medium">{row.pupilName}</td>
-                            {row.terms.map((termRow) => {
-                              const inputKey = `${row.pupilId}:${termRow.termId}`;
-                              const editedValue = historicalTotalsInput[inputKey] ?? '';
-                              return (
-                                <td key={termRow.termId} className="px-4 py-3 text-center">
-                                  {termRow.totalScore !== null ? (
-                                    <span className="font-medium">{termRow.totalScore}</span>
-                                  ) : (
-                                    <input
-                                      type="number"
-                                      inputMode="decimal"
-                                      step="0.1"
-                                      min="0"
-                                      value={editedValue}
-                                      onChange={(event) =>
-                                        handleHistoricalTotalChange(inputKey, event.target.value)
-                                      }
-                                      className="mx-auto w-24 rounded border border-border bg-white px-2 py-1 text-sm text-center focus:border-brand focus:outline-none"
-                                      placeholder="—"
-                                    />
-                                  )}
-                                </td>
-                              );
-                            })}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                  {historicalTotalsSuccess ? (
+                    <div className="mt-3 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700">
+                      {historicalTotalsSuccess}
+                    </div>
+                  ) : null}
                 </div>
               ) : null}
             </div>
@@ -879,6 +965,15 @@ export default function AssessmentDetailPage({
           <p className="text-gray-600">No saved assessment results are available for this assessment yet.</p>
         </div>
       )}
+
+      <ErrorModal
+        isOpen={saveModalOpen}
+        onClose={() => setSaveModalOpen(false)}
+        title={saveModalTitle}
+        message={saveModalMessage}
+        type={saveModalType}
+        confirmLabel={saveModalType === "success" ? "Done" : "Review"}
+      />
 
       {/* Statistics Tab */}
       {activeTab === "statistics" && (

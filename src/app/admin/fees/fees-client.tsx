@@ -25,7 +25,7 @@ import {
   type Stats,
   type InvoiceStatus,
 } from "@/lib/fees-grouping";
-import { ArrowUpRight, TrendingUp, CheckCircle, AlertCircle, Clock } from "lucide-react";
+import { ArrowUpRight, TrendingUp, CheckCircle, AlertCircle, Clock, Sparkles } from "lucide-react";
 import { WhatsAppIcon } from "@/components/ui/icons";
 
 const STATUS_CONFIG = {
@@ -118,14 +118,6 @@ export default function FeesPageClient({
 }) {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const success = searchParams?.get("success") === "1";
-  const created = Number(searchParams?.get("created") ?? 0);
-  const reminders = searchParams?.get("reminders") === "1";
-  const remindersSent = Number(searchParams?.get("sent") ?? 0);
-  const paymentRecorded = searchParams?.get("paymentRecorded") === "1";
-  const error = searchParams?.get("error") ?? undefined;
-  const errorMessage = searchParams?.get("errorMessage") ?? undefined;
-
   const [activePhase, setActivePhase] = useState("ALL");
   const [activeStatus, setActiveStatus] = useState("ALL");
   const [searchQuery, setSearchQuery] = useState("");
@@ -137,7 +129,12 @@ export default function FeesPageClient({
   const [paymentReference, setPaymentReference] = useState("");
   const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
   const [sendingReminderInvoiceId, setSendingReminderInvoiceId] = useState<string | null>(null);
-  
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalType, setModalType] = useState<'success' | 'error'>('success');
+  const [modalTitle, setModalTitle] = useState<string | undefined>(undefined);
+  const [modalMessage, setModalMessage] = useState<string | null>(null);
+  const [modalDetails, setModalDetails] = useState<string | undefined>(undefined);
+
   // Issue bills and send reminders state
   const [issuingBills, setIssuingBills] = useState(false);
   const [sendingReminders, setSendingReminders] = useState(false);
@@ -152,6 +149,47 @@ export default function FeesPageClient({
       searchInputRef.current.focus();
     }
   }, [isSearchOpen]);
+
+  useEffect(() => {
+    if (!searchParams) return;
+
+    const success = searchParams.get("success") === "1";
+    const created = Number(searchParams.get("created") ?? 0);
+    const reminders = searchParams.get("reminders") === "1";
+    const remindersSent = Number(searchParams.get("sent") ?? 0);
+    const paymentRecorded = searchParams.get("paymentRecorded") === "1";
+    const error = searchParams.get("error") === "1";
+    const errorMessage = searchParams.get("errorMessage") ?? undefined;
+
+    if (!success && !reminders && !paymentRecorded && !error) {
+      return;
+    }
+
+    if (success) {
+      setModalType('success');
+      setModalTitle('Invoices issued');
+      setModalMessage(`${created ?? 0} invoice${(created ?? 0) !== 1 ? 's' : ''} were created.`);
+      setModalDetails(undefined);
+    } else if (reminders) {
+      setModalType('success');
+      setModalTitle('Reminders sent');
+      setModalMessage(`${remindersSent ?? 0} reminders were queued for sending.`);
+      setModalDetails(undefined);
+    } else if (paymentRecorded) {
+      setModalType('success');
+      setModalTitle('Payment recorded');
+      setModalMessage('The invoice has been updated and the dashboard is refreshed.');
+      setModalDetails(undefined);
+    } else if (error) {
+      setModalType('error');
+      setModalTitle('Could not complete action');
+      setModalMessage(errorMessage || 'An error occurred while processing your request.');
+      setModalDetails(undefined);
+    }
+
+    setModalOpen(true);
+    playOpenTone();
+  }, [searchParams]);
 
   const handleIssueBillsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -290,78 +328,6 @@ export default function FeesPageClient({
 
   return (
     <>
-      {/* Success Modal: Invoices Issued */}
-      {success ? (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 px-4 py-8">
-          <div className="w-full max-w-xl rounded-3xl border border-border bg-surface p-8 shadow-2xl">
-            <div className="flex items-start gap-4">
-              <div className="mt-1 rounded-2xl bg-success/10 p-3 text-success">✓</div>
-              <div>
-                <h3 className="text-xl font-semibold text-foreground">Invoices issued</h3>
-                <p className="mt-2 text-sm text-muted">{created ?? 0} invoice{(created ?? 0) !== 1 ? "s" : ""} were created.</p>
-              </div>
-            </div>
-            <div className="mt-6 flex justify-end">
-              <a href="/admin/fees" className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white transition hover:bg-brand/90">Close</a>
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      {/* Success Modal: Reminders Sent */}
-      {reminders ? (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 px-4 py-8">
-          <div className="w-full max-w-xl rounded-3xl border border-border bg-surface p-8 shadow-2xl">
-            <div className="flex items-start gap-4">
-              <div className="mt-1 rounded-2xl bg-success/10 p-3 text-success">✓</div>
-              <div>
-                <h3 className="text-xl font-semibold text-foreground">Reminders sent</h3>
-                <p className="mt-2 text-sm text-muted">{remindersSent ?? 0} reminders were queued for sending.</p>
-              </div>
-            </div>
-            <div className="mt-6 flex justify-end">
-              <a href="/admin/fees" className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white transition hover:bg-brand/90">Close</a>
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      {/* Success Modal: Payment Recorded */}
-      {paymentRecorded ? (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 px-4 py-8">
-          <div className="w-full max-w-xl rounded-3xl border border-border bg-surface p-8 shadow-2xl">
-            <div className="flex items-start gap-4">
-              <div className="mt-1 rounded-2xl bg-success/10 p-3 text-success">✓</div>
-              <div>
-                <h3 className="text-xl font-semibold text-foreground">Payment recorded</h3>
-                <p className="mt-2 text-sm text-muted">The invoice has been updated and the dashboard is refreshed.</p>
-              </div>
-            </div>
-            <div className="mt-6 flex justify-end">
-              <a href="/admin/fees" className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white transition hover:bg-brand/90">Close</a>
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      {/* Error Modal */}
-      {error ? (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 px-4 py-8">
-          <div className="w-full max-w-xl rounded-3xl border border-border bg-surface p-8 shadow-2xl">
-            <div className="flex items-start gap-4">
-              <div className="mt-1 rounded-2xl bg-rose-50 p-3 text-rose-600">!</div>
-              <div>
-                <h3 className="text-xl font-semibold text-foreground">Could not issue invoices</h3>
-                <p className="mt-2 text-sm text-muted">{errorMessage ?? (error === "no_schedules" ? "No fee schedules were found for the selected term." : "Selected term not found.")}</p>
-              </div>
-            </div>
-            <div className="mt-6 flex justify-end">
-              <a href="/admin/fees" className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white transition hover:bg-brand/90">Close</a>
-            </div>
-          </div>
-        </div>
-      ) : null}
-
       {/* Payment Modal */}
       {selectedInvoice ? (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 px-4 py-8 overflow-y-auto">
@@ -420,6 +386,7 @@ export default function FeesPageClient({
                       amount: paymentAmount,
                       method: paymentMethod,
                       reference: paymentReference || null,
+                      currency,
                     }),
                   });
 
@@ -521,6 +488,74 @@ export default function FeesPageClient({
           </div>
         </div>
       ) : null}
+
+      {modalOpen && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4">
+          <style>{`
+            @keyframes sb_modal_enter { from { transform: translateX(36px) scale(.98); opacity: 0 } to { transform: translateX(0) scale(1); opacity: 1 } }
+            @keyframes sb_modal_exit  { from { transform: translateX(0) scale(1); opacity: 1 } to { transform: translateX(36px) scale(.98); opacity: 0 } }
+          `}</style>
+
+          <div
+            className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_50px_rgba(10,102,194,0.16)]"
+            style={{
+              animation: `sb_modal_enter 320ms cubic-bezier(.2,.9,.2,1)`,
+            }}
+          >
+            <div
+              className="border-b border-slate-100 px-6 py-5"
+              style={{ background: "linear-gradient(90deg, rgba(10,102,194,0.12), rgba(10,102,194,0.04))" }}
+            >
+              <div className="flex items-start gap-3">
+                <div
+                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/70 shadow-sm"
+                  style={{ background: modalType === 'success' ? "rgba(16,185,129,0.12)" : "rgba(10,102,194,0.12)" }}
+                >
+                  {modalType === 'success' ? (
+                    <Sparkles className="h-6 w-6" style={{ color: "#0A66C2" }} />
+                  ) : (
+                    <AlertCircle className="h-6 w-6" style={{ color: "#0A66C2" }} />
+                  )}
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-slate-900">
+                    {modalTitle || (modalType === 'success' ? 'All set' : 'Something went wrong')}
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-600">
+                    {modalType === 'success'
+                      ? 'Your request was completed successfully.'
+                      : 'Please review the details below.'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="px-6 py-5">
+              <p className="text-sm leading-6 text-slate-700">{modalMessage}</p>
+              {modalDetails && (
+                <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                  <p className="text-xs text-slate-700">{modalDetails}</p>
+                </div>
+              )}
+            </div>
+
+            <div className="border-t border-slate-100 bg-slate-50 px-6 py-4">
+              <button
+                onClick={() => {
+                  setModalOpen(false);
+                  playCloseTone();
+                }}
+                className="w-full rounded-lg px-4 py-2.5 font-medium text-sm transition-colors text-white"
+                style={{ background: "#0A66C2" }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "#084B8A")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "#0A66C2")}
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Page */}
       <div className="space-y-6">
@@ -933,4 +968,54 @@ export default function FeesPageClient({
       <UserGuide guide={HELP_GUIDE} />
     </>
   );
+}
+
+// Sound effects for modals
+function playOpenTone() {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const now = ctx.currentTime;
+
+    const playTone = (freq: number, duration: number, gain: number, delay = 0) => {
+      const osc = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, now + delay);
+      gainNode.gain.setValueAtTime(0.0001, now + delay);
+      gainNode.gain.exponentialRampToValueAtTime(gain, now + delay + 0.01);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, now + delay + duration);
+      osc.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      osc.start(now + delay);
+      osc.stop(now + delay + duration);
+    };
+
+    playTone(880, 0.16, 0.05, 0);
+    playTone(1174, 0.16, 0.05, 0.08);
+
+    setTimeout(() => ctx.close(), 700);
+  } catch (e) {
+    // ignore
+  }
+}
+
+function playCloseTone() {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = "sine";
+    o.frequency.value = 420;
+    g.gain.value = 0.0001;
+    o.connect(g);
+    g.connect(ctx.destination);
+    const now = ctx.currentTime;
+    g.gain.linearRampToValueAtTime(0.045, now + 0.01);
+    o.start(now);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+    o.stop(now + 0.24);
+    setTimeout(() => ctx.close(), 500);
+  } catch (e) {
+    // ignore
+  }
 }

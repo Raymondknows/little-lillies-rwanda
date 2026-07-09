@@ -123,7 +123,7 @@ export default function FeesPage() {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ termId }),
+        body: JSON.stringify({ termId, currency: data?.currency || 'NGN' }),
       });
 
       if (!response.ok) {
@@ -144,11 +144,11 @@ export default function FeesPage() {
     try {
       const backendUrl = getBackendUrl();
       const response = await fetch(`${backendUrl}/api/admin/fees/invoices/send-reminders`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(invoiceId ? { invoiceId } : {}),
-      });
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(invoiceId ? { invoiceId, currency: data?.currency || 'NGN' } : { currency: data?.currency || 'NGN' }),
+        });
 
       if (!response.ok) {
         const errorData = await response.json();

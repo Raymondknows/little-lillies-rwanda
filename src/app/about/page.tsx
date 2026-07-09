@@ -4,11 +4,11 @@ import { Button } from '@/components/ui/button'
 export const metadata: Metadata = {
   title: 'About SchoolBase | School Management Platform',
   description:
-    'Learn about SchoolBase and our mission to simplify school management with fee collection, WhatsApp parent communication, and result publishing.',
+    'Learn about SchoolBase and our mission to simplify school management for West African schools with fee collection, WhatsApp parent communication, and result publishing.',
   openGraph: {
     title: 'About SchoolBase',
     description:
-      'Discover how SchoolBase is transforming school management in Africa.',
+      'Discover how SchoolBase is transforming school management for West African schools.',
     url: 'https://schoolbase.live/about',
     type: 'website',
   },
@@ -24,7 +24,7 @@ export default function AboutPage() {
             Our Mission
           </h1>
           <p className="mt-6 max-w-2xl text-lg text-muted leading-relaxed">
-            To become the most intuitive school management platform in Africa.
+            To become the most intuitive school management platform for West African schools.
             Every day, thousands of school owners trust SchoolBase to manage fees,
             communicate with parents, and run their schools efficiently.
           </p>
@@ -38,13 +38,13 @@ export default function AboutPage() {
             <h2 className="text-3xl font-bold text-foreground">Our Story</h2>
             <p className="mt-6 text-muted leading-relaxed">
               SchoolBase was founded by ClickBase Technologies Ltd with a simple
-              observation: African schools were struggling with paper-based
+              observation: West African schools were struggling with paper-based
               administration, missing fee payments, and no direct parent
               communication channels.
             </p>
             <p className="mt-4 text-muted leading-relaxed">
               We built SchoolBase to solve these problems. In 2025, we launched and
-              today, we're helping hundreds of schools across Nigeria operate smarter.
+              today, we're helping schools across Nigeria, Ghana, Liberia, Sierra Leone, and The Gambia operate smarter.
             </p>
           </div>
 
@@ -75,7 +75,7 @@ export default function AboutPage() {
               <li className="flex gap-3">
                 <span className="text-brand">✓</span>
                 <span>
-                  <strong>Built for Africa:</strong> We understand Nigerian schools.
+                  <strong>Built for West Africa:</strong> We understand schools in Nigeria, Ghana, Liberia, Sierra Leone, and The Gambia.
                   Bank transfers, cash, Paystack.
                 </span>
               </li>

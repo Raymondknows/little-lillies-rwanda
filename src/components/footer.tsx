@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { Linkedin, Facebook, Mail, Phone, MessageCircle } from "lucide-react";
+import { Linkedin, Facebook, Mail, MessageCircle } from "lucide-react";
+
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://schoolbase.live";
 
 export default function Footer() {
   return (
@@ -11,7 +13,7 @@ export default function Footer() {
           <div className="md:col-span-1">
             <h3 className="font-bold text-lg mb-4">SchoolBase</h3>
             <p className="text-sm text-white/70 mb-6">
-              Complete school management platform. Built by ClickBase Technologies Ltd.
+              The school management system built for West African schools. Fees, attendance, results, and parent communication in one platform.
             </p>
             <div className="flex gap-3">
               <a
@@ -31,7 +33,7 @@ export default function Footer() {
                 <Facebook className="h-5 w-5" />
               </a>
               <a
-                href="mailto:support@schoolbase.clickbasegroup.com"
+                href="mailto:support@schoolbase.live"
                 className="text-white/70 hover:text-white"
               >
                 <Mail className="h-5 w-5" />
@@ -53,7 +55,7 @@ export default function Footer() {
             <ul className="space-y-2 text-sm">
               <li>
                 <Link
-                  href="/solutions/school-fee-management"
+                  href={`${siteUrl}/solutions/school-fee-management`}
                   className="text-white/70 hover:text-white"
                 >
                   Fee Management
@@ -61,7 +63,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/solutions/digital-result-management"
+                  href={`${siteUrl}/solutions/digital-result-management`}
                   className="text-white/70 hover:text-white"
                 >
                   Results Management
@@ -69,7 +71,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/solutions/student-attendance-tracking"
+                  href={`${siteUrl}/solutions/student-attendance-tracking`}
                   className="text-white/70 hover:text-white"
                 >
                   Attendance Tracking
@@ -77,7 +79,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/solutions/parent-communication"
+                  href={`${siteUrl}/solutions/parent-communication`}
                   className="text-white/70 hover:text-white"
                 >
                   Parent Communication
@@ -85,7 +87,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/solutions/school-broadsheet"
+                  href={`${siteUrl}/solutions/school-broadsheet`}
                   className="text-white/70 hover:text-white"
                 >
                   Broadsheet
@@ -100,7 +102,7 @@ export default function Footer() {
             <ul className="space-y-2 text-sm">
               <li>
                 <Link
-                  href="/guides/school-fee-management"
+                  href={`${siteUrl}/guides/school-fee-management`}
                   className="text-white/70 hover:text-white"
                 >
                   Fee Management Guide
@@ -108,7 +110,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/guides/digital-report-cards"
+                  href={`${siteUrl}/guides/digital-report-cards`}
                   className="text-white/70 hover:text-white"
                 >
                   Digital Report Cards
@@ -116,7 +118,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/guides/school-broadsheet"
+                  href={`${siteUrl}/guides/school-broadsheet`}
                   className="text-white/70 hover:text-white"
                 >
                   Broadsheet Guide
@@ -124,7 +126,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/guides/digital-transformation"
+                  href={`${siteUrl}/guides/digital-transformation`}
                   className="text-white/70 hover:text-white"
                 >
                   Digital Transformation
@@ -132,7 +134,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/video-tutorials"
+                  href={`${siteUrl}/video-tutorials`}
                   className="text-white/70 hover:text-white"
                 >
                   Video Tutorials
@@ -143,38 +145,46 @@ export default function Footer() {
 
           {/* Countries */}
           <div>
-            <h4 className="font-semibold mb-4">Geographic</h4>
+            <h4 className="font-semibold mb-4">West Africa</h4>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link
-                  href="/ghana-school-software"
+                  href={`${siteUrl}/ghana-school-software`}
                   className="text-white/70 hover:text-white"
                 >
-                  🇬🇭 Ghana (GHS 500)
+                  🇬🇭 Ghana
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/nigeria-school-software"
+                  href={`${siteUrl}/nigeria-school-software`}
                   className="text-white/70 hover:text-white"
                 >
-                  🇳🇬 Nigeria (₦35k)
+                  🇳🇬 Nigeria
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/kenya-school-software"
+                  href={`${siteUrl}/school-management-software`}
                   className="text-white/70 hover:text-white"
                 >
-                  🇰🇪 Kenya (KES 4k)
+                  🇱🇷 Liberia
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/uganda-school-software"
+                  href={`${siteUrl}/school-management-software`}
                   className="text-white/70 hover:text-white"
                 >
-                  🇺🇬 Uganda (UGX 150k)
+                  🇸🇱 Sierra Leone
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href={`${siteUrl}/school-management-software`}
+                  className="text-white/70 hover:text-white"
+                >
+                  🇬🇲 The Gambia
                 </Link>
               </li>
             </ul>
@@ -216,7 +226,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/founder"
+                  href={`${siteUrl}/founder`}
                   className="text-white/70 hover:text-white font-semibold"
                 >
                   Founder
@@ -234,15 +244,15 @@ export default function Footer() {
               <p className="font-semibold text-white mb-2">Compare</p>
               <div className="space-y-1">
                 <Link
-                  href="/compare/manual-systems"
+                  href={`${siteUrl}/compare/manual-systems`}
                   className="block hover:text-white"
                 >
                   vs Manual Systems
                 </Link>
-                <Link href="/compare/edumis" className="block hover:text-white">
+                <Link href={`${siteUrl}/compare/edumis`} className="block hover:text-white">
                   vs EduMIS
                 </Link>
-                <Link href="/compare/free-vs-paid" className="block hover:text-white">
+                <Link href={`${siteUrl}/compare/free-vs-paid`} className="block hover:text-white">
                   Free vs Paid
                 </Link>
               </div>
@@ -252,16 +262,16 @@ export default function Footer() {
             <div>
               <p className="font-semibold text-white mb-2">For Your Role</p>
               <div className="space-y-1">
-                <Link href="/for-principals" className="block hover:text-white">
+                <Link href={`${siteUrl}/for-principals`} className="block hover:text-white">
                   Principals
                 </Link>
-                <Link href="/for-bursars" className="block hover:text-white">
+                <Link href={`${siteUrl}/for-bursars`} className="block hover:text-white">
                   Bursars
                 </Link>
-                <Link href="/for-teachers" className="block hover:text-white">
+                <Link href={`${siteUrl}/for-teachers`} className="block hover:text-white">
                   Teachers
                 </Link>
-                <Link href="/for-parents" className="block hover:text-white">
+                <Link href={`${siteUrl}/for-parents`} className="block hover:text-white">
                   Parents
                 </Link>
               </div>
@@ -272,19 +282,19 @@ export default function Footer() {
               <p className="font-semibold text-white mb-2">By School Type</p>
               <div className="space-y-1">
                 <Link
-                  href="/industries/secondary-schools"
+                  href={`${siteUrl}/school-management-software-for-secondary-schools`}
                   className="block hover:text-white"
                 >
                   Secondary Schools
                 </Link>
                 <Link
-                  href="/industries/early-childhood-centers"
+                  href={`${siteUrl}/school-management-software-for-early-childhood-schools`}
                   className="block hover:text-white"
                 >
                   Early Childhood
                 </Link>
                 <Link
-                  href="/industries/international-schools"
+                  href={`${siteUrl}/school-management-software-for-international-schools`}
                   className="block hover:text-white"
                 >
                   International Schools

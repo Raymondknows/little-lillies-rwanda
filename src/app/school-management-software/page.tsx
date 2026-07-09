@@ -5,7 +5,7 @@ import { CheckCircle, Zap, Award, MessageSquare, ShieldCheck, CalendarDays } fro
 export const metadata: Metadata = {
   title: 'School Management Software | SchoolBase',
   description:
-    'SchoolBase is modern school management software for African schools. Manage fees, attendance, results, parent communication and secure school data on one platform.',
+    'SchoolBase is the school management system built for West African schools. Manage fees, attendance, results, parent communication and secure school data on one platform.',
   keywords: [
     'school management software',
     'school software',
@@ -24,7 +24,7 @@ export default function SchoolManagementSoftwarePage() {
           <div className="max-w-3xl">
             <p className="mb-2 text-sm font-medium text-brand">SCHOOL MANAGEMENT SOFTWARE</p>
             <h1 className="text-4xl font-bold text-foreground">
-              School Management Software Built for African Schools
+              The School Management System Built for West African Schools
             </h1>
             <p className="mt-4 text-lg text-muted">
               SchoolBase brings fees, attendance, results, parent communication and school data together in one trusted platform.
@@ -71,8 +71,8 @@ export default function SchoolManagementSoftwarePage() {
             },
             {
               icon: <Award className="h-8 w-8 text-brand" />,
-              title: 'Designed for African Schools',
-              desc: 'Local payment, local curriculum support, local service. No one-size-fits-all software here.',
+              title: 'Built for West African Schools',
+              desc: 'Support for schools in Nigeria, Ghana, Liberia, Sierra Leone, and The Gambia with local workflows and practical features.',
             },
           ].map((item, index) => (
             <div key={index} className="rounded-xl border border-brand/10 bg-white p-8 shadow-sm">

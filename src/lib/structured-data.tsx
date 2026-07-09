@@ -136,9 +136,9 @@ export const structuredData = {
     '@type': 'LocalBusiness',
     name: 'SchoolBase',
     image: 'https://schoolbase.live/logo.png',
-    description: 'School management platform serving Nigerian schools',
+    description: 'School management platform serving West African schools',
     url: 'https://schoolbase.live',
-    telephone: '+234800000000',
+    telephone: '+2349031368963',
     email: 'support@schoolbase.live',
     address: {
       '@type': 'PostalAddress',

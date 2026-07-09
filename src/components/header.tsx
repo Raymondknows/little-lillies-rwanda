@@ -15,7 +15,7 @@ export default async function Header() {
         {/* Top bar with social links - hide for logged-in users */}
         {!isLoggedIn && (
           <div className="hidden md:flex justify-between items-center text-xs text-muted mb-2 pb-2 border-b border-border/30">
-            <div>Built in Africa by ClickBase Technologies Ltd. Trusted worldwide.</div>
+            <div>Built for West African schools by ClickBase Technologies Ltd.</div>
             <div className="flex flex-wrap gap-3">
               <a
                 href="https://www.linkedin.com/company/106371744/"

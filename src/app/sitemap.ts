@@ -468,6 +468,42 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.9,
     },
     {
+      url: `${baseUrl}/school-management-software-for-private-schools`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.88,
+    },
+    {
+      url: `${baseUrl}/school-management-software-for-primary-schools`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.88,
+    },
+    {
+      url: `${baseUrl}/school-management-software-for-secondary-schools`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.88,
+    },
+    {
+      url: `${baseUrl}/school-management-software-for-boarding-schools`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.88,
+    },
+    {
+      url: `${baseUrl}/school-management-software-for-international-schools`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.88,
+    },
+    {
+      url: `${baseUrl}/school-management-software-for-early-childhood-schools`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.88,
+    },
+    {
       url: `${baseUrl}/school-fee-management-software`,
       lastModified: new Date(),
       changeFrequency: 'monthly',

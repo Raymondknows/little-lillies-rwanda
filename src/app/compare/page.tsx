@@ -139,12 +139,12 @@ export default function ComparisonPage() {
           <div className="grid md:grid-cols-2 gap-8">
             {[
               {
-                title: 'Built for Nigerian Schools',
+                title: 'Built for West African Schools',
                 points: [
-                  'Understands Nigerian payment systems',
+                  'Understands West African school workflows and payment systems',
                   'WhatsApp integration (how parents communicate here)',
                   'Local currency and payment methods',
-                  'Pricing designed for Nigerian budgets',
+                  'Pricing designed for West African school budgets',
                 ],
               },
               {

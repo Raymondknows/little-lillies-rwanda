@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { Search, UserPlus, X } from "lucide-react";
 import { WhatsAppIcon } from "@/components/ui/icons";
 import { Pagination } from "@/components/ui/pagination";
 import { UserGuide, type PageHelpGuide } from "@/components/ui/user-guide";
@@ -276,13 +276,19 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
             </div>
             <Button
               type="button"
-              variant="secondary"
+              variant="primary"
               onClick={() => setIsSearchOpen((open) => !open)}
-              className="w-full sm:w-auto px-3 py-2 text-sm"
+              className="h-9 w-full rounded-md border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8] sm:w-auto"
             >
+              <Search className="h-4 w-4" />
               {isSearchOpen ? "Close Search" : "Search Student"}
             </Button>
-            <Button type="button" onClick={() => router.push('/admin/students/new')} className="w-full sm:w-auto px-3 py-2 text-sm">
+            <Button
+              type="button"
+              onClick={() => router.push('/admin/students/new')}
+              className="h-9 w-full rounded-md border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8] sm:w-auto"
+            >
+              <UserPlus className="h-4 w-4" />
               Register Student
             </Button>
           </div>

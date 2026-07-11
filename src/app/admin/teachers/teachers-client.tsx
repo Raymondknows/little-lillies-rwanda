@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { UserGuide } from "@/components/ui/user-guide";
 import { getBackendUrl } from "@/lib/backend-url";
-import { X, Plus } from "lucide-react";
+import { X, Plus, Search, UserPlus, AlertCircle, Trash2 } from "lucide-react";
 
 function parseApiErrorMessage(body: any, status: number): string {
   if (!body) return `Server error: ${status}`;
@@ -99,6 +99,11 @@ export default function TeachersPageClient({
   const [selectedSubjectToAdd, setSelectedSubjectToAdd] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showErrorModal, setShowErrorModal] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deletingTeacherId, setDeletingTeacherId] = useState<string | null>(null);
+  const [deletingTeacherName, setDeletingTeacherName] = useState("");
+  const [deleteAnimateState, setDeleteAnimateState] = useState<"enter" | "exit">("enter");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (isSearchOpen && searchInputRef.current) {
@@ -126,6 +131,55 @@ export default function TeachersPageClient({
       );
     });
   }, [teachers, searchQuery]);
+
+  const openDeleteModal = (teacher: any) => {
+    setDeletingTeacherId(teacher.id);
+    setDeletingTeacherName(teacher.name ?? "this teacher");
+    setDeleteAnimateState("enter");
+    setDeleteModalOpen(true);
+    playOpenTone();
+  };
+
+  const closeDeleteModal = () => {
+    setDeleteAnimateState("exit");
+    playCloseTone();
+    setTimeout(() => {
+      setDeleteModalOpen(false);
+      setDeletingTeacherId(null);
+      setDeletingTeacherName("");
+    }, 320);
+  };
+
+  const handleDeleteTeacher = async () => {
+    if (!deletingTeacherId) return;
+
+    setIsDeleting(true);
+    try {
+      const backendUrl = getBackendUrl();
+      const response = await fetch(`${backendUrl}/api/admin/teachers/${deletingTeacherId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => null);
+        throw new Error(parseApiErrorMessage(errorBody, response.status));
+      }
+
+      closeDeleteModal();
+      window.location.reload();
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        setErrorMessage(error.message);
+        setShowErrorModal(true);
+      } else {
+        setErrorMessage("An unexpected error occurred while deleting the teacher.");
+        setShowErrorModal(true);
+      }
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <>
@@ -158,13 +212,20 @@ export default function TeachersPageClient({
           </div>
           <Button
             type="button"
-            variant="secondary"
+            variant="primary"
             onClick={() => setIsSearchOpen((open) => !open)}
-            className="w-full sm:w-auto px-3 py-2 text-sm"
+            className="h-9 w-full rounded-md border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8] sm:w-auto"
           >
+            <Search className="h-4 w-4" />
             {isSearchOpen ? "Close Search" : "Search Teacher"}
           </Button>
-          <Button onClick={() => setIsOpen(true)} className="w-full sm:w-auto px-3 py-2 text-sm">Add teacher</Button>
+          <Button
+            onClick={() => setIsOpen(true)}
+            className="h-9 w-full rounded-md border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8] sm:w-auto"
+          >
+            <UserPlus className="h-4 w-4" />
+            Add teacher
+          </Button>
         </div>
       </div>
 
@@ -425,9 +486,18 @@ export default function TeachersPageClient({
                   Update teacher information and assign classes and subjects.
                 </p>
               </div>
-              <Button variant="outline" onClick={() => setSelectedTeacher(null)}>
-                Close
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => openDeleteModal(selectedTeacher)}
+                  className="border-red-200 bg-red-50 text-red-700 hover:bg-red-100"
+                >
+                  Delete teacher
+                </Button>
+                <Button variant="outline" onClick={() => setSelectedTeacher(null)}>
+                  Close
+                </Button>
+              </div>
             </div>
 
             <form 
@@ -584,6 +654,77 @@ export default function TeachersPageClient({
         </div>
       )}
 
+      {deleteModalOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4">
+          <style>{`
+            @keyframes teacher_delete_enter { from { transform: translateX(36px) scale(.98); opacity: 0 } to { transform: translateX(0) scale(1); opacity: 1 } }
+            @keyframes teacher_delete_exit { from { transform: translateX(0) scale(1); opacity: 1 } to { transform: translateX(36px) scale(.98); opacity: 0 } }
+          `}</style>
+
+          <div
+            className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_50px_rgba(220,38,38,0.16)]"
+            style={{
+              animation: `${deleteAnimateState === "enter" ? "teacher_delete_enter" : "teacher_delete_exit"} 320ms cubic-bezier(.2,.9,.2,1)`,
+            }}
+          >
+            <div className="border-b border-slate-100 px-6 py-5" style={{ background: "linear-gradient(90deg, rgba(220,38,38,0.12), rgba(220,38,38,0.04))" }}>
+              <div className="flex items-start gap-3">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/70 bg-red-100 shadow-sm">
+                  <AlertCircle className="h-6 w-6 text-red-600" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-slate-900">Delete Teacher?</h2>
+                  <p className="mt-1 text-sm text-slate-600">This action cannot be undone.</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="px-6 py-5">
+              <p className="text-sm leading-6 text-slate-700">
+                You are about to permanently delete <strong>“{deletingTeacherName}”</strong>.
+              </p>
+              <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3">
+                <p className="text-xs text-red-700">
+                  <strong>Warning:</strong> This will remove the teacher from assigned classes and subjects.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4">
+              <button
+                type="button"
+                onClick={closeDeleteModal}
+                disabled={isDeleting}
+                className="flex-1 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-slate-100 disabled:opacity-50 text-slate-700"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteTeacher}
+                disabled={isDeleting}
+                className="flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-colors disabled:opacity-50"
+                style={{ background: "#DC2626" }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "#991B1B")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "#DC2626")}
+              >
+                {isDeleting ? (
+                  <>
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4" />
+                    Delete Permanently
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showErrorModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-md rounded-3xl border border-border bg-surface p-6 shadow-2xl">
@@ -609,4 +750,51 @@ export default function TeachersPageClient({
       <UserGuide guide={TEACHER_GUIDE} />
     </>
   );
+}
+
+function playOpenTone() {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const now = ctx.currentTime;
+    const playTone = (freq: number, duration: number, gain: number, delay = 0) => {
+      const osc = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, now + delay);
+      gainNode.gain.setValueAtTime(0.0001, now + delay);
+      gainNode.gain.exponentialRampToValueAtTime(gain, now + delay + 0.01);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, now + delay + duration);
+      osc.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      osc.start(now + delay);
+      osc.stop(now + delay + duration);
+    };
+
+    playTone(860, 0.14, 0.05, 0);
+    playTone(1180, 0.14, 0.05, 0.07);
+    setTimeout(() => ctx.close(), 700);
+  } catch (e) {
+    // ignore
+  }
+}
+
+function playCloseTone() {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = "sine";
+    o.frequency.value = 410;
+    g.gain.value = 0.0001;
+    o.connect(g);
+    g.connect(ctx.destination);
+    const now = ctx.currentTime;
+    g.gain.linearRampToValueAtTime(0.04, now + 0.01);
+    o.start(now);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+    o.stop(now + 0.24);
+    setTimeout(() => ctx.close(), 500);
+  } catch (e) {
+    // ignore
+  }
 }

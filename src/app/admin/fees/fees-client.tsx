@@ -25,7 +25,19 @@ import {
   type Stats,
   type InvoiceStatus,
 } from "@/lib/fees-grouping";
-import { ArrowUpRight, TrendingUp, CheckCircle, AlertCircle, Clock, Sparkles } from "lucide-react";
+import {
+  ArrowUpRight,
+  TrendingUp,
+  CheckCircle,
+  AlertCircle,
+  Clock,
+  Sparkles,
+  Search,
+  CalendarDays,
+  ReceiptText,
+  SendHorizonal,
+  ScrollText,
+} from "lucide-react";
 import { WhatsAppIcon } from "@/components/ui/icons";
 
 const STATUS_CONFIG = {
@@ -721,38 +733,59 @@ export default function FeesPageClient({
             </div>
             <Button
               type="button"
-              variant="secondary"
+              variant="primary"
               onClick={() => setIsSearchOpen((open) => !open)}
-              className="px-3 py-2 text-sm"
+              className="h-9 rounded-md border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8]"
             >
+              <Search className="h-4 w-4" />
               {isSearchOpen ? "Close Search" : "Search Fees"}
             </Button>
-            <form onSubmit={handleIssueBillsSubmit} className="flex gap-2">
-              <select
-                value={selectedTermId}
-                onChange={(e) => setSelectedTermId(e.target.value)}
-                required
-                className="rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-brand"
+            <form onSubmit={handleIssueBillsSubmit} className="flex items-center gap-2">
+              <div className="flex items-center gap-2 rounded-md border border-[#0A66C2] bg-background px-2.5 py-1.5 text-sm text-foreground shadow-sm">
+                <CalendarDays className="h-4 w-4 text-[#0A66C2]" />
+                <select
+                  value={selectedTermId}
+                  onChange={(e) => setSelectedTermId(e.target.value)}
+                  required
+                  className="bg-transparent text-sm text-foreground outline-none"
+                >
+                  <option value="">Select term</option>
+                  {terms.map((term) => (
+                    <option key={term.id} value={term.id}>
+                      {term.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <Button
+                type="submit"
+                disabled={issuingBills}
+                variant="primary"
+                className="h-9 rounded-md border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8]"
               >
-                <option value="">Select term</option>
-                {terms.map((term) => (
-                  <option key={term.id} value={term.id}>
-                    {term.name}
-                  </option>
-                ))}
-              </select>
-              <Button type="submit" disabled={issuingBills} className="text-xs px-2.5 py-1.5 h-auto">
+                <ReceiptText className="h-4 w-4" />
                 {issuingBills ? "Issuing..." : "Issue Bills"}
               </Button>
             </form>
 
             <form onSubmit={handleSendRemindersSubmit}>
-              <Button type="submit" disabled={sendingReminders} variant="secondary" className="text-xs px-2.5 py-1.5 h-auto">
+              <Button
+                type="submit"
+                disabled={sendingReminders}
+                variant="primary"
+                className="h-9 rounded-md border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8]"
+              >
+                <SendHorizonal className="h-4 w-4" />
                 {sendingReminders ? "Sending..." : "Send Reminders"}
               </Button>
             </form>
 
-            <Button href="/admin/fees/schedules" variant="secondary" className="text-xs px-2.5 py-1.5 h-auto">
+            <Button
+              href="/admin/fees/schedules"
+              variant="primary"
+              className="h-9 rounded-md border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8]"
+            >
+              <ScrollText className="h-4 w-4" />
               Fee Schedules
             </Button>
           </div>

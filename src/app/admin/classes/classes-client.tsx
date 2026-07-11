@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { UserGuide } from "@/components/ui/user-guide";
 import SubscriptionModal from "@/components/subscription-modal";
 import AdminSkeleton from "@/components/ui/skeleton";
-import { BookOpen, Users, Plus, Edit2, TrendingUp, LayoutGrid, ArrowUpRight } from "lucide-react";
+import { BookOpen, Users, Plus, Edit2, TrendingUp, LayoutGrid, ArrowUpRight, Search, School, AlertCircle, Trash2 } from "lucide-react";
 
 const CLASS_GUIDE = {
   title: "Classes Management",
@@ -81,16 +81,16 @@ function getPhaseLabel(phase: string) {
   return PHASE_OPTIONS.find((option) => option.value === phase)?.label ?? phase;
 }
 
-function getPhaseColor(phase: string): { bg: string; text: string; icon: string } {
+function getPhaseColor(phase: string): { bg: string; text: string; icon: string; row: string } {
   switch (phase) {
     case "EARLY_YEARS":
-      return { bg: "bg-purple-100", text: "text-purple-800", icon: "text-purple-600" };
+      return { bg: "bg-purple-100", text: "text-purple-800", icon: "text-purple-600", row: "bg-purple-50/70" };
     case "PRIMARY":
-      return { bg: "bg-blue-100", text: "text-blue-800", icon: "text-blue-600" };
+      return { bg: "bg-blue-100", text: "text-blue-800", icon: "text-blue-600", row: "bg-blue-50/70" };
     case "SECONDARY":
-      return { bg: "bg-green-100", text: "text-green-800", icon: "text-green-600" };
+      return { bg: "bg-green-100", text: "text-green-800", icon: "text-green-600", row: "bg-green-50/70" };
     default:
-      return { bg: "bg-gray-100", text: "text-gray-800", icon: "text-gray-600" };
+      return { bg: "bg-gray-100", text: "text-gray-800", icon: "text-gray-600", row: "bg-slate-50/70" };
   }
 }
 
@@ -109,6 +109,11 @@ export default function ClassesPageClient({ classes: initialClasses }: { classes
   const [className, setClassName] = useState("");
   const [classPhase, setClassPhase] = useState("PRIMARY");
   const [classArm, setClassArm] = useState("");
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deletingClassId, setDeletingClassId] = useState<string | null>(null);
+  const [deletingClassName, setDeletingClassName] = useState("");
+  const [deleteAnimateState, setDeleteAnimateState] = useState<"enter" | "exit">("enter");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (isSearchOpen && searchInputRef.current) {
@@ -276,11 +281,25 @@ export default function ClassesPageClient({ classes: initialClasses }: { classes
     }
   };
 
-  const handleDelete = async (classItem: any) => {
-    if (!confirm(`Are you sure you want to delete "${classItem.name}"? This action cannot be undone.`)) {
-      return;
-    }
+  const openDeleteModal = (classItem: any) => {
+    setDeletingClassId(classItem.id);
+    setDeletingClassName(classItem.name ?? "this class");
+    setDeleteAnimateState("enter");
+    setDeleteModalOpen(true);
+    playOpenTone();
+  };
 
+  const closeDeleteModal = () => {
+    setDeleteAnimateState("exit");
+    playCloseTone();
+    setTimeout(() => {
+      setDeleteModalOpen(false);
+      setDeletingClassId(null);
+      setDeletingClassName("");
+    }, 320);
+  };
+
+  const handleDelete = async (classItem: any) => {
     try {
       setLoading(true);
       const backendUrl = getBackendUrl();
@@ -311,6 +330,21 @@ export default function ClassesPageClient({ classes: initialClasses }: { classes
       setError(err instanceof Error ? err.message : 'Failed to delete class');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const confirmDeleteClass = async () => {
+    if (!deletingClassId) return;
+
+    setIsDeleting(true);
+    try {
+      await handleDelete({ id: deletingClassId });
+      setIsOpen(false);
+      closeDeleteModal();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete class');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -446,14 +480,18 @@ export default function ClassesPageClient({ classes: initialClasses }: { classes
               </div>
               <Button
                 type="button"
-                variant="secondary"
+                variant="primary"
                 onClick={() => setIsSearchOpen((open) => !open)}
-                className="px-3 py-2 text-sm"
+                className="h-9 rounded-md border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8]"
               >
+                <Search className="h-4 w-4" />
                 {isSearchOpen ? "Close Search" : "Search Classes"}
               </Button>
-              <Button onClick={() => openModal()} className="gap-2 flex items-center whitespace-nowrap">
-                <Plus className="h-4 w-4" />
+              <Button
+                onClick={() => openModal()}
+                className="h-9 rounded-md border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8]"
+              >
+                <School className="h-4 w-4" />
                 Add class
               </Button>
             </div>
@@ -492,14 +530,14 @@ export default function ClassesPageClient({ classes: initialClasses }: { classes
           <div className="overflow-hidden rounded-lg border border-border bg-surface">
             {/* Desktop Table */}
             <table className="hidden sm:table w-full text-left text-sm">
-              <thead className="border-b border-border bg-background text-muted">
+              <thead className="border-b border-border/70 bg-gradient-to-r from-[#0A66C2]/10 via-[#0A66C2]/5 to-white text-muted">
                 <tr>
-                  <th className="px-4 py-3 font-semibold">Class</th>
-                  <th className="px-4 py-3 font-semibold">Phase</th>
-                  <th className="px-4 py-3 font-semibold">Arm</th>
-                  <th className="px-4 py-3 font-semibold">Pupils</th>
-                  <th className="px-4 py-3 font-semibold">Subjects</th>
-                  <th className="px-4 py-3 font-semibold text-right">Action</th>
+                  <th className="px-3 py-2 font-semibold">Class</th>
+                  <th className="px-3 py-2 font-semibold">Phase</th>
+                  <th className="px-3 py-2 font-semibold">Arm</th>
+                  <th className="px-3 py-2 font-semibold">Pupils</th>
+                  <th className="px-3 py-2 font-semibold">Subjects</th>
+                  <th className="px-3 py-2 font-semibold text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -507,17 +545,17 @@ export default function ClassesPageClient({ classes: initialClasses }: { classes
                   filteredClasses.map((classItem) => {
                     const colors = getPhaseColor(classItem.phase);
                     return (
-                      <tr key={classItem.id} className="hover:bg-background/50 transition-colors">
-                        <td className="px-4 py-3 font-medium text-foreground">{classItem.name}</td>
-                        <td className="px-4 py-3">
+                      <tr key={classItem.id} className={`transition-colors hover:bg-background/50 ${colors.row}`}>
+                        <td className="px-3 py-2 font-medium text-foreground">{classItem.name}</td>
+                        <td className="px-3 py-2">
                           <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${colors.bg} ${colors.text}`}>
                             {getPhaseLabel(classItem.phase)}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-sm text-muted">{classItem.arm ?? "—"}</td>
-                        <td className="px-4 py-3 text-sm text-foreground font-medium">{classItem._count?.pupils ?? 0}</td>
-                        <td className="px-4 py-3 text-sm text-foreground font-medium">{classItem._count?.subjectClasses ?? 0}</td>
-                        <td className="px-4 py-3 text-right">
+                        <td className="px-3 py-2 text-sm text-muted">{classItem.arm ?? "—"}</td>
+                        <td className="px-3 py-2 text-sm text-foreground font-medium">{classItem._count?.pupils ?? 0}</td>
+                        <td className="px-3 py-2 text-sm text-foreground font-medium">{classItem._count?.subjectClasses ?? 0}</td>
+                        <td className="px-3 py-2 text-right">
                           <div className="flex items-center gap-2 justify-end">
                             <button
                               onClick={() => openModal(classItem)}
@@ -527,7 +565,7 @@ export default function ClassesPageClient({ classes: initialClasses }: { classes
                               Edit
                             </button>
                             <button
-                              onClick={() => handleDelete(classItem)}
+                              onClick={() => openDeleteModal(classItem)}
                               className="inline-flex px-3 py-1.5 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 text-sm font-medium transition-colors"
                             >
                               Delete
@@ -585,6 +623,78 @@ export default function ClassesPageClient({ classes: initialClasses }: { classes
               )}
             </div>
           </div>
+
+          {/* Delete Confirmation Modal */}
+          {deleteModalOpen && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4">
+              <style>{`
+                @keyframes classes_delete_enter { from { transform: translateX(36px) scale(.98); opacity: 0 } to { transform: translateX(0) scale(1); opacity: 1 } }
+                @keyframes classes_delete_exit { from { transform: translateX(0) scale(1); opacity: 1 } to { transform: translateX(36px) scale(.98); opacity: 0 } }
+              `}</style>
+
+              <div
+                className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_50px_rgba(220,38,38,0.16)]"
+                style={{
+                  animation: `${deleteAnimateState === "enter" ? "classes_delete_enter" : "classes_delete_exit"} 320ms cubic-bezier(.2,.9,.2,1)`,
+                }}
+              >
+                <div className="border-b border-slate-100 px-6 py-5" style={{ background: "linear-gradient(90deg, rgba(220,38,38,0.12), rgba(220,38,38,0.04))" }}>
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/70 bg-red-100 shadow-sm">
+                      <AlertCircle className="h-6 w-6 text-red-600" />
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-semibold text-slate-900">Delete Class?</h2>
+                      <p className="mt-1 text-sm text-slate-600">This action cannot be undone.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="px-6 py-5">
+                  <p className="text-sm leading-6 text-slate-700">
+                    You are about to permanently delete <strong>“{deletingClassName}”</strong>.
+                  </p>
+                  <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3">
+                    <p className="text-xs text-red-700">
+                      <strong>Warning:</strong> This will remove the class from the system and may affect related student assignments.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4">
+                  <button
+                    type="button"
+                    onClick={closeDeleteModal}
+                    disabled={isDeleting}
+                    className="flex-1 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-slate-100 disabled:opacity-50 text-slate-700"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={confirmDeleteClass}
+                    disabled={isDeleting}
+                    className="flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-colors disabled:opacity-50"
+                    style={{ background: "#DC2626" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "#991B1B")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "#DC2626")}
+                  >
+                    {isDeleting ? (
+                      <>
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                        Deleting...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="h-4 w-4" />
+                        Delete Permanently
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Modal */}
           {isOpen && (
@@ -667,12 +777,7 @@ export default function ClassesPageClient({ classes: initialClasses }: { classes
                       {selectedClass && (
                         <button
                           type="button"
-                          onClick={() => {
-                            if (confirm(`Delete "${selectedClass.name}"? This cannot be undone.`)) {
-                              handleDelete(selectedClass);
-                              setIsOpen(false);
-                            }
-                          }}
+                          onClick={() => openDeleteModal(selectedClass)}
                           className="px-4 py-2 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 text-sm font-medium transition-colors"
                         >
                           Delete
@@ -699,4 +804,51 @@ export default function ClassesPageClient({ classes: initialClasses }: { classes
       <UserGuide guide={CLASS_GUIDE} />
     </>
   );
+}
+
+function playOpenTone() {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const now = ctx.currentTime;
+    const playTone = (freq: number, duration: number, gain: number, delay = 0) => {
+      const osc = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, now + delay);
+      gainNode.gain.setValueAtTime(0.0001, now + delay);
+      gainNode.gain.exponentialRampToValueAtTime(gain, now + delay + 0.01);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, now + delay + duration);
+      osc.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      osc.start(now + delay);
+      osc.stop(now + delay + duration);
+    };
+
+    playTone(860, 0.14, 0.05, 0);
+    playTone(1180, 0.14, 0.05, 0.07);
+    setTimeout(() => ctx.close(), 700);
+  } catch (e) {
+    // ignore
+  }
+}
+
+function playCloseTone() {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = "sine";
+    o.frequency.value = 410;
+    g.gain.value = 0.0001;
+    o.connect(g);
+    g.connect(ctx.destination);
+    const now = ctx.currentTime;
+    g.gain.linearRampToValueAtTime(0.04, now + 0.01);
+    o.start(now);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+    o.stop(now + 0.24);
+    setTimeout(() => ctx.close(), 500);
+  } catch (e) {
+    // ignore
+  }
 }

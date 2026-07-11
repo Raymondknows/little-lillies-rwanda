@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import SubscriptionModal from "@/components/subscription-modal";
 import { getBackendUrl } from "@/lib/backend-url";
+import { CalendarDays, PlusCircle, BookOpen, AlertCircle, Trash2 } from "lucide-react";
 
 interface Term {
   id: string;
@@ -33,6 +34,10 @@ export default function AcademicYearsPage() {
   const [editingTermId, setEditingTermId] = useState<string | null>(null);
   const [pendingDeleteTermId, setPendingDeleteTermId] = useState<string | null>(null);
   const [pendingDeleteYearId, setPendingDeleteYearId] = useState<string | null>(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteModalType, setDeleteModalType] = useState<"TERM" | "YEAR" | null>(null);
+  const [deleteAnimateState, setDeleteAnimateState] = useState<"enter" | "exit">("enter");
+  const [deletingItemName, setDeletingItemName] = useState("");
   const [saving, setSaving] = useState(false);
   const [newYearData, setNewYearData] = useState({ name: "", isCurrent: false });
   const [newTermData, setNewTermData] = useState({
@@ -229,8 +234,14 @@ export default function AcademicYearsPage() {
   };
 
   const handleDeleteYear = async (id: string) => {
+    const year = academicYears.find((item) => item.id === id);
     setPendingDeleteTermId(null);
     setPendingDeleteYearId(id);
+    setDeletingItemName(year?.name || "this academic year");
+    setDeleteModalType("YEAR");
+    setDeleteAnimateState("enter");
+    setDeleteModalOpen(true);
+    playOpenTone();
   };
 
   const confirmDeleteYear = async () => {
@@ -254,6 +265,9 @@ export default function AcademicYearsPage() {
       }
 
       setPendingDeleteYearId(null);
+      setDeleteModalOpen(false);
+      setDeleteModalType(null);
+      setDeletingItemName("");
       await loadAcademicYears();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete year");
@@ -263,7 +277,13 @@ export default function AcademicYearsPage() {
   };
 
   const handleDeleteTerm = (termId: string) => {
+    const term = academicYears.flatMap((year) => year.terms).find((item) => item.id === termId);
     setPendingDeleteTermId(termId);
+    setDeletingItemName(term?.name || "this term");
+    setDeleteModalType("TERM");
+    setDeleteAnimateState("enter");
+    setDeleteModalOpen(true);
+    playOpenTone();
   };
 
   const confirmDeleteTerm = async () => {
@@ -287,6 +307,9 @@ export default function AcademicYearsPage() {
       }
 
       setPendingDeleteTermId(null);
+      setDeleteModalOpen(false);
+      setDeleteModalType(null);
+      setDeletingItemName("");
       await loadAcademicYears();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete term");
@@ -397,16 +420,19 @@ export default function AcademicYearsPage() {
         <div className="flex flex-col gap-2 sm:flex-row">
           <Button
             onClick={() => setShowNewTermModal(true)}
-            variant="secondary"
+            variant="primary"
             disabled={academicYears.length === 0}
-            className="w-full sm:w-auto text-sm"
+            className="h-9 w-full rounded-lg border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8] sm:w-auto"
           >
+            <PlusCircle className="h-4 w-4" />
             Add Term
           </Button>
           <Button
             onClick={() => setShowNewYearModal(true)}
-            className="w-full sm:w-auto text-sm"
+            variant="primary"
+            className="h-9 w-full rounded-lg border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8] sm:w-auto"
           >
+            <CalendarDays className="h-4 w-4" />
             Add Year
           </Button>
         </div>
@@ -447,8 +473,10 @@ export default function AcademicYearsPage() {
           </p>
           <Button
             onClick={() => setShowNewYearModal(true)}
-            className="mt-4"
+            variant="primary"
+            className="mt-4 h-9 rounded-lg border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8]"
           >
+            <CalendarDays className="h-4 w-4" />
             Create First Year
           </Button>
         </div>
@@ -469,18 +497,19 @@ export default function AcademicYearsPage() {
                   {!year.isCurrent && (
                     <Button
                       onClick={() => handleSetCurrentYear(year.id)}
-                      variant="secondary"
+                      variant="primary"
                       disabled={saving}
-                      className="text-xs sm:text-sm"
+                      className="h-9 rounded-lg border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#0858a8] sm:text-sm"
                     >
+                      <BookOpen className="h-4 w-4" />
                       Set as Current
                     </Button>
                   )}
                   <Button
                     onClick={() => handleDeleteYear(year.id)}
-                    variant="outline"
+                    variant="destructive"
                     disabled={saving}
-                    className="text-xs sm:text-sm text-red-600 hover:bg-red-50"
+                    className="h-9 rounded-lg px-3 py-1.5 text-xs font-semibold sm:text-sm"
                   >
                     Delete
                   </Button>
@@ -526,13 +555,14 @@ export default function AcademicYearsPage() {
                             <div className="flex gap-2">
                               <button
                                 onClick={() => handleEditTerm(term, year.id)}
-                                className="px-3 py-1 text-xs font-medium rounded bg-brand/10 text-brand hover:bg-brand/20 transition"
+                                className="inline-flex items-center gap-1 rounded-lg border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#0858a8]"
                               >
+                                <BookOpen className="h-3.5 w-3.5" />
                                 Edit
                               </button>
                               <button
                                 onClick={() => handleDeleteTerm(term.id)}
-                                className="px-3 py-1 text-xs font-medium rounded bg-red-50 text-red-600 hover:bg-red-100 transition"
+                                className="inline-flex items-center gap-1 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700"
                               >
                                 Delete
                               </button>
@@ -553,67 +583,81 @@ export default function AcademicYearsPage() {
         </div>
       )}
 
-      {/* Delete Term Confirmation Modal */}
-      {pendingDeleteTermId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-lg border border-border bg-surface p-6 shadow-2xl">
-            <h2 className="text-xl font-semibold text-foreground">Delete Term</h2>
-            <p className="mt-2 text-sm text-muted">
-              Are you sure you want to delete this term? This action cannot be undone.
-            </p>
+      {/* Delete Confirmation Modal */}
+      {deleteModalOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4">
+          <style>{`
+            @keyframes ay_delete_enter { from { transform: translateX(36px) scale(.98); opacity: 0 } to { transform: translateX(0) scale(1); opacity: 1 } }
+            @keyframes ay_delete_exit { from { transform: translateX(0) scale(1); opacity: 1 } to { transform: translateX(36px) scale(.98); opacity: 0 } }
+          `}</style>
 
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              <Button
-                type="button"
-                variant="destructive"
-                className="flex-1"
-                onClick={confirmDeleteTerm}
-                disabled={saving}
-              >
-                {saving ? "Deleting..." : "Delete term"}
-              </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                className="flex-1"
-                onClick={() => setPendingDeleteTermId(null)}
-                disabled={saving}
-              >
-                Cancel
-              </Button>
+          <div
+            className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_50px_rgba(220,38,38,0.16)]"
+            style={{ animation: `${deleteAnimateState === "enter" ? "ay_delete_enter" : "ay_delete_exit"} 320ms cubic-bezier(.2,.9,.2,1)` }}
+          >
+            <div className="border-b border-slate-100 px-6 py-5" style={{ background: "linear-gradient(90deg, rgba(220,38,38,0.12), rgba(220,38,38,0.04))" }}>
+              <div className="flex items-start gap-3">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/70 bg-red-100 shadow-sm">
+                  <AlertCircle className="h-6 w-6 text-red-600" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-slate-900">{deleteModalType === "YEAR" ? "Delete Academic Year?" : "Delete Term?"}</h2>
+                  <p className="mt-1 text-sm text-slate-600">This action cannot be undone.</p>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
 
-      {/* Delete Academic Year Confirmation Modal */}
-      {pendingDeleteYearId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-lg border border-border bg-surface p-6 shadow-2xl">
-            <h2 className="text-xl font-semibold text-foreground">Delete academic year</h2>
-            <p className="mt-2 text-sm text-muted">
-              Are you sure you want to delete this academic year and all its terms? This action cannot be undone.
-            </p>
+            <div className="px-6 py-5">
+              <p className="text-sm leading-6 text-slate-700">
+                You are about to permanently delete <strong>“{deletingItemName}”</strong>.
+              </p>
+              <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3">
+                <p className="text-xs text-red-700">
+                  <strong>Warning:</strong> {deleteModalType === "YEAR" ? "This will remove the academic year and all associated terms." : "This will remove the term from the academic year."}
+                </p>
+              </div>
+            </div>
 
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              <Button
+            <div className="flex gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4">
+              <button
                 type="button"
-                variant="destructive"
-                className="flex-1"
-                onClick={confirmDeleteYear}
+                onClick={() => {
+                  setDeleteAnimateState("exit");
+                  playCloseTone();
+                  setTimeout(() => {
+                    setDeleteModalOpen(false);
+                    setDeleteModalType(null);
+                    setDeletingItemName("");
+                    setPendingDeleteTermId(null);
+                    setPendingDeleteYearId(null);
+                  }, 320);
+                }}
                 disabled={saving}
-              >
-                {saving ? "Deleting..." : "Delete year"}
-              </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                className="flex-1"
-                onClick={() => setPendingDeleteYearId(null)}
-                disabled={saving}
+                className="flex-1 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-slate-100 disabled:opacity-50 text-slate-700"
               >
                 Cancel
-              </Button>
+              </button>
+              <button
+                type="button"
+                onClick={deleteModalType === "YEAR" ? confirmDeleteYear : confirmDeleteTerm}
+                disabled={saving}
+                className="flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-colors disabled:opacity-50"
+                style={{ background: "#DC2626" }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "#991B1B")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "#DC2626")}
+              >
+                {saving ? (
+                  <>
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4" />
+                    Delete Permanently
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>
@@ -671,15 +715,16 @@ export default function AcademicYearsPage() {
                 <Button
                   type="submit"
                   disabled={saving}
-                  className="flex-1"
+                  variant="primary"
+                  className="flex-1 rounded-lg border border-[#0A66C2] bg-[#0A66C2] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#0858a8]"
                 >
                   {saving ? "Creating..." : "Create Year"}
                 </Button>
                 <Button
                   type="button"
-                  variant="secondary"
+                  variant="primary"
                   onClick={() => setShowNewYearModal(false)}
-                  className="flex-1"
+                  className="flex-1 rounded-lg border border-[#0A66C2] bg-[#0A66C2] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#0858a8]"
                 >
                   Cancel
                 </Button>
@@ -779,15 +824,16 @@ export default function AcademicYearsPage() {
                 <Button
                   type="submit"
                   disabled={saving}
-                  className="flex-1"
+                  variant="primary"
+                  className="flex-1 rounded-lg border border-[#0A66C2] bg-[#0A66C2] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#0858a8]"
                 >
                   {saving ? "Creating..." : "Create Term"}
                 </Button>
                 <Button
                   type="button"
-                  variant="secondary"
+                  variant="primary"
                   onClick={() => setShowNewTermModal(false)}
-                  className="flex-1"
+                  className="flex-1 rounded-lg border border-[#0A66C2] bg-[#0A66C2] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#0858a8]"
                 >
                   Cancel
                 </Button>
@@ -862,15 +908,16 @@ export default function AcademicYearsPage() {
                 <Button
                   type="submit"
                   disabled={saving}
-                  className="flex-1"
+                  variant="primary"
+                  className="flex-1 rounded-lg border border-[#0A66C2] bg-[#0A66C2] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#0858a8]"
                 >
                   {saving ? "Updating..." : "Update Term"}
                 </Button>
                 <Button
                   type="button"
-                  variant="secondary"
+                  variant="primary"
                   onClick={() => setEditingTermId(null)}
-                  className="flex-1"
+                  className="flex-1 rounded-lg border border-[#0A66C2] bg-[#0A66C2] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#0858a8]"
                 >
                   Cancel
                 </Button>
@@ -881,4 +928,51 @@ export default function AcademicYearsPage() {
       )}
     </div>
   );
+}
+
+function playOpenTone() {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const now = ctx.currentTime;
+    const playTone = (freq: number, duration: number, gain: number, delay = 0) => {
+      const osc = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, now + delay);
+      gainNode.gain.setValueAtTime(0.0001, now + delay);
+      gainNode.gain.exponentialRampToValueAtTime(gain, now + delay + 0.01);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, now + delay + duration);
+      osc.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      osc.start(now + delay);
+      osc.stop(now + delay + duration);
+    };
+
+    playTone(860, 0.14, 0.05, 0);
+    playTone(1180, 0.14, 0.05, 0.07);
+    setTimeout(() => ctx.close(), 700);
+  } catch (e) {
+    // ignore
+  }
+}
+
+function playCloseTone() {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = "sine";
+    o.frequency.value = 410;
+    g.gain.value = 0.0001;
+    o.connect(g);
+    g.connect(ctx.destination);
+    const now = ctx.currentTime;
+    g.gain.linearRampToValueAtTime(0.04, now + 0.01);
+    o.start(now);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+    o.stop(now + 0.24);
+    setTimeout(() => ctx.close(), 500);
+  } catch (e) {
+    // ignore
+  }
 }

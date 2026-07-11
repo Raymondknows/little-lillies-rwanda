@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { getBackendUrl } from "../../../lib/backend-url";
 import { Button } from "../../../components/ui/button";
 import { Badge } from "../../../components/ui/badge";
+import { Search, Sparkles, TrendingUp, PlayCircle, CheckCircle2, Loader2, ArrowRight, RefreshCw, UserRoundPlus, Users, GraduationCap } from "lucide-react";
 
 type Term = {
   id: string;
@@ -344,11 +345,25 @@ export default function PromotionsPageClient({
           <p className="text-sm font-semibold text-brand">Student Promotion</p>
           <h1 className="text-2xl font-bold">Preview and apply class promotions</h1>
         </div>
-        <div className="flex flex-wrap gap-3">
-          <Button variant="secondary" onClick={handlePreview} disabled={loading || !selectedClassId || !selectedTermId || !selectedAcademicYearId}>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="primary"
+            onClick={handlePreview}
+            disabled={loading || !selectedClassId || !selectedTermId || !selectedAcademicYearId}
+            className="h-9 rounded-lg border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8]"
+          >
+            <PlayCircle className="h-4 w-4" />
             Preview promotions
           </Button>
-          <Button variant="primary" onClick={handleApply} disabled={loading || !previewData || selectedPupilDecisions.length === 0}>
+          <Button
+            type="button"
+            variant="primary"
+            onClick={handleApply}
+            disabled={loading || !previewData || selectedPupilDecisions.length === 0}
+            className="h-9 rounded-lg border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8]"
+          >
+            <CheckCircle2 className="h-4 w-4" />
             Apply decisions
           </Button>
         </div>
@@ -431,7 +446,14 @@ export default function PromotionsPageClient({
                 <p className="text-sm font-semibold">Bulk action for this class</p>
                 <p className="text-xs text-muted">Apply one decision to every pupil in the current preview.</p>
               </div>
-              <Button variant="secondary" onClick={applyBulkDecision} disabled={loading || !previewData}>
+              <Button
+                type="button"
+                variant="primary"
+                onClick={applyBulkDecision}
+                disabled={loading || !previewData}
+                className="h-9 rounded-lg border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8]"
+              >
+                <Users className="h-4 w-4" />
                 Apply to selected pupils
               </Button>
             </div>
@@ -573,7 +595,14 @@ export default function PromotionsPageClient({
 
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/60 pt-2">
             <p className="text-sm text-muted">Selected actions: {selectedPupilDecisions.length}</p>
-            <Button variant="primary" onClick={handleApply} disabled={loading || selectedPupilDecisions.length === 0}>
+            <Button
+              type="button"
+              variant="primary"
+              onClick={handleApply}
+              disabled={loading || selectedPupilDecisions.length === 0}
+              className="h-9 rounded-lg border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8]"
+            >
+              <GraduationCap className="h-4 w-4" />
               Apply selected actions
             </Button>
           </div>
@@ -590,7 +619,14 @@ export default function PromotionsPageClient({
             <h2 className="text-lg font-semibold">Promotion history</h2>
             <p className="text-sm text-muted">View historical promotion records for the selected year and term.</p>
           </div>
-          <Button variant="secondary" onClick={fetchHistory} disabled={historyLoading || !selectedAcademicYearId || !selectedTermId}>
+          <Button
+            type="button"
+            variant="primary"
+            onClick={fetchHistory}
+            disabled={historyLoading || !selectedAcademicYearId || !selectedTermId}
+            className="h-9 rounded-lg border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8]"
+          >
+            <RefreshCw className="h-4 w-4" />
             Refresh history
           </Button>
         </div>

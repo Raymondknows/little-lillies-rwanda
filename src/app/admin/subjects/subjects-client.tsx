@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { UserGuide } from "@/components/ui/user-guide";
 import { getBackendUrl } from "@/lib/backend-url";
+import { Search, BookPlus } from "lucide-react";
 
 const SUBJECTS_GUIDE = {
   title: "Subjects Management",
@@ -308,13 +309,21 @@ export default function SubjectsPageClient({
           </div>
           <Button
             type="button"
-            variant="secondary"
+            variant="primary"
             onClick={() => setIsSearchOpen((open) => !open)}
-            className="px-3 py-2 text-sm"
+            className="h-9 rounded-md border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8]"
           >
+            <Search className="h-4 w-4" />
             {isSearchOpen ? "Close Search" : "Search Subject"}
           </Button>
-          <Button type="button" onClick={() => openSubjectModal()} className="w-full sm:w-auto">Add subject</Button>
+          <Button
+            type="button"
+            onClick={() => openSubjectModal()}
+            className="h-9 rounded-md border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8]"
+          >
+            <BookPlus className="h-4 w-4" />
+            Add subject
+          </Button>
         </div>
       </div>
 

@@ -10,6 +10,10 @@ import {
   ChevronRight,
   Trash2,
   Sparkles,
+  Search,
+  KeyRound,
+  PlusCircle,
+  TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
 import { PublishButton } from "@/components/admin/publish-button";
@@ -369,16 +373,35 @@ export default function ResultsPageClient({ assessments, sessions = [] }: { asse
             </div>
             <Button
               type="button"
-              variant="secondary"
+              variant="primary"
               onClick={() => setIsSearchOpen((open) => !open)}
-              className="w-full sm:w-auto"
+              className="h-9 w-full rounded-md border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8] sm:w-auto"
             >
+              <Search className="h-4 w-4" />
               {isSearchOpen ? "Close Search" : "Search Results"}
             </Button>
-            <Button href="/admin/results/new" className="w-full sm:w-auto">
+            <Button
+              variant="primary"
+              href="/admin/settings/result-pins"
+              className="h-9 w-full rounded-md border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8] sm:w-auto"
+            >
+              <KeyRound className="h-4 w-4" />
+              Result PINs
+            </Button>
+            <Button
+              variant="primary"
+              href="/admin/results/new"
+              className="h-9 w-full rounded-md border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8] sm:w-auto"
+            >
+              <PlusCircle className="h-4 w-4" />
               Create assessment
             </Button>
-            <Button variant="secondary" href="/admin/promotions" className="w-full sm:w-auto">
+            <Button
+              variant="primary"
+              href="/admin/promotions"
+              className="h-9 w-full rounded-md border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8] sm:w-auto"
+            >
+              <TrendingUp className="h-4 w-4" />
               Promotions
             </Button>
           </div>

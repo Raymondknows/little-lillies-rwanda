@@ -6,8 +6,9 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ErrorModal } from "@/components/ui/error-modal";
-import { Building2, MapPin, DollarSign, FileText, Upload, Save, AlertCircle, Zap, X, KeyRound } from "lucide-react";
+import { Building2, MapPin, DollarSign, FileText, Upload, Save, AlertCircle, Zap, X, KeyRound, CalendarDays, ShieldCheck } from "lucide-react";
 import { UserGuide, type PageHelpGuide } from "@/components/ui/user-guide";
+import { WhatsAppIcon } from "@/components/ui/icons";
 import countriesData from "../../../../config/countries.json";
 import { resolveSchoolAssetUrl } from "@/lib/asset-urls";
 import { getBackendUrl } from "@/lib/backend-url";
@@ -308,20 +309,26 @@ export default function SettingsPageClient({
           ) : null}
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link href="/admin/settings/academic-years">
-            <Button variant="secondary" className="text-sm">
-              Manage Academic Years
-            </Button>
+          <Link
+            href="/admin/settings/academic-years"
+            className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8]"
+          >
+            <CalendarDays className="h-4 w-4" />
+            Manage Session
           </Link>
-          <Link href="/admin/settings/whatsapp">
-            <Button variant="secondary" className="text-sm">
-              WhatsApp Settings
-            </Button>
+          <Link
+            href="/admin/settings/whatsapp"
+            className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8]"
+          >
+            <WhatsAppIcon className="h-4 w-4" />
+            WhatsApp Settings
           </Link>
-          <Link href="/admin/settings/result-pins">
-            <Button variant="secondary" className="text-sm">
-              Result PINs
-            </Button>
+          <Link
+            href="/admin/settings/result-pins"
+            className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8]"
+          >
+            <ShieldCheck className="h-4 w-4" />
+            Result PINs
           </Link>
         </div>
       </div>

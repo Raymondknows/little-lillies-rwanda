@@ -3,7 +3,7 @@
 import { getBackendUrl } from "@/lib/backend-url";
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Calendar, Users, CheckCircle, AlertCircle, Clock, Send, TrendingUp, ArrowUpRight, Download, BarChart2 } from "lucide-react";
+import { Calendar, Users, CheckCircle, AlertCircle, Clock, Send, TrendingUp, ArrowUpRight, Download, BarChart2, Save, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { UserGuide, type PageHelpGuide } from "@/components/ui/user-guide";
@@ -510,11 +510,19 @@ export default function AttendancePage() {
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <Button onClick={() => router.push("/admin/attendance/summary")} variant="secondary" className="gap-2">
+        <Button
+          onClick={() => router.push("/admin/attendance/summary")}
+          variant="primary"
+          className="h-9 rounded-lg border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8]"
+        >
           <BarChart2 className="h-4 w-4" />
           View Summary
         </Button>
-        <Button onClick={exportCSV} variant="secondary" className="gap-2">
+        <Button
+          onClick={exportCSV}
+          variant="primary"
+          className="h-9 rounded-lg border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8]"
+        >
           <Download className="h-4 w-4" />
           Export CSV
         </Button>
@@ -608,7 +616,12 @@ export default function AttendancePage() {
             </div>
 
             <div className="flex items-end">
-              <Button onClick={() => window.location.reload()} variant="secondary" className="w-full">
+              <Button
+                onClick={() => window.location.reload()}
+                variant="primary"
+                className="h-9 w-full rounded-lg border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8]"
+              >
+                <RefreshCw className="h-4 w-4" />
                 Refresh
               </Button>
             </div>
@@ -808,8 +821,10 @@ export default function AttendancePage() {
                 <Button
                   onClick={handleSaveAttendance}
                   disabled={selectedClass === "ALL" || !hasModifications || saving}
-                  className="flex-1"
+                  variant="primary"
+                  className="flex h-9 flex-1 items-center justify-center gap-2 rounded-lg border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8]"
                 >
+                  <Save className="h-4 w-4" />
                   {saving ? "Saving..." : "Save Attendance"}
                 </Button>
                 <div className="flex gap-2 flex-1">
@@ -825,8 +840,8 @@ export default function AttendancePage() {
                   <Button
                     onClick={handleSendNotifications}
                     disabled={selectedClass === "ALL" || notifying}
-                    variant="secondary"
-                    className="flex items-center gap-2"
+                    variant="primary"
+                    className="flex h-9 items-center justify-center gap-2 rounded-lg border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8]"
                   >
                     <Send className="h-4 w-4" />
                     {notifying ? "Sending..." : "Send Notifications"}

@@ -111,14 +111,12 @@ export default function PublicResultCheckPage() {
       });
 
       const data = await response.json().catch(() => ({}));
-      
+
       if (!response.ok) {
-        // Check if the error is about PIN being required
-        if (data?.error?.includes("PIN") || data?.error?.includes("pin")) {
-          // Store the student/school info but show PIN modal
+        if (data?.requiresPin) {
           const nextStudent = data.student || null;
           const nextSchool = data.school || null;
-          
+
           if (nextStudent && nextSchool) {
             setStudent(nextStudent);
             setSchool(nextSchool);
@@ -128,7 +126,7 @@ export default function PublicResultCheckPage() {
             return;
           }
         }
-        
+
         throw new Error(data?.error || "Unable to check results");
       }
 
@@ -193,7 +191,7 @@ export default function PublicResultCheckPage() {
 
     try {
       setDownloadError(null);
-      const response = await fetch(`${backendUrl}/api/pdf-reports/${selectedAssessmentId}/${pupilId}`, {
+      const response = await fetch(`/api/pdf-reports/${selectedAssessmentId}/${pupilId}`, {
         credentials: "include",
         headers: {
           "x-school-id": school.id,
@@ -208,8 +206,13 @@ export default function PublicResultCheckPage() {
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
+      const studentName = [student?.firstName, student?.lastName].filter(Boolean).join(" ").trim() || student?.admissionNo || "student";
+      const termName = selectedTerm?.name || "results";
+      const safeStudentName = studentName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+      const safeTermName = termName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+      const fileName = `${safeStudentName || "student"}-${safeTermName || "results"}.pdf`;
       link.href = url;
-      link.download = `report-${selectedAssessmentId}-${pupilId}.pdf`;
+      link.download = fileName;
       document.body.appendChild(link);
       link.click();
       window.URL.revokeObjectURL(url);
@@ -406,9 +409,13 @@ export default function PublicResultCheckPage() {
                 <div className="mt-1">
                   <label className="mb-2 block text-sm font-semibold text-slate-900">School Code</label>
                   <input
+                    id="results-school-code"
+                    name="results-school-code"
                     value={schoolCode}
                     onChange={(event) => setSchoolCode(event.target.value)}
                     placeholder="Enter school slug or initials"
+                    autoComplete="off"
+                    data-lpignore="true"
                     className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
                     required
                   />
@@ -416,9 +423,13 @@ export default function PublicResultCheckPage() {
                 <div className="mt-1">
                   <label className="mb-2 block text-sm font-semibold text-slate-900">Admission Number</label>
                   <input
+                    id="results-admission-number"
+                    name="results-admission-number"
                     value={admissionNo}
                     onChange={(event) => setAdmissionNo(event.target.value)}
                     placeholder="Enter admission number"
+                    autoComplete="off"
+                    data-lpignore="true"
                     className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
                     required
                   />
@@ -429,8 +440,11 @@ export default function PublicResultCheckPage() {
                 <div className="mt-1">
                   <label className="mb-2 block text-sm font-semibold text-slate-900">Term</label>
                   <select
+                    id="results-term"
+                    name="results-term"
                     value={termId}
                     onChange={(event) => setTermId(event.target.value)}
+                    autoComplete="off"
                     className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
                   >
                     <option value="">Latest Term</option>
@@ -440,6 +454,21 @@ export default function PublicResultCheckPage() {
                       </option>
                     ))}
                   </select>
+                </div>
+                <div className="mt-1">
+                  <label className="mb-2 block text-sm font-semibold text-slate-900">PIN</label>
+                  <input
+                    id="results-pin"
+                    name="results-pin"
+                    value={pin}
+                    onChange={(event) => setPin(event.target.value)}
+                    placeholder="Enter result PIN"
+                    type="password"
+                    maxLength={20}
+                    autoComplete="new-password"
+                    data-lpignore="true"
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                  />
                 </div>
               </div>
 

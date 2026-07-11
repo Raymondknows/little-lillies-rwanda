@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ErrorModal } from "@/components/ui/error-modal";
-import { Building2, MapPin, DollarSign, FileText, Upload, Save, AlertCircle, Zap, X } from "lucide-react";
+import { Building2, MapPin, DollarSign, FileText, Upload, Save, AlertCircle, Zap, X, KeyRound } from "lucide-react";
 import { UserGuide, type PageHelpGuide } from "@/components/ui/user-guide";
 import countriesData from "../../../../config/countries.json";
 import { resolveSchoolAssetUrl } from "@/lib/asset-urls";
@@ -34,6 +34,13 @@ interface SchoolSettingsProps {
     manualPaymentBankName?: string | null;
     enabledPhases: Array<{ phase: string }>;
     partner?: { name: string } | null;
+    resultAccess?: {
+      enabled?: boolean;
+      mode?: string;
+      pinType?: string;
+      pinValidity?: string;
+      allowRegeneration?: boolean;
+    };
   };
   staff: Array<{ id: string; name: string; role: string }>;
   paystackConfigured: boolean;
@@ -103,6 +110,11 @@ export default function SettingsPageClient({
   const [successModalTitle, setSuccessModalTitle] = useState<string | undefined>("Success");
   const [successModalMessage, setSuccessModalMessage] = useState<string>("Your settings were saved successfully.");
   const [status, setStatus] = useState<any>(null);
+  const [resultAccessEnabled, setResultAccessEnabled] = useState(Boolean(school.resultAccess?.enabled));
+  const [resultAccessMode, setResultAccessMode] = useState(school.resultAccess?.mode || "NONE");
+  const [resultAccessPinType, setResultAccessPinType] = useState(school.resultAccess?.pinType || "NONE");
+  const [resultAccessPinValidity, setResultAccessPinValidity] = useState(school.resultAccess?.pinValidity || "TERM");
+  const [resultAccessAllowRegeneration, setResultAccessAllowRegeneration] = useState(Boolean(school.resultAccess?.allowRegeneration));
 
   useEffect(() => {
     fetchStatus();
@@ -181,6 +193,13 @@ export default function SettingsPageClient({
           principalSignatureUrl: signatureUrl,
           stampUrl: stampUrl,
           logoUrl: logoUrl,
+          resultAccess: {
+            enabled: resultAccessEnabled,
+            mode: resultAccessMode,
+            pinType: resultAccessPinType,
+            pinValidity: resultAccessPinValidity,
+            allowRegeneration: resultAccessAllowRegeneration,
+          },
         }),
       });
 
@@ -297,6 +316,11 @@ export default function SettingsPageClient({
           <Link href="/admin/settings/whatsapp">
             <Button variant="secondary" className="text-sm">
               WhatsApp Settings
+            </Button>
+          </Link>
+          <Link href="/admin/settings/result-pins">
+            <Button variant="secondary" className="text-sm">
+              Result PINs
             </Button>
           </Link>
         </div>
@@ -561,6 +585,91 @@ export default function SettingsPageClient({
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Result Access PIN Section */}
+        <div className="rounded-lg border border-border bg-surface overflow-hidden">
+          <div className="border-b border-border bg-background px-6 py-4 flex items-center gap-3">
+            <KeyRound className="h-5 w-5 text-brand" />
+            <div>
+              <h2 className="font-semibold text-foreground">Result Access PINs</h2>
+              <p className="text-xs text-muted">Optional school-managed result access control for parents and public checker pages</p>
+            </div>
+          </div>
+
+          <div className="p-6 space-y-5">
+            <div className="flex items-center gap-3 rounded-lg border border-border bg-background p-4">
+              <input
+                id="result-access-enabled"
+                type="checkbox"
+                checked={resultAccessEnabled}
+                onChange={(e) => setResultAccessEnabled(e.target.checked)}
+                className="h-4 w-4 rounded border-border text-brand focus:ring-brand"
+              />
+              <label htmlFor="result-access-enabled" className="text-sm font-medium text-foreground">
+                Require a PIN to access results
+              </label>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">Result Access Mode</label>
+                <select
+                  value={resultAccessMode}
+                  onChange={(e) => setResultAccessMode(e.target.value)}
+                  className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand/50"
+                >
+                  <option value="NONE">No PIN Required</option>
+                  <option value="PARENT_PORTAL_ONLY">Parent Portal Only</option>
+                  <option value="PUBLIC_CHECKER_ONLY">Public Result Checker Only</option>
+                  <option value="BOTH">Both</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">PIN Type</label>
+                <select
+                  value={resultAccessPinType}
+                  onChange={(e) => setResultAccessPinType(e.target.value)}
+                  className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand/50"
+                >
+                  <option value="NONE">None</option>
+                  <option value="STUDENT">Student PIN</option>
+                  <option value="GENERIC">Generic PIN Batch</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">PIN Validity</label>
+                <select
+                  value={resultAccessPinValidity}
+                  onChange={(e) => setResultAccessPinValidity(e.target.value)}
+                  className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand/50"
+                >
+                  <option value="TERM">Entire Term</option>
+                  <option value="SESSION">Entire Session</option>
+                  <option value="CUSTOM">Custom Expiry Date</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-3 rounded-lg border border-border bg-background p-4">
+                <input
+                  id="result-access-allow-regeneration"
+                  type="checkbox"
+                  checked={resultAccessAllowRegeneration}
+                  onChange={(e) => setResultAccessAllowRegeneration(e.target.checked)}
+                  className="h-4 w-4 rounded border-border text-brand focus:ring-brand"
+                />
+                <label htmlFor="result-access-allow-regeneration" className="text-sm font-medium text-foreground">
+                  Allow PIN regeneration
+                </label>
+              </div>
+            </div>
+
+            <p className="text-sm text-muted">
+              This setting is disabled by default. When left off, the current result experience remains unchanged for parents and staff.
+            </p>
           </div>
         </div>
 

@@ -21,6 +21,20 @@ export default function ParentsPage() {
             <p className="mt-4 text-lg text-muted">
               See results same-day. Track fees. Instant WhatsApp notifications. Never miss important updates.
             </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link
+                href="/results/check"
+                className="inline-flex items-center rounded-lg bg-brand px-5 py-3 text-sm font-semibold text-white hover:bg-brand/90"
+              >
+                Check Result With PIN
+              </Link>
+              <Link
+                href="/parent/login"
+                className="inline-flex items-center rounded-lg border border-brand/20 bg-white px-5 py-3 text-sm font-semibold text-brand hover:bg-brand/5"
+              >
+                Parent Portal Login
+              </Link>
+            </div>
           </div>
         </div>
       </div>

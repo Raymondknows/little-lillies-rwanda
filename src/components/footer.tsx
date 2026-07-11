@@ -5,7 +5,7 @@ const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://schoolbase.live";
 
 export default function Footer() {
   return (
-    <footer className="bg-foreground text-white">
+    <footer className="bg-foreground text-white print:hidden">
       {/* Main Footer */}
       <div className="mx-auto max-w-6xl px-4 py-16">
         <div className="grid gap-12 md:grid-cols-5">

@@ -10,7 +10,7 @@ export default async function Header() {
   if (isLoggedIn) return null;
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-white/95 backdrop-blur">
+    <header className="sticky top-0 z-50 border-b border-border bg-white/95 backdrop-blur print:hidden">
       <div className="mx-auto max-w-6xl px-4 py-3">
         {/* Top bar with social links - hide for logged-in users */}
         {!isLoggedIn && (

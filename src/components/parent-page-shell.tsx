@@ -13,7 +13,7 @@ interface ParentPageShellProps {
 export default function ParentPageShell({
   children,
   onRefresh,
-  className = "space-y-8 px-0 pb-12 pt-6 sm:px-2 md:px-4 lg:px-8",
+  className = "space-y-8 px-0 pb-12 pt-6 sm:px-2 md:px-4 lg:px-8 print:space-y-0 print:px-0 print:pb-0 print:pt-0",
 }: ParentPageShellProps) {
   const { pullDistance, isRefreshing, handleTouchStart, handleTouchMove, handleTouchEnd } = usePullToRefresh({
     onRefresh,

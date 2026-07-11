@@ -35,6 +35,7 @@ interface ReportCardData {
     logoUrl?: string;
     principalName?: string;
     stampUrl?: string;
+    principalSignatureUrl?: string;
   };
   class: {
     name: string;
@@ -155,6 +156,18 @@ export function WaecReportCard({
     let mounted = true;
 
     const fetchSchoolConfig = async () => {
+      // First, check if principal signature is already in the data
+      if (data?.school?.principalSignatureUrl) {
+        if (mounted) {
+          setSchoolConfig({
+            principalSignatureUrl: data.school.principalSignatureUrl,
+            principalName: data.school.principalName,
+          });
+        }
+        return;
+      }
+
+      // If not, try to fetch from API (for authenticated users)
       try {
         const backendUrl = getBackendUrl();
         const response = await fetch(`${backendUrl}/api/admin/settings/data`, {
@@ -163,9 +176,9 @@ export function WaecReportCard({
 
         if (!response.ok) return;
 
-        const data = await response.json();
+        const fetchedData = await response.json();
         if (mounted) {
-          setSchoolConfig(data?.config ?? null);
+          setSchoolConfig(fetchedData?.config ?? null);
         }
       } catch (error) {
         console.error("Error loading school config:", error);
@@ -177,7 +190,7 @@ export function WaecReportCard({
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [data?.school?.principalSignatureUrl, data?.school?.principalName]);
 
   const getGradeColor = (grade: string) => GRADE_COLORS[grade] || { bg: "bg-gray-100", text: "text-gray-900" };
 
@@ -249,7 +262,7 @@ export function WaecReportCard({
             <p className="text-xs font-semibold text-gray-800">STATEMENT OF RESULT</p>
             <p className="text-xs text-gray-600 mt-2">{data.term.session}</p>
 
-            <div className="grid grid-cols-4 gap-2 text-xs mt-4 text-gray-700 font-medium">
+            <div className="grid grid-cols-3 gap-2 text-xs mt-4 text-gray-700 font-medium">
               <div>
                 <p className="text-[10px] font-semibold text-gray-600">TERM</p>
                 <p className="font-bold">{data.term.name}</p>
@@ -257,10 +270,6 @@ export function WaecReportCard({
               <div>
                 <p className="text-[10px] font-semibold text-gray-600">CLASS</p>
                 <p className="font-bold">{data.class.name}</p>
-              </div>
-              <div>
-                <p className="text-[10px] font-semibold text-gray-600">ASSESSMENT</p>
-                <p className="font-bold text-[10px]">{data.assessment?.name || 'Assessment'}</p>
               </div>
               <div>
                 <p className="text-[10px] font-semibold text-gray-600">DATE</p>

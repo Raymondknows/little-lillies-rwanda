@@ -10,7 +10,7 @@ export const PullToRefreshIndicator = ({
       {/* Pull-to-Refresh Visual Indicator */}
       {pullDistance > 0 && (
         <div
-          className="fixed top-0 left-0 right-0 flex items-center justify-center bg-brand/10 transition-all z-40"
+          className="fixed top-0 left-0 right-0 flex items-center justify-center bg-brand/10 transition-all z-40 print:hidden"
           style={{ height: `${Math.min(pullDistance, 80)}px` }}
         >
           <div className="text-center">
@@ -31,7 +31,7 @@ export const PullToRefreshIndicator = ({
 
       {/* Refreshing Indicator */}
       {isRefreshing && (
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-40">
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-40 print:hidden">
           <div className="flex items-center gap-2 bg-brand text-white px-4 py-2 rounded-full shadow-lg">
             <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
             <span className="text-xs font-semibold">Refreshing...</span>

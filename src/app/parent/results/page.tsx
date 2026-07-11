@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { AlertCircle, ChevronRight, Filter, GraduationCap } from "lucide-react";
+import { AlertCircle, ChevronRight, Filter, GraduationCap, Lock } from "lucide-react";
 import { getBackendUrl } from "@/lib/backend-url";
 import ParentPageShell from "@/components/parent-page-shell";
 import { WaecReportCard } from "@/components/teacher/waec-report-card";
@@ -42,6 +42,12 @@ export default function ParentResultsPage() {
   const [loading, setLoading] = useState(true);
   const [reportLoading, setReportLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pinInput, setPinInput] = useState('');
+  const [pinError, setPinError] = useState<string | null>(null);
+  const [pinChecking, setPinChecking] = useState(false);
+  const [pinVerifiedChildId, setPinVerifiedChildId] = useState<string | null>(null);
+  const [verifiedPin, setVerifiedPin] = useState<string | null>(null);
+  const [pinRequired, setPinRequired] = useState(false);
 
   const backendUrl = getBackendUrl();
 
@@ -100,19 +106,34 @@ export default function ParentResultsPage() {
       try {
         const backendUrl = getBackendUrl();
         const termParam = selectedTerm ? `&termId=${selectedTerm.id}` : "";
+        const pinParam = verifiedPin && pinVerifiedChildId === selectedChildId ? `&pin=${encodeURIComponent(verifiedPin)}` : "";
         const response = await fetch(
-          `${backendUrl}/api/parent/results?childId=${selectedChildId}${termParam}`,
+          `${backendUrl}/api/parent/results?childId=${selectedChildId}${termParam}${pinParam}`,
           {
             credentials: "include",
             headers: { "Content-Type": "application/json" },
           }
         );
 
-        if (!response.ok) throw new Error("Failed to fetch results");
+        if (!response.ok) {
+          const errorPayload = await response.json().catch(() => ({}));
+          if (response.status === 403 && errorPayload.requiresPin) {
+            setPinRequired(true);
+            setPinError(errorPayload.error || "Result PIN required to view this child’s results.");
+            setResults([]);
+            setSelectedAssessmentId(null);
+            setReportCardData(null);
+            return;
+          }
+
+          throw new Error(errorPayload.error || "Failed to fetch results");
+        }
 
         const data = await response.json();
         const nextResults: Result[] = data.results || [];
         setResults(nextResults);
+        setPinRequired(false);
+        setPinError(null);
 
         if (data.term && !selectedTerm) {
           setSelectedTerm(data.term);
@@ -128,11 +149,12 @@ export default function ParentResultsPage() {
         });
       } catch (err) {
         console.error("Error fetching results:", err);
+        setPinRequired(false);
       }
     };
 
     fetchResults();
-  }, [selectedChildId, selectedTerm]);
+  }, [selectedChildId, selectedTerm, verifiedPin, pinVerifiedChildId]);
 
   useEffect(() => {
     if (!selectedChildId || !selectedAssessmentId) {
@@ -170,6 +192,50 @@ export default function ParentResultsPage() {
   const selectedChild = children.find((child) => child.id === selectedChildId) || null;
   const selectedAssessment = results.find((result) => result.assessmentId === selectedAssessmentId) || null;
 
+  const handleUnlockResults = async () => {
+    if (!selectedChild) return;
+
+    setPinChecking(true);
+    setPinError(null);
+
+    try {
+      const response = await fetch(
+        `${backendUrl}/api/parent/results?childId=${selectedChild.id}&pin=${encodeURIComponent(pinInput)}`,
+        {
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setPinError(data.error || "Invalid result PIN.");
+        return;
+      }
+
+      setPinVerifiedChildId(selectedChild.id);
+      setVerifiedPin(pinInput.trim());
+      setPinRequired(false);
+      setPinError(null);
+      setResults(data.results || []);
+      setSelectedAssessmentId((current) => {
+        const nextResults: Result[] = data.results || [];
+        if (current && nextResults.some((result) => result.assessmentId === current)) {
+          return current;
+        }
+        return nextResults[0]?.assessmentId ?? null;
+      });
+      if (data.term && !selectedTerm) {
+        setSelectedTerm(data.term);
+      }
+    } catch (err) {
+      console.error("Error unlocking results:", err);
+      setPinError("Unable to validate PIN right now.");
+    } finally {
+      setPinChecking(false);
+    }
+  };
+
   if (loading) {
     return (
       <ParentPageShell onRefresh={loadData}>
@@ -190,6 +256,74 @@ export default function ParentResultsPage() {
               <div className="h-16 w-full bg-slate-100 rounded"></div>
             </div>
           ))}
+        </div>
+      </ParentPageShell>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-lg border border-red-300 bg-red-50 p-4 flex gap-3">
+        <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+        <div>
+          <h3 className="font-semibold text-red-900">Error</h3>
+          <p className="text-sm text-red-700 mt-1">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (pinRequired && selectedChild) {
+    return (
+      <ParentPageShell onRefresh={loadData}>
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl shadow-xl max-w-md w-full p-8 space-y-6">
+            <div className="text-center">
+              <div className="mx-auto w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mb-4">
+                <Lock className="w-8 h-8 text-amber-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-slate-900">Result PIN Required</h2>
+              <p className="text-sm text-slate-600 mt-2">
+                Enter the result PIN provided by the school to view {selectedChild.firstName}'s results.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-900 mb-2">PIN</label>
+                <input
+                  value={pinInput}
+                  onChange={(event) => setPinInput(event.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && !pinChecking && handleUnlockResults()}
+                  placeholder="Enter PIN"
+                  type="password"
+                  maxLength={20}
+                  autoFocus
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-center text-lg font-semibold text-slate-900 outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                />
+              </div>
+
+              {pinError && (
+                <div className="rounded-lg border border-red-200 bg-red-50 p-3 flex gap-2">
+                  <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                  <p className="text-sm text-red-700">{pinError}</p>
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={handleUnlockResults}
+                disabled={pinChecking || !pinInput.trim()}
+                className="w-full rounded-2xl bg-brand px-4 py-3 text-sm font-semibold text-white transition hover:bg-brand/90 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {pinChecking ? "Verifying..." : "Unlock Results"}
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-500 text-center">
+              Your PIN is confidential and used only to verify access.
+            </p>
+          </div>
         </div>
       </ParentPageShell>
     );
@@ -231,6 +365,30 @@ export default function ParentResultsPage() {
           <h2 className="font-semibold text-slate-900">Filter Results</h2>
         </div>
 
+        {pinRequired && selectedChild && (
+          <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+            <p className="text-sm font-semibold text-amber-900">Result PIN required</p>
+            <p className="mt-1 text-sm text-amber-800">Enter the result PIN provided by the school to view this child’s results.</p>
+            <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+              <input
+                value={pinInput}
+                onChange={(event) => setPinInput(event.target.value)}
+                placeholder="Enter PIN"
+                className="w-full rounded-2xl border border-amber-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+              />
+              <button
+                type="button"
+                onClick={handleUnlockResults}
+                disabled={pinChecking || !pinInput.trim()}
+                className="rounded-2xl bg-brand px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand/90 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {pinChecking ? "Checking..." : "Unlock results"}
+              </button>
+            </div>
+            {pinError && <p className="mt-2 text-sm text-red-700">{pinError}</p>}
+          </div>
+        )}
+
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-semibold text-slate-900 mb-3">Select Child</label>
@@ -246,6 +404,11 @@ export default function ParentResultsPage() {
                       setResults([]);
                       setSelectedAssessmentId(null);
                       setReportCardData(null);
+                      setPinVerifiedChildId(null);
+                      setVerifiedPin(null);
+                      setPinInput('');
+                      setPinRequired(false);
+                      setPinError(null);
                     }}
                     className={`rounded-full px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
                       selectedChild?.id === child.id

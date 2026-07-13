@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Bell, CheckCircle2, Mail, Zap } from "lucide-react";
-import { getBackendUrl } from "@/lib/backend-url";
 import { sendSetupCompletionRemindersAction, sendSetupCompletionReminder } from "@/app/schoolbase-admin/actions";
+import { ErrorModal } from "@/components/ui/error-modal";
 import { Pagination } from "@/components/ui/pagination";
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100, 500];
@@ -44,25 +44,27 @@ export default function SetupRemindersClient({
   const [setupStatuses, setSetupStatuses] = useState<Record<string, any>>({});
   const [sending, setSending] = useState(false);
   const [sendingFor, setSendingFor] = useState<string>("");
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [filter, setFilter] = useState<"all" | "new">("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [emailLogPage, setEmailLogPage] = useState(1);
   const [emailLogItemsPerPage, setEmailLogItemsPerPage] = useState(10);
   const [pageLoading, setPageLoading] = useState(true);
+  const [statusModal, setStatusModal] = useState<{ open: boolean; type: "success" | "error"; title?: string; message: string }>({
+    open: false,
+    type: "success",
+    message: "",
+  });
 
   // Load schools and email logs
   useEffect(() => {
     const loadData = async () => {
       try {
-        const backendUrl = getBackendUrl();
         const [schoolsRes, logsRes] = await Promise.all([
-          fetch(`${backendUrl}/schoolbase-admin/api/schools?limit=500`, {
+          fetch(`/schoolbase-admin/api/schools?limit=500`, {
             credentials: "include",
           }),
-          fetch(`${backendUrl}/schoolbase-admin/api/email-logs?emailType=SETUP_COMPLETION_REMINDER&limit=500`, {
+          fetch(`/schoolbase-admin/api/email-logs?emailType=SETUP_COMPLETION_REMINDER&limit=500`, {
             credentials: "include",
           }),
         ]);
@@ -84,7 +86,7 @@ export default function SetupRemindersClient({
           const statuses: Record<string, any> = {};
           for (const school of schoolsData.schools) {
             try {
-              const statusRes = await fetch(`${backendUrl}/api/admin/school/${school.id}/setup-status`, {
+              const statusRes = await fetch(`/api/admin/school/${school.id}/setup-status`, {
                 credentials: "include",
               });
               if (statusRes.ok) {
@@ -127,29 +129,32 @@ export default function SetupRemindersClient({
   const handleBulkSend = async () => {
     try {
       setSending(true);
-      setError("");
-      setSuccess("");
 
       const result = await sendSetupCompletionRemindersAction();
 
-      setSuccess(
-        `Sent ${result.sentCount} reminders. Skipped ${result.skippedCount}.`
-      );
+      setStatusModal({
+        open: true,
+        type: "success",
+        title: "Reminders Sent",
+        message: `Sent ${result.sentCount} reminders. Skipped ${result.skippedCount}.`,
+      });
 
       // Reload email logs
-      const backendUrl = getBackendUrl();
       const response = await fetch(
-        `${backendUrl}/schoolbase-admin/api/email-logs?emailType=SETUP_COMPLETION_REMINDER&limit=50`,
+        `/schoolbase-admin/api/email-logs?emailType=SETUP_COMPLETION_REMINDER&limit=50`,
         { credentials: 'include' }
       );
       if (response.ok) {
         const data = await response.json();
         setEmailLogs(data.logs ?? []);
       }
-
-      setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
-      setError(`Failed to send reminders: ${err}`);
+      setStatusModal({
+        open: true,
+        type: "error",
+        title: "Reminder Failed",
+        message: `Failed to send reminders: ${err instanceof Error ? err.message : String(err)}`,
+      });
     } finally {
       setSending(false);
     }
@@ -158,27 +163,32 @@ export default function SetupRemindersClient({
   const handleSendToSchool = async (schoolId: string) => {
     try {
       setSendingFor(schoolId);
-      setError("");
-      setSuccess("");
 
       await sendSetupCompletionReminder(schoolId);
 
-      setSuccess("Email sent successfully");
+      setStatusModal({
+        open: true,
+        type: "success",
+        title: "Email Sent",
+        message: "The setup reminder email was sent successfully.",
+      });
 
       // Reload email logs
-      const backendUrl = getBackendUrl();
       const response = await fetch(
-        `${backendUrl}/schoolbase-admin/api/email-logs?emailType=SETUP_COMPLETION_REMINDER&limit=50`,
+        `/schoolbase-admin/api/email-logs?emailType=SETUP_COMPLETION_REMINDER&limit=50`,
         { credentials: 'include' }
       );
       if (response.ok) {
         const data = await response.json();
         setEmailLogs(data.logs ?? []);
       }
-
-      setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
-      setError(`Failed to send: ${err}`);
+      setStatusModal({
+        open: true,
+        type: "error",
+        title: "Email Failed",
+        message: `Failed to send: ${err instanceof Error ? err.message : String(err)}`,
+      });
     } finally {
       setSendingFor("");
     }
@@ -242,17 +252,14 @@ export default function SetupRemindersClient({
 
   return (
     <div className="space-y-6">
-      {/* Alert Messages */}
-      {error && (
-        <div className="rounded-3xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          {error}
-        </div>
-      )}
-      {success && (
-        <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
-          {success}
-        </div>
-      )}
+      <ErrorModal
+        isOpen={statusModal.open}
+        onClose={() => setStatusModal((prev) => ({ ...prev, open: false }))}
+        title={statusModal.title}
+        message={statusModal.message}
+        type={statusModal.type}
+        confirmLabel={statusModal.type === "success" ? "Okay" : "Try again"}
+      />
 
       {/* Stats Cards */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

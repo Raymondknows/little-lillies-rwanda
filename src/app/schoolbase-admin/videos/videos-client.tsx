@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { ErrorModal } from "@/components/ui/error-modal";
 import { Plus, Copy, Trash2, Edit2 } from "lucide-react";
 import { getBackendUrl } from "@/lib/backend-url";
 import {
@@ -35,9 +36,12 @@ export default function VideosClient({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [confirmDeleteVideoId, setConfirmDeleteVideoId] = useState<string | null>(null);
+  const [statusModal, setStatusModal] = useState<{ open: boolean; type: "success" | "error"; title?: string; message: string }>({
+    open: false,
+    type: "success",
+    message: "",
+  });
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -84,7 +88,7 @@ export default function VideosClient({
       featured: false,
     });
     setEditingId(null);
-    setError(null);
+    setStatusModal((prev) => ({ ...prev, open: false }));
   };
 
   const handleEdit = (video: Video) => {
@@ -97,13 +101,12 @@ export default function VideosClient({
     });
     setEditingId(video.id);
     onShowForm();
-    setError(null);
+    setStatusModal((prev) => ({ ...prev, open: false }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
 
     // Trim and validate inputs
     const trimmedTitle = formData.title.trim();
@@ -111,14 +114,14 @@ export default function VideosClient({
     const trimmedDescription = formData.description.trim();
 
     if (!trimmedTitle || !trimmedUrl) {
-      setError("Title and Video URL are required");
+      setStatusModal({ open: true, type: "error", title: "Missing details", message: "Title and video URL are required." });
       setLoading(false);
       return;
     }
 
     // Validate URL format
     if (!isValidVideoUrl(trimmedUrl)) {
-      setError("Please enter a valid video URL (YouTube, Vimeo, or Loom)");
+      setStatusModal({ open: true, type: "error", title: "Invalid video URL", message: "Please enter a valid video URL (YouTube, Vimeo, or Loom)." });
       setLoading(false);
       return;
     }
@@ -131,6 +134,7 @@ export default function VideosClient({
         category: formData.category,
         featured: formData.featured,
       };
+      const isEditing = Boolean(editingId);
 
       if (editingId) {
         await updateVideoAction(editingId, dataToSubmit);
@@ -153,8 +157,14 @@ export default function VideosClient({
 
       handleReset();
       onHideForm();
+      setStatusModal({
+        open: true,
+        type: "success",
+        title: isEditing ? "Video Updated" : "Video Added",
+        message: isEditing ? "The video was updated successfully." : "The video was added successfully.",
+      });
     } catch (err: any) {
-      setError(err.message || "Failed to save video");
+      setStatusModal({ open: true, type: "error", title: "Save failed", message: err.message || "Failed to save video." });
     } finally {
       setLoading(false);
     }
@@ -187,10 +197,9 @@ export default function VideosClient({
       setVideos((prevVideos) =>
         prevVideos.filter((v) => v.id !== confirmDeleteVideoId)
       );
-      setToastMessage("Video deleted successfully.");
-      window.setTimeout(() => setToastMessage(null), 1800);
+      setStatusModal({ open: true, type: "success", title: "Video Deleted", message: "The video was deleted successfully." });
     } catch (err: any) {
-      setError(err.message || "Failed to delete video");
+      setStatusModal({ open: true, type: "error", title: "Delete failed", message: err.message || "Failed to delete video." });
     } finally {
       setConfirmDeleteVideoId(null);
     }
@@ -200,8 +209,7 @@ export default function VideosClient({
     if (typeof window !== 'undefined') {
       const shareUrl = `${window.location.origin}/video-tutorials/${videoId}`;
       navigator.clipboard.writeText(shareUrl);
-      setToastMessage("Link copied to clipboard!");
-      window.setTimeout(() => setToastMessage(null), 1800);
+      setStatusModal({ open: true, type: "success", title: "Link copied", message: "The share link was copied to your clipboard." });
     }
   };
 
@@ -213,6 +221,14 @@ export default function VideosClient({
 
   return (
     <div className="relative w-full space-y-2 px-0 sm:px-0 sm:space-y-4">
+      <ErrorModal
+        isOpen={statusModal.open}
+        onClose={() => setStatusModal((prev) => ({ ...prev, open: false }))}
+        title={statusModal.title}
+        message={statusModal.message}
+        type={statusModal.type}
+        confirmLabel={statusModal.type === "success" ? "Okay" : "Try again"}
+      />
       {showForm && (
         <div className="w-full rounded-2xl border border-border/70 bg-surface p-3 shadow-sm sm:p-4">
           <div className="mb-3 flex flex-col gap-3 sm:mb-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
@@ -235,12 +251,6 @@ export default function VideosClient({
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4 w-full">
-            {error && (
-              <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
-                {error}
-              </div>
-            )}
-
             <div className="w-full">
               <label className="block text-xs sm:text-sm font-medium text-foreground mb-2">
                 Video Title *
@@ -441,14 +451,6 @@ export default function VideosClient({
           </div>
         )}
       </div>
-      {toastMessage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/30 p-4">
-          <div className="max-w-sm rounded-3xl bg-white p-5 text-center shadow-xl shadow-slate-900/20">
-            <p className="text-sm font-semibold text-foreground">{toastMessage}</p>
-          </div>
-        </div>
-      )}
-
       {confirmDeleteVideoId && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/40 p-4">
           <div className="w-full max-w-lg rounded-3xl border border-border bg-white p-6 shadow-xl shadow-slate-900/20">

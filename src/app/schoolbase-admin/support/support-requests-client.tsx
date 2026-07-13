@@ -2,6 +2,7 @@
 
 import { getBackendUrl } from "@/lib/backend-url";
 
+import { ErrorModal } from "@/components/ui/error-modal";
 import AdminSkeleton from "@/components/ui/skeleton";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -80,8 +81,11 @@ export default function SupportRequestsClient({
   const [readRequestIds, setReadRequestIds] = useState<string[]>([]);
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
-  const [replyError, setReplyError] = useState<string | null>(null);
-  const [replySuccess, setReplySuccess] = useState<string | null>(null);
+  const [statusModal, setStatusModal] = useState<{ open: boolean; type: "success" | "error"; title?: string; message: string }>({
+    open: false,
+    type: "success",
+    message: "",
+  });
   const [loading, setLoading] = useState(true);
 
   const refreshRequests = useCallback(async (showLoading = false) => {
@@ -261,12 +265,10 @@ export default function SupportRequestsClient({
     if (!selectedRequest) return;
     const currentDraft = replyDrafts[selectedRequest.id] ?? "";
     if (!currentDraft.trim()) {
-      setReplyError("Reply cannot be empty.");
+      setStatusModal({ open: true, type: "error", title: "Reply required", message: "Reply cannot be empty." });
       return;
     }
 
-    setReplyError(null);
-    setReplySuccess(null);
     setBusy(true);
 
     try {
@@ -283,7 +285,7 @@ export default function SupportRequestsClient({
       });
       const result = await response.json();
       if (!response.ok) {
-        setReplyError(result.message || "Unable to send reply.");
+        setStatusModal({ open: true, type: "error", title: "Reply failed", message: result.message || "Unable to send reply." });
         return;
       }
 
@@ -292,7 +294,7 @@ export default function SupportRequestsClient({
           request.id === selectedRequest.id ? result.supportRequest : request,
         ),
       );
-      setReplySuccess("Reply sent successfully.");
+      setStatusModal({ open: true, type: "success", title: "Reply sent", message: "Your reply was sent successfully." });
       setReplyDrafts((current) => {
         const next = { ...current };
         delete next[selectedRequest.id];
@@ -300,7 +302,7 @@ export default function SupportRequestsClient({
       });
       setSelectedRequestId(selectedRequest.id);
     } catch (err) {
-      setReplyError(err instanceof Error ? err.message : "Unable to send reply.");
+      setStatusModal({ open: true, type: "error", title: "Reply failed", message: err instanceof Error ? err.message : "Unable to send reply." });
     } finally {
       setBusy(false);
     }
@@ -308,6 +310,14 @@ export default function SupportRequestsClient({
 
   return (
     <div className="space-y-2.5 sm:space-y-4">
+      <ErrorModal
+        isOpen={statusModal.open}
+        onClose={() => setStatusModal((prev) => ({ ...prev, open: false }))}
+        title={statusModal.title}
+        message={statusModal.message}
+        type={statusModal.type}
+        confirmLabel={statusModal.type === "success" ? "Okay" : "Try again"}
+      />
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {[
           {
@@ -410,8 +420,7 @@ export default function SupportRequestsClient({
                     onClick={() => {
                       setSelectedRequestId(request.id);
                       setReplyStatus(request.status === "OPEN" ? "IN_PROGRESS" : request.status);
-                      setReplyError(null);
-                      setReplySuccess(null);
+                      setStatusModal((prev) => ({ ...prev, open: false }));
                     }}
                     className={`w-full rounded-2xl border p-2.5 text-left transition sm:p-3 ${isActive ? "border-brand bg-brand/5 shadow-sm" : "border-border bg-background hover:border-brand/40 hover:bg-brand/5"}`}
                   >
@@ -555,9 +564,6 @@ export default function SupportRequestsClient({
                   />
                 </div>
               </div>
-
-              {replyError ? <div className="rounded-2xl bg-rose-50 p-3 text-sm text-rose-700">{replyError}</div> : null}
-              {replySuccess ? <div className="rounded-2xl bg-emerald-50 p-3 text-sm text-emerald-700">{replySuccess}</div> : null}
 
               <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                 <button

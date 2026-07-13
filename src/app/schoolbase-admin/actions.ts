@@ -4,6 +4,19 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { getBackendUrl } from "@/lib/backend-url";
 
+export async function buildPlatformAdminHeaders(sessionCookie?: string | null) {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  if (sessionCookie) {
+    headers.Cookie = `schoolbase_session=${sessionCookie}`;
+    headers['X-Schoolbase-Session'] = sessionCookie;
+  }
+
+  return headers;
+}
+
 // Server actions for Vercel compatibility - use API routes
 
 export async function platformAdminLogoutAction(formData?: FormData): Promise<any> {
@@ -68,16 +81,19 @@ export async function sendPlatformCommunicationEmailAction(...args: any[]): Prom
 export async function sendSetupCompletionRemindersAction(...args: any[]): Promise<any> {
   try {
     const backendUrl = getBackendUrl();
-    
+    const cookieStore = await cookies();
+    const sessionCookie = cookieStore.get('schoolbase_session')?.value;
+
     const response = await fetch(`${backendUrl}/schoolbase-admin/api/reminders/send-bulk`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await buildPlatformAdminHeaders(sessionCookie),
       credentials: 'include',
       body: JSON.stringify({}),
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to send reminders (${response.status})`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `Failed to send reminders (${response.status})`);
     }
 
     return await response.json();
@@ -89,16 +105,19 @@ export async function sendSetupCompletionRemindersAction(...args: any[]): Promis
 export async function sendSetupCompletionReminder(schoolId: string): Promise<any> {
   try {
     const backendUrl = getBackendUrl();
-    
+    const cookieStore = await cookies();
+    const sessionCookie = cookieStore.get('schoolbase_session')?.value;
+
     const response = await fetch(`${backendUrl}/schoolbase-admin/api/reminders/send-single`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: await buildPlatformAdminHeaders(sessionCookie),
       credentials: 'include',
       body: JSON.stringify({ schoolId }),
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to send reminder (${response.status})`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `Failed to send reminder (${response.status})`);
     }
 
     return await response.json();

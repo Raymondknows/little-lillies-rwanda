@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Info } from "lucide-react";
 import { Pagination } from "@/components/ui/pagination";
+import { ErrorModal } from "@/components/ui/error-modal";
 import { getBackendUrl } from "@/lib/backend-url";
 import { sendPlatformCommunicationEmailAction } from "@/app/schoolbase-admin/actions";
 
@@ -246,9 +247,17 @@ export default function EmailCenterClient({
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
-  const [error, setError] = useState("");
-  const [successModalMessage, setSuccessModalMessage] = useState("");
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [statusModal, setStatusModal] = useState<{
+    open: boolean;
+    type: "success" | "error";
+    title?: string;
+    message: string;
+    details?: string;
+  }>({
+    open: false,
+    type: "success",
+    message: "",
+  });
   const [emailLogs, setEmailLogs] = useState(initialEmailLogs);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -328,8 +337,6 @@ export default function EmailCenterClient({
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSending(true);
-    setError("");
-    setSuccessModalMessage("");
 
     try {
       if (!subject.trim()) {
@@ -354,14 +361,24 @@ export default function EmailCenterClient({
       const result = await sendPlatformCommunicationEmailAction(emailData);
 
       const message = `Sent ${result.sentCount} email(s). ${result.skippedCount} skipped.`;
-      setSuccessModalMessage(message);
-      setShowSuccessModal(true);
-      setError("");
+      setStatusModal({
+        open: true,
+        type: "success",
+        title: "Email Sent",
+        message,
+        details:
+          selectedTarget === "school"
+            ? `The message was sent to ${selectedSchool?.name ?? "the selected school"}.`
+            : `The message was sent to the selected ${selectedSegment} segment.`,
+      });
       await refreshEmailLogs();
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to send platform email."
-      );
+      setStatusModal({
+        open: true,
+        type: "error",
+        title: "Send Failed",
+        message: err instanceof Error ? err.message : "Failed to send platform email.",
+      });
     } finally {
       setSending(false);
     }
@@ -510,11 +527,6 @@ export default function EmailCenterClient({
               </button>
             </div>
 
-            {error && (
-              <div className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-                {error}
-              </div>
-            )}
           </form>
         </section>
 
@@ -619,38 +631,15 @@ export default function EmailCenterClient({
         />
       </section>
 
-      {showSuccessModal && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 px-4 py-8">
-          <div className="w-full max-w-xl rounded-3xl border border-border bg-surface p-8 shadow-2xl">
-            <div className="flex items-start gap-4">
-              <div className="mt-1 rounded-2xl bg-emerald-100 p-3 text-emerald-700">
-                ✓
-              </div>
-              <div>
-                <h3 className="text-xl font-semibold text-foreground">Email sent successfully</h3>
-                <p className="mt-2 text-sm text-muted">{successModalMessage}</p>
-              </div>
-            </div>
-
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
-              <button
-                type="button"
-                className="rounded-2xl border border-border bg-background px-4 py-3 text-sm font-semibold text-foreground"
-                onClick={() => setShowSuccessModal(false)}
-              >
-                Close
-              </button>
-              <button
-                type="button"
-                className="rounded-2xl bg-brand px-4 py-3 text-sm font-semibold text-white"
-                onClick={() => setShowSuccessModal(false)}
-              >
-                Back to email center
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ErrorModal
+        isOpen={statusModal.open}
+        onClose={() => setStatusModal((prev) => ({ ...prev, open: false }))}
+        title={statusModal.title}
+        message={statusModal.message}
+        details={statusModal.details}
+        type={statusModal.type}
+        confirmLabel={statusModal.type === "success" ? "Okay" : "Try again"}
+      />
 
       {selectedLog && (
         <div className="fixed inset-0 z-50 grid place-items-end bg-black/40 px-4 py-8">

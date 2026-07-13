@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   AlertTriangle,
 } from "lucide-react";
+import { ErrorModal } from "@/components/ui/error-modal";
 import AdminSkeleton from "@/components/ui/skeleton";
 
 interface AdminProfile {
@@ -64,8 +65,11 @@ export default function SettingsClient() {
   const [saving, setSaving] = useState(false);
   const [savingSettings, setSavingSettings] = useState(false);
   const [profileMessage, setProfileMessage] = useState<string | null>(null);
-  const [settingsMessage, setSettingsMessage] = useState<string | null>(null);
-  const [settingsError, setSettingsError] = useState<string | null>(null);
+  const [statusModal, setStatusModal] = useState<{ open: boolean; type: "success" | "error"; title?: string; message: string }>({
+    open: false,
+    type: "success",
+    message: "",
+  });
   const [stats, setStats] = useState<PlatformStats | null>(null);
   const [activity, setActivity] = useState<AuditLog[]>([]);
   const [settings, setSettings] = useState<PlatformSettingsState>(defaultSettings);
@@ -160,10 +164,10 @@ export default function SettingsClient() {
       }
 
       setAdmin(data.admin);
-      setProfileMessage("Profile updated successfully.");
+      setStatusModal({ open: true, type: "success", title: "Profile Updated", message: "Your profile was updated successfully." });
     } catch (error) {
       console.error(error);
-      setProfileMessage(error instanceof Error ? error.message : "Unable to save profile.");
+      setStatusModal({ open: true, type: "error", title: "Profile Update Failed", message: error instanceof Error ? error.message : "Unable to save profile." });
     } finally {
       setSaving(false);
     }
@@ -172,8 +176,6 @@ export default function SettingsClient() {
   async function handleSaveSettings() {
     try {
       setSavingSettings(true);
-      setSettingsMessage(null);
-      setSettingsError(null);
 
       const res = await fetch("/schoolbase-admin/api/settings", {
         method: "PATCH",
@@ -187,10 +189,10 @@ export default function SettingsClient() {
         throw new Error(data?.message || "Failed to save settings.");
       }
 
-      setSettingsMessage("Platform preferences saved successfully.");
+      setStatusModal({ open: true, type: "success", title: "Preferences Saved", message: "Platform preferences were saved successfully." });
     } catch (error) {
       console.error(error);
-      setSettingsError(error instanceof Error ? error.message : "Unable to save platform preferences.");
+      setStatusModal({ open: true, type: "error", title: "Save Failed", message: error instanceof Error ? error.message : "Unable to save platform preferences." });
     } finally {
       setSavingSettings(false);
     }
@@ -214,6 +216,14 @@ export default function SettingsClient() {
 
   return (
     <div className="w-full space-y-4 px-0 sm:px-0">
+      <ErrorModal
+        isOpen={statusModal.open}
+        onClose={() => setStatusModal((prev) => ({ ...prev, open: false }))}
+        title={statusModal.title}
+        message={statusModal.message}
+        type={statusModal.type}
+        confirmLabel={statusModal.type === "success" ? "Okay" : "Try again"}
+      />
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
         <div className="rounded-xl border border-border bg-surface p-4 shadow-sm sm:p-5">
           <div className="flex items-center gap-2 mb-4">
@@ -246,12 +256,6 @@ export default function SettingsClient() {
             <User className="h-4 w-4 text-brand" />
             <h2 className="font-semibold text-foreground">Platform Admin</h2>
           </div>
-
-          {profileMessage ? (
-            <div className="mb-4 rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground">
-              {profileMessage}
-            </div>
-          ) : null}
 
           <div className="space-y-3">
             <div>
@@ -328,17 +332,6 @@ export default function SettingsClient() {
           </div>
 
           <div className="space-y-4">
-            {settingsMessage ? (
-              <div className="rounded-lg border border-success/20 bg-success/10 px-3 py-2 text-sm text-success">
-                {settingsMessage}
-              </div>
-            ) : null}
-            {settingsError ? (
-              <div className="rounded-lg border border-danger/20 bg-danger/10 px-3 py-2 text-sm text-danger">
-                {settingsError}
-              </div>
-            ) : null}
-
             <div className="space-y-3 rounded-lg border border-border bg-background p-3">
               <div className="flex items-center justify-between">
                 <div>

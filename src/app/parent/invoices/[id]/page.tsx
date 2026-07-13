@@ -7,6 +7,7 @@ import { ChevronLeft, Download, Printer, AlertCircle, CheckCircle2, Clock3 } fro
 import { getBackendUrl } from "@/lib/backend-url";
 import { formatMoney, pupilName as formatPupilName } from "@/lib/format";
 import { resolveSchoolAssetUrl } from "@/lib/asset-urls";
+import { useEffectiveCurrency } from "../../parent-school-context";
 
 type InvoicePayment = {
   id: string;
@@ -149,7 +150,7 @@ export default function InvoiceDetailPage() {
   const className = invoice.pupil.class ? `${invoice.pupil.class.name}${invoice.pupil.class.arm ? ` ${invoice.pupil.class.arm}` : ""}` : "Unassigned";
   const termName = invoice.feeSchedule?.term?.name || "Current Term";
   const academicYear = invoice.feeSchedule?.term?.academicYear?.name || "";
-  const currency = school?.currency || "NGN";
+  const currency = useEffectiveCurrency(school);
   let schoolLogo = resolveSchoolAssetUrl(school?.logoUrl);
   if (schoolLogo === "/api/admin/school-logo" && school?.name && school?.logoUrl) {
     // prefer public route with school id to avoid session-protected admin route

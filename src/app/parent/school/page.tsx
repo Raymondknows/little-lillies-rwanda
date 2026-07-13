@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Phone, Mail, MapPin, AlertCircle } from "lucide-react";
 import { getBackendUrl } from "@/lib/backend-url";
 import ParentPageShell from "@/components/parent-page-shell";
+import { useEffectiveCurrency } from "../parent-school-context";
 
 interface SchoolInfo {
   id: string;
@@ -38,6 +39,7 @@ export default function SchoolPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [calling, setCalling] = useState(false);
+  const effectiveCurrency = useEffectiveCurrency(school);
 
   const loadData = async () => {
     try {
@@ -253,7 +255,7 @@ export default function SchoolPage() {
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted">Currency</p>
-              <p className="mt-2 text-lg font-semibold text-foreground">{school.currency || '-'}</p>
+              <p className="mt-2 text-lg font-semibold text-foreground">{effectiveCurrency || '-'}</p>
             </div>
             {school.schoolHours ? (
               <div>

@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { AppLogo } from "@/components/app-logo";
 import { Button } from "@/components/ui/button";
 import { LogoutButton } from "@/components/logout-button";
+import { resolveSchoolAssetUrl } from "@/lib/asset-urls";
 import {
   Home,
   LayoutDashboard,
@@ -83,7 +84,7 @@ export default function Sidebar({
   onClose,
 }: {
   navItems: NavItem[];
-  school?: { name?: string | null; city?: string | null; country?: string | null } | null;
+  school?: { name?: string | null; city?: string | null; country?: string | null; logoUrl?: string | null } | null;
   session?: { name?: string } | null;
   logoHref?: string;
   logoutRedirectUrl?: string;
@@ -92,6 +93,8 @@ export default function Sidebar({
 }) {
   const pathname = usePathname();
   let lastSection: string | undefined;
+  const schoolLogo = school?.logoUrl ? resolveSchoolAssetUrl(school.logoUrl) : null;
+  const schoolName = school?.name || "SchoolBase";
 
   const handleNavClick = () => {
     if (isMobile && onClose) {
@@ -104,9 +107,19 @@ export default function Sidebar({
       isMobile ? "" : "hidden md:flex"
     }`}>
       <div className="border-b border-border px-4 py-4 flex-shrink-0">
-        <AppLogo href={logoHref} size="md" />
-        <p className="mt-3 truncate text-sm font-semibold text-foreground">{school?.name}</p>
-        <p className="text-xs text-muted">{session?.name ?? "Staff"} · {school?.city ?? school?.country}</p>
+        <Link href={logoHref} className="flex items-center gap-2.5 rounded-lg px-1 py-1 hover:bg-accent/40 transition-colors">
+          {schoolLogo ? (
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-white shadow-sm">
+              <img src={schoolLogo} alt={schoolName} className="h-full w-full object-contain p-1" />
+            </div>
+          ) : (
+            <AppLogo size="md" showText={false} href={null} />
+          )}
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-foreground">{schoolName}</p>
+            <p className="truncate text-xs text-muted">{session?.name ?? "Staff"} · {school?.city ?? school?.country}</p>
+          </div>
+        </Link>
       </div>
 
       <nav className="flex-1 space-y-2 p-2 overflow-y-auto">

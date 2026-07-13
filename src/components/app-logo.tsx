@@ -14,14 +14,14 @@ const sizeMap: Record<Size, { box: number; img: number; text: string }> = {
 };
 
 interface AppLogoProps {
-  href?: string;
+  href?: string | null;
   size?: Size;
   showText?: boolean;
   className?: string;
 }
 
 export function AppLogo({
-  href = "/",
+  href,
   size = "md",
   showText = true,
   className = "",

@@ -6,7 +6,7 @@ import { BookOpen, CreditCard, AlertCircle, Users, Clock, CheckCircle, XCircle, 
 import { formatMoney } from "@/lib/format";
 import { getBackendUrl } from "@/lib/backend-url";
 import ParentPageShell from "@/components/parent-page-shell";
-import { useParentSchool } from "../parent-school-context";
+import { useEffectiveCurrency, useParentSchool } from "../parent-school-context";
 
 interface AttendanceData {
   todayStatus: string | null;
@@ -87,7 +87,7 @@ export default function ChildrenPage() {
   }, []);
 
   const { school: parentSchool } = useParentSchool();
-  const currency = parentSchool?.currency || "NGN";
+  const currency = useEffectiveCurrency(parentSchool);
 
   if (loading) {
     return (

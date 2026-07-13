@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, KeyRound, RefreshCw, Sparkles, UserRoundPlus, Search, Printer, Eye, Download, ShieldOff, Copy, X, Building2, Users, CheckCircle2, Clock3, AlertTriangle } from "lucide-react";
 import { getBackendUrl } from "@/lib/backend-url";
+import { buildPinCardHtml } from "@/lib/pin-print";
+import { resolveSchoolAssetUrl } from "@/lib/asset-urls";
 
 interface PinStatus {
   enabled: boolean;
@@ -126,6 +128,7 @@ interface SchoolMeta {
   name?: string | null;
   slug?: string | null;
   initials?: string | null;
+  logoUrl?: string | null;
 }
 
 export default function ResultPinsPage() {
@@ -169,14 +172,24 @@ export default function ResultPinsPage() {
 
   const loadSchoolMeta = async () => {
     try {
-      const response = await fetch("/api/admin/school", { credentials: "include" });
-      if (!response.ok) return;
-      const data = await response.json();
+      const [schoolResponse, settingsResponse] = await Promise.all([
+        fetch("/api/admin/school", { credentials: "include" }),
+        fetch("/api/admin/settings/data", { credentials: "include" }),
+      ]);
+
+      if (!schoolResponse.ok) return;
+
+      const schoolData = await schoolResponse.json();
+      const settingsData = settingsResponse.ok ? await settingsResponse.json() : null;
+      const configuredLogoUrl = settingsData?.config?.logoUrl || schoolData?.logoUrl || schoolData?.school?.logoUrl || null;
+      const resolvedLogoUrl = configuredLogoUrl ? resolveSchoolAssetUrl(configuredLogoUrl) : null;
+
       setSchoolMeta({
-        id: data?.id,
-        name: data?.name || data?.school?.name,
-        slug: data?.slug || data?.school?.slug,
-        initials: data?.initials || data?.school?.initials,
+        id: schoolData?.id || schoolData?.school?.id,
+        name: schoolData?.name || schoolData?.school?.name,
+        slug: schoolData?.slug || schoolData?.school?.slug,
+        initials: schoolData?.initials || schoolData?.school?.initials,
+        logoUrl: resolvedLogoUrl,
       });
     } catch (err) {
       console.error("Unable to load school metadata", err);
@@ -455,7 +468,7 @@ export default function ResultPinsPage() {
     }
   };
 
-  const handlePrintSheet = () => {
+  const handlePrintSheet = async () => {
     if (!generatedStudent?.pin) return;
 
     const studentName = generatedStudent.student ? `${generatedStudent.student.firstName || ""} ${generatedStudent.student.lastName || ""}`.trim() : "Student";
@@ -464,39 +477,39 @@ export default function ResultPinsPage() {
     const printWindow = window.open("", "_blank", "width=900,height=700");
     if (!printWindow) return;
 
-    printWindow.document.write(`<!DOCTYPE html>
-      <html>
-        <head>
-          <title>Result Access PIN Sheet</title>
-          <style>
-            body { font-family: Arial, sans-serif; padding: 28px; color: #111827; }
-            .card { border: 2px solid #111827; border-radius: 12px; padding: 24px; max-width: 620px; margin: 0 auto; }
-            .title { text-align: center; font-size: 22px; font-weight: 700; margin-bottom: 16px; }
-            .field { margin: 8px 0; font-size: 16px; }
-            .label { font-weight: 700; }
-            .pin { font-size: 28px; font-weight: 700; letter-spacing: 0.35em; margin-top: 18px; }
-            .hint { margin-top: 10px; font-size: 13px; color: #6b7280; }
-          </style>
-        </head>
-        <body>
-          <div class="card">
-            <div class="title">Result Access PIN Sheet</div>
-            <div class="field"><span class="label">School code:</span> ${schoolCode}</div>
-            <div class="field"><span class="label">Student:</span> ${studentName}</div>
-            <div class="field"><span class="label">Admission number:</span> ${admissionNo}</div>
-            <div class="field"><span class="label">Session:</span> ${generatedStudent.sessionName || "—"}</div>
-            <div class="field"><span class="label">Term:</span> ${generatedStudent.termName || "—"}</div>
-            <div class="field"><span class="label">Assessment:</span> ${generatedStudent.assessmentName || "—"}</div>
-            <div class="field"><span class="label">PIN:</span></div>
-            <div class="pin">${generatedStudent.pin}</div>
-            <div class="hint">Use the school code, admission number, and PIN on the public result checker page.</div>
-          </div>
-        </body>
-      </html>`);
+    const schoolLogoUrl = schoolMeta?.logoUrl || (schoolMeta?.id ? `/api/school-logo/${encodeURIComponent(schoolMeta.id)}` : undefined);
+    const html = await buildPinCardHtml({
+      schoolName: generatedStudent.schoolName || schoolMeta?.name || undefined,
+      schoolLogoUrl,
+      schoolId: schoolMeta?.id,
+      schoolCode,
+      studentName,
+      admissionNo,
+      session: generatedStudent.sessionName || "—",
+      term: generatedStudent.termName || "—",
+      pin: generatedStudent.pin,
+      printedAt: new Date().toLocaleString(),
+    });
+
+    printWindow.document.write(html);
     printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
-    printWindow.close();
+
+    setTimeout(() => {
+      try {
+        printWindow.focus();
+        printWindow.print();
+      } catch (printError) {
+        console.error("Unable to print PIN card", printError);
+      }
+
+      setTimeout(() => {
+        try {
+          printWindow.close();
+        } catch (closeError) {
+          console.error("Unable to close PIN card popup", closeError);
+        }
+      }, 900);
+    }, 900);
   };
 
   const handleGenerateBatch = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -558,45 +571,46 @@ export default function ResultPinsPage() {
     setIsPinModalOpen(true);
   };
 
-  const handlePrintPin = (pin: PinRecord) => {
+  const handlePrintPin = async (pin: PinRecord) => {
     const schoolCode = schoolMeta?.slug || schoolMeta?.initials || "school-code";
     const admissionNo = pin.student?.admissionNo || "N/A";
     const studentName = pin.student ? `${pin.student.firstName || ""} ${pin.student.lastName || ""}`.trim() : "Unassigned";
     const printWindow = window.open("", "_blank", "width=900,height=700");
     if (!printWindow) return;
 
-    printWindow.document.write(`<!DOCTYPE html>
-      <html>
-        <head>
-          <title>Result Access PIN Sheet</title>
-          <style>
-            body { font-family: Arial, sans-serif; padding: 28px; color: #111827; }
-            .card { border: 2px solid #111827; border-radius: 12px; padding: 24px; max-width: 620px; margin: 0 auto; }
-            .title { text-align: center; font-size: 22px; font-weight: 700; margin-bottom: 16px; }
-            .field { margin: 8px 0; font-size: 16px; }
-            .label { font-weight: 700; }
-            .pin { font-size: 28px; font-weight: 700; letter-spacing: 0.35em; margin-top: 18px; }
-            .hint { margin-top: 10px; font-size: 13px; color: #6b7280; }
-          </style>
-        </head>
-        <body>
-          <div class="card">
-            <div class="title">Result Access PIN Sheet</div>
-            <div class="field"><span class="label">School code:</span> ${schoolCode}</div>
-            <div class="field"><span class="label">Student:</span> ${studentName}</div>
-            <div class="field"><span class="label">Admission number:</span> ${admissionNo}</div>
-            <div class="field"><span class="label">Session:</span> ${pin.term?.academicYear?.name || "—"}</div>
-            <div class="field"><span class="label">Term:</span> ${pin.term?.name || "—"}</div>
-            <div class="field"><span class="label">PIN:</span></div>
-            <div class="pin">${pin.pinValue || "—"}</div>
-            <div class="hint">Use the school code, admission number, and PIN on the public result checker page.</div>
-          </div>
-        </body>
-      </html>`);
+    const schoolLogoUrl = schoolMeta?.logoUrl || (schoolMeta?.id ? `/api/school-logo/${encodeURIComponent(schoolMeta.id)}` : undefined);
+    const html = await buildPinCardHtml({
+      schoolName: schoolMeta?.name || undefined,
+      schoolLogoUrl,
+      schoolId: schoolMeta?.id,
+      schoolCode,
+      studentName,
+      admissionNo,
+      session: pin.term?.academicYear?.name || "—",
+      term: pin.term?.name || "—",
+      pin: pin.pinValue || "—",
+      printedAt: new Date().toLocaleString(),
+    });
+
+    printWindow.document.write(html);
     printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
-    printWindow.close();
+
+    setTimeout(() => {
+      try {
+        printWindow.focus();
+        printWindow.print();
+      } catch (printError) {
+        console.error("Unable to print PIN card", printError);
+      }
+
+      setTimeout(() => {
+        try {
+          printWindow.close();
+        } catch (closeError) {
+          console.error("Unable to close PIN card popup", closeError);
+        }
+      }, 900);
+    }, 900);
   };
 
   const getTypeBadgeClass = (type?: string | null) => {

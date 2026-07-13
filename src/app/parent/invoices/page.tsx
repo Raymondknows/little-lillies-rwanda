@@ -6,7 +6,7 @@ import { CreditCard, AlertCircle, Eye, Filter } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 import { getBackendUrl } from "@/lib/backend-url";
 import ParentPageShell from "@/components/parent-page-shell";
-import { useParentSchool } from "../parent-school-context";
+import { useEffectiveCurrency, useParentSchool } from "../parent-school-context";
 
 interface Invoice {
   id: string;
@@ -77,7 +77,7 @@ export default function InvoicesPage() {
     .reduce((sum, inv) => sum + (inv.amountDue || 0), 0);
 
   const { school: parentSchool } = useParentSchool();
-  const currency = parentSchool?.currency || "NGN";
+  const currency = useEffectiveCurrency(parentSchool);
 
   if (loading) {
     return (

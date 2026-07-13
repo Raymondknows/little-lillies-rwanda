@@ -5,7 +5,7 @@ import { CreditCard, AlertCircle, Download } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 import { getBackendUrl } from "@/lib/backend-url";
 import ParentPageShell from "@/components/parent-page-shell";
-import { useParentSchool } from "../parent-school-context";
+import { useEffectiveCurrency, useParentSchool } from "../parent-school-context";
 
 interface Payment {
   id: string;
@@ -24,7 +24,7 @@ export default function PaymentsPage() {
   const [error, setError] = useState<string | null>(null);
 
   const { school: parentSchool } = useParentSchool();
-  const currency = parentSchool?.currency || "NGN";
+  const currency = useEffectiveCurrency(parentSchool);
 
   const loadData = async () => {
     try {

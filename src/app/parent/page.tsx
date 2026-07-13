@@ -15,7 +15,7 @@ import {
 import { formatMoney } from "@/lib/format";
 import { getBackendUrl } from "@/lib/backend-url";
 import ParentPageShell from "@/components/parent-page-shell";
-import { useParentSchool } from "./parent-school-context";
+import { useEffectiveCurrency, useParentSchool } from "./parent-school-context";
 
 export default function ParentDashboardPage() {
   const [dashboardData, setDashboardData] = useState<any>(null);
@@ -61,7 +61,7 @@ export default function ParentDashboardPage() {
   }, []);
 
   const { school: parentSchool } = useParentSchool();
-  const currency = parentSchool?.currency || "NGN";
+  const currency = useEffectiveCurrency(parentSchool);
 
   if (loading) {
     return (

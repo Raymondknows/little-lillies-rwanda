@@ -1,13 +1,19 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
+import {
+  Activity,
+  AlertCircle,
+  BarChart2,
+  BarChart3,
+  Calendar,
+  Download,
+  Filter,
+  Loader2,
+  Search,
+} from "lucide-react";
 import { getBackendUrl } from "@/lib/backend-url";
-import { useEffect, useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
-import { Calendar, Users, CheckCircle, AlertCircle, Clock, Send, TrendingUp, ArrowUpRight, Download, BarChart2, Save, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { UserGuide, type PageHelpGuide } from "@/components/ui/user-guide";
-import { WhatsAppIcon } from "@/components/ui/icons";
 import SubscriptionModal from "@/components/subscription-modal";
 import AdminSkeleton from "@/components/ui/skeleton";
 
@@ -18,25 +24,7 @@ interface ClassData {
   arm?: string;
 }
 
-interface Pupil {
-  pupilId: string;
-  name: string;
-  status: "PRESENT" | "ABSENT" | "LATE";
-  guardians: Array<{ id: string; name: string; phone?: string; email?: string }>;
-}
-
-interface AttendanceData {
-  date: string;
-  classId: string;
-  className: string;
-  pupils: Pupil[];
-  totalPupils: number;
-  presentCount: number;
-  absentCount: number;
-  lateCount: number;
-}
-
-interface AttendanceSummaryRecord {
+interface SummaryRecord {
   id: string;
   date: string;
   status: "PRESENT" | "ABSENT" | "LATE";
@@ -51,113 +39,53 @@ interface AttendanceSummaryRecord {
   };
 }
 
-interface AttendanceSummaryData {
+interface SummaryResponse {
   summary: {
     totalRecords: number;
     presentCount: number;
     absentCount: number;
     lateCount: number;
   };
-  records: AttendanceSummaryRecord[];
+  records: SummaryRecord[];
 }
 
-const PHASE_ORDER = ["EARLY_YEARS", "PRIMARY", "SECONDARY"];
-const PHASE_LABELS: { [key: string]: string } = {
+const PHASE_ORDER = ["ALL", "EARLY_YEARS", "PRIMARY", "SECONDARY"];
+const PHASE_LABELS: Record<string, string> = {
+  ALL: "All Phases",
   EARLY_YEARS: "Early Years",
   PRIMARY: "Primary",
   SECONDARY: "Secondary",
 };
 
-const HELP_GUIDE: PageHelpGuide = {
-  title: "Managing Attendance Records",
-  overview: "Record and track student attendance for each class and date. Monitor attendance rates by student and class, and send notifications to parents about absences.",
-  steps: [
-    "Select a date to record attendance for.",
-    "Choose a class to mark attendance.",
-    "Mark each student as Present, Absent, or Late.",
-    "Save attendance records for the class.",
-    "View attendance summary and history.",
-    "Send absence notifications to parents.",
-  ],
-  commonTasks: [
-    {
-      title: "Record Attendance",
-      description: "Mark students present or absent for the day.",
-      tips: [
-        "Select today's date or a past date from the calendar",
-        "Choose a class from the phase list",
-        "Click on each student to toggle Present/Absent/Late",
-        "Mark all students quickly using keyboard shortcuts",
-        "Click 'Save attendance' when finished",
-        "Confirmation shows number of records saved",
-      ],
-    },
-    {
-      title: "View Attendance Summary",
-      description: "See historical attendance records and patterns.",
-      tips: [
-        "Click 'View attendance summary' button",
-        "Filter by date range to see weekly or monthly trends",
-        "See total present, absent, and late records",
-        "View individual student attendance history",
-        "Export data as CSV for reports or analysis",
-      ],
-    },
-    {
-      title: "Send Absence Notifications",
-      description: "Alert parents when students are absent",
-      tips: [
-        "Configure notification settings in your school settings",
-        "Notifications are sent via WhatsApp or Email automatically",
-        "Parents receive alerts when their child is marked absent",
-        "You can view notification status in the WhatsApp & Email section",
-      ],
-    },
-  ],
-  faqs: [
-    {
-      question: "Can I edit attendance after saving?",
-      answer: "Yes, you can update attendance records by selecting the same date and class again. Changes overwrite the previous record.",
-    },
-    {
-      question: "How are absence notifications sent?",
-      answer: "Automated notifications are sent to parents via WhatsApp and Email based on your school's communication settings. You can view delivery status in the WhatsApp & Email page.",
-    },
-    {
-      question: "Can I export attendance data?",
-      answer: "Yes, in the attendance summary you can download attendance records as CSV files for further analysis or sharing.",
-    },
-    {
-      question: "What's the difference between Absent and Late?",
-      answer: "Absent means the student didn't come to school. Late means the student arrived after the class started but still attended.",
-    },
-  ],
-};
-
-export default function AttendancePage() {
-  const router = useRouter();
+export default function AttendanceOverviewPage() {
   const [allClasses, setAllClasses] = useState<ClassData[]>([]);
   const [selectedPhase, setSelectedPhase] = useState<string>("ALL");
   const [selectedClass, setSelectedClass] = useState<string>("ALL");
-  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split("T")[0]);
-  const [attendanceData, setAttendanceData] = useState<AttendanceData | null>(null);
-  const [summaryData, setSummaryData] = useState<AttendanceSummaryData | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [notifying, setNotifying] = useState(false);
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
+  const [summaryData, setSummaryData] = useState<SummaryResponse | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"ALL" | "PRESENT" | "ABSENT" | "LATE">("ALL");
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [subscriptionBlocked, setSubscriptionBlocked] = useState<{ reason: string; schoolName?: string } | null>(null);
   const [schoolName, setSchoolName] = useState("");
-  const [success, setSuccess] = useState(false);
-  const [modifications, setModifications] = useState<{ [key: string]: "PRESENT" | "ABSENT" | "LATE" }>({});
-  const [whatsAppConnected, setWhatsAppConnected] = useState<boolean | null>(null);
-  const [whatsAppStatusMessage, setWhatsAppStatusMessage] = useState<string | null>(null);
-  const [notificationMode, setNotificationMode] = useState<"ALL" | "ABSENT" | "LATE">("ALL");
-  const [classesLoading, setClassesLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
+  const [recordsPanelOpen, setRecordsPanelOpen] = useState(false);
 
-  // Fetch classes on mount
   useEffect(() => {
-    async function fetchClasses() {
+    const today = new Date();
+    const monday = new Date(today);
+    monday.setDate(today.getDate() - today.getDay() + 1);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+
+    setStartDate(monday.toISOString().split("T")[0]);
+    setEndDate(sunday.toISOString().split("T")[0]);
+  }, []);
+
+  useEffect(() => {
+    async function loadClasses() {
       try {
         const backendUrl = getBackendUrl();
         const [response, verifyResponse] = await Promise.all([
@@ -199,55 +127,30 @@ export default function AttendancePage() {
                 schoolName: schoolNameToUse || undefined,
               });
               setSchoolName(schoolNameToUse);
-              setClassesLoading(false);
+              setLoading(false);
               return;
             }
           }
-          setError("Failed to load classes");
-        } else {
-          const data = await response.json();
-
-          try {
-            const whatsappRes = await fetch(`/api/admin/whatsapp/status`, {
-              credentials: "include",
-              headers: { "Content-Type": "application/json" },
-            });
-            if (whatsappRes.ok) {
-              const whatsappData = await whatsappRes.json();
-              setWhatsAppConnected(whatsappData?.session?.status === 'connected');
-              setWhatsAppStatusMessage(whatsappData?.session?.statusMessage || whatsappData?.session?.status || null);
-            } else {
-              setWhatsAppConnected(false);
-              setWhatsAppStatusMessage('Unable to retrieve WhatsApp status.');
-            }
-          } catch (err) {
-            console.error('Error loading WhatsApp status:', err);
-            setWhatsAppConnected(false);
-            setWhatsAppStatusMessage('Unable to retrieve WhatsApp status.');
-          }
-
-          setSchoolName(schoolNameToUse);
-          const sorted = (data.classes || []).sort((a: any, b: any) => {
-            const phaseOrder = PHASE_ORDER.indexOf(a.phase) - PHASE_ORDER.indexOf(b.phase);
-            if (phaseOrder !== 0) return phaseOrder;
-            return a.name.localeCompare(b.name);
-          });
-          setAllClasses(sorted);
-          if (sorted.length > 0 && selectedClass === "ALL") {
-            setSelectedPhase("ALL");
-          }
+          throw new Error("Failed to load classes");
         }
+
+        const data = await response.json();
+        setSchoolName(schoolNameToUse);
+        const sorted = (data.classes || []).sort((a: any, b: any) => {
+          const phaseOrder = PHASE_ORDER.indexOf(a.phase) - PHASE_ORDER.indexOf(b.phase);
+          if (phaseOrder !== 0) return phaseOrder;
+          return a.name.localeCompare(b.name);
+        });
+
+        setAllClasses(sorted);
       } catch (err) {
-        console.error("Failed to fetch classes:", err);
-        setError("Failed to load classes");
-      } finally {
-        setClassesLoading(false);
+        setError(err instanceof Error ? err.message : "Failed to load classes");
       }
     }
-    fetchClasses();
+
+    loadClasses();
   }, []);
 
-  // Filter classes by phase
   const filteredClasses = useMemo(() => {
     if (selectedPhase === "ALL") return allClasses;
     return allClasses.filter((cls) => cls.phase === selectedPhase);
@@ -263,170 +166,91 @@ export default function AttendancePage() {
     }
   }, [allClasses, filteredClasses, selectedClass]);
 
-  // Fetch attendance data when class or date changes
   useEffect(() => {
-    if (!selectedClass) return;
+    if (!startDate || !endDate) return;
 
-    async function fetchAttendance() {
-      setLoading(true);
-      setError(null);
+    async function loadSummary() {
       try {
+        setLoading(true);
+        setError(null);
+
         const backendUrl = getBackendUrl();
-        if (selectedClass === "ALL") {
-          const response = await fetch(
-            `${backendUrl}/api/admin/attendance/summary?fromDate=${selectedDate}&toDate=${selectedDate}`,
-            { credentials: "include" }
-          );
-          if (response.ok) {
-            const data = await response.json();
-            setSummaryData(data);
-            setAttendanceData(null);
-            setModifications({});
-          } else {
-            throw new Error("Failed to load attendance summary");
-          }
-        } else {
-          const response = await fetch(
-            `${backendUrl}/api/admin/attendance/data?classId=${selectedClass}&date=${selectedDate}`,
-            { credentials: "include" }
-          );
-          if (response.ok) {
-            const data = await response.json();
-            setAttendanceData(data);
-            setSummaryData(null);
-            setModifications({});
-          } else {
-            throw new Error("Failed to load attendance");
-          }
+        const query = new URLSearchParams({ fromDate: startDate, toDate: endDate });
+        if (selectedClass !== "ALL") query.set("classId", selectedClass);
+
+        const response = await fetch(`${backendUrl}/api/admin/attendance/summary?${query.toString()}`, {
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to load attendance summary");
         }
+
+        setSummaryData(await response.json());
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load attendance");
+        setError(err instanceof Error ? err.message : "Failed to load attendance summary");
       } finally {
         setLoading(false);
       }
     }
 
-    fetchAttendance();
-  }, [selectedClass, selectedDate]);
+    loadSummary();
+  }, [selectedClass, startDate, endDate]);
 
-  const toggleStatus = (pupilId: string) => {
-    const current = modifications[pupilId] || attendanceData?.pupils.find((p) => p.pupilId === pupilId)?.status;
-    const statusOrder: Array<"PRESENT" | "ABSENT" | "LATE"> = ["PRESENT", "ABSENT", "LATE"];
-    const currentIndex = statusOrder.indexOf(current || "PRESENT");
-    const nextStatus = statusOrder[(currentIndex + 1) % statusOrder.length];
-    setModifications({ ...modifications, [pupilId]: nextStatus });
-  };
-
-  const handleSaveAttendance = async () => {
-    if (!attendanceData || selectedClass === "ALL") return;
-
-    setSaving(true);
-    setError(null);
-
-    try {
-      const backendUrl = getBackendUrl();
-
-      const attendanceArray = attendanceData.pupils.map((pupil) => ({
-        pupilId: pupil.pupilId,
-        status: modifications[pupil.pupilId] || pupil.status,
-      }));
-
-      const response = await fetch(`${backendUrl}/api/admin/attendance/mark`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          classId: selectedClass,
-          date: selectedDate,
-          attendance: attendanceArray,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to save attendance");
-      }
-
-      setSuccess(true);
-      setModifications({});
-
-      const refreshResponse = await fetch(
-        `${backendUrl}/api/admin/attendance/data?classId=${selectedClass}&date=${selectedDate}`,
-        { credentials: "include" }
-      );
-      if (refreshResponse.ok) {
-        setAttendanceData(await refreshResponse.json());
-      }
-
-      setTimeout(() => setSuccess(false), 3000);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save attendance");
-    } finally {
-      setSaving(false);
+  const dates = useMemo(() => {
+    if (!startDate || !endDate) return [];
+    const output: Date[] = [];
+    const current = new Date(startDate);
+    const last = new Date(endDate);
+    while (current <= last) {
+      output.push(new Date(current));
+      current.setDate(current.getDate() + 1);
     }
-  };
+    return output;
+  }, [startDate, endDate]);
 
-  const handleSendNotifications = async () => {
-    if (!attendanceData || selectedClass === "ALL") return;
-
-    setNotifying(true);
-    setError(null);
-
-    try {
-      const backendUrl = getBackendUrl();
-      const response = await fetch(`${backendUrl}/api/admin/attendance/notify`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          classId: selectedClass,
-          date: selectedDate,
-          notificationType: notificationMode,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to send notifications");
-      }
-
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to send notifications");
-    } finally {
-      setNotifying(false);
-    }
-  };
+  const filteredRecords = useMemo(() => {
+    const records = summaryData?.records || [];
+    return records.filter((record) => {
+      const studentName = `${record.pupil.firstName} ${record.pupil.lastName}`.toLowerCase();
+      const query = searchQuery.trim().toLowerCase();
+      const matchesSearch = !query || studentName.includes(query) || record.class.name.toLowerCase().includes(query);
+      const matchesStatus = statusFilter === "ALL" || record.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [searchQuery, statusFilter, summaryData]);
 
   const stats = useMemo(() => {
-    if (selectedClass === "ALL") {
-      return {
-        present: summaryData?.summary.presentCount || 0,
-        absent: summaryData?.summary.absentCount || 0,
-        late: summaryData?.summary.lateCount || 0,
-        total: summaryData?.summary.totalRecords || 0,
-      };
-    }
-    if (!attendanceData) return { present: 0, absent: 0, late: 0, total: 0 };
+    const summary = summaryData?.summary;
     return {
-      present: attendanceData.presentCount,
-      absent: attendanceData.absentCount,
-      late: attendanceData.lateCount,
-      total: attendanceData.totalPupils,
+      records: summary?.totalRecords || 0,
+      present: summary?.presentCount || 0,
+      absent: summary?.absentCount || 0,
+      late: summary?.lateCount || 0,
+      presentRate: summary && summary.totalRecords > 0 ? (summary.presentCount / summary.totalRecords) * 100 : 0,
     };
-  }, [attendanceData, summaryData, selectedClass]);
+  }, [summaryData]);
 
-  const hasModifications = Object.keys(modifications).length > 0;
+  const chartData = useMemo(() => {
+    const total = Math.max(stats.present + stats.absent + stats.late, 1);
+    return [
+      { label: "Present", value: stats.present, color: "bg-emerald-500", textColor: "text-emerald-700", bg: "bg-emerald-50" },
+      { label: "Absent", value: stats.absent, color: "bg-rose-500", textColor: "text-rose-700", bg: "bg-rose-50" },
+      { label: "Late", value: stats.late, color: "bg-amber-500", textColor: "text-amber-700", bg: "bg-amber-50" },
+    ].map((item) => ({ ...item, width: `${Math.max((item.value / total) * 100, item.value > 0 ? 8 : 0)}%` }));
+  }, [stats]);
 
   const exportCSV = () => {
-    const escapeCell = (value: string | number | null | undefined) =>
-      `"${String(value ?? "").replace(/"/g, '""')}"`;
+    if (!summaryData) return;
 
-    let rows: string[][] = [];
+    setExporting(true);
+    try {
+      const escapeCell = (value: string | number | null | undefined) =>
+        `"${String(value ?? "").replace(/"/g, '""')}"`;
 
-    if (selectedClass === "ALL" && summaryData) {
-      rows = [
+      const csvRows = [
         ["Date", "Class", "Student", "Status"],
-        ...summaryData.records.map((record) => [
+        ...filteredRecords.map((record) => [
           record.date,
           record.class.name,
           `${record.pupil.firstName} ${record.pupil.lastName}`,
@@ -434,431 +258,378 @@ export default function AttendancePage() {
         ]),
         ["", "", "", ""],
         ["Summary", "Count", "", ""],
-        ["Present", String(summaryData.summary.presentCount), "", ""],
-        ["Absent", String(summaryData.summary.absentCount), "", ""],
-        ["Late", String(summaryData.summary.lateCount), "", ""],
-        ["Total Records", String(summaryData.summary.totalRecords), "", ""],
+        ["Present", String(stats.present), "", ""],
+        ["Absent", String(stats.absent), "", ""],
+        ["Late", String(stats.late), "", ""],
+        ["Records", String(stats.records), "", ""],
+        ["Present Rate", `${stats.presentRate.toFixed(1)}%`, "", ""],
       ];
-    } else if (attendanceData) {
-      rows = [
-        ["Student", "Status"],
-        ...attendanceData.pupils.map((pupil) => [pupil.name, pupil.status]),
-        ["", "", ""],
-        ["Present", String(attendanceData.presentCount), ""],
-        ["Absent", String(attendanceData.absentCount), ""],
-        ["Late", String(attendanceData.lateCount), ""],
-        ["Total", String(attendanceData.totalPupils), ""],
-      ];
+
+      const csv = csvRows.map((row) => row.map(escapeCell).join(",")).join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.href = url;
+      link.download = `attendance-overview-${startDate}-to-${endDate}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } finally {
+      setExporting(false);
     }
-
-    if (rows.length === 0) return;
-
-    const csv = rows.map((row) => row.map(escapeCell).join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.href = url;
-    link.download = selectedClass === "ALL" ? `attendance-summary-${selectedDate}.csv` : `attendance-${selectedClass}-${selectedDate}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
   };
 
-  if (subscriptionBlocked) {
-    return <SubscriptionModal reason={subscriptionBlocked.reason} schoolName={subscriptionBlocked.schoolName || schoolName || 'Your School'} />;
-  }
+  const exportPDF = () => {
+    if (!summaryData) return;
 
-  if (classesLoading) {
+    setExporting(true);
+    try {
+      const printWindow = window.open("", "", "width=1200,height=800");
+      if (!printWindow) return;
+
+      const rows = filteredRecords
+        .map(
+          (record, index) => `
+            <tr>
+              <td>${index + 1}</td>
+              <td>${record.date}</td>
+              <td>${record.class.name}</td>
+              <td>${record.pupil.firstName} ${record.pupil.lastName}</td>
+              <td>${record.status}</td>
+            </tr>
+          `
+        )
+        .join("");
+
+      const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Attendance Overview</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 0; padding: 32px; color: #1f2937; }
+            h1 { font-size: 24px; margin-bottom: 8px; }
+            .meta { color: #6b7280; font-size: 13px; margin-bottom: 24px; }
+            .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+            .metric { border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px; }
+            .metric .label { font-size: 11px; text-transform: uppercase; color: #6b7280; }
+            .metric .value { font-size: 22px; font-weight: 700; margin-top: 4px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 18px; }
+            th, td { border: 1px solid #e5e7eb; padding: 8px 10px; font-size: 12px; text-align: left; }
+            th { background: #0a66c2; color: white; }
+            tr:nth-child(even) { background: #f9fafb; }
+            @media print { body { padding: 0; } }
+          </style>
+        </head>
+        <body>
+          <h1>Attendance Overview</h1>
+          <div class="meta">Period: ${startDate} to ${endDate}${selectedClass !== "ALL" ? ` | Class: ${filteredClasses.find((cls) => cls.id === selectedClass)?.name || selectedClass}` : " | All Classes"}</div>
+          <div class="metrics">
+            <div class="metric"><div class="label">Records</div><div class="value">${stats.records}</div></div>
+            <div class="metric"><div class="label">Present</div><div class="value">${stats.present}</div></div>
+            <div class="metric"><div class="label">Absent</div><div class="value">${stats.absent}</div></div>
+            <div class="metric"><div class="label">Late</div><div class="value">${stats.late}</div></div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Date</th>
+                <th>Class</th>
+                <th>Student</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>${rows || `<tr><td colspan="5">No records found</td></tr>`}</tbody>
+          </table>
+          <script>
+            window.print();
+          </script>
+        </body>
+        </html>
+      `;
+
+      printWindow.document.write(html);
+      printWindow.document.close();
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const selectPhase = (phase: string) => {
+    setSelectedPhase(phase);
+    const nextClass = phase === "ALL" ? "ALL" : allClasses.find((cls) => cls.phase === phase)?.id || "ALL";
+    setSelectedClass(nextClass);
+  };
+
+  if (loading && allClasses.length === 0) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-[60vh] bg-background">
         <AdminSkeleton />
       </div>
     );
   }
 
+  if (subscriptionBlocked) {
+    return <SubscriptionModal reason={subscriptionBlocked.reason} schoolName={subscriptionBlocked.schoolName || schoolName || 'Your School'} />;
+  }
+
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-6">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-            <Calendar className="h-8 w-8 text-brand" />
-            Attendance Management
-          </h1>
-          <p className="mt-1 text-muted">Track and manage student attendance by class and date</p>
-        </div>
-
-        {whatsAppConnected !== null && (
-          <div className="inline-flex items-center gap-3 rounded-full border px-4 py-2 shadow-sm transition-colors">
-            <span className={`inline-flex h-9 w-9 items-center justify-center rounded-full ${whatsAppConnected ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-              <WhatsAppIcon className="h-5 w-5" />
-            </span>
-            <div className="flex flex-col">
-              <span className="text-sm font-semibold text-foreground">
-                {whatsAppConnected ? 'WhatsApp connected' : 'WhatsApp disconnected'}
-              </span>
-              <span className="text-xs text-muted">
-                {whatsAppConnected ? 'Ready to send absences.' : 'Reconnect via settings.'}
-              </span>
-            </div>
-            <span className={`inline-flex h-6 min-w-[2.25rem] items-center justify-center rounded-full px-2 text-xs font-semibold ${whatsAppConnected ? 'bg-emerald-600 text-white' : 'bg-amber-600 text-white'}`}>
-              {whatsAppConnected ? 'On' : 'Off'}
-            </span>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="space-y-2">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
+              <BarChart2 className="h-8 w-8 text-brand" />
+              Attendance overview
+            </h1>
+            <p className="mt-1 text-muted">Manage attendance records, review performance, and export reporting from one place.</p>
           </div>
-        )}
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        <Button
-          onClick={() => router.push("/admin/attendance/summary")}
-          variant="primary"
-          className="h-9 rounded-lg border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8]"
-        >
-          <BarChart2 className="h-4 w-4" />
-          View Summary
-        </Button>
-        <Button
-          onClick={exportCSV}
-          variant="primary"
-          className="h-9 rounded-lg border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8]"
-        >
-          <Download className="h-4 w-4" />
-          Export CSV
-        </Button>
-      </div>
-
-      {/* Error/Success Messages */}
-      {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-600">
-          {error}
         </div>
-      )}
-      {success && (
-        <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-600">
-          ✓ Operation completed successfully
-        </div>
-      )}
-
-      {/* Phase Filters */}
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap gap-2">
-          <label className="text-sm font-medium text-muted">Phase:</label>
           <button
-            onClick={() => setSelectedPhase("ALL")}
-            className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
-              selectedPhase === "ALL"
-                ? "bg-brand text-white"
-                : "bg-background text-muted hover:bg-surface"
-            }`}
+            onClick={() => setRecordsPanelOpen(true)}
+            className="inline-flex items-center gap-2 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand/90"
           >
-            All Phases
+            <BarChart3 className="h-4 w-4" />
+            Open records
           </button>
-          {PHASE_ORDER.map((phase) => (
-            <button
-              key={phase}
-              onClick={() => {
-                setSelectedPhase(phase);
-                const nextClass = allClasses.find((cls) => cls.phase === phase);
-                if (nextClass) {
-                  setSelectedClass(nextClass.id);
-                }
-              }}
-              className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
-                selectedPhase === phase
-                  ? "bg-brand text-white"
-                  : "bg-background text-muted hover:bg-surface"
-              }`}
-            >
-              {PHASE_LABELS[phase]}
-            </button>
-          ))}
+          <Button onClick={exportCSV} disabled={exporting || !summaryData} variant="primary" className="gap-2 bg-brand text-white hover:bg-brand/90">
+            <Download className="h-4 w-4" />
+            CSV
+          </Button>
+          <Button onClick={exportPDF} disabled={exporting || !summaryData} variant="primary" className="gap-2 bg-brand text-white hover:bg-brand/90">
+            <Calendar className="h-4 w-4" />
+            PDF
+          </Button>
         </div>
       </div>
 
-      {/* Class & Date Selector */}
-      {classesLoading ? (
-        <div className="rounded-lg border border-border bg-surface p-8 text-center">
-          <p className="text-muted">Loading classes...</p>
+      {error && (
+        <div className="rounded-lg border border-error bg-error/10 p-4 flex gap-3">
+          <AlertCircle className="h-5 w-5 text-error flex-shrink-0 mt-0.5" />
+          <div>
+            <h3 className="font-semibold text-error">Error</h3>
+            <p className="text-sm text-error/80">{error}</p>
+          </div>
         </div>
-      ) : (
-        <>
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">Class</label>
-              <select
-                value={selectedClass}
-                onChange={(e) => {
-                  setSelectedClass(e.target.value);
-                  const selected = allClasses.find((c) => c.id === e.target.value);
-                  if (selected) setSelectedPhase(selected.phase);
-                  if (e.target.value === "ALL") setSelectedPhase("ALL");
-                }}
-                className="w-full rounded-lg border border-border bg-surface px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-brand"
-              >
-                <option value="ALL">All Classes</option>
-                {filteredClasses.map((cls) => (
-                  <option key={cls.id} value={cls.id}>
-                    {cls.name} {cls.arm || ""}
-                  </option>
-                ))}
-              </select>
-            </div>
+      )}
 
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">Date</label>
-              <input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="w-full rounded-lg border border-border bg-surface px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-brand"
-              />
-            </div>
-
-            <div className="flex items-end">
-              <Button
-                onClick={() => window.location.reload()}
-                variant="primary"
-                className="h-9 w-full rounded-lg border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8]"
+      <div className="grid gap-4 sm:grid-cols-4">
+        <div>
+          <label className="text-xs font-semibold uppercase tracking-wider text-muted">Phase</label>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {PHASE_ORDER.map((phase) => (
+              <button
+                key={phase}
+                onClick={() => selectPhase(phase)}
+                className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                  selectedPhase === phase ? "bg-brand text-white" : "bg-background text-muted hover:bg-surface"
+                }`}
               >
-                <RefreshCw className="h-4 w-4" />
-                Refresh
-              </Button>
+                {PHASE_LABELS[phase]}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="text-xs font-semibold uppercase tracking-wider text-muted">Class</label>
+          <select
+            className="w-full mt-2 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none"
+            value={selectedClass}
+            onChange={(e) => setSelectedClass(e.target.value)}
+          >
+            <option value="ALL">All Classes</option>
+            {filteredClasses.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name} {c.arm || ""}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="text-xs font-semibold uppercase tracking-wider text-muted">Start Date</label>
+          <input
+            type="date"
+            className="w-full mt-2 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+          />
+        </div>
+
+        <div>
+          <label className="text-xs font-semibold uppercase tracking-wider text-muted">End Date</label>
+          <input
+            type="date"
+            className="w-full mt-2 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+          />
+        </div>
+      </div>
+
+
+      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm transition-shadow">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
+              <BarChart3 className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Attendance Mix</p>
+              <h3 className="mt-1 text-lg font-semibold text-slate-900">Daily status breakdown</h3>
             </div>
           </div>
-
-          {/* Summary Cards */}
-          {selectedClass === "ALL" && summaryData && (
-            <div className="rounded-lg border border-border overflow-hidden">
-              <div className="border-b border-border bg-background px-6 py-4">
-                <h2 className="text-lg font-semibold text-foreground">School Attendance Summary</h2>
-                <p className="text-sm text-muted">Attendance records for {new Date(selectedDate).toLocaleDateString()}</p>
+          <div className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-sm font-medium text-slate-600">
+            {stats.records > 0 ? "Live overview" : "No data yet"}
+          </div>
+        </div>
+        <div className="mt-6 grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+          <div className="space-y-4">
+            {chartData.map((item) => (
+              <div key={item.label}>
+                <div className="mb-2 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className={`h-2.5 w-2.5 rounded-full ${item.color}`} />
+                    <span className="text-sm font-semibold text-slate-900">{item.label}</span>
+                  </div>
+                  <span className="text-sm font-semibold text-slate-700">{item.value}</span>
+                </div>
+                <div className="h-3 overflow-hidden rounded-full bg-slate-100">
+                  <div className={`h-3 rounded-full ${item.color}`} style={{ width: item.width }} />
+                </div>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-border bg-background">
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Class</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Student</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {summaryData.records.map((record) => {
-                      const statusColor =
-                        record.status === "PRESENT"
-                          ? "bg-green-100 text-green-800"
-                          : record.status === "ABSENT"
-                          ? "bg-red-100 text-red-800"
-                          : "bg-orange-100 text-orange-800";
+            ))}
+          </div>
 
-                      return (
-                        <tr key={record.id} className="hover:bg-surface/50 transition-colors">
-                          <td className="px-6 py-4 text-sm text-foreground">{record.class.name}</td>
-                          <td className="px-6 py-4 text-sm font-medium text-foreground">{record.pupil.firstName} {record.pupil.lastName}</td>
-                          <td className="px-6 py-4 text-sm">
-                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColor}`}>
-                              {record.status}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+                <Activity className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Attendance Health</p>
+                <h3 className="text-base font-semibold text-slate-900">Present rate snapshot</h3>
               </div>
             </div>
-          )}
-
-          {selectedClass !== "ALL" && attendanceData && (
-            <div className="hidden sm:grid grid-cols-4 gap-3">
-              <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50 flex flex-col">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
-                    <Users className="h-4 w-4 text-brand" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs text-muted">Total Pupils</p>
-                    <p className="mt-1 text-lg font-bold text-foreground">{stats.total}</p>
-                  </div>
-                  <ArrowUpRight className="h-3 w-3 text-muted opacity-0 transition-opacity group-hover:opacity-100 flex-shrink-0" />
-                </div>
-                <p className="mt-2 text-[11px] text-muted">All students</p>
-              </div>
-
-              <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50 flex flex-col">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
-                    <CheckCircle className="h-4 w-4 text-brand" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs text-muted">Present</p>
-                    <p className="mt-1 text-lg font-bold text-green-600">{stats.present}</p>
-                  </div>
-                  <ArrowUpRight className="h-3 w-3 text-muted opacity-0 transition-opacity group-hover:opacity-100 flex-shrink-0" />
-                </div>
-                <p className="mt-2 text-[11px] text-muted">{stats.total > 0 ? ((stats.present / stats.total) * 100).toFixed(0) : 0}% of class</p>
-              </div>
-
-              <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50 flex flex-col">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
-                    <AlertCircle className="h-4 w-4 text-brand" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs text-muted">Absent</p>
-                    <p className="mt-1 text-lg font-bold text-red-600">{stats.absent}</p>
-                  </div>
-                  <ArrowUpRight className="h-3 w-3 text-muted opacity-0 transition-opacity group-hover:opacity-100 flex-shrink-0" />
-                </div>
-                <p className="mt-2 text-[11px] text-muted">Not present</p>
-              </div>
-
-              <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50 flex flex-col">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
-                    <Clock className="h-4 w-4 text-brand" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs text-muted">Late</p>
-                    <p className="mt-1 text-lg font-bold text-orange-600">{stats.late}</p>
-                  </div>
-                  <ArrowUpRight className="h-3 w-3 text-muted opacity-0 transition-opacity group-hover:opacity-100 flex-shrink-0" />
-                </div>
-                <p className="mt-2 text-[11px] text-muted">Marked late</p>
-              </div>
-            </div>
-          )}
-
-          {/* Mobile Stats */}
-          {selectedClass !== "ALL" && attendanceData && (
-            <div className="sm:hidden space-y-3">
-              <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
-                    <Users className="h-4 w-4 text-brand" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs text-muted">Total Pupils</p>
-                    <p className="mt-1 text-lg font-bold text-foreground">{stats.total}</p>
-                  </div>
-                </div>
-              </div>
-              <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
-                    <CheckCircle className="h-4 w-4 text-brand" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs text-muted">Present</p>
-                    <p className="mt-1 text-lg font-bold text-green-600">{stats.present}</p>
-                  </div>
-                </div>
-              </div>
-              <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
-                    <AlertCircle className="h-4 w-4 text-brand" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs text-muted">Absent</p>
-                    <p className="mt-1 text-lg font-bold text-red-600">{stats.absent}</p>
+            <div className="mt-6 flex items-center justify-center">
+              <div className="relative flex h-32 w-32 items-center justify-center rounded-full" style={{ background: `conic-gradient(#0A66C2 ${stats.presentRate}%, #e2e8f0 0)` }}>
+                <div className="flex h-24 w-24 items-center justify-center rounded-full bg-white shadow-inner">
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-slate-900">{stats.records === 0 ? 0 : stats.presentRate.toFixed(0)}%</div>
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Present</div>
                   </div>
                 </div>
               </div>
             </div>
-          )}
+          </div>
+        </div>
+      </div>
 
-          {/* Attendance Grid */}
-          {loading ? (
-            <div className="text-center py-12 text-muted">Loading attendance...</div>
-          ) : selectedClass !== "ALL" && attendanceData?.pupils && attendanceData.pupils.length > 0 ? (
-            <>
-              <div className="rounded-lg border border-border overflow-hidden">
+      {loading ? (
+        <div className="rounded-lg border border-border bg-surface p-8 text-center">
+          <Loader2 className="mx-auto h-8 w-8 animate-spin text-brand" />
+          <p className="mt-3 text-muted">Loading attendance overview...</p>
+        </div>
+      ) : null}
+
+      {recordsPanelOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/20 backdrop-blur-[2px]" onClick={() => setRecordsPanelOpen(false)}>
+          <div className="absolute inset-y-0 right-0 flex w-full max-w-[640px] flex-col border-l border-brand/15 bg-white/95 shadow-2xl backdrop-blur" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-slate-200 bg-gradient-to-r from-brand/10 via-white to-slate-50 px-5 py-4">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-brand">Record Explorer</p>
+                <h3 className="text-lg font-semibold text-slate-900">Attendance records</h3>
+              </div>
+              <button onClick={() => setRecordsPanelOpen(false)} className="rounded-full border border-slate-200 bg-white p-2 text-slate-700 shadow-sm transition hover:bg-slate-100">
+                ✕
+              </button>
+            </div>
+
+            <div className="border-b border-slate-200 bg-slate-50/70 px-5 py-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <div className="relative flex-1">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <input
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search student or class"
+                    className="w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 py-2 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                  />
+                </div>
+                <select
+                  value={selectedClass}
+                  onChange={(e) => setSelectedClass(e.target.value)}
+                  className="min-w-[140px] rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                >
+                  <option value="ALL">All classes</option>
+                  {filteredClasses.map((cls) => (
+                    <option key={cls.id} value={cls.id}>
+                      {cls.name} {cls.arm || ""}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value as any)}
+                  className="min-w-[140px] rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                >
+                  <option value="ALL">All statuses</option>
+                  <option value="PRESENT">Present</option>
+                  <option value="ABSENT">Absent</option>
+                  <option value="LATE">Late</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-5">
+              <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
                 <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-border bg-background">
-                        <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Student Name</th>
-                        <th className="px-6 py-3 text-left text-sm font-semibold text-foreground">Status</th>
+                  <table className="min-w-full text-sm">
+                    <thead className="bg-slate-50 text-left text-xs uppercase tracking-wider text-slate-600">
+                      <tr>
+                        <th className="px-4 py-3">Date</th>
+                        <th className="px-4 py-3">Class</th>
+                        <th className="px-4 py-3">Student</th>
+                        <th className="px-4 py-3">Status</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-border">
-                      {attendanceData.pupils.map((pupil) => {
-                        const status = modifications[pupil.pupilId] || pupil.status;
-                        const isModified = pupil.pupilId in modifications;
-                        const statusColor =
-                          status === "PRESENT"
-                            ? "bg-green-100 text-green-800"
-                            : status === "ABSENT"
-                            ? "bg-red-100 text-red-800"
-                            : "bg-orange-100 text-orange-800";
-
-                        return (
-                          <tr
-                            key={pupil.pupilId}
-                            className={`hover:bg-surface/50 transition-colors ${isModified ? "ring-2 ring-brand/50" : ""}`}
-                          >
-                            <td className="px-6 py-4 text-sm font-medium text-foreground">{pupil.name}</td>
-                            <td className="px-6 py-4 text-sm">
-                              <button
-                                onClick={() => toggleStatus(pupil.pupilId)}
-                                className={`px-3 py-1 rounded-full text-xs font-semibold transition ${statusColor} cursor-pointer hover:opacity-80`}
-                              >
-                                {status}
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
+                    <tbody className="divide-y divide-slate-200 bg-white">
+                      {filteredRecords.length > 0 ? (
+                        filteredRecords.map((record, index) => {
+                          const badgeColor =
+                            record.status === "PRESENT"
+                              ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100"
+                              : record.status === "ABSENT"
+                              ? "bg-rose-50 text-rose-700 ring-1 ring-rose-100"
+                              : "bg-amber-50 text-amber-700 ring-1 ring-amber-100";
+                          return (
+                            <tr key={record.id} className={`transition-colors ${index % 2 === 0 ? "bg-white" : "bg-slate-50/70"}`}>
+                              <td className="px-4 py-3 text-slate-700">{new Date(record.date).toLocaleDateString()}</td>
+                              <td className="px-4 py-3 text-slate-700">{record.class.name}</td>
+                              <td className="px-4 py-3 font-medium text-slate-700">{record.pupil.firstName} {record.pupil.lastName}</td>
+                              <td className="px-4 py-3">
+                                <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${badgeColor}`}>{record.status}</span>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      ) : (
+                        <tr>
+                          <td colSpan={4} className="px-4 py-10 text-center text-slate-500">No records found for the selected filters.</td>
+                        </tr>
+                      )}
                     </tbody>
                   </table>
                 </div>
               </div>
-
-              {/* Action Buttons */}
-              <div className="flex gap-3 flex-col sm:flex-row">
-                <Button
-                  onClick={handleSaveAttendance}
-                  disabled={selectedClass === "ALL" || !hasModifications || saving}
-                  variant="primary"
-                  className="flex h-9 flex-1 items-center justify-center gap-2 rounded-lg border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8]"
-                >
-                  <Save className="h-4 w-4" />
-                  {saving ? "Saving..." : "Save Attendance"}
-                </Button>
-                <div className="flex gap-2 flex-1">
-                  <select
-                    value={notificationMode}
-                    onChange={(e) => setNotificationMode(e.target.value as "ALL" | "ABSENT" | "LATE")}
-                    className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground"
-                  >
-                    <option value="ALL">Notify All</option>
-                    <option value="ABSENT">Notify Absent Only</option>
-                    <option value="LATE">Notify Late Only</option>
-                  </select>
-                  <Button
-                    onClick={handleSendNotifications}
-                    disabled={selectedClass === "ALL" || notifying}
-                    variant="primary"
-                    className="flex h-9 items-center justify-center gap-2 rounded-lg border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8]"
-                  >
-                    <Send className="h-4 w-4" />
-                    {notifying ? "Sending..." : "Send Notifications"}
-                  </Button>
-                </div>
-              </div>
-            </>
-          ) : !loading && selectedClass !== "ALL" && attendanceData ? (
-            <div className="rounded-lg border border-border bg-surface p-8 text-center">
-              <p className="text-muted">No pupils in this class</p>
             </div>
-          ) : null}
-        </>
+          </div>
+        </div>
       )}
-
-      {/* Help & Guide */}
-      <UserGuide guide={HELP_GUIDE} />
     </div>
   );
 }

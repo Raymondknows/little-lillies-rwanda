@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AlertCircle, ChevronRight, Filter, GraduationCap, Lock } from "lucide-react";
+import { ErrorModal } from "@/components/ui/error-modal";
 import { getBackendUrl } from "@/lib/backend-url";
 import ParentPageShell from "@/components/parent-page-shell";
 import { WaecReportCard } from "@/components/teacher/waec-report-card";
@@ -125,6 +126,15 @@ export default function PublicResultCheckPage() {
             setLoading(false);
             return;
           }
+        }
+
+        if (typeof data?.error === "string" && /pin|expired/i.test(data.error)) {
+          setPinError(data.error);
+          setPinRequired(true);
+          setStudent(data.student || student);
+          setSchool(data.school || school);
+          setLoading(false);
+          return;
         }
 
         throw new Error(data?.error || "Unable to check results");
@@ -312,13 +322,14 @@ export default function PublicResultCheckPage() {
   if (error) {
     return (
       <ParentPageShell onRefresh={loadData}>
-        <div className="rounded-lg border border-red-300 bg-red-50 p-4 flex gap-3">
-          <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
-          <div>
-            <h3 className="font-semibold text-red-900">Error</h3>
-            <p className="text-sm text-red-700 mt-1">{error}</p>
-          </div>
-        </div>
+        <ErrorModal
+          isOpen={Boolean(error)}
+          onClose={() => setError(null)}
+          title="Error"
+          message={error}
+          type="error"
+          confirmLabel="Close"
+        />
       </ParentPageShell>
     );
   }
@@ -326,7 +337,15 @@ export default function PublicResultCheckPage() {
   if (pinRequired && student && school) {
     return (
       <ParentPageShell onRefresh={loadData}>
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+        <ErrorModal
+          isOpen={Boolean(pinError)}
+          onClose={() => setPinError(null)}
+          title="Invalid PIN"
+          message={pinError || "The supplied PIN is invalid or has expired."}
+          type="error"
+          confirmLabel="Close"
+        />
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-40 p-4">
           <div className="bg-white rounded-3xl shadow-xl max-w-md w-full p-8 space-y-6">
             <div className="text-center">
               <div className="mx-auto w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mb-4">
@@ -352,13 +371,6 @@ export default function PublicResultCheckPage() {
                   className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-center text-lg font-semibold text-slate-900 outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
                 />
               </div>
-
-              {pinError && (
-                <div className="rounded-lg border border-red-200 bg-red-50 p-3 flex gap-2">
-                  <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-red-700">{pinError}</p>
-                </div>
-              )}
 
               <button
                 type="button"
@@ -391,6 +403,14 @@ export default function PublicResultCheckPage() {
 
   return (
     <ParentPageShell onRefresh={loadData}>
+      <ErrorModal
+        isOpen={Boolean(pinError)}
+        onClose={() => setPinError(null)}
+        title="Invalid PIN"
+        message={pinError || "The supplied PIN is invalid or has expired."}
+        type="error"
+        confirmLabel="Close"
+      />
       <div className="mx-2 mt-4 space-y-4 sm:mx-4 lg:mx-6 print:mx-0 print:mt-0 print:space-y-0">
         <div className="border-b border-slate-200 pb-6 print:hidden">
           <h1 className="text-4xl font-bold text-slate-900">Academic Results</h1>

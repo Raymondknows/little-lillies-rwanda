@@ -113,3 +113,107 @@ export async function buildPinCardHtml(data: PinPrintCardData): Promise<string> 
       </body>
     </html>`;
 }
+
+export interface PinSheetOptions {
+  title?: string;
+  columns?: number;
+}
+
+async function renderPinSheetCardMarkup(data: PinPrintCardData): Promise<string> {
+  const payload = JSON.stringify({
+    schoolCode: data.schoolCode,
+    studentName: data.studentName,
+    admissionNo: data.admissionNo,
+    session: data.session,
+    term: data.term,
+    pin: data.pin,
+    printedAt: data.printedAt,
+  });
+
+  const qrSvg = await QRCode.toString(payload, {
+    type: "svg",
+    width: 100,
+    margin: 1,
+    color: { dark: "#111827", light: "#ffffff" },
+    errorCorrectionLevel: "M",
+  });
+
+  const logoSource = data.schoolLogoUrl || (data.schoolId ? `/api/school-logo/${encodeURIComponent(data.schoolId)}` : null);
+  const resolvedLogoUrl = logoSource
+    ? (() => {
+        if (/^https?:\/\//.test(logoSource)) return logoSource;
+        if (typeof window !== "undefined" && window.location?.origin) {
+          try {
+            return new URL(logoSource, window.location.origin).toString();
+          } catch {
+            return logoSource;
+          }
+        }
+        return logoSource;
+      })()
+    : null;
+
+  return `
+      <div class="sheet-card">
+        <div class="sheet-card-header">
+          <div class="sheet-logo">${resolvedLogoUrl ? `<img src="${escapeHtml(resolvedLogoUrl)}" alt="${escapeHtml(data.schoolName || data.schoolCode || "School logo")}" />` : "<span>Logo</span>"}</div>
+          <div>
+            <div class="sheet-school-name">${escapeHtml(data.schoolName || data.schoolCode || "School")}</div>
+            <div class="sheet-school-tag">Result PIN</div>
+          </div>
+        </div>
+        <div class="sheet-card-body">
+          <div class="sheet-field"><span class="sheet-label">Student</span> ${escapeHtml(data.studentName)}</div>
+          <div class="sheet-field"><span class="sheet-label">Admission</span> ${escapeHtml(data.admissionNo)}</div>
+          <div class="sheet-field"><span class="sheet-label">Session</span> ${escapeHtml(data.session)}</div>
+          <div class="sheet-field"><span class="sheet-label">Term</span> ${escapeHtml(data.term)}</div>
+          <div class="sheet-pin">${escapeHtml(data.pin)}</div>
+        </div>
+        <div class="sheet-footer">
+          <div class="sheet-qr">${qrSvg}</div>
+          <div class="sheet-meta">Printed: ${escapeHtml(data.printedAt)}</div>
+        </div>
+      </div>`;
+}
+
+export async function buildPinSheetHtml(cards: PinPrintCardData[], options: PinSheetOptions = {}): Promise<string> {
+  const cardHtmls = await Promise.all(cards.map(renderPinSheetCardMarkup));
+  const columns = options.columns || 2;
+
+  return `<!DOCTYPE html>
+<html>
+  <head>
+    <title>${escapeHtml(options.title || "Result PIN Sheet")}</title>
+    <style>
+      @page { size: A4 portrait; margin: 12mm; }
+      html, body { margin: 0; padding: 0; background: #ffffff; color: #111827; font-family: Arial, sans-serif; }
+      body { padding: 12px; }
+      .sheet-container { display: grid; grid-template-columns: repeat(${columns}, minmax(0, 1fr)); gap: 10px; }
+      .sheet-card { border: 1px solid #d1d5db; border-radius: 12px; padding: 12px; min-height: 220px; display: flex; flex-direction: column; justify-content: space-between; page-break-inside: avoid; }
+      .sheet-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+      .sheet-logo { width: 44px; height: 44px; border-radius: 10px; background: #f8fafc; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+      .sheet-logo img { width: 100%; height: 100%; object-fit: contain; }
+      .sheet-school-name { font-size: 13px; font-weight: 700; color: #111827; }
+      .sheet-school-tag { font-size: 11px; color: #64748b; margin-top: 2px; }
+      .sheet-card-body { flex: 1; display: grid; gap: 6px; }
+      .sheet-field { font-size: 12px; color: #374151; }
+      .sheet-label { font-weight: 700; }
+      .sheet-pin { margin-top: 10px; font-size: 18px; font-weight: 800; letter-spacing: 0.22em; color: #0f172a; }
+      .sheet-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; }
+      .sheet-qr { width: 72px; height: 72px; }
+      .sheet-qr svg { width: 100%; height: 100%; }
+      .sheet-meta { font-size: 10px; color: #6b7280; text-align: right; }
+      @media print {
+        body { padding: 0; }
+        .sheet-container { gap: 8px; }
+        .sheet-card { border-color: #9ca3af; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sheet-container">
+      ${cardHtmls.join("\n")}
+    </div>
+  </body>
+</html>`;
+}

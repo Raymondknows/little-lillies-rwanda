@@ -51,6 +51,9 @@ export default function ResultPinsAllPage() {
   const [pins, setPins] = useState<PinRecord[]>([]);
   const [loadingPins, setLoadingPins] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(50);
+  const [total, setTotal] = useState<number | null>(null);
   const [search, setSearch] = useState("");
   const [selectedPin, setSelectedPin] = useState<PinRecord | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -84,15 +87,17 @@ export default function ResultPinsAllPage() {
     }
   };
 
-  const loadPins = async (searchValue = search) => {
+  const loadPins = async (searchValue = search, nextPage = 1) => {
     try {
       setLoadingPins(true);
-      const response = await fetch(`${backendUrl}/api/result-pins/pins?search=${encodeURIComponent(searchValue)}&limit=250`, {
+      const response = await fetch(`${backendUrl}/api/result-pins/pins?search=${encodeURIComponent(searchValue)}&limit=${limit}&page=${nextPage}`, {
         credentials: "include",
       });
       if (!response.ok) throw new Error("Failed to load PIN records");
       const data = await response.json();
       setPins(data.pins || []);
+      setTotal(typeof data.total === 'number' ? data.total : null);
+      setPage(typeof data.page === 'number' ? data.page : nextPage);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to load PIN records");
     } finally {
@@ -102,7 +107,7 @@ export default function ResultPinsAllPage() {
 
   useEffect(() => {
     void loadSchoolMeta();
-    void loadPins();
+    void loadPins(search, page);
   }, []);
 
   const filteredPins = useMemo(() => {
@@ -232,7 +237,11 @@ export default function ResultPinsAllPage() {
             <Search className="h-4 w-4 text-muted" />
             <input
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
+              onChange={(event) => {
+                const next = event.target.value;
+                setSearch(next);
+                void loadPins(next, 1);
+              }}
               placeholder="Search PINs"
               className="w-52 bg-transparent text-sm text-foreground outline-none"
             />
@@ -253,7 +262,8 @@ export default function ResultPinsAllPage() {
               </div>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <>
+              <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-border text-sm">
                 <thead className="bg-background/60 text-left text-xs uppercase tracking-wide text-muted">
                   <tr>
@@ -308,6 +318,28 @@ export default function ResultPinsAllPage() {
                 </tbody>
               </table>
             </div>
+              <div className="mt-4 flex items-center justify-between">
+              <div className="text-sm text-muted">Page {page} {total ? `of ${Math.max(1, Math.ceil((total || 0) / limit))}` : ''}</div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={page <= 1}
+                  onClick={() => void loadPins(search, Math.max(1, page - 1))}
+                  className="rounded-md border px-3 py-1 text-sm"
+                >
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  disabled={total !== null && page >= Math.ceil((total || 0) / limit)}
+                  onClick={() => void loadPins(search, page + 1)}
+                  className="rounded-md border px-3 py-1 text-sm"
+                >
+                  Next
+                </button>
+              </div>
+              </div>
+            </>
           )}
         </div>
       </div>

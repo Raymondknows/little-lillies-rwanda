@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, KeyRound, RefreshCw, Sparkles, UserRoundPlus, Search, Printer, Eye, Download, ShieldOff, Copy, X, Building2, Users, CheckCircle2, Clock3, AlertTriangle } from "lucide-react";
+import { ArrowLeft, KeyRound, RefreshCw, Sparkles, UserRoundPlus, Search, Printer, Eye, Download, ShieldOff, Copy, X, Users, CheckCircle2, Clock3, AlertTriangle } from "lucide-react";
 import { getBackendUrl } from "@/lib/backend-url";
-import { buildPinCardHtml } from "@/lib/pin-print";
+import { buildPinCardHtml, buildPinSheetHtml } from "@/lib/pin-print";
 import { resolveSchoolAssetUrl } from "@/lib/asset-urls";
+import { ErrorModal } from "@/components/ui/error-modal";
 
 interface PinStatus {
   enabled: boolean;
@@ -24,6 +25,8 @@ interface StudentPinResult {
     lastName: string;
     admissionNo?: string | null;
   };
+
+
   pinRecord?: {
     id: string;
     status?: string;
@@ -131,6 +134,116 @@ interface SchoolMeta {
   logoUrl?: string | null;
 }
 
+const isToday = (value?: string | null) => {
+  if (!value) return false;
+  const date = new Date(value);
+  const now = new Date();
+  return (
+    date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth() &&
+    date.getDate() === now.getDate()
+  );
+};
+
+function PinModal({
+  pin,
+  schoolMeta,
+  onClose,
+  onPrint,
+  onCopy,
+}: {
+  pin: PinRecord;
+  schoolMeta: SchoolMeta | null;
+  onClose: () => void;
+  onPrint: (pin: PinRecord) => void;
+  onCopy: () => void;
+}) {
+  return (
+    <ErrorModal
+      isOpen={true}
+      onClose={onClose}
+      type="success"
+      title="PIN preview"
+      message=""
+      confirmLabel="Close"
+    >
+      <div className="mt-2 space-y-4 text-sm text-muted">
+        <div className="text-center">
+          <div className="mb-3 text-xs text-muted">PIN</div>
+          <div className="inline-block rounded-lg border border-border bg-background px-6 py-4 text-2xl font-mono tracking-[0.3em] text-foreground">{pin.pinValue || '—'}</div>
+        </div>
+
+        <div className="space-y-2">
+          <div><span className="font-medium text-foreground">Student:</span> {pin.student ? `${pin.student.firstName || ''} ${pin.student.lastName || ''}`.trim() : '—'}</div>
+          <div><span className="font-medium text-foreground">School code:</span> {schoolMeta?.slug || schoolMeta?.initials || '—'}</div>
+          <div><span className="font-medium text-foreground">Admission number:</span> {pin.student?.admissionNo || '—'}</div>
+          <div><span className="font-medium text-foreground">Session:</span> {pin.term?.academicYear?.name || '—'}</div>
+          <div><span className="font-medium text-foreground">Term:</span> {pin.term?.name || '—'}</div>
+        </div>
+
+        <div className="mt-4 flex flex-wrap gap-3">
+          <button type="button" onClick={() => { onCopy(); }} className="inline-flex items-center gap-2 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand/90">
+            <Copy className="h-4 w-4" /> Copy PIN
+          </button>
+          <button type="button" onClick={() => { onPrint(pin); }} className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted/30">
+            <Printer className="h-4 w-4" /> Print sheet
+          </button>
+        </div>
+      </div>
+    </ErrorModal>
+  );
+}
+
+function GeneratedPinModal({
+  data,
+  schoolMeta,
+  onClose,
+  onPrint,
+  onCopy,
+}: {
+  data: StudentPinResult;
+  schoolMeta: SchoolMeta | null;
+  onClose: () => void;
+  onPrint: () => void;
+  onCopy: () => void;
+}) {
+  return (
+    <ErrorModal
+      isOpen={true}
+      onClose={onClose}
+      type="success"
+      title="Generated PIN"
+      message={data.pin || ''}
+      confirmLabel="Close"
+    >
+      <div className="mt-2 space-y-4 text-sm text-muted">
+        <div className="text-center">
+          <div className="mb-3 text-xs text-muted">PIN</div>
+          <div className="inline-block rounded-lg border border-border bg-background px-6 py-4 text-2xl font-mono tracking-[0.3em] text-foreground">{data.pin}</div>
+        </div>
+
+        <div className="space-y-2">
+          <div><span className="font-medium text-foreground">Student:</span> {data.student ? `${data.student.firstName || ''} ${data.student.lastName || ''}`.trim() : '—'}</div>
+          <div><span className="font-medium text-foreground">School code:</span> {data.schoolCode || schoolMeta?.slug || schoolMeta?.initials || '—'}</div>
+          <div><span className="font-medium text-foreground">Admission number:</span> {data.student?.admissionNo || '—'}</div>
+          <div><span className="font-medium text-foreground">Session:</span> {data.sessionName || '—'}</div>
+          <div><span className="font-medium text-foreground">Term:</span> {data.termName || '—'}</div>
+          <div><span className="font-medium text-foreground">Assessment:</span> {data.assessmentName || '—'}</div>
+        </div>
+
+        <div className="mt-4 flex flex-wrap gap-3">
+          <button type="button" onClick={onCopy} className="inline-flex items-center gap-2 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand/90">
+            <Copy className="h-4 w-4" /> Copy PIN
+          </button>
+          <button type="button" onClick={onPrint} className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted/30">
+            <Printer className="h-4 w-4" /> Print sheet
+          </button>
+        </div>
+      </div>
+    </ErrorModal>
+  );
+}
+
 export default function ResultPinsPage() {
   const [status, setStatus] = useState<PinStatus | null>(null);
   const [loadingStatus, setLoadingStatus] = useState(true);
@@ -143,6 +256,9 @@ export default function ResultPinsPage() {
   const [classes, setClasses] = useState<Array<{ id: string; name: string; phase?: string | null }>>([]);
   const [students, setStudents] = useState<StudentOption[]>([]);
   const [selectedClassId, setSelectedClassId] = useState("");
+  const [submittingClass, setSubmittingClass] = useState(false);
+  const [classPinError, setClassPinError] = useState<string | null>(null);
+  const [classPinSummary, setClassPinSummary] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(10);
   const [batchName, setBatchName] = useState("");
   const [pinFormat, setPinFormat] = useState("XXXX-XXXX");
@@ -160,6 +276,8 @@ export default function ResultPinsPage() {
   const [pinFilterGeneratedBy, setPinFilterGeneratedBy] = useState("all");
   const [pinFilterBatch, setPinFilterBatch] = useState("all");
   const [pins, setPins] = useState<PinRecord[]>([]);
+  const [selectedPinIds, setSelectedPinIds] = useState<string[]>([]);
+  const [statusModal, setStatusModal] = useState<{ open: boolean; type: "success" | "error"; title?: string; message: string }>({ open: false, type: "success", message: "" });
   const [loadingPins, setLoadingPins] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedPin, setSelectedPin] = useState<PinRecord | null>(null);
@@ -169,6 +287,28 @@ export default function ResultPinsPage() {
   const pageSize = 10;
 
   const backendUrl = getBackendUrl();
+
+  // Persist selection across pages using localStorage
+  const SELECTION_KEY = 'resultPins:selectedIds';
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(SELECTION_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) setSelectedPinIds(parsed.filter((v) => typeof v === 'string'));
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(SELECTION_KEY, JSON.stringify(selectedPinIds));
+    } catch (e) {
+      // ignore
+    }
+  }, [selectedPinIds]);
 
   const loadSchoolMeta = async () => {
     try {
@@ -283,7 +423,7 @@ export default function ResultPinsPage() {
     try {
       setLoadingPins(true);
       setCurrentPage(1);
-      const response = await fetch(`${backendUrl}/api/result-pins/pins?search=${encodeURIComponent(searchValue)}&limit=100`, {
+      const response = await fetch(`${backendUrl}/api/result-pins/pins?search=${encodeURIComponent(searchValue)}&limit=50`, {
         credentials: "include",
       });
       if (!response.ok) throw new Error("Failed to load PIN records");
@@ -299,6 +439,11 @@ export default function ResultPinsPage() {
   const filteredStudents = useMemo(() => {
     if (!selectedClassId) return students;
     return students.filter((student) => student.class?.id === selectedClassId);
+  }, [selectedClassId, students]);
+
+  const selectedClassStudentCount = useMemo(() => {
+    if (!selectedClassId) return 0;
+    return students.filter((student) => student.class?.id === selectedClassId).length;
   }, [selectedClassId, students]);
 
   const selectedClassPhase = useMemo(() => {
@@ -335,27 +480,48 @@ export default function ResultPinsPage() {
       (accumulator, pin) => {
         accumulator.total += 1;
         if (pin.status === "ACTIVE") accumulator.active += 1;
+        if (pin.status === "USED" || pin.lastValidatedAt) accumulator.used += 1;
         if (pin.status === "EXPIRED") accumulator.expired += 1;
         if (pin.status === "REVOKED") accumulator.revoked += 1;
         if (pin.studentId) accumulator.assigned += 1;
         else accumulator.unassigned += 1;
+        if (pin.lastValidatedAt && isToday(pin.lastValidatedAt)) accumulator.today += 1;
+        if (pin.lastValidatedAt) {
+          const identifier = pin.studentId || pin.pinValue || pin.id;
+          accumulator.loggedIn.add(identifier);
+        }
         return accumulator;
       },
       {
         total: 0,
         active: 0,
+        used: 0,
         assigned: 0,
         unassigned: 0,
         expired: 0,
         revoked: 0,
+        today: 0,
+        loggedIn: new Set<string>(),
+      } as {
+        total: number;
+        active: number;
+        used: number;
+        assigned: number;
+        unassigned: number;
+        expired: number;
+        revoked: number;
+        today: number;
+        loggedIn: Set<string>;
       },
     );
 
+    const unused = Math.max(0, totals.active - totals.used);
+
     return [
-      { label: "Total PINs", value: totals.total, sub: "All generated PINs", icon: KeyRound, iconClass: "bg-sky-100 text-sky-700" },
       { label: "Active PINs", value: totals.active, sub: "Ready for use", icon: CheckCircle2, iconClass: "bg-emerald-100 text-emerald-700" },
-      { label: "Assigned PINs", value: totals.assigned, sub: "Linked to students", icon: Users, iconClass: "bg-violet-100 text-violet-700" },
-      { label: "Expired / Revoked", value: totals.expired + totals.revoked, sub: "No longer valid", icon: Clock3, iconClass: "bg-amber-100 text-amber-700" },
+      { label: "Used PINs", value: totals.used, sub: "Validated at least once", icon: Users, iconClass: "bg-sky-100 text-sky-700" },
+      { label: "Unused PINs", value: unused, sub: "Available and not validated", icon: Sparkles, iconClass: "bg-violet-100 text-violet-700" },
+      { label: "Today's accesses", value: totals.today, sub: "PINs validated today", icon: Clock3, iconClass: "bg-orange-100 text-orange-700" },
     ];
   }, [pins]);
 
@@ -410,12 +576,124 @@ export default function ResultPinsPage() {
     });
   }, [pins, pinFilterStatus, pinFilterType, pinFilterSession, pinFilterTerm, pinFilterClass, pinFilterGeneratedBy, pinFilterBatch]);
 
-  const totalFilteredRows = filteredPins.length;
+  const filteredStudentPins = useMemo(() => filteredPins.filter((pin) => (pin.type || "GENERIC").toUpperCase() !== "GENERIC"), [filteredPins]);
+  const filteredGenericPins = useMemo(() => filteredPins.filter((pin) => (pin.type || "GENERIC").toUpperCase() === "GENERIC"), [filteredPins]);
+
+  const totalFilteredRows = filteredStudentPins.length;
   const pageCount = Math.max(1, Math.ceil(totalFilteredRows / pageSize));
   const pagedPins = useMemo(() => {
     const startIndex = (currentPage - 1) * pageSize;
-    return filteredPins.slice(startIndex, startIndex + pageSize);
-  }, [filteredPins, currentPage]);
+    return filteredStudentPins.slice(startIndex, startIndex + pageSize);
+  }, [filteredStudentPins, currentPage]);
+
+  const pagePinIds = useMemo(() => pagedPins.map((pin) => pin.id), [pagedPins]);
+  const pageAllSelected = pagePinIds.length > 0 && pagePinIds.every((id) => selectedPinIds.includes(id));
+
+  const handleTogglePinSelection = (pinId: string) => {
+    setSelectedPinIds((current) =>
+      current.includes(pinId) ? current.filter((id) => id !== pinId) : [...current, pinId],
+    );
+  };
+
+  const handleToggleSelectAll = () => {
+    setSelectedPinIds((current) => (pageAllSelected ? [] : pagePinIds));
+  };
+
+  const handleExportSelected = () => {
+    const selectedPins = pins.filter((pin) => selectedPinIds.includes(pin.id));
+    if (!selectedPins.length) return;
+    const lines = selectedPins.map((pin) => `${pin.pinValue || "—"}\t${pin.student ? `${pin.student.firstName || ""} ${pin.student.lastName || ""}`.trim() : "Unassigned"}`).join("\n");
+    const blob = new Blob([lines], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `result-pins-selected.txt`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handlePrintSelected = async () => {
+    const selectedPins = pins.filter((pin) => selectedPinIds.includes(pin.id));
+    if (!selectedPins.length) return;
+
+    const cards = selectedPins.map((pin) => ({
+      schoolName: schoolMeta?.name || undefined,
+      schoolLogoUrl: schoolMeta?.logoUrl || (schoolMeta?.id ? `/api/school-logo/${encodeURIComponent(schoolMeta.id)}` : undefined),
+      schoolId: schoolMeta?.id,
+      schoolCode: schoolMeta?.slug || schoolMeta?.initials || "school-code",
+      studentName: pin.student ? `${pin.student.firstName || ""} ${pin.student.lastName || ""}`.trim() : "Student",
+      admissionNo: pin.student?.admissionNo || "N/A",
+      session: pin.term?.academicYear?.name || "—",
+      term: pin.term?.name || "—",
+      pin: pin.pinValue || "—",
+      printedAt: new Date().toLocaleString(),
+    }));
+
+    const printWindow = window.open("", "_blank", "width=1200,height=900");
+    if (!printWindow) return;
+
+    const html = await buildPinSheetHtml(cards, { title: `Selected PINs` });
+    printWindow.document.write(html);
+    printWindow.document.close();
+
+    setTimeout(() => {
+      try {
+        printWindow.focus();
+        printWindow.print();
+      } catch (printError) {
+        console.error("Unable to print selected PIN sheet", printError);
+      }
+
+      setTimeout(() => {
+        try {
+          printWindow.close();
+        } catch (closeError) {
+          console.error("Unable to close PIN sheet popup", closeError);
+        }
+      }, 900);
+    }, 900);
+  };
+
+  const [confirmModal, setConfirmModal] = useState<{ open: boolean; kind: 'deactivate' | 'delete' | null }>({ open: false, kind: null });
+
+  const handleOpenConfirm = (kind: 'deactivate' | 'delete') => {
+    setConfirmModal({ open: true, kind });
+  };
+
+  const performBulkAction = async () => {
+    if (!confirmModal.kind) return;
+    try {
+      const backendUrl = getBackendUrl();
+      if (confirmModal.kind === 'deactivate') {
+        const response = await fetch(`${backendUrl}/api/result-pins/pins/bulk/status`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids: selectedPinIds, status: 'INACTIVE' }),
+        });
+        const data = await response.json().catch(() => null);
+        if (!response.ok) throw new Error(data?.error || 'Failed to deactivate selected PINs');
+        setStatusModal({ open: true, type: 'success', title: 'Deactivated', message: `Deactivated ${data.updated || selectedPinIds.length} PIN(s).` });
+      } else if (confirmModal.kind === 'delete') {
+        const response = await fetch(`${backendUrl}/api/result-pins/pins/bulk/delete`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids: selectedPinIds }),
+        });
+        const data = await response.json().catch(() => null);
+        if (!response.ok) throw new Error(data?.error || 'Failed to delete selected PINs');
+        setStatusModal({ open: true, type: 'success', title: 'Deleted', message: `Deleted ${data.deleted || selectedPinIds.length} PIN(s).` });
+      }
+
+      setSelectedPinIds([]);
+      await loadPins();
+    } catch (err) {
+      setStatusModal({ open: true, type: 'error', title: 'Failed', message: err instanceof Error ? err.message : 'Bulk action failed' });
+    } finally {
+      setConfirmModal({ open: false, kind: null });
+    }
+  };
 
   useEffect(() => {
     setCurrentPage(1);
@@ -426,6 +704,57 @@ export default function ResultPinsPage() {
       setCurrentPage(pageCount);
     }
   }, [currentPage, pageCount]);
+
+  // Generic (scratch card) pagination + selection
+  const [genericCurrentPage, setGenericCurrentPage] = useState(1);
+  const GENERIC_PAGE_SIZE = pageSize;
+  const [genericServerPins, setGenericServerPins] = useState<PinRecord[]>([]);
+  const [genericTotal, setGenericTotal] = useState<number>(0);
+  const genericPageCount = Math.max(1, Math.ceil((genericTotal || 0) / GENERIC_PAGE_SIZE));
+
+  const loadGenericPins = async (searchValue = pinSearch, page = genericCurrentPage) => {
+    try {
+      const params = new URLSearchParams();
+      params.set('search', String(searchValue || ''));
+      params.set('limit', String(GENERIC_PAGE_SIZE));
+      params.set('page', String(page));
+      params.set('type', 'GENERIC');
+      if (pinFilterStatus && pinFilterStatus !== 'all') params.set('status', pinFilterStatus);
+      if (pinFilterBatch && pinFilterBatch !== 'all') params.set('batch', pinFilterBatch);
+      if (pinFilterTerm && pinFilterTerm !== 'all') params.set('term', pinFilterTerm);
+      if (pinFilterSession && pinFilterSession !== 'all') params.set('session', pinFilterSession);
+      if (pinFilterGeneratedBy && pinFilterGeneratedBy !== 'all') params.set('generatedBy', pinFilterGeneratedBy);
+      if (pinFilterClass && pinFilterClass !== 'all') params.set('classId', pinFilterClass);
+
+      const response = await fetch(`${backendUrl}/api/result-pins/pins?${params.toString()}`, {
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error('Failed to load generic PIN records');
+      const data = await response.json();
+      setGenericServerPins(data.pins || []);
+      setGenericTotal(Number(data.total || 0));
+      setGenericCurrentPage(Number(data.page || page));
+    } catch (err) {
+      console.error('Failed to load generic pins', err);
+    }
+  };
+
+  const genericPagePinIds = useMemo(() => genericServerPins.map((pin) => pin.id), [genericServerPins]);
+  const pageAllSelectedGeneric = genericPagePinIds.length > 0 && genericPagePinIds.every((id) => selectedPinIds.includes(id));
+
+  const handleToggleSelectAllGeneric = () => {
+    setSelectedPinIds((current) =>
+      pageAllSelectedGeneric ? current.filter((id) => !genericPagePinIds.includes(id)) : Array.from(new Set([...current, ...genericPagePinIds])),
+    );
+  };
+
+  useEffect(() => {
+    setGenericCurrentPage(1);
+  }, [pinFilterStatus, pinFilterType, pinFilterSession, pinFilterTerm, pinFilterClass, pinFilterGeneratedBy, pinFilterBatch, pinSearch]);
+
+  useEffect(() => {
+    void loadGenericPins(pinSearch, genericCurrentPage);
+  }, [pinSearch, genericCurrentPage, pinFilterStatus, pinFilterBatch, pinFilterSession, pinFilterTerm, pinFilterGeneratedBy, pinFilterClass]);
 
   const handleGenerateStudentPin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -512,6 +841,93 @@ export default function ResultPinsPage() {
     }, 900);
   };
 
+  const handleGenerateClassPins = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError(null);
+    setClassPinError(null);
+    setClassPinSummary(null);
+    setSubmittingClass(true);
+
+    if (!selectedClassId) {
+      setClassPinError("Please select a class to generate PINs for.");
+      setSubmittingClass(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(`${backendUrl}/api/result-pins/generate/class`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          classId: selectedClassId,
+          termId: selectedTermId || undefined,
+          assessmentId: selectedAssessmentId || undefined,
+          generatedBy: "admin-ui",
+          pinFormat,
+          pinLength,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data?.error || "Failed to generate PINs for the selected class");
+
+      const cards = (data.cards || []).map((entry: any) => ({
+        schoolName: data.school?.name || schoolMeta?.name || undefined,
+        schoolLogoUrl: schoolMeta?.logoUrl || (schoolMeta?.id ? `/api/school-logo/${encodeURIComponent(schoolMeta.id)}` : undefined),
+        schoolId: data.school?.id || schoolMeta?.id,
+        schoolCode: data.school?.slug || data.school?.initials || schoolMeta?.slug || schoolMeta?.initials || "school-code",
+        studentName: `${entry.student?.firstName || ""} ${entry.student?.lastName || ""}`.trim(),
+        admissionNo: entry.student?.admissionNo || "N/A",
+        session: entry.sessionName || data.sessionName || "—",
+        term: entry.termName || data.termName || "—",
+        pin: entry.pin,
+        printedAt: new Date().toLocaleString(),
+      }));
+
+      if (!cards.length) {
+        throw new Error("No active students were found for the selected class.");
+      }
+
+      const printWindow = window.open("", "_blank", "width=1200,height=900");
+      if (!printWindow) {
+        throw new Error("Your browser blocked the print window. Please allow pop-ups and try again.");
+      }
+
+      const className = classes.find((entry) => entry.id === selectedClassId)?.name || "Selected class";
+      const html = await buildPinSheetHtml(cards, {
+        title: `${className} PIN Sheet`,
+      });
+
+      printWindow.document.write(html);
+      printWindow.document.close();
+
+      setTimeout(() => {
+        try {
+          printWindow.focus();
+          printWindow.print();
+        } catch (printError) {
+          console.error("Unable to print class PIN sheet", printError);
+        }
+
+        setTimeout(() => {
+          try {
+            printWindow.close();
+          } catch (closeError) {
+            console.error("Unable to close class PIN sheet popup", closeError);
+          }
+        }, 900);
+      }, 800);
+
+      setClassPinSummary(`Generated ${cards.length} PIN${cards.length === 1 ? "" : "s"} for ${className}.`);
+      await loadPins();
+    } catch (err) {
+      setClassPinError(err instanceof Error ? err.message : "Failed to generate class PINs");
+    } finally {
+      setSubmittingClass(false);
+    }
+  };
+
   const handleGenerateBatch = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
@@ -566,6 +982,29 @@ export default function ResultPinsPage() {
     URL.revokeObjectURL(url);
   };
 
+  const handleCopyPinValue = async (pinValue?: string | null) => {
+    if (!pinValue) return;
+    try {
+      await navigator.clipboard.writeText(pinValue);
+      setError(null);
+      setStatusModal({ open: true, type: "success", title: "PIN copied", message: `Copied ${pinValue} to clipboard.` });
+    } catch (clipboardError) {
+      console.error("Unable to copy PIN", clipboardError);
+      setError("Unable to copy PIN to clipboard.");
+    }
+  };
+
+  const handleExportPin = (pinValue?: string | null) => {
+    if (!pinValue) return;
+    const blob = new Blob([pinValue], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `result-pin-${pinValue}.txt`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
+
   const handleViewPin = (pin: PinRecord) => {
     setSelectedPin(pin);
     setIsPinModalOpen(true);
@@ -613,6 +1052,23 @@ export default function ResultPinsPage() {
     }, 900);
   };
 
+  const handleStudentPrintClick = async () => {
+    // Prefer the freshly generated student PIN, otherwise try to print an existing PIN for the selected student
+    if (generatedStudent?.pin) {
+      await handlePrintSheet();
+      setGeneratedStudent(null);
+      return;
+    }
+
+    const existingPin = pins.find((p) => p.student?.id === studentId);
+    if (existingPin) {
+      await handlePrintPin(existingPin);
+      return;
+    }
+
+    setStatusModal({ open: true, type: "error", title: "No PIN to print", message: "No generated or existing PIN found for the selected student." });
+  };
+
   const getTypeBadgeClass = (type?: string | null) => {
     const normalized = (type || "GENERIC").toUpperCase();
     if (normalized === "STUDENT") {
@@ -629,6 +1085,9 @@ export default function ResultPinsPage() {
     if (normalized === "ACTIVE") {
       return "border-emerald-200 bg-emerald-100 text-emerald-700";
     }
+    if (normalized === "USED") {
+      return "border-sky-200 bg-sky-100 text-sky-700";
+    }
     if (normalized === "EXPIRED") {
       return "border-amber-200 bg-amber-100 text-amber-700";
     }
@@ -640,24 +1099,92 @@ export default function ResultPinsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <ErrorModal
+        isOpen={statusModal.open}
+        onClose={() => setStatusModal((prev) => ({ ...prev, open: false }))}
+        title={statusModal.title}
+        message={statusModal.message}
+        type={statusModal.type}
+        confirmLabel={statusModal.type === "success" ? "Okay" : "Try again"}
+      />
+
+      <ErrorModal
+        isOpen={confirmModal.open}
+        onClose={() => setConfirmModal({ open: false, kind: null })}
+        type="success"
+        title={confirmModal.kind === 'delete' ? 'Delete selected PINs' : 'Deactivate selected PINs'}
+        message={`Are you sure you want to ${confirmModal.kind === 'delete' ? 'delete' : 'deactivate'} ${selectedPinIds.length} selected PIN(s)?`}
+        action={{ label: 'Cancel', onClick: () => setConfirmModal({ open: false, kind: null }) }}
+        onSuccessAction={performBulkAction}
+        confirmLabel="Confirm"
+      />
+      {isPinModalOpen && selectedPin ? (
+        <PinModal
+          pin={selectedPin}
+          schoolMeta={schoolMeta}
+          onClose={() => {
+            setIsPinModalOpen(false);
+            setSelectedPin(null);
+          }}
+          onPrint={handlePrintPin}
+          onCopy={() => {
+            if (!selectedPin?.pinValue) return;
+            void handleCopyPinValue(selectedPin.pinValue);
+          }}
+        />
+      ) : null}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <Link href="/admin/settings" className="inline-flex items-center gap-2 text-sm font-medium text-brand hover:text-brand/80">
             <ArrowLeft className="h-4 w-4" />
             Back to settings
           </Link>
-          <h1 className="mt-3 text-3xl font-bold text-foreground">Result PIN Management</h1>
-          <p className="mt-2 text-sm text-muted">Generate and validate PINs for the optional result-access layer.</p>
+          <h1 className="mt-3 text-3xl font-bold text-foreground">Result PIN Centre</h1>
+          <p className="mt-2 text-sm text-muted">A polished workspace for generating, printing, and tracking result access PINs.</p>
         </div>
-        <button
-          type="button"
-          onClick={() => void loadStatus()}
-          disabled={loadingStatus}
-          className="inline-flex items-center gap-2 rounded-lg border border-[#0A66C2] bg-[#0A66C2] px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0858a8] disabled:cursor-not-allowed disabled:opacity-70"
-        >
-          <RefreshCw className={`h-4 w-4 ${loadingStatus ? "animate-spin" : ""}`} />
-          {loadingStatus ? "Refreshing..." : "Refresh status"}
-        </button>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => document.getElementById('student-pin-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            className="inline-flex items-center gap-2 rounded-lg border border-[#0A66C2] bg-[#0A66C2] px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0858a8]"
+          >
+            <UserRoundPlus className="h-4 w-4" />
+            Student PIN
+          </button>
+          <button
+            type="button"
+            onClick={() => document.getElementById('class-pin-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            className="inline-flex items-center gap-2 rounded-lg border border-[#0A66C2] bg-[#0A66C2] px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0858a8]"
+          >
+            <Users className="h-4 w-4" />
+            Class PINs
+          </button>
+          <button
+            type="button"
+            onClick={() => document.getElementById('batch-pin-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            className="inline-flex items-center gap-2 rounded-lg border border-[#0A66C2] bg-[#0A66C2] px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0858a8]"
+          >
+            <Sparkles className="h-4 w-4" />
+            Scratch Cards
+          </button>
+          <button
+            type="button"
+            onClick={() => document.getElementById('pin-registry')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+            className="inline-flex items-center gap-2 rounded-lg border border-[#0A66C2] bg-[#0A66C2] px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0858a8]"
+          >
+            <Printer className="h-4 w-4" />
+            Print Sheet
+          </button>
+          <button
+            type="button"
+            onClick={() => void loadStatus()}
+            disabled={loadingStatus}
+            className="inline-flex items-center gap-2 rounded-lg border border-[#0A66C2] bg-[#0A66C2] px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0858a8] disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            <RefreshCw className={`h-4 w-4 ${loadingStatus ? "animate-spin" : ""}`} />
+            {loadingStatus ? "Syncing..." : "Sync status"}
+          </button>
+        </div>
       </div>
 
       <div className="rounded-lg border border-border bg-surface p-5">
@@ -792,10 +1319,59 @@ export default function ResultPinsPage() {
           </select>
         </div>
 
-        <div className="mt-4 overflow-hidden rounded-lg border border-border">
+        <div className="mt-4 overflow-hidden rounded-lg border border-border" id="pin-registry">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-background/60 px-3 py-3 text-sm text-muted">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1 text-xs font-semibold text-foreground">
+                <input
+                  type="checkbox"
+                  checked={pageAllSelected}
+                  onChange={handleToggleSelectAll}
+                  className="h-4 w-4 rounded border border-border text-brand focus:ring-brand"
+                />
+                {selectedPinIds.length ? `${selectedPinIds.length} selected` : "Select rows"}
+              </div>
+              <div className="hidden sm:inline">Use the table to choose rows for print or export.</div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={!selectedPinIds.length}
+                onClick={handlePrintSelected}
+                className={`rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${selectedPinIds.length ? 'bg-brand border-brand text-white hover:bg-brand/90' : 'border-border bg-background text-foreground hover:bg-muted/30'}`}
+              >
+                Print Selected
+              </button>
+              <button
+                type="button"
+                disabled={!selectedPinIds.length}
+                onClick={handleExportSelected}
+                className={`rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${selectedPinIds.length ? 'bg-brand border-brand text-white hover:bg-brand/90' : 'border-border bg-background text-foreground hover:bg-muted/30'}`}
+              >
+                Export Selected
+              </button>
+              <button
+                type="button"
+                disabled={!selectedPinIds.length}
+                onClick={() => handleOpenConfirm('deactivate')}
+                className={`rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${selectedPinIds.length ? 'bg-brand border-brand text-white hover:bg-brand/90' : 'border-border bg-background/80 text-foreground opacity-50'}`}
+              >
+                Deactivate Selected
+              </button>
+              <button
+                type="button"
+                disabled={!selectedPinIds.length}
+                onClick={() => handleOpenConfirm('delete')}
+                className={`rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${selectedPinIds.length ? 'bg-brand border-brand text-white hover:bg-brand/90' : 'border-border bg-background/80 text-foreground opacity-50'}`}
+              >
+                Delete Selected
+              </button>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border bg-surface/60 px-3 py-3 text-sm text-muted">
             <div>
-              {loadingPins ? "Loading records..." : `Showing ${totalFilteredRows === 0 ? 0 : (currentPage - 1) * pageSize + 1}-${Math.min(currentPage * pageSize, totalFilteredRows)} of ${totalFilteredRows} rows`}
+              <span className="text-xs font-semibold text-foreground">Showing {totalFilteredRows} record{totalFilteredRows === 1 ? "" : "s"}</span>
+              <Link href="/admin/settings/result-pins/all" className="ml-3 text-xs font-medium text-brand hover:underline">View all</Link>
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -827,173 +1403,242 @@ export default function ResultPinsPage() {
                 <ShieldOff className="h-5 w-5 text-muted" />
               </div>
               <div>
-                <p className="text-base font-semibold text-foreground">No Result PINs have been generated yet.</p>
-                <p className="mt-1 text-sm text-muted">Generate a student PIN or a generic batch to see records here.</p>
+                  <p className="text-base font-semibold text-foreground">No student-linked Result PINs have been generated yet.</p>
+                  <p className="mt-1 text-sm text-muted">Generate a student PIN or class PIN to see records here.</p>
+                </div>
               </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-border text-sm">
+                  <thead className="bg-background/60 text-left text-xs uppercase tracking-wide text-muted">
+                    <tr>
+                      <th className="px-3 py-3 font-medium">
+                        <label className="inline-flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={pageAllSelected}
+                            onChange={handleToggleSelectAll}
+                            className="h-4 w-4 rounded border border-border text-brand focus:ring-0"
+                          />
+                          <span className="sr-only">Select all</span>
+                        </label>
+                      </th>
+                      <th className="px-3 py-3 font-medium">PIN</th>
+                      <th className="px-3 py-3 font-medium">Student</th>
+                      <th className="px-3 py-3 font-medium">Admission No.</th>
+                      <th className="px-3 py-3 font-medium">Type</th>
+                      <th className="px-3 py-3 font-medium">Status</th>
+                      <th className="px-3 py-3 font-medium">Session</th>
+                      <th className="px-3 py-3 font-medium">Term</th>
+                      <th className="px-3 py-3 font-medium">Expiry</th>
+                      <th className="px-3 py-3 font-medium">Generated</th>
+                      <th className="px-3 py-3 font-medium">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border bg-surface/60">
+                    {pagedPins.map((pin) => (
+                      <tr key={pin.id} className="align-top">
+                        <td className="px-3 py-3">
+                          <input
+                            type="checkbox"
+                            checked={selectedPinIds.includes(pin.id)}
+                            onChange={() => handleTogglePinSelection(pin.id)}
+                            className="h-4 w-4 rounded border border-border text-brand"
+                          />
+                        </td>
+                        <td className="px-3 py-3">
+                          <div className="font-semibold tracking-[0.2em] text-foreground">{pin.pinValue || '—'}</div>
+                          <div className="mt-1 text-xs text-muted">{pin.batch?.batchName || 'Generated individually'}</div>
+                        </td>
+                        <td className="px-3 py-3">
+                          <div className="font-medium text-foreground">{pin.student ? `${pin.student.firstName || ''} ${pin.student.lastName || ''}`.trim() : 'Unassigned'}</div>
+                          <div className="text-xs text-muted">{pin.student?.class?.name || '—'}</div>
+                        </td>
+                        <td className="px-3 py-3 text-foreground">{pin.student?.admissionNo || '—'}</td>
+                        <td className="px-3 py-3">
+                          <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${getTypeBadgeClass(pin.type || 'GENERIC')}`}>
+                            {pin.type || 'GENERIC'}
+                          </span>
+                        </td>
+                        <td className="px-3 py-3">
+                          <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${getStatusBadgeClass(pin.status || 'ACTIVE')}`}>
+                            {pin.status || 'ACTIVE'}
+                          </span>
+                        </td>
+                        <td className="px-3 py-3 text-foreground">{pin.term?.academicYear?.name || '—'}</td>
+                        <td className="px-3 py-3 text-foreground">{pin.term?.name || '—'}</td>
+                        <td className="px-3 py-3 text-foreground">{pin.expiresAt ? new Date(pin.expiresAt).toLocaleDateString() : '—'}</td>
+                        <td className="px-3 py-3 text-foreground">{pin.generatedAt ? new Date(pin.generatedAt).toLocaleDateString() : '—'}</td>
+                        <td className="px-3 py-3">
+                          <div className="flex flex-wrap gap-2">
+                            <button type="button" onClick={() => handleViewPin(pin)} className="inline-flex items-center gap-1 rounded border border-sky-200 bg-sky-50 px-2 py-1 text-xs font-semibold text-sky-700 transition hover:bg-sky-100">
+                              <Eye className="h-3.5 w-3.5" /> View
+                            </button>
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                await handleCopyPinValue(pin.pinValue);
+                              }}
+                              className="inline-flex items-center gap-1 rounded border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
+                            >
+                              <Copy className="h-3.5 w-3.5" /> Copy
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleExportPin(pin.pinValue)}
+                              className="inline-flex items-center gap-1 rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                            >
+                              <Download className="h-3.5 w-3.5" /> Export
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div id="generic-pin-registry" className="mt-4 rounded-lg border border-border bg-surface p-5">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">Scratch Card Registry</h2>
+              <p className="text-sm text-muted">Generic scratch cards are shown separately and remain unassigned until redeemed.</p>
+            </div>
+            <div className="text-xs text-muted">Showing {filteredGenericPins.length} scratch card{filteredGenericPins.length === 1 ? "" : "s"}</div>
+          </div>
+
+          {filteredGenericPins.length === 0 ? (
+            <div className="rounded-2xl border border-border bg-background/70 p-4 text-sm text-muted">
+              No generic scratch cards match the current filters.
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-border text-sm">
-                <thead className="bg-background/60 text-left text-xs uppercase tracking-wide text-muted">
-                  <tr>
-                    <th className="px-3 py-3 font-medium">PIN</th>
-                    <th className="px-3 py-3 font-medium">Student</th>
-                    <th className="px-3 py-3 font-medium">Admission No.</th>
-                    <th className="px-3 py-3 font-medium">Type</th>
-                    <th className="px-3 py-3 font-medium">Status</th>
-                    <th className="px-3 py-3 font-medium">Session</th>
-                    <th className="px-3 py-3 font-medium">Term</th>
-                    <th className="px-3 py-3 font-medium">Expiry</th>
-                    <th className="px-3 py-3 font-medium">Generated</th>
-                    <th className="px-3 py-3 font-medium">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border bg-surface/60">
-                  {pagedPins.map((pin) => (
-                    <tr key={pin.id} className="align-top">
-                      <td className="px-3 py-3">
-                        <div className="font-semibold tracking-[0.2em] text-foreground">{pin.pinValue || '—'}</div>
-                        <div className="mt-1 text-xs text-muted">{pin.batch?.batchName || 'Standalone'}</div>
-                      </td>
-                      <td className="px-3 py-3">
-                        <div className="font-medium text-foreground">{pin.student ? `${pin.student.firstName || ''} ${pin.student.lastName || ''}`.trim() : 'Unassigned'}</div>
-                        <div className="text-xs text-muted">{pin.student?.class?.name || '—'}</div>
-                      </td>
-                      <td className="px-3 py-3 text-foreground">{pin.student?.admissionNo || '—'}</td>
-                      <td className="px-3 py-3">
-                        <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${getTypeBadgeClass(pin.type || 'GENERIC')}`}>
-                          {pin.type || 'GENERIC'}
-                        </span>
-                      </td>
-                      <td className="px-3 py-3">
-                        <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${getStatusBadgeClass(pin.status || 'ACTIVE')}`}>
-                          {pin.status || 'ACTIVE'}
-                        </span>
-                      </td>
-                      <td className="px-3 py-3 text-foreground">{pin.term?.academicYear?.name || '—'}</td>
-                      <td className="px-3 py-3 text-foreground">{pin.term?.name || '—'}</td>
-                      <td className="px-3 py-3 text-foreground">{pin.expiresAt ? new Date(pin.expiresAt).toLocaleDateString() : '—'}</td>
-                      <td className="px-3 py-3 text-foreground">{pin.generatedAt ? new Date(pin.generatedAt).toLocaleDateString() : '—'}</td>
-                      <td className="px-3 py-3">
-                        <div className="flex flex-wrap gap-2">
-                          <button type="button" onClick={() => handleViewPin(pin)} className="inline-flex items-center gap-1 rounded border border-sky-200 bg-sky-50 px-2 py-1 text-xs font-semibold text-sky-700 transition hover:bg-sky-100">
-                            <Eye className="h-3.5 w-3.5" /> View
-                          </button>
-                          <button type="button" onClick={() => handlePrintPin(pin)} className="inline-flex items-center gap-1 rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-700 transition hover:bg-amber-100">
-                            <Printer className="h-3.5 w-3.5" /> Print
-                          </button>
-                          <button type="button" className="inline-flex items-center gap-1 rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100">
-                            <Download className="h-3.5 w-3.5" /> Export
-                          </button>
-                        </div>
-                      </td>
+            <div>
+              <div className="mb-3 flex items-center justify-between">
+                <div className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1 text-xs font-semibold text-foreground">
+                  <input
+                    type="checkbox"
+                    checked={pageAllSelectedGeneric}
+                    onChange={handleToggleSelectAllGeneric}
+                    className="h-4 w-4 rounded border border-border text-brand focus:ring-brand"
+                  />
+                  {selectedPinIds.length ? `${selectedPinIds.length} selected` : 'Select rows'}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    disabled={!selectedPinIds.length}
+                    onClick={handlePrintSelected}
+                    className={`rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${selectedPinIds.length ? 'bg-brand border-brand text-white hover:bg-brand/90' : 'border-border bg-background text-foreground hover:bg-muted/30'}`}
+                  >
+                    Print Selected
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!selectedPinIds.length}
+                    onClick={handleExportSelected}
+                    className={`rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${selectedPinIds.length ? 'bg-brand border-brand text-white hover:bg-brand/90' : 'border-border bg-background text-foreground hover:bg-muted/30'}`}
+                  >
+                    Export Selected
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!selectedPinIds.length}
+                    onClick={() => handleOpenConfirm('deactivate')}
+                    className={`rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${selectedPinIds.length ? 'bg-brand border-brand text-white hover:bg-brand/90' : 'border-border bg-background/80 text-foreground opacity-50'}`}
+                  >
+                    Deactivate Selected
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!selectedPinIds.length}
+                    onClick={() => handleOpenConfirm('delete')}
+                    className={`rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${selectedPinIds.length ? 'bg-brand border-brand text-white hover:bg-brand/90' : 'border-border bg-background/80 text-foreground opacity-50'}`}
+                  >
+                    Delete Selected
+                  </button>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-border text-sm">
+                  <thead className="bg-background/60 text-left text-xs uppercase tracking-wide text-muted">
+                    <tr>
+                      <th className="px-3 py-3 font-medium">
+                        <input type="checkbox" checked={pageAllSelectedGeneric} onChange={handleToggleSelectAllGeneric} className="h-4 w-4 rounded border border-border text-brand focus:ring-brand" />
+                      </th>
+                      <th className="px-3 py-3 font-medium">PIN</th>
+                      <th className="px-3 py-3 font-medium">Batch</th>
+                      <th className="px-3 py-3 font-medium">Status</th>
+                      <th className="px-3 py-3 font-medium">Session</th>
+                      <th className="px-3 py-3 font-medium">Term</th>
+                      <th className="px-3 py-3 font-medium">Generated</th>
+                      <th className="px-3 py-3 font-medium">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-border bg-surface/60">
+                    {genericServerPins.map((pin) => (
+                      <tr key={pin.id} className="align-top">
+                        <td className="px-3 py-3">
+                          <input
+                            type="checkbox"
+                            checked={selectedPinIds.includes(pin.id)}
+                            onChange={() => handleTogglePinSelection(pin.id)}
+                            className="h-4 w-4 rounded border border-border text-brand focus:ring-brand"
+                          />
+                        </td>
+                        <td className="px-3 py-3">
+                          <div className="font-semibold tracking-[0.2em] text-foreground">{pin.pinValue || '—'}</div>
+                        </td>
+                        <td className="px-3 py-3 text-foreground">{pin.batch?.batchName || '—'}</td>
+                        <td className="px-3 py-3">
+                          <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${getStatusBadgeClass(pin.status || 'ACTIVE')}`}>
+                            {pin.status || 'ACTIVE'}
+                          </span>
+                        </td>
+                        <td className="px-3 py-3 text-foreground">{pin.term?.academicYear?.name || '—'}</td>
+                        <td className="px-3 py-3 text-foreground">{pin.term?.name || '—'}</td>
+                        <td className="px-3 py-3 text-foreground">{pin.generatedAt ? new Date(pin.generatedAt).toLocaleDateString() : '—'}</td>
+                        <td className="px-3 py-3">
+                          <div className="flex flex-wrap gap-2">
+                            <button type="button" onClick={() => handleViewPin(pin)} className="inline-flex items-center gap-1 rounded border border-sky-200 bg-sky-50 px-2 py-1 text-xs font-semibold text-sky-700 transition hover:bg-sky-100">
+                              <Eye className="h-3.5 w-3.5" /> View
+                            </button>
+                            <button type="button" onClick={() => handlePrintPin(pin)} className="inline-flex items-center gap-1 rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-700 transition hover:bg-amber-100">
+                              <Printer className="h-3.5 w-3.5" /> Print
+                            </button>
+                            <button type="button" onClick={async () => { await handleCopyPinValue(pin.pinValue); }} className="inline-flex items-center gap-1 rounded border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-semibold text-slate-700 transition hover:bg-slate-100">
+                              <Copy className="h-3.5 w-3.5" /> Copy
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="mt-4 flex items-center justify-between">
+                <div className="text-sm text-muted">Page {genericCurrentPage} of {genericPageCount}</div>
+                <div className="flex items-center gap-2">
+                  <button type="button" disabled={genericCurrentPage <= 1} onClick={() => setGenericCurrentPage((p) => Math.max(1, p - 1))} className="rounded-md border px-3 py-1 text-sm">Previous</button>
+                  <button type="button" disabled={genericCurrentPage >= genericPageCount} onClick={() => setGenericCurrentPage((p) => Math.min(genericPageCount, p + 1))} className="rounded-md border px-3 py-1 text-sm">Next</button>
+                </div>
+              </div>
             </div>
           )}
         </div>
-        <div className="mt-3 flex justify-end">
-          <Link
-            href="/admin/settings/result-pins/all"
-            className="inline-flex items-center gap-2 rounded-lg border border-[#0A66C2] bg-[#0A66C2] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#0858a8]"
-          >
-            View all
-          </Link>
-        </div>
-      </div>
 
-      {isPinModalOpen && selectedPin ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 py-6">
-          <div className="w-full max-w-lg rounded-3xl border border-border bg-surface p-6 shadow-2xl">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-brand">PIN preview</p>
-                <h3 className="mt-2 text-xl font-semibold text-foreground">Result access sheet details</h3>
-              </div>
-              <button type="button" onClick={() => { setSelectedPin(null); setIsPinModalOpen(false); }} className="rounded-full border border-border bg-background p-2 text-foreground hover:bg-muted/30">
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="mt-6 space-y-3 text-sm text-muted">
-              <div className="rounded-2xl border border-border bg-background p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="font-medium text-foreground">School code</span>
-                  <span className="font-semibold text-foreground">{schoolMeta?.slug || schoolMeta?.initials || "school-code"}</span>
-                </div>
-              </div>
-              <div className="rounded-2xl border border-border bg-background p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="font-medium text-foreground">Student</span>
-                  <span className="font-semibold text-foreground">{selectedPin.student ? `${selectedPin.student.firstName || ""} ${selectedPin.student.lastName || ""}`.trim() : "Unassigned"}</span>
-                </div>
-              </div>
-              <div className="rounded-2xl border border-border bg-background p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="font-medium text-foreground">Admission number</span>
-                  <span className="font-semibold text-foreground">{selectedPin.student?.admissionNo || "—"}</span>
-                </div>
-              </div>
-              <div className="rounded-2xl border border-border bg-background p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="font-medium text-foreground">PIN</span>
-                  <span className="font-semibold tracking-[0.3em] text-brand">{selectedPin.pinValue || "—"}</span>
-                </div>
-              </div>
-              <div className="rounded-2xl border border-border bg-background p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="font-medium text-foreground">Session</span>
-                  <span className="font-semibold text-foreground">{selectedPin.term?.academicYear?.name || "—"}</span>
-                </div>
-              </div>
-              <div className="rounded-2xl border border-border bg-background p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="font-medium text-foreground">Term</span>
-                  <span className="font-semibold text-foreground">{selectedPin.term?.name || "—"}</span>
-                </div>
-              </div>
-            </div>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <button type="button" onClick={() => handlePrintPin(selectedPin)} className="inline-flex items-center gap-2 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand/90">
-                <Printer className="h-4 w-4" />
-                Print sheet
-              </button>
-              <button type="button" onClick={() => { setSelectedPin(null); setIsPinModalOpen(false); }} className="rounded-lg border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted/30">
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div className="rounded-lg border border-border bg-surface p-5">
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div id="student-pin-form" className="rounded-lg border border-border bg-surface p-5">
           <div className="mb-4 flex items-center gap-2">
-            <UserRoundPlus className="h-5 w-5 text-brand" />
+            <Sparkles className="h-5 w-5 text-brand" />
             <h2 className="text-lg font-semibold text-foreground">Generate Student PIN</h2>
           </div>
           <form onSubmit={handleGenerateStudentPin} className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="mb-2 block text-sm font-medium text-foreground">Class</label>
-                <select
-                  value={selectedClassId}
-                  onChange={(event) => {
-                    setSelectedClassId(event.target.value);
-                    setSelectedAssessmentId("");
-                    setStudentId("");
-                  }}
-                  className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand/50"
-                >
-                  <option value="">All classes</option>
-                  {classes.map((classItem) => (
-                    <option key={classItem.id} value={classItem.id}>
-                      {classItem.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
               <div>
                 <label className="mb-2 block text-sm font-medium text-foreground">Student</label>
                 <select
@@ -1010,8 +1655,6 @@ export default function ResultPinsPage() {
                   ))}
                 </select>
               </div>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label className="mb-2 block text-sm font-medium text-foreground">Session / Term</label>
                 <select
@@ -1042,32 +1685,32 @@ export default function ResultPinsPage() {
                   )}
                 </select>
               </div>
-              <div>
-                <label className="mb-2 block text-sm font-medium text-foreground">Assessment</label>
-                <select
-                  value={selectedAssessmentId}
-                  onChange={(event) => {
-                    const nextAssessmentId = event.target.value;
-                    setSelectedAssessmentId(nextAssessmentId);
-                    if (!nextAssessmentId) {
-                      setSelectedTermId("");
-                      return;
-                    }
-                    const assessment = assessments.find((item) => item.id === nextAssessmentId);
-                    if (assessment?.term?.id) {
-                      setSelectedTermId(assessment.term.id);
-                    }
-                  }}
-                  className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand/50"
-                >
-                  <option value="">Optional assessment</option>
-                  {filteredAssessments.map((assessment) => (
-                    <option key={assessment.id} value={assessment.id}>
-                      {assessment.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-foreground">Assessment</label>
+              <select
+                value={selectedAssessmentId}
+                onChange={(event) => {
+                  const nextAssessmentId = event.target.value;
+                  setSelectedAssessmentId(nextAssessmentId);
+                  if (!nextAssessmentId) {
+                    setSelectedTermId("");
+                    return;
+                  }
+                  const assessment = assessments.find((item) => item.id === nextAssessmentId);
+                  if (assessment?.term?.id) {
+                    setSelectedTermId(assessment.term.id);
+                  }
+                }}
+                className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand/50"
+              >
+                <option value="">Optional assessment</option>
+                {filteredAssessments.map((assessment) => (
+                  <option key={assessment.id} value={assessment.id}>
+                    {assessment.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="flex flex-wrap gap-3">
               <button
@@ -1080,8 +1723,8 @@ export default function ResultPinsPage() {
               </button>
               <button
                 type="button"
-                onClick={handlePrintSheet}
-                disabled={!generatedStudent?.pin}
+                onClick={handleStudentPrintClick}
+                disabled={!generatedStudent?.pin && !studentId}
                 className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted/30 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <Printer className="h-4 w-4" />
@@ -1090,50 +1733,159 @@ export default function ResultPinsPage() {
             </div>
           </form>
 
-          {generatedStudent ? (
-            <div className="mt-4 rounded-lg border border-border bg-background p-4 text-sm">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="font-semibold text-foreground">Generated PIN</p>
-                  <p className="mt-2 text-2xl font-bold tracking-[0.3em] text-brand">{generatedStudent.pin}</p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={handleCopyPin}
-                    className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium text-foreground hover:bg-muted/30"
-                  >
-                    <Copy className="h-4 w-4" />
-                    Copy PIN
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handlePrintSheet}
-                    className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium text-foreground hover:bg-muted/30"
-                  >
-                    <Printer className="h-4 w-4" />
-                    Print sheet
-                  </button>
-                </div>
-              </div>
-              <p className="mt-3 text-muted">
-                Student: {generatedStudent.student?.firstName || ""} {generatedStudent.student?.lastName || ""}
-              </p>
-              <div className="mt-3 space-y-1 text-sm text-muted">
-                <div><span className="font-medium text-foreground">School code:</span> {generatedStudent.schoolCode || schoolMeta?.slug || schoolMeta?.initials || "—"}</div>
-                <div><span className="font-medium text-foreground">Admission number:</span> {generatedStudent.student?.admissionNo || "—"}</div>
-                <div><span className="font-medium text-foreground">Session:</span> {generatedStudent.sessionName || "—"}</div>
-                <div><span className="font-medium text-foreground">Term:</span> {generatedStudent.termName || "—"}</div>
-                <div><span className="font-medium text-foreground">Assessment:</span> {generatedStudent.assessmentName || "—"}</div>
-              </div>
+          {classPinError ? (
+            <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+              {classPinError}
             </div>
           ) : null}
+
+          {classPinSummary ? (
+            <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
+              {classPinSummary}
+            </div>
+          ) : null}
+          </div>
+
+          <div id="class-pin-form" className="rounded-lg border border-border bg-surface p-5">
+          <div className="mb-4 flex items-center gap-2">
+            <Printer className="h-5 w-5 text-brand" />
+            <h2 className="text-lg font-semibold text-foreground">Generate Class PINs</h2>
+          </div>
+          <form onSubmit={handleGenerateClassPins} className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-foreground">Class</label>
+                <select
+                  value={selectedClassId}
+                  onChange={(event) => {
+                    setSelectedClassId(event.target.value);
+                  }}
+                  className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand/50"
+                  required
+                >
+                  <option value="">Select a class</option>
+                  {classes.map((classItem) => (
+                    <option key={classItem.id} value={classItem.id}>
+                      {classItem.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-foreground">Session / Term</label>
+                <select
+                  value={selectedTermId}
+                  onChange={(event) => {
+                    setSelectedTermId(event.target.value);
+                    setSelectedAssessmentId("");
+                  }}
+                  className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand/50"
+                >
+                  <option value="">Optional term</option>
+                  {sessions.length > 0 ? (
+                    sessions.map((session) => (
+                      <optgroup key={session.id} label={session.name}>
+                        {session.terms.map((term) => (
+                          <option key={term.id} value={term.id}>
+                            {term.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))
+                  ) : (
+                    terms.map((term) => (
+                      <option key={term.id} value={term.id}>
+                        {term.academicYearName ? `${term.academicYearName} • ${term.name}` : term.name}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-border bg-background/70 p-4 text-sm text-muted">
+              {selectedClassId ? (
+                <>
+                  {selectedClassStudentCount} active student{selectedClassStudentCount === 1 ? "" : "s"} will receive PINs for this class.
+                </>
+              ) : (
+                "Select a class to preview the student count."
+              )}
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-foreground">Assessment</label>
+              <select
+                value={selectedAssessmentId}
+                onChange={(event) => {
+                  const nextAssessmentId = event.target.value;
+                  setSelectedAssessmentId(nextAssessmentId);
+                  if (!nextAssessmentId) {
+                    setSelectedTermId("");
+                    return;
+                  }
+                  const assessment = assessments.find((item) => item.id === nextAssessmentId);
+                  if (assessment?.term?.id) {
+                    setSelectedTermId(assessment.term.id);
+                  }
+                }}
+                className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand/50"
+              >
+                <option value="">Optional assessment</option>
+                {filteredAssessments.map((assessment) => (
+                  <option key={assessment.id} value={assessment.id}>
+                    {assessment.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-foreground">Format</label>
+                <select
+                  value={pinFormat}
+                  onChange={(event) => setPinFormat(event.target.value)}
+                  className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand/50"
+                >
+                  <option value="XXXX-XXXX">XXXX-XXXX</option>
+                  <option value="XXXX-XXXX-XXXX">XXXX-XXXX-XXXX</option>
+                  <option value="ALPHA-NUMERIC">Alpha-numeric</option>
+                </select>
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-foreground">Length</label>
+                <input
+                  type="number"
+                  min={4}
+                  max={12}
+                  value={pinLength}
+                  onChange={(event) => setPinLength(Number(event.target.value))}
+                  className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand/50"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                disabled={submittingClass || !status?.enabled}
+                className="inline-flex items-center gap-2 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand/90 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Printer className="h-4 w-4" />
+                {submittingClass ? "Generating..." : "Generate & Print Class PINs"}
+              </button>
+            </div>
+          </form>
+          </div>
         </div>
 
-        <div className="rounded-lg border border-border bg-surface p-5">
+        {/** Generated student modal moved to end to avoid JSX adjacency issues */}
+        <div id="batch-pin-form" className="rounded-lg border border-border bg-surface p-5">
           <div className="mb-4 flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-brand" />
-            <h2 className="text-lg font-semibold text-foreground">Generate Generic PIN Batch</h2>
+            <h2 className="text-lg font-semibold text-foreground">Generate Scratch Cards</h2>
           </div>
           <form onSubmit={handleGenerateBatch} className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
@@ -1227,8 +1979,32 @@ export default function ResultPinsPage() {
               </div>
             </div>
           ) : null}
-        </div>
+
+          {generatedStudent ? (
+            <GeneratedPinModal
+              data={generatedStudent}
+              schoolMeta={schoolMeta}
+              onClose={() => setGeneratedStudent(null)}
+              onPrint={async () => {
+                await handlePrintSheet();
+                setGeneratedStudent(null);
+              }}
+              onCopy={async () => {
+                if (!generatedStudent?.pin) return;
+                try {
+                  await navigator.clipboard.writeText(generatedStudent.pin);
+                  setStatusModal({ open: true, type: "success", title: "PIN copied", message: `Copied ${generatedStudent.pin} to clipboard.` });
+                } catch (err) {
+                  console.error('Copy failed', err);
+                  setError('Unable to copy PIN to clipboard.');
+                }
+              }}
+            />
+          ) : null}
       </div>
     </div>
+
+      
+
   );
 }

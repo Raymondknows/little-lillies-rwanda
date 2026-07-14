@@ -18,6 +18,7 @@ interface ErrorModalProps {
   };
   onSuccessAction?: () => void; // For success modal primary button
   confirmLabel?: string;
+  children?: React.ReactNode;
 }
 
 export function ErrorModal({
@@ -30,6 +31,7 @@ export function ErrorModal({
   action,
   onSuccessAction,
   confirmLabel,
+  children,
 }: ErrorModalProps) {
   const [showDetails, setShowDetails] = useState(Boolean(details));
   const [shouldRender, setShouldRender] = useState(isOpen);
@@ -76,7 +78,7 @@ export function ErrorModal({
   const BUTTON_HOVER = BRAND_DARK;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center px-4 bg-black/40">
       <style>{`
         @keyframes sb_modal_enter { from { transform: translateX(36px) scale(.98); opacity: 0 } to { transform: translateX(0) scale(1); opacity: 1 } }
         @keyframes sb_modal_exit  { from { transform: translateX(0) scale(1); opacity: 1 } to { transform: translateX(36px) scale(.98); opacity: 0 } }
@@ -111,29 +113,36 @@ export function ErrorModal({
 
         {/* Content */}
         <div className="px-6 py-5">
-          <p className="text-sm leading-6 text-slate-700">{message}</p>
+          {/** If children provided, render that (allows custom modal content). Otherwise fall back to message/details. */}
+          {children ? (
+            <div>{children}</div>
+          ) : (
+            <>
+              <p className="text-sm leading-6 text-slate-700">{message}</p>
 
-          {details && (
-            <div className="mt-4 space-y-2">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold" style={{ color: BRAND }}>
-                  {isSuccess ? "Next steps" : "What teachers should do"}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setShowDetails(!showDetails)}
-                  className="text-xs font-medium"
-                  style={{ color: BRAND }}
-                >
-                  {showDetails ? "Hide" : "Show"}
-                </button>
-              </div>
-              {showDetails && (
-                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                  <p className="whitespace-pre-line text-sm text-slate-700">{details}</p>
+              {details && (
+                <div className="mt-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold" style={{ color: BRAND }}>
+                      {isSuccess ? "Next steps" : "What teachers should do"}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowDetails(!showDetails)}
+                      className="text-xs font-medium"
+                      style={{ color: BRAND }}
+                    >
+                      {showDetails ? "Hide" : "Show"}
+                    </button>
+                  </div>
+                  {showDetails && (
+                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                      <p className="whitespace-pre-line text-sm text-slate-700">{details}</p>
+                    </div>
+                  )}
                 </div>
               )}
-            </div>
+            </>
           )}
         </div>
 

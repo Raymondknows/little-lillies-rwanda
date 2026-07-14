@@ -7,6 +7,7 @@ import { getBackendUrl } from "@/lib/backend-url";
 import { buildPinCardHtml, buildPinSheetHtml } from "@/lib/pin-print";
 import { resolveSchoolAssetUrl } from "@/lib/asset-urls";
 import { ErrorModal } from "@/components/ui/error-modal";
+import { UserGuide, type PageHelpGuide } from "@/components/ui/user-guide";
 
 interface PinStatus {
   enabled: boolean;
@@ -2001,10 +2002,52 @@ export default function ResultPinsPage() {
               }}
             />
           ) : null}
+
+          <UserGuide guide={HELP_GUIDE} />
       </div>
     </div>
 
-      
-
   );
 }
+
+const HELP_GUIDE: PageHelpGuide = {
+  title: 'Result PIN Management',
+  overview: 'Use this page to generate student PINs, issue generic scratch cards, and manage the PIN registry with printing, export, and bulk actions.',
+  steps: [
+    'Search or filter the registry by PIN, student name, batch, status, session, or term.',
+    'Generate student PINs, class PINs, or scratch cards from the forms below.',
+    'Use row selection to print, export, deactivate, or delete multiple PINs at once.',
+    'Share the public Result Checker link — https://schoolbase.live/result/check — with parents and students for secure result entry.',
+  ],
+  commonTasks: [
+    {
+      title: 'Generate a student PIN',
+      description: 'Select the student, optional term and assessment, then generate a PIN that can be printed or copied.',
+      tips: ['Use the student search to quickly locate learners by name or admission number.'],
+    },
+    {
+      title: 'Issue generic scratch cards',
+      description: 'Create a batch of generic PINs for distribution and track them separately in the scratch card registry.',
+      tips: ['Choose a batch name to help identify the cards later.', 'Use the generic registry search and pagination to review active scratch cards.'],
+    },
+    {
+      title: 'Perform bulk actions',
+      description: 'Select multiple records and use Print, Export, Deactivate, or Delete to manage PIN lifecycle efficiently.',
+      tips: ['Deactivate old or unused PINs so they cannot be redeemed again.', 'Export selected PINs as text for offline distribution.'],
+    },
+  ],
+  faqs: [
+    {
+      question: 'Where can students use the PIN?',
+      answer: 'Students use the public Result Checker entry page at https://schoolbase.live/result/check to enter their PIN and view results.',
+    },
+    {
+      question: 'How do I revoke an old PIN?',
+      answer: 'Select the PINs and choose Deactivate Selected to prevent further use while preserving history.',
+    },
+    {
+      question: 'What if a PIN is invalid?',
+      answer: 'Confirm the status, then regenerate a new PIN or delete the invalid record and issue a fresh code.',
+    },
+  ],
+};

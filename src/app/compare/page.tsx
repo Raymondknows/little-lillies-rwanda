@@ -315,7 +315,7 @@ export default function ComparisonPage() {
             Ready to Switch to SchoolBase?
           </h2>
           <p className="text-[#bfdbfe] mb-8 text-lg">
-            See why 500+ schools have made the switch. Try it free for 14 days.
+            See why 500+ schools have made the switch. Try it free for 7 days.
           </p>
           <Link
             href="/purchase"

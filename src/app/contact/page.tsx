@@ -107,7 +107,7 @@ export default function ContactPage() {
               </div>
 
               <div className="rounded-lg bg-brand-light p-4 text-sm text-foreground">
-                <p className="font-semibold">💡 Try free for 14 days</p>
+                <p className="font-semibold">💡 Try free for 7 days</p>
                 <p className="mt-1 text-muted">
                   No credit card required. Full access to all features.
                 </p>

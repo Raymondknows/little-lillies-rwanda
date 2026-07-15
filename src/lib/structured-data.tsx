@@ -94,7 +94,7 @@ export const structuredData = {
         name: 'Do you offer a free trial?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'Yes, we offer a 14-day free trial with full access to all features. No credit card required.',
+          text: 'Yes, we offer a 7-day free trial with full access to all features. No credit card required.',
         },
       },
     ],

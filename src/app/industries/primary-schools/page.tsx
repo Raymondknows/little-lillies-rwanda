@@ -173,7 +173,7 @@ export default function PrimarySchoolsPage() {
             Try SchoolBase for Your Primary School
           </h2>
           <p className="text-[#bfdbfe] mb-8 text-lg">
-            14-day free trial. No credit card required. Get started in minutes.
+            7-day free trial. No credit card required. Get started in minutes.
           </p>
           <Link
             href="/purchase"

@@ -169,7 +169,7 @@ export default function UseCasesPage() {
             Ready to Solve Your School Challenges?
           </h2>
           <p className="text-[#bfdbfe] mb-8 text-lg">
-            Start your 14-day free trial today. No credit card required.
+            Start your 7-day free trial today. No credit card required.
           </p>
           <Link
             href="/purchase"

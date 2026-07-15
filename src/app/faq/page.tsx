@@ -26,7 +26,7 @@ const faqs = [
       },
       {
         q: 'Can I try SchoolBase for free?',
-        a: 'Yes! We offer a 14-day free trial with full access to all features. No credit card required.',
+        a: 'Yes! We offer a 7-day free trial with full access to all features. No credit card required.',
       },
     ],
   },

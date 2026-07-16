@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useRef, useEffect } from "react";
+import { useCallback, useMemo, useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   FileText,
@@ -154,6 +154,9 @@ export default function ResultsPageClient({ assessments, sessions = [] }: { asse
   const [modalTitle, setModalTitle] = useState<string | undefined>(undefined);
   const [modalType, setModalType] = useState<'success' | 'error'>('error');
   const [modalDetails, setModalDetails] = useState<string | undefined>(undefined);
+  const [resultsNotificationsEnabled, setResultsNotificationsEnabled] = useState<boolean | null>(null);
+  const [resultsNotificationsLoading, setResultsNotificationsLoading] = useState(false);
+  const [resultsNotificationsError, setResultsNotificationsError] = useState<string | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deletingAssessmentId, setDeletingAssessmentId] = useState<string | null>(null);
   const [deletingAssessmentName, setDeletingAssessmentName] = useState<string>("");
@@ -166,6 +169,30 @@ export default function ResultsPageClient({ assessments, sessions = [] }: { asse
       searchInputRef.current.focus();
     }
   }, [isSearchOpen]);
+
+  const loadCommunicationRules = useCallback(async () => {
+    setResultsNotificationsLoading(true);
+    setResultsNotificationsError(null);
+    try {
+      const response = await fetch('/api/admin/communications/rules', { credentials: 'include' });
+      if (!response.ok) {
+        const fallback = await response.text();
+        console.error('Communication rules endpoint failed', response.status, fallback);
+        throw new Error('Unable to load notification settings.');
+      }
+      const data = await response.json();
+      setResultsNotificationsEnabled(data?.rules?.ResultsPublished?.enabled ?? true);
+    } catch (error) {
+      console.error('Communication rules load error:', error);
+      setResultsNotificationsError('Unable to load notification settings right now.');
+    } finally {
+      setResultsNotificationsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadCommunicationRules();
+  }, [loadCommunicationRules]);
 
   const sessionOptions = useMemo(() => {
     const uniqueSessions = Array.from(
@@ -349,6 +376,39 @@ export default function ResultsPageClient({ assessments, sessions = [] }: { asse
 
   const totalResults = paginatedAssessments.reduce((sum, a) => sum + a._count.results, 0);
 
+  async function handleResultsNotificationsToggle(enabled: boolean) {
+    setResultsNotificationsLoading(true);
+    setResultsNotificationsError(null);
+    try {
+      const response = await fetch('/api/admin/communications/rules', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ event: 'ResultsPublished', enabled }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.error || 'Failed to update notification setting.');
+      }
+      setResultsNotificationsEnabled(data?.rules?.ResultsPublished?.enabled ?? enabled);
+      setModalTitle(enabled ? 'Notifications enabled' : 'Notifications disabled');
+      setModalType('success');
+      setModalMessage(enabled ? 'Parents will now receive result-published notifications.' : 'Result-published notifications are now turned off.');
+      setModalDetails(undefined);
+      setModalOpen(true);
+    } catch (error) {
+      console.error('Communication rules update error:', error);
+      setResultsNotificationsError(error instanceof Error ? error.message : 'Unable to update notification settings.');
+      setModalTitle('Update failed');
+      setModalType('error');
+      setModalMessage(error instanceof Error ? error.message : 'Unable to update notification settings.');
+      setModalDetails(undefined);
+      setModalOpen(true);
+    } finally {
+      setResultsNotificationsLoading(false);
+    }
+  }
+
   return (
     <>
       <div className="w-full">
@@ -404,6 +464,20 @@ export default function ResultsPageClient({ assessments, sessions = [] }: { asse
               <TrendingUp className="h-4 w-4" />
               Promotions
             </Button>
+            <div className="flex items-center gap-2 rounded-full border border-border bg-background px-3 py-2 shadow-sm">
+              <span className="text-sm font-medium text-muted">Notify parents</span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={resultsNotificationsEnabled ?? true}
+                aria-label="Toggle parent result notifications"
+                disabled={resultsNotificationsLoading}
+                onClick={() => void handleResultsNotificationsToggle(! (resultsNotificationsEnabled ?? true))}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${resultsNotificationsEnabled ?? true ? 'bg-[#0A66C2]' : 'bg-gray-300'}`}
+              >
+                <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${resultsNotificationsEnabled ?? true ? 'translate-x-5' : 'translate-x-1'}`} />
+              </button>
+            </div>
           </div>
         </div>
 

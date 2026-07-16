@@ -117,7 +117,7 @@ export default function WhatsAppSettingsPage() {
     setDebugInfo(nextSession?.debugInfo || null);
   };
 
-  const fetchStatus = async (showLoading = false) => {
+  async function fetchStatus(showLoading = false) {
     if (showLoading) {
       setLoading(true);
     }
@@ -392,6 +392,7 @@ export default function WhatsAppSettingsPage() {
               </label>
               <p className="text-xs text-muted mt-2">Preview: {message}{schoolPreviewName || schoolPreviewPhone ? ` \n\n— ${schoolPreviewName || ''}${schoolPreviewName && schoolPreviewPhone ? ' | ' : ''}${schoolPreviewPhone || ''}` : ''}</p>
             </div>
+
             {usePairingCode && (
               <div>
                 <label className="block text-sm font-medium mb-2">Phone number for pairing</label>

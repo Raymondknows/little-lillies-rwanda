@@ -613,6 +613,36 @@ export default function ResultPinsPage() {
     URL.revokeObjectURL(url);
   };
 
+  const handleNotifySelected = async () => {
+    if (!selectedPinIds.length) return;
+
+    try {
+      const response = await fetch(`${backendUrl}/api/result-pins/pins/bulk/notify`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: selectedPinIds }),
+      });
+
+      const data = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(data?.error || 'Failed to send PIN notifications');
+
+      setStatusModal({
+        open: true,
+        type: 'success',
+        title: 'Notifications sent',
+        message: `Sent ${data?.sent || 0} PIN delivery notification(s) to guardians.`,
+      });
+    } catch (err) {
+      setStatusModal({
+        open: true,
+        type: 'error',
+        title: 'Unable to send notifications',
+        message: err instanceof Error ? err.message : 'PIN notifications could not be sent.',
+      });
+    }
+  };
+
   const handlePrintSelected = async () => {
     const selectedPins = pins.filter((pin) => selectedPinIds.includes(pin.id));
     if (!selectedPins.length) return;
@@ -1354,6 +1384,14 @@ export default function ResultPinsPage() {
               <button
                 type="button"
                 disabled={!selectedPinIds.length}
+                onClick={() => { void handleNotifySelected(); }}
+                className={`rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${selectedPinIds.length ? 'bg-brand border-brand text-white hover:bg-brand/90' : 'border-border bg-background text-foreground hover:bg-muted/30'}`}
+              >
+                Notify Guardians
+              </button>
+              <button
+                type="button"
+                disabled={!selectedPinIds.length}
                 onClick={() => handleOpenConfirm('deactivate')}
                 className={`rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${selectedPinIds.length ? 'bg-brand border-brand text-white hover:bg-brand/90' : 'border-border bg-background/80 text-foreground opacity-50'}`}
               >
@@ -1543,6 +1581,14 @@ export default function ResultPinsPage() {
                     className={`rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${selectedPinIds.length ? 'bg-brand border-brand text-white hover:bg-brand/90' : 'border-border bg-background text-foreground hover:bg-muted/30'}`}
                   >
                     Export Selected
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!selectedPinIds.length}
+                    onClick={() => { void handleNotifySelected(); }}
+                    className={`rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${selectedPinIds.length ? 'bg-brand border-brand text-white hover:bg-brand/90' : 'border-border bg-background text-foreground hover:bg-muted/30'}`}
+                  >
+                    Notify Guardians
                   </button>
                   <button
                     type="button"

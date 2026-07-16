@@ -48,6 +48,7 @@ export default function ParentResultsPage() {
   const [pinVerifiedChildId, setPinVerifiedChildId] = useState<string | null>(null);
   const [verifiedPin, setVerifiedPin] = useState<string | null>(null);
   const [pinRequired, setPinRequired] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   const backendUrl = getBackendUrl();
 
@@ -132,6 +133,7 @@ export default function ParentResultsPage() {
         const data = await response.json();
         const nextResults: Result[] = data.results || [];
         setResults(nextResults);
+        setStatusMessage(typeof data?.message === 'string' ? data.message : null);
         setPinRequired(false);
         setPinError(null);
 
@@ -217,6 +219,7 @@ export default function ParentResultsPage() {
       setVerifiedPin(pinInput.trim());
       setPinRequired(false);
       setPinError(null);
+      setStatusMessage(typeof data?.message === 'string' ? data.message : null);
       setResults(data.results || []);
       setSelectedAssessmentId((current) => {
         const nextResults: Result[] = data.results || [];
@@ -467,7 +470,7 @@ export default function ParentResultsPage() {
             <div className="rounded-3xl border border-slate-200 bg-slate-50 p-10 text-center print:hidden">
               <GraduationCap className="h-12 w-12 text-slate-400 mx-auto mb-3" />
               <p className="text-slate-600">
-                {selectedTerm ? `No results available for ${selectedTerm.name}` : "No results available yet"}
+                {statusMessage || (selectedTerm ? `No published results are available for ${selectedTerm.name} yet.` : "No published results are available yet. Results will appear here once the school publishes them.")}
               </p>
             </div>
           ) : (

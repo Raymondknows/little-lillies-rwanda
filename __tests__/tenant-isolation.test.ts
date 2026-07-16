@@ -1,6 +1,6 @@
 /**
  * Tenant Isolation Verification Tests
- * 
+ *
  * CRITICAL: These tests verify multi-school data isolation.
  * All queries must filter by schoolId to prevent cross-tenant data leaks.
  */
@@ -8,7 +8,6 @@
 import { prisma } from "@/lib/db";
 
 describe("Tenant Isolation", () => {
-  // Setup: Create two isolated school environments
   let school1: any, school2: any;
   let pupil1: any, pupil2: any;
   let parent1: any, parent2: any;
@@ -20,8 +19,7 @@ describe("Tenant Isolation", () => {
     school2 = await prisma.school.create({
       data: { name: "School Beta", currency: "USD", country: "US", phone: "555-0002" },
     });
-    // Note: GradingScales are auto-seeded via database trigger on School insert
-    // Also seed programmatically for test reliability
+
     const gradingScales = [
       { minScore: 70, maxScore: 100, grade: "A", sortOrder: 0 },
       { minScore: 60, maxScore: 69, grade: "B", sortOrder: 1 },
@@ -30,6 +28,7 @@ describe("Tenant Isolation", () => {
       { minScore: 40, maxScore: 44, grade: "E", sortOrder: 4 },
       { minScore: 0, maxScore: 39, grade: "F", sortOrder: 5 },
     ];
+
     for (const school of [school1, school2]) {
       for (const scale of gradingScales) {
         await prisma.gradingScale.create({
@@ -67,31 +66,31 @@ describe("Tenant Isolation", () => {
     await prisma.school.deleteMany();
   });
 
-   School 1 queries only return School 1 data", async () => {test("
+  it("School 1 queries only return School 1 data", async () => {
     const result = await prisma.pupil.findMany({ where: { schoolId: school1.id } });
-    expect(result.map(p => p.id)).toEqual([pupil1.id]);
+    expect(result.map((p: any) => p.id)).toEqual([pupil1.id]);
   });
 
-   School 2 queries only return School 2 data", async () => {test("
+  it("School 2 queries only return School 2 data", async () => {
     const result = await prisma.pupil.findMany({ where: { schoolId: school2.id } });
-    expect(result.map(p => p.id)).toEqual([pupil2.id]);
+    expect(result.map((p: any) => p.id)).toEqual([pupil2.id]);
   });
 
-   Parent 1 cannot access Parent 2 pupils", async () => {test("
+  it("Parent 1 cannot access Parent 2 pupils", async () => {
     const result = await prisma.guardianPupil.findMany({ where: { guardianId: parent1.id } });
-    expect(result.map(gp => gp.pupilId)).toEqual([pupil1.id]);
+    expect(result.map((gp: any) => gp.pupilId)).toEqual([pupil1.id]);
   });
 
-   Invoices scoped to schoolId", async () => {test("
+  it("Invoices scoped to schoolId", async () => {
     await prisma.invoice.create({
       data: { schoolId: school1.id, pupilId: pupil1.id, invoiceNo: "INV001", term: "Term 1", amountDue: 1000, amountPaid: 0, status: "pending" },
     });
     const result = await prisma.invoice.findMany({ where: { schoolId: school1.id } });
-    expect(result.every(i => i.schoolId === school1.id)).toBe(true);
+    expect(result.every((i: any) => i.schoolId === school1.id)).toBe(true);
   });
 
-   Classes isolated by schoolId", async () => {test("
+  it("Classes isolated by schoolId", async () => {
     const result = await prisma.class.findMany({ where: { schoolId: school1.id } });
-    expect(result.every(c => c.schoolId === school1.id)).toBe(true);
+    expect(result.every((c: any) => c.schoolId === school1.id)).toBe(true);
   });
 });

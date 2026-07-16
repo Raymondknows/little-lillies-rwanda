@@ -59,6 +59,7 @@ export default function PublicResultCheckPage() {
   const [reportCards, setReportCards] = useState<any[]>([]);
   const [student, setStudent] = useState<any>(null);
   const [school, setSchool] = useState<any>(null);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   const backendUrl = getBackendUrl();
 
@@ -75,6 +76,7 @@ export default function PublicResultCheckPage() {
     setSchool(null);
     setChildren([]);
     setSelectedChildId(null);
+    setStatusMessage(null);
     setPinRequired(false);
     setPinError(null);
     setPinInput("");
@@ -280,6 +282,7 @@ export default function PublicResultCheckPage() {
       // Update results with the newly fetched data
       const nextResults: Result[] = data.results || [];
       const nextReportCards = data.reportCards || [];
+      setStatusMessage(typeof data?.message === 'string' ? data.message : null);
       setResults(nextResults);
       setReportCards(nextReportCards);
       
@@ -576,7 +579,9 @@ export default function PublicResultCheckPage() {
                     {visibleResults.length === 0 ? (
                       <div className="rounded-3xl border border-slate-200 bg-slate-50 p-10 text-center print:hidden">
                         <GraduationCap className="h-12 w-12 text-slate-400 mx-auto mb-3" />
-                        <p className="text-slate-600">No results available yet for this student.</p>
+                        <p className="text-slate-600">
+                          {statusMessage || 'No published results are available yet for this student. Results will appear here once the school publishes them.'}
+                        </p>
                       </div>
                     ) : (
                       <>

@@ -68,8 +68,7 @@ export default function AboutPage() {
               <li className="flex gap-3">
                 <span className="text-brand">✓</span>
                 <span>
-                  <strong>Affordable:</strong> Prices start from ₦35,000/term. No
-                  hidden costs.
+                  <strong>Transparent pricing:</strong> Plans start from ₦60,000/term for schools that want a complete digital foundation. No hidden costs.
                 </span>
               </li>
               <li className="flex gap-3">

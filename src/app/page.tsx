@@ -107,7 +107,7 @@ export default async function HomePage() {
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted">
             Collect fees, remind parents on WhatsApp, publish results, and give
-            your school a beautiful website, all in one place. <strong className="text-foreground">Register and start using immediately</strong> — includes a <strong className="text-foreground">7-day free trial</strong>.
+            your school a professional digital experience, all in one place. <strong className="text-foreground">Register and start using immediately</strong> — includes a <strong className="text-foreground">7-day free trial</strong>.
           </p>
           <div className="mt-10 flex flex-wrap gap-4" id="start">
             <Button href="#buy">Subscribe</Button>
@@ -154,7 +154,7 @@ export default async function HomePage() {
             One plan. Everything included.
           </h2>
           <p className="mt-3 text-muted">
-            SchoolBase All-In — no hidden modules. Pricing shown for {countryLabel}. Pay per term, or ask about upfront annual billing for your country.
+            SchoolBase All-In — no hidden modules. Pricing shown for {countryLabel}. Pay per term for a premium operating system for your school, with annual billing available for schools that want continuity and savings.
           </p>
           <div className="mt-12 grid gap-6 md:grid-cols-3">
             {plans.map((plan) => (
@@ -187,8 +187,7 @@ export default async function HomePage() {
             ))}
           </div>
           <p className="mt-8 text-center text-sm text-muted">
-            Founding schools: special discount before term starts · 48-hour setup
-            guarantee
+            Premium school operations start here: 48-hour setup guarantee · onboarding support included · no hidden add-ons
           </p>
         </div>
       </section>
@@ -206,11 +205,11 @@ export default async function HomePage() {
                   Secure your subscription and begin onboarding today.
                 </h2>
                 <p className="mt-5 text-base leading-7 text-muted">
-                  Choose your plan and complete the checkout with Paystack. Our team will confirm your school setup immediately.
+                  Choose your plan and complete the checkout with Paystack. Our team will confirm your school setup immediately and help you go live with confidence.
                 </p>
                 <ul className="mt-8 space-y-3 text-sm text-muted">
                   <li>✓ Instant Paystack checkout</li>
-                  <li>✓ {starterPriceLabel} starter price</li>
+                  <li>✓ {starterPriceLabel} starter plan</li>
                   <li>✓ ClickBase Technologies Ltd payment collection</li>
                 </ul>
                 <div className="mt-10">

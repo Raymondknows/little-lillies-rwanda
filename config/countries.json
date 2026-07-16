@@ -6,9 +6,9 @@
       "currency": "NGN",
       "timezone": "Africa/Lagos",
       "plans": {
-        "starter": { "amountMinor": 3500000, "priceLabel": "₦35,000 / term" },
-        "standard": { "amountMinor": 4500000, "priceLabel": "₦45,000 / term" },
-        "group": { "amountMinor": 0, "priceLabel": "Talk to us" }
+        "starter": { "amountMinor": 6000000, "priceLabel": "₦60,000 / term" },
+        "standard": { "amountMinor": 8500000, "priceLabel": "₦85,000 / term" },
+        "group": { "amountMinor": 0, "priceLabel": "Custom from ₦150,000 / term" }
       }
     },
     "GH": {
@@ -16,9 +16,9 @@
       "currency": "GHS",
       "timezone": "Africa/Accra",
       "plans": {
-        "starter": { "amountMinor": 45000, "priceLabel": "GHS450 / term" },
-        "standard": { "amountMinor": 60000, "priceLabel": "GHS600 / term" },
-        "group": { "amountMinor": 0, "priceLabel": "Talk to us" }
+        "starter": { "amountMinor": 60000, "priceLabel": "GHS600 / term" },
+        "standard": { "amountMinor": 85000, "priceLabel": "GHS850 / term" },
+        "group": { "amountMinor": 0, "priceLabel": "Custom from GHS1,500 / term" }
       }
     },
     "SL": {
@@ -26,9 +26,9 @@
       "currency": "SLE",
       "timezone": "Africa/Freetown",
       "plans": {
-        "starter": { "amountMinor": 450000, "priceLabel": "Le 450,000 / term" },
-        "standard": { "amountMinor": 600000, "priceLabel": "Le 600,000 / term" },
-        "group": { "amountMinor": 0, "priceLabel": "Talk to us" }
+        "starter": { "amountMinor": 600000, "priceLabel": "Le 600,000 / term" },
+        "standard": { "amountMinor": 850000, "priceLabel": "Le 850,000 / term" },
+        "group": { "amountMinor": 0, "priceLabel": "Custom from Le 1,500,000 / term" }
       }
     },
     "LR": {
@@ -36,9 +36,9 @@
       "currency": "LRD",
       "timezone": "Africa/Monrovia",
       "plans": {
-        "starter": { "amountMinor": 450000, "priceLabel": "L$450,000 / term" },
-        "standard": { "amountMinor": 600000, "priceLabel": "L$600,000 / term" },
-        "group": { "amountMinor": 0, "priceLabel": "Talk to us" }
+        "starter": { "amountMinor": 600000, "priceLabel": "L$600,000 / term" },
+        "standard": { "amountMinor": 850000, "priceLabel": "L$850,000 / term" },
+        "group": { "amountMinor": 0, "priceLabel": "Custom from L$1,500,000 / term" }
       }
     },
     "GM": {
@@ -46,9 +46,9 @@
       "currency": "GMD",
       "timezone": "Africa/Banjul",
       "plans": {
-        "starter": { "amountMinor": 450000, "priceLabel": "D450,000 / term" },
-        "standard": { "amountMinor": 600000, "priceLabel": "D600,000 / term" },
-        "group": { "amountMinor": 0, "priceLabel": "Talk to us" }
+        "starter": { "amountMinor": 600000, "priceLabel": "D600,000 / term" },
+        "standard": { "amountMinor": 850000, "priceLabel": "D850,000 / term" },
+        "group": { "amountMinor": 0, "priceLabel": "Custom from D1,500,000 / term" }
       }
     }
   }

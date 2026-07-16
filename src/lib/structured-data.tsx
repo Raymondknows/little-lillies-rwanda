@@ -43,7 +43,7 @@ export const structuredData = {
     operatingSystem: 'Web, iOS, Android',
     offers: {
       '@type': 'Offer',
-      price: '35000',
+      price: '60000',
       priceCurrency: 'NGN',
       description: 'Starter plan - up to 150 pupils per term',
     },
@@ -86,7 +86,7 @@ export const structuredData = {
         name: 'How much does SchoolBase cost?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'Plans start from ₦35,000/term for schools up to 150 pupils. Standard plan is ₦45,000/term for schools up to 600 pupils.',
+          text: 'Plans start from ₦60,000/term for schools up to 150 pupils. Growth is ₦85,000/term for schools up to 600 pupils.',
         },
       },
       {

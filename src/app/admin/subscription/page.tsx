@@ -22,18 +22,18 @@ interface SubscriptionStatus {
 
 const planDetails: Record<string, { description: string; price: string; accent: string }> = {
   STARTER: {
-    description: "Perfect for small schools",
-    price: "₦35,000 / term",
+    description: "For schools up to 150 pupils",
+    price: "₦60,000 / term",
     accent: "from-blue-500 to-blue-600",
   },
   GROWTH: {
-    description: "For growing institutions",
-    price: "₦45,000 / term",
+    description: "For schools up to 600 pupils",
+    price: "₦85,000 / term",
     accent: "from-green-500 to-green-600",
   },
   ENTERPRISE: {
-    description: "Custom solution",
-    price: "Custom pricing",
+    description: "600+ students and multi-campus schools",
+    price: "Custom from ₦150,000 / term",
     accent: "from-purple-500 to-purple-600",
   },
   FREE: {
@@ -134,7 +134,7 @@ const HELP_GUIDE: PageHelpGuide = {
     },
     {
       question: "What's the difference between plans?",
-      answer: "STARTER is ideal for small schools with basic features. GROWTH is for larger institutions with more students and advanced features. ENTERPRISE is customizable for your school's specific needs.",
+      answer: "STARTER is ideal for schools with up to 150 pupils. GROWTH is for schools with up to 600 pupils and more automation. ENTERPRISE is for 600+ students and multi-campus schools that need a more tailored setup.",
     },
     {
       question: "Can I upgrade or downgrade my plan?",
@@ -151,9 +151,9 @@ export default function SubscriptionPage() {
   const [countryName, setCountryName] = useState("Nigeria");
   const [currency, setCurrency] = useState("NGN");
   const [countryPlans, setCountryPlans] = useState<Record<string, { amountMinor: number; priceLabel: string }>>({
-    starter: { amountMinor: 3500000, priceLabel: "₦35,000 / term" },
-    standard: { amountMinor: 4500000, priceLabel: "₦45,000 / term" },
-    group: { amountMinor: 0, priceLabel: "Talk to us" },
+    starter: { amountMinor: 6000000, priceLabel: "₦60,000 / term" },
+    standard: { amountMinor: 8500000, priceLabel: "₦85,000 / term" },
+    group: { amountMinor: 0, priceLabel: "Custom from ₦150,000 / term" },
   });
 
   const getCountryPlanKey = (plan: string) => {

@@ -1,6 +1,6 @@
 /**
  * Simple fixed NGN pricing for all countries
- * Everyone pays ₦35,000 (Starter) or ₦45,000 (Growth) regardless of selected country
+ * Everyone pays ₦60,000 (Starter) or ₦85,000 (Growth) regardless of selected country
  */
 
 export interface PlanConfig {
@@ -16,8 +16,8 @@ export interface CountryPlans {
 
 export function getPricingByCurrency(currencyCode: string): CountryPlans {
   // Fixed NGN prices for everyone
-  const starterNGN = 35000;
-  const growthNGN = 45000;
+  const starterNGN = 60000;
+  const growthNGN = 85000;
 
   return {
     starter: {
@@ -30,7 +30,7 @@ export function getPricingByCurrency(currencyCode: string): CountryPlans {
     },
     group: {
       amountMinor: 0,
-      priceLabel: 'Custom pricing',
+      priceLabel: 'Custom from ₦150,000 / term',
     },
   };
 }

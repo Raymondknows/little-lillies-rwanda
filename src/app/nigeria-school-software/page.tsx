@@ -179,7 +179,7 @@ export default function NigeriaPage() {
           {[
             {
               name: "Starter",
-              price: "₦35,000",
+              price: "₦60,000",
               desc: "Up to 150 pupils",
               features: [
                 "✓ Fees & receipts",
@@ -190,8 +190,8 @@ export default function NigeriaPage() {
               ],
             },
             {
-              name: "Standard",
-              price: "₦45,000",
+              name: "Growth",
+              price: "₦85,000",
               desc: "Up to 600 pupils",
               features: [
                 "✓ Fees & receipts",
@@ -203,9 +203,9 @@ export default function NigeriaPage() {
               highlighted: true,
             },
             {
-              name: "Group",
-              price: "Talk to us",
-              desc: "Multiple campuses",
+              name: "Enterprise",
+              price: "Custom from ₦150,000",
+              desc: "600+ students / multi-campus",
               features: [
                 "✓ Fees & receipts",
                 "✓ WhatsApp & SMS",
@@ -225,7 +225,7 @@ export default function NigeriaPage() {
             >
               <h3 className="font-bold text-lg text-foreground">{tier.name}</h3>
               <div className="text-3xl font-bold text-brand my-4">{tier.price}</div>
-              <p className="text-sm text-muted mb-6">/month, billed monthly. No setup fee.</p>
+              <p className="text-sm text-muted mb-6">/term, billed per term. No setup fee.</p>
               <ul className="space-y-2 mb-8">
                 {tier.features.map((feature, j) => (
                   <li key={j} className="text-sm text-foreground">

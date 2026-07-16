@@ -25,9 +25,9 @@ const defaultPlans: Plan[] = [
   {
     id: "starter",
     name: "Starter",
-    description: "Perfect for small schools",
-    amountMinor: 3500000,
-    priceLabel: "₦35,000",
+    description: "For schools that want a dependable digital foundation",
+    amountMinor: 6000000,
+    priceLabel: "₦60,000",
     features: [
       "Up to 150 students",
       "Basic fee collection",
@@ -39,9 +39,9 @@ const defaultPlans: Plan[] = [
   {
     id: "standard",
     name: "Standard",
-    description: "For growing institutions",
-    amountMinor: 4500000,
-    priceLabel: "₦45,000",
+    description: "For growing institutions that need full automation and parent engagement",
+    amountMinor: 8500000,
+    priceLabel: "₦85,000",
     features: [
       "Up to 600 students",
       "Advanced fee collection",
@@ -56,7 +56,7 @@ const defaultPlans: Plan[] = [
     name: "Enterprise",
     description: "Custom solution",
     amountMinor: 0,
-    priceLabel: "Custom",
+    priceLabel: "Custom from ₦150,000",
     features: [
       "Unlimited students",
       "Custom integrations",

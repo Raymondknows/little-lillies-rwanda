@@ -16,8 +16,8 @@ const PLAN_CONFIG = {
 };
 
 const PLAN_OPTIONS = [
-  { value: "STARTER", label: "Starter - ₦35,000/term" },
-  { value: "GROWTH", label: "Growth - ₦45,000/term" },
+  { value: "STARTER", label: "Starter - ₦60,000/term" },
+  { value: "GROWTH", label: "Growth - ₦85,000/term" },
 ];
 
 const STATUS_CONFIG = {

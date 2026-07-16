@@ -35,7 +35,7 @@ const faqs = [
     questions: [
       {
         q: 'How much does SchoolBase cost?',
-        a: 'Plans start from ₦35,000/term for schools up to 150 pupils. Standard plan is ₦45,000/term for schools up to 600 pupils. Multi-campus schools can contact us for custom pricing.',
+        a: 'Plans start from ₦60,000/term for schools up to 150 pupils. Growth is ₦85,000/term for schools up to 600 pupils. Larger and multi-campus schools can contact us for custom pricing from ₦150,000/term.',
       },
       {
         q: 'Is billing per term or annual?',

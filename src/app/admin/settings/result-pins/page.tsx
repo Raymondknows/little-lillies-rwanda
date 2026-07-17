@@ -270,8 +270,6 @@ export default function ResultPinsPage() {
   const [assessments, setAssessments] = useState<AssessmentOption[]>([]);
   const [classes, setClasses] = useState<Array<{ id: string; name: string; phase?: string | null }>>([]);
   const [students, setStudents] = useState<StudentOption[]>([]);
-  const [selectedStudentId, setSelectedStudentId] = useState("");
-  const [selectedGuardianIds, setSelectedGuardianIds] = useState<string[]>([]);
   const [selectedClassId, setSelectedClassId] = useState("");
   const [submittingClass, setSubmittingClass] = useState(false);
   const [classPinError, setClassPinError] = useState<string | null>(null);
@@ -295,6 +293,8 @@ export default function ResultPinsPage() {
   const [pins, setPins] = useState<PinRecord[]>([]);
   const [selectedPinIds, setSelectedPinIds] = useState<string[]>([]);
   const [statusModal, setStatusModal] = useState<{ open: boolean; type: "success" | "error"; title?: string; message: string }>({ open: false, type: "success", message: "" });
+  const [notifyModal, setNotifyModal] = useState<{ open: boolean; title: string; message: string }>({ open: false, title: "Sending notifications", message: "Please wait while the selected PIN notifications are being sent." });
+  const [isNotifying, setIsNotifying] = useState(false);
   const [loadingPins, setLoadingPins] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedPin, setSelectedPin] = useState<PinRecord | null>(null);
@@ -630,14 +630,17 @@ export default function ResultPinsPage() {
   };
 
   const handleNotifySelected = async () => {
-    if (!selectedPinIds.length) return;
+    if (!selectedPinIds.length || isNotifying) return;
+
+    setIsNotifying(true);
+    setNotifyModal({ open: true, title: 'Sending notifications', message: 'Please wait while the selected PIN notifications are being sent.' });
 
     try {
       const response = await fetch(`${backendUrl}/api/result-pins/pins/bulk/notify`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids: selectedPinIds, guardianIds: selectedGuardianIds }),
+        body: JSON.stringify({ ids: selectedPinIds }),
       });
 
       const data = await response.json().catch(() => null);
@@ -657,6 +660,9 @@ export default function ResultPinsPage() {
         title: 'Unable to send notifications',
         message: err instanceof Error ? err.message : 'PIN notifications could not be sent.',
       });
+    } finally {
+      setIsNotifying(false);
+      setNotifyModal({ open: false, title: 'Sending notifications', message: 'Please wait while the selected PIN notifications are being sent.' });
     }
   };
 
@@ -701,15 +707,6 @@ export default function ResultPinsPage() {
       }, 900);
     }, 900);
   };
-
-  const selectedStudent = useMemo(() => students.find((student) => student.id === selectedStudentId) || null, [selectedStudentId, students]);
-  const selectableGuardians = useMemo(() => {
-    const guardians = selectedStudent?.guardians ?? [];
-    return guardians
-      .map((entry) => entry.guardian)
-      .filter((guardian) => guardian?.id)
-      .filter((guardian) => Boolean(guardian.email || guardian.whatsapp || guardian.phone));
-  }, [selectedStudent]);
 
   const [confirmModal, setConfirmModal] = useState<{ open: boolean; kind: 'deactivate' | 'delete' | null }>({ open: false, kind: null });
 
@@ -1376,50 +1373,6 @@ export default function ResultPinsPage() {
           </select>
         </div>
 
-        <div className="mt-4 rounded-lg border border-border bg-surface/70 p-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h3 className="text-sm font-semibold text-foreground">Target guardians for notifications</h3>
-              <p className="text-xs text-muted">Leave this empty to send to all linked guardians for the selected PINs.</p>
-            </div>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <select
-                value={selectedStudentId}
-                onChange={(event) => {
-                  const nextStudentId = event.target.value;
-                  setSelectedStudentId(nextStudentId);
-                  setSelectedGuardianIds([]);
-                }}
-                className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
-              >
-                <option value="">Select student (optional)</option>
-                {students.map((student) => (
-                  <option key={student.id} value={student.id}>
-                    {`${student.firstName || ''} ${student.lastName || ''}`.trim() || student.admissionNo || student.id}
-                  </option>
-                ))}
-              </select>
-              {selectableGuardians.length > 0 && (
-                <select
-                  multiple
-                  value={selectedGuardianIds}
-                  onChange={(event) => {
-                    const nextValues = Array.from(event.target.selectedOptions, (option) => option.value);
-                    setSelectedGuardianIds(nextValues);
-                  }}
-                  className="min-h-[90px] rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
-                >
-                  {selectableGuardians.map((guardian) => (
-                    <option key={guardian.id} value={guardian.id}>
-                      {`${guardian.firstName || ''} ${guardian.lastName || ''}`.trim() || guardian.email || guardian.phone || guardian.whatsapp || guardian.id}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
-          </div>
-        </div>
-
         <div className="mt-4 overflow-hidden rounded-lg border border-border" id="pin-registry">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-background/60 px-3 py-3 text-sm text-muted">
             <div className="flex flex-wrap items-center gap-3">
@@ -1453,11 +1406,11 @@ export default function ResultPinsPage() {
               </button>
               <button
                 type="button"
-                disabled={!selectedPinIds.length}
+                disabled={!selectedPinIds.length || isNotifying}
                 onClick={() => { void handleNotifySelected(); }}
-                className={`rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${selectedPinIds.length ? 'bg-brand border-brand text-white hover:bg-brand/90' : 'border-border bg-background text-foreground hover:bg-muted/30'}`}
+                className={`rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${selectedPinIds.length && !isNotifying ? 'bg-brand border-brand text-white hover:bg-brand/90' : 'border-border bg-background text-foreground hover:bg-muted/30'}`}
               >
-                Notify Guardians
+                {isNotifying ? 'Sending…' : 'Notify Guardians'}
               </button>
               <button
                 type="button"
@@ -1609,6 +1562,22 @@ export default function ResultPinsPage() {
             )}
           </div>
         </div>
+
+        {notifyModal.open ? (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 px-4">
+            <div className="w-full max-w-md rounded-2xl border border-border bg-background p-6 shadow-2xl">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full border border-brand/20 bg-brand/10 text-brand">
+                  <RefreshCw className="h-5 w-5 animate-spin" />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-foreground">{notifyModal.title}</h3>
+                  <p className="text-sm text-muted">{notifyModal.message}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
 
         <div id="generic-pin-registry" className="mt-4 rounded-lg border border-border bg-surface p-5">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">

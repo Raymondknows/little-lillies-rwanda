@@ -82,6 +82,16 @@ interface BatchPinResult {
   schoolName?: string | null;
 }
 
+interface GuardianOption {
+  id: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  email?: string | null;
+  whatsapp?: string | null;
+  phone?: string | null;
+  relation?: string | null;
+}
+
 interface StudentOption {
   id: string;
   firstName?: string | null;
@@ -92,6 +102,10 @@ interface StudentOption {
     name?: string | null;
     phase?: string | null;
   } | null;
+  guardians?: Array<{
+    guardian: GuardianOption;
+    relation?: string | null;
+  }>;
 }
 
 interface PinRecord {
@@ -256,6 +270,8 @@ export default function ResultPinsPage() {
   const [assessments, setAssessments] = useState<AssessmentOption[]>([]);
   const [classes, setClasses] = useState<Array<{ id: string; name: string; phase?: string | null }>>([]);
   const [students, setStudents] = useState<StudentOption[]>([]);
+  const [selectedStudentId, setSelectedStudentId] = useState("");
+  const [selectedGuardianIds, setSelectedGuardianIds] = useState<string[]>([]);
   const [selectedClassId, setSelectedClassId] = useState("");
   const [submittingClass, setSubmittingClass] = useState(false);
   const [classPinError, setClassPinError] = useState<string | null>(null);
@@ -621,17 +637,18 @@ export default function ResultPinsPage() {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids: selectedPinIds }),
+        body: JSON.stringify({ ids: selectedPinIds, guardianIds: selectedGuardianIds }),
       });
 
       const data = await response.json().catch(() => null);
       if (!response.ok) throw new Error(data?.error || 'Failed to send PIN notifications');
 
+      const batchCount = data?.batches ? ` in ${data.batches} safe batch${data.batches > 1 ? 'es' : ''}` : '';
       setStatusModal({
         open: true,
         type: 'success',
         title: 'Notifications sent',
-        message: `Sent ${data?.sent || 0} PIN delivery notification(s) to guardians.`,
+        message: `Sent ${data?.sent || 0} PIN delivery notification(s) to guardians${batchCount}.`,
       });
     } catch (err) {
       setStatusModal({
@@ -684,6 +701,15 @@ export default function ResultPinsPage() {
       }, 900);
     }, 900);
   };
+
+  const selectedStudent = useMemo(() => students.find((student) => student.id === selectedStudentId) || null, [selectedStudentId, students]);
+  const selectableGuardians = useMemo(() => {
+    const guardians = selectedStudent?.guardians ?? [];
+    return guardians
+      .map((entry) => entry.guardian)
+      .filter((guardian) => guardian?.id)
+      .filter((guardian) => Boolean(guardian.email || guardian.whatsapp || guardian.phone));
+  }, [selectedStudent]);
 
   const [confirmModal, setConfirmModal] = useState<{ open: boolean; kind: 'deactivate' | 'delete' | null }>({ open: false, kind: null });
 
@@ -1348,6 +1374,50 @@ export default function ResultPinsPage() {
               <option key={batchName} value={batchName}>{batchName}</option>
             ))}
           </select>
+        </div>
+
+        <div className="mt-4 rounded-lg border border-border bg-surface/70 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">Target guardians for notifications</h3>
+              <p className="text-xs text-muted">Leave this empty to send to all linked guardians for the selected PINs.</p>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <select
+                value={selectedStudentId}
+                onChange={(event) => {
+                  const nextStudentId = event.target.value;
+                  setSelectedStudentId(nextStudentId);
+                  setSelectedGuardianIds([]);
+                }}
+                className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+              >
+                <option value="">Select student (optional)</option>
+                {students.map((student) => (
+                  <option key={student.id} value={student.id}>
+                    {`${student.firstName || ''} ${student.lastName || ''}`.trim() || student.admissionNo || student.id}
+                  </option>
+                ))}
+              </select>
+              {selectableGuardians.length > 0 && (
+                <select
+                  multiple
+                  value={selectedGuardianIds}
+                  onChange={(event) => {
+                    const nextValues = Array.from(event.target.selectedOptions, (option) => option.value);
+                    setSelectedGuardianIds(nextValues);
+                  }}
+                  className="min-h-[90px] rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+                >
+                  {selectableGuardians.map((guardian) => (
+                    <option key={guardian.id} value={guardian.id}>
+                      {`${guardian.firstName || ''} ${guardian.lastName || ''}`.trim() || guardian.email || guardian.phone || guardian.whatsapp || guardian.id}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="mt-4 overflow-hidden rounded-lg border border-border" id="pin-registry">

@@ -427,7 +427,7 @@ export default function SettingsClient() {
                 No recent platform activity yet.
               </div>
             ) : (
-              activity.map((item) => (
+              activity.slice(0, 3).map((item) => (
                 <div key={item.id} className="rounded-lg border border-border bg-background p-3">
                   <div className="flex items-start justify-between gap-2">
                     <div>

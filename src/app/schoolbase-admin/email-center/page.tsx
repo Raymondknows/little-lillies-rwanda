@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { BellRing, LifeBuoy } from "lucide-react";
 import AdminPageShell from "@/components/admin-page-shell";
 import { getBackendUrl } from "@/lib/backend-url";
 import EmailCenterClient from "./email-center-client";
@@ -46,10 +47,12 @@ export default function EmailCenterPage() {
       subtitle="Send professional updates, reminders, and announcements to schools."
       actions={
         <>
-          <Link href="/schoolbase-admin/setup-reminders" className="inline-flex items-center justify-center rounded-xl border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground shadow-sm transition hover:bg-surface">
+          <Link href="/schoolbase-admin/setup-reminders" className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground shadow-sm transition hover:bg-surface">
+            <BellRing className="h-4 w-4" />
             Setup reminders
           </Link>
-          <Link href="/schoolbase-admin/support" className="inline-flex items-center justify-center rounded-xl bg-[#0A66C2] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0952a4]">
+          <Link href="/schoolbase-admin/support" className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0A66C2] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0952a4]">
+            <LifeBuoy className="h-4 w-4" />
             Support inbox
           </Link>
         </>

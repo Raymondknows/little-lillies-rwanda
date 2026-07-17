@@ -20,10 +20,17 @@ import {
   Bell,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
+  FileText,
+  MailCheck,
+  GraduationCap,
+  LifeBuoy,
 } from "lucide-react";
 import AdminPageShell from "@/components/admin-page-shell";
 import AdminSkeleton from "@/components/ui/skeleton";
 import { getBackendUrl } from "@/lib/backend-url";
+import { resolveSchoolAssetUrl } from "@/lib/asset-urls";
 
 function getActivityTitle(log: any) {
   const raw = log?.event ?? log?.action;
@@ -31,6 +38,17 @@ function getActivityTitle(log: any) {
     return raw.replace(/_/g, " ");
   }
   return "Platform activity";
+}
+
+function getSchoolInitials(name?: string) {
+  if (!name) return "S";
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
 }
 
 export default function PlatformOverviewPage() {
@@ -45,6 +63,12 @@ export default function PlatformOverviewPage() {
   const [reminding, setReminding] = useState(false);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [cardScroll, setCardScroll] = useState(0);
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    activity: false,
+    emails: false,
+    trials: false,
+    support: false,
+  });
 
   useEffect(() => {
     async function loadData() {
@@ -183,8 +207,9 @@ export default function PlatformOverviewPage() {
         <button
           type="button"
           onClick={() => setIsPanelOpen(true)}
-          className="inline-flex items-center justify-center rounded-xl bg-[#0A66C2] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0952a4]"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0A66C2] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0952a4]"
         >
+          <ShieldCheck className="h-4 w-4" />
           Open admin panel
         </button>
       }
@@ -311,130 +336,196 @@ export default function PlatformOverviewPage() {
                 ✕
               </button>
             </div>
-            <div className="overflow-y-auto p-6 space-y-6">
-              <div className="rounded-3xl border border-border bg-background p-6 shadow-sm">
-                <div className="flex items-center justify-between gap-4 mb-5">
-                  <div>
-                    <h3 className="text-lg font-semibold text-foreground">Recent activity</h3>
-                    <p className="text-sm text-muted">Audit events and school actions.</p>
-                  </div>
-                  <Link href="/schoolbase-admin/audit" className="text-sm font-semibold text-brand hover:text-brand/80">
-                    View all
-                  </Link>
-                </div>
-                <div className="grid gap-3">
-                  {activityLogs.length === 0 ? (
-                    <div className="rounded-2xl border border-border bg-surface p-4 text-sm text-muted">No activity recorded yet.</div>
-                  ) : (
-                    activityLogs.map((log: any) => (
-                      <div key={log.id} className="rounded-2xl border border-border bg-white p-4 shadow-sm">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <p className="text-sm font-semibold text-foreground">{getActivityTitle(log)}</p>
-                            <p className="mt-1 text-xs text-muted">{log.details || "No additional details provided."}</p>
-                          </div>
-                          <p className="text-[11px] uppercase tracking-[0.18em] text-muted">
-                            {log.createdAt ? new Date(log.createdAt).toLocaleString() : "—"}
-                          </p>
-                        </div>
-                        {log.school?.name ? (
-                          <p className="mt-3 text-xs text-muted">School: {log.school.name}</p>
-                        ) : null}
+            <div className="overflow-y-auto p-6">
+              <div className="space-y-2.5">
+                <section className="rounded-2xl border border-border bg-surface/50 p-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setExpandedSections((current) => ({ ...current, activity: !current.activity }))}
+                    className="flex w-full items-center justify-between gap-2 rounded-xl px-2 py-1.5 text-left"
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
+                        <Activity className="h-3.5 w-3.5" />
                       </div>
-                    ))
-                  )}
-                </div>
-              </div>
+                      <div>
+                        <h3 className="text-sm font-semibold text-foreground">Recent activity</h3>
+                        <p className="text-[11px] text-muted">Audit events and school actions.</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {expandedSections.activity ? <ChevronUp className="h-4 w-4 text-muted" /> : <ChevronDown className="h-4 w-4 text-muted" />}
+                    </div>
+                  </button>
+                  {expandedSections.activity ? (
+                    <div className="mt-2 space-y-2 px-1 pb-1">
+                      <div className="mb-1.5 flex justify-end">
+                        <Link href="/schoolbase-admin/audit" className="text-xs font-semibold text-brand hover:text-brand/80">
+                          View all
+                        </Link>
+                      </div>
+                      {activityLogs.length === 0 ? (
+                        <div className="rounded-xl border border-border bg-background/80 px-3 py-2 text-sm text-muted">No activity recorded yet.</div>
+                      ) : (
+                        activityLogs.map((log: any) => (
+                          <div key={log.id} className="rounded-xl border border-border bg-background/80 px-3 py-2.5">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-semibold text-foreground">{getActivityTitle(log)}</p>
+                                <p className="mt-1 text-xs text-muted">{log.details || "No additional details provided."}</p>
+                              </div>
+                              <p className="shrink-0 text-[11px] uppercase tracking-[0.18em] text-muted">
+                                {log.createdAt ? new Date(log.createdAt).toLocaleString() : "—"}
+                              </p>
+                            </div>
+                            {log.school?.name ? (
+                              <p className="mt-2 text-xs text-muted">School: {log.school.name}</p>
+                            ) : null}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  ) : null}
+                </section>
 
-              <div className="rounded-3xl border border-border bg-background p-6 shadow-sm">
-                <div className="flex items-center justify-between gap-4 mb-5">
-                  <div>
-                    <h3 className="text-lg font-semibold text-foreground">Recent emails</h3>
-                    <p className="text-sm text-muted">Latest outbound email events.</p>
-                  </div>
-                  <Link href="/schoolbase-admin/email-logs" className="text-sm font-semibold text-brand hover:text-brand/80">
-                    View logs
-                  </Link>
-                </div>
-                <div className="grid gap-3">
-                  {emailLogs.length === 0 ? (
-                    <div className="rounded-2xl border border-border bg-surface p-4 text-sm text-muted">No email activity recorded.</div>
-                  ) : (
-                    emailLogs.map((log: any) => (
-                      <div key={log.id} className="rounded-2xl border border-border bg-white p-4 shadow-sm">
-                        <div className="flex items-center justify-between gap-3">
-                          <div>
-                            <p className="text-sm font-semibold text-foreground">{log.subject}</p>
-                            <p className="mt-1 text-xs text-muted">{log.emailType}</p>
-                          </div>
-                          <span className="text-[11px] uppercase tracking-[0.18em] text-muted">
-                            {new Date(log.sentAt).toLocaleDateString()}
-                          </span>
-                        </div>
-                        <p className="mt-2 text-xs text-muted">{log.recipientEmail}</p>
+                <section className="rounded-2xl border border-border bg-surface/50 p-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setExpandedSections((current) => ({ ...current, emails: !current.emails }))}
+                    className="flex w-full items-center justify-between gap-2 rounded-xl px-2 py-1.5 text-left"
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-100 text-violet-600">
+                        <MailCheck className="h-3.5 w-3.5" />
                       </div>
-                    ))
-                  )}
-                </div>
-              </div>
+                      <div>
+                        <h3 className="text-sm font-semibold text-foreground">Recent emails</h3>
+                        <p className="text-[11px] text-muted">Latest outbound email events.</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {expandedSections.emails ? <ChevronUp className="h-4 w-4 text-muted" /> : <ChevronDown className="h-4 w-4 text-muted" />}
+                    </div>
+                  </button>
+                  {expandedSections.emails ? (
+                    <div className="mt-2 space-y-2 px-1 pb-1">
+                      <div className="mb-1.5 flex justify-end">
+                        <Link href="/schoolbase-admin/email-logs" className="text-xs font-semibold text-brand hover:text-brand/80">
+                          View logs
+                        </Link>
+                      </div>
+                      {emailLogs.length === 0 ? (
+                        <div className="rounded-xl border border-border bg-background/80 px-3 py-2 text-sm text-muted">No email activity recorded.</div>
+                      ) : (
+                        emailLogs.map((log: any) => (
+                          <div key={log.id} className="rounded-xl border border-border bg-background/80 px-3 py-2.5">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-semibold text-foreground">{log.subject}</p>
+                                <p className="mt-1 text-xs text-muted">{log.emailType}</p>
+                              </div>
+                              <span className="shrink-0 text-[11px] uppercase tracking-[0.18em] text-muted">
+                                {new Date(log.sentAt).toLocaleDateString()}
+                              </span>
+                            </div>
+                            <p className="mt-2 text-xs text-muted">{log.recipientEmail}</p>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  ) : null}
+                </section>
 
-              <div className="rounded-3xl border border-border bg-background p-6 shadow-sm">
-                <div className="flex items-center justify-between gap-4 mb-5">
-                  <div>
-                    <h3 className="text-lg font-semibold text-foreground">Trial schools</h3>
-                    <p className="text-sm text-muted">Schools currently on trial.</p>
-                  </div>
-                  <Link href="/schoolbase-admin/schools?status=TRIAL" className="text-sm font-semibold text-brand hover:text-brand/80">
-                    View all
-                  </Link>
-                </div>
-                <div className="grid gap-3">
-                  {trialSchools.length === 0 ? (
-                    <div className="rounded-2xl border border-border bg-surface p-4 text-sm text-muted">No trial schools to show.</div>
-                  ) : (
-                    trialSchools.map((school: any) => (
-                      <div key={school.id} className="rounded-2xl border border-border bg-white p-4 shadow-sm">
-                        <div className="flex items-center justify-between gap-3">
-                          <div>
-                            <p className="text-sm font-semibold text-foreground">{school.name}</p>
-                            <p className="mt-1 text-xs text-muted">{school.country}</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-sm font-semibold text-foreground">{school.userCount || 0} users</p>
-                            <p className="text-xs text-muted">
-                              Ends {school.trialEndsAt ? new Date(school.trialEndsAt).toLocaleDateString() : 'n/a'}
-                            </p>
-                          </div>
-                        </div>
+                <section className="rounded-2xl border border-border bg-surface/50 p-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setExpandedSections((current) => ({ ...current, trials: !current.trials }))}
+                    className="flex w-full items-center justify-between gap-2 rounded-xl px-2 py-1.5 text-left"
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-100 text-amber-600">
+                        <GraduationCap className="h-3.5 w-3.5" />
                       </div>
-                    ))
-                  )}
-                </div>
-              </div>
+                      <div>
+                        <h3 className="text-sm font-semibold text-foreground">Trial schools</h3>
+                        <p className="text-[11px] text-muted">Schools currently on trial.</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {expandedSections.trials ? <ChevronUp className="h-4 w-4 text-muted" /> : <ChevronDown className="h-4 w-4 text-muted" />}
+                    </div>
+                  </button>
+                  {expandedSections.trials ? (
+                    <div className="mt-2 space-y-2 px-1 pb-1">
+                      <div className="mb-1.5 flex justify-end">
+                        <Link href="/schoolbase-admin/schools?status=TRIAL" className="text-xs font-semibold text-brand hover:text-brand/80">
+                          View all
+                        </Link>
+                      </div>
+                      {trialSchools.length === 0 ? (
+                        <div className="rounded-xl border border-border bg-background/80 px-3 py-2 text-sm text-muted">No trial schools to show.</div>
+                      ) : (
+                        trialSchools.map((school: any) => (
+                          <div key={school.id} className="rounded-xl border border-border bg-background/80 px-3 py-2.5">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-semibold text-foreground">{school.name}</p>
+                                <p className="mt-1 text-xs text-muted">{school.country}</p>
+                              </div>
+                              <div className="shrink-0 text-right">
+                                <p className="text-sm font-semibold text-foreground">{school.userCount || 0} users</p>
+                                <p className="text-xs text-muted">
+                                  Ends {school.trialEndsAt ? new Date(school.trialEndsAt).toLocaleDateString() : 'n/a'}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  ) : null}
+                </section>
 
-              <div className="rounded-3xl border border-border bg-background p-6 shadow-sm">
-                <div className="flex items-center justify-between gap-4 mb-5">
-                  <div>
-                    <h3 className="text-lg font-semibold text-foreground">Open support requests</h3>
-                    <p className="text-sm text-muted">Recent tickets from schools.</p>
-                  </div>
-                  <Link href="/schoolbase-admin/support" className="text-sm font-semibold text-brand hover:text-brand/80">
-                    View all
-                  </Link>
-                </div>
-                <div className="grid gap-3">
-                  {supportRequests.length === 0 ? (
-                    <div className="rounded-2xl border border-border bg-surface p-4 text-sm text-muted">No open support requests at the moment.</div>
-                  ) : (
-                    supportRequests.slice(0, 5).map((request: any) => (
-                      <div key={request.id} className="rounded-2xl border border-border bg-white p-4 shadow-sm">
-                        <p className="text-sm font-semibold text-foreground">{request.subject}</p>
-                        <p className="mt-1 text-xs text-muted">{request.school?.name || 'Unknown school'} • {request.priority}</p>
-                        <p className="mt-2 text-xs text-muted line-clamp-2">{request.message}</p>
+                <section className="rounded-2xl border border-border bg-surface/50 p-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setExpandedSections((current) => ({ ...current, support: !current.support }))}
+                    className="flex w-full items-center justify-between gap-2 rounded-xl px-2 py-1.5 text-left"
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-100 text-rose-600">
+                        <LifeBuoy className="h-3.5 w-3.5" />
                       </div>
-                    ))
-                  )}
-                </div>
+                      <div>
+                        <h3 className="text-sm font-semibold text-foreground">Open support requests</h3>
+                        <p className="text-[11px] text-muted">Recent tickets from schools.</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {expandedSections.support ? <ChevronUp className="h-4 w-4 text-muted" /> : <ChevronDown className="h-4 w-4 text-muted" />}
+                    </div>
+                  </button>
+                  {expandedSections.support ? (
+                    <div className="mt-2 space-y-2 px-1 pb-1">
+                      <div className="mb-1.5 flex justify-end">
+                        <Link href="/schoolbase-admin/support" className="text-xs font-semibold text-brand hover:text-brand/80">
+                          View all
+                        </Link>
+                      </div>
+                      {supportRequests.length === 0 ? (
+                        <div className="rounded-xl border border-border bg-background/80 px-3 py-2 text-sm text-muted">No open support requests at the moment.</div>
+                      ) : (
+                        supportRequests.slice(0, 5).map((request: any) => (
+                          <div key={request.id} className="rounded-xl border border-border bg-background/80 px-3 py-2.5">
+                            <p className="text-sm font-semibold text-foreground">{request.subject}</p>
+                            <p className="mt-1 text-xs text-muted">{request.school?.name || 'Unknown school'} • {request.priority}</p>
+                            <p className="mt-2 text-xs text-muted line-clamp-2">{request.message}</p>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  ) : null}
+                </section>
               </div>
             </div>
           </div>
@@ -459,12 +550,25 @@ export default function PlatformOverviewPage() {
             <li className="py-3 text-sm text-muted">No schools registered yet.</li>
           ) : (
             schools.map((school: any, idx: number) => (
-              <li key={idx} className="flex items-center justify-between gap-2 py-3 first:pt-0 last:pb-0">
-                <div className="flex-1">
-                  <p className="font-medium text-foreground text-sm">{school.name}</p>
-                  <p className="text-xs text-muted mt-1">
-                    {school.userCount || 0} users • {school.pupilCount || 0} pupils • {school.classCount || 0} classes
-                  </p>
+              <li key={idx} className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-brand/10 text-sm font-semibold text-brand shadow-sm">
+                    {school.logoUrl ? (
+                      <img
+                        src={resolveSchoolAssetUrl(school.logoUrl) || school.logoUrl}
+                        alt={`${school.name} logo`}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <span>{getSchoolInitials(school.name)}</span>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium text-foreground text-sm">{school.name}</p>
+                    <p className="mt-1 text-xs text-muted">
+                      {school.userCount || 0} users • {school.pupilCount || 0} pupils • {school.classCount || 0} classes
+                    </p>
+                  </div>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${

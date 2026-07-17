@@ -291,7 +291,8 @@ export default function ResultPinsPage() {
   const [pinFilterGeneratedBy, setPinFilterGeneratedBy] = useState("all");
   const [pinFilterBatch, setPinFilterBatch] = useState("all");
   const [pins, setPins] = useState<PinRecord[]>([]);
-  const [selectedPinIds, setSelectedPinIds] = useState<string[]>([]);
+  const [selectedStudentPinIds, setSelectedStudentPinIds] = useState<string[]>([]);
+  const [selectedGenericPinIds, setSelectedGenericPinIds] = useState<string[]>([]);
   const [statusModal, setStatusModal] = useState<{ open: boolean; type: "success" | "error"; title?: string; message: string }>({ open: false, type: "success", message: "" });
   const [notifyModal, setNotifyModal] = useState<{ open: boolean; title: string; message: string }>({ open: false, title: "Sending notifications", message: "Please wait while the selected PIN notifications are being sent." });
   const [isNotifying, setIsNotifying] = useState(false);
@@ -312,7 +313,14 @@ export default function ResultPinsPage() {
       const raw = localStorage.getItem(SELECTION_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) setSelectedPinIds(parsed.filter((v) => typeof v === 'string'));
+        if (parsed && typeof parsed === 'object') {
+          if (Array.isArray(parsed.student)) {
+            setSelectedStudentPinIds(parsed.student.filter((v: unknown) => typeof v === 'string'));
+          }
+          if (Array.isArray(parsed.generic)) {
+            setSelectedGenericPinIds(parsed.generic.filter((v: unknown) => typeof v === 'string'));
+          }
+        }
       }
     } catch (e) {
       // ignore
@@ -321,11 +329,14 @@ export default function ResultPinsPage() {
 
   useEffect(() => {
     try {
-      localStorage.setItem(SELECTION_KEY, JSON.stringify(selectedPinIds));
+      localStorage.setItem(SELECTION_KEY, JSON.stringify({
+        student: selectedStudentPinIds,
+        generic: selectedGenericPinIds,
+      }));
     } catch (e) {
       // ignore
     }
-  }, [selectedPinIds]);
+  }, [selectedStudentPinIds, selectedGenericPinIds]);
 
   const loadSchoolMeta = async () => {
     try {
@@ -604,20 +615,35 @@ export default function ResultPinsPage() {
   }, [filteredStudentPins, currentPage]);
 
   const pagePinIds = useMemo(() => pagedPins.map((pin) => pin.id), [pagedPins]);
-  const pageAllSelected = pagePinIds.length > 0 && pagePinIds.every((id) => selectedPinIds.includes(id));
+  const studentPageAllSelected = pagePinIds.length > 0 && pagePinIds.every((id) => selectedStudentPinIds.includes(id));
 
-  const handleTogglePinSelection = (pinId: string) => {
-    setSelectedPinIds((current) =>
+  const handleTogglePinSelection = (pinId: string, scope: 'student' | 'generic') => {
+    if (scope === 'generic') {
+      setSelectedGenericPinIds((current) =>
+        current.includes(pinId) ? current.filter((id) => id !== pinId) : [...current, pinId],
+      );
+      return;
+    }
+
+    setSelectedStudentPinIds((current) =>
       current.includes(pinId) ? current.filter((id) => id !== pinId) : [...current, pinId],
     );
   };
 
-  const handleToggleSelectAll = () => {
-    setSelectedPinIds((current) => (pageAllSelected ? [] : pagePinIds));
+  const handleToggleSelectAll = (scope: 'student' | 'generic') => {
+    if (scope === 'generic') {
+      setSelectedGenericPinIds((current) => (pageAllSelectedGeneric ? current.filter((id) => !genericPagePinIds.includes(id)) : Array.from(new Set([...current, ...genericPagePinIds]))));
+      return;
+    }
+
+    setSelectedStudentPinIds((current) => (studentPageAllSelected ? [] : pagePinIds));
   };
 
-  const handleExportSelected = () => {
-    const selectedPins = pins.filter((pin) => selectedPinIds.includes(pin.id));
+  const handleExportSelected = (scope: 'student' | 'generic') => {
+    const selectedPins = scope === 'generic'
+      ? genericServerPins.filter((pin) => selectedGenericPinIds.includes(pin.id))
+      : pins.filter((pin) => selectedStudentPinIds.includes(pin.id));
+
     if (!selectedPins.length) return;
     const lines = selectedPins.map((pin) => `${pin.pinValue || "—"}\t${pin.student ? `${pin.student.firstName || ""} ${pin.student.lastName || ""}`.trim() : "Unassigned"}`).join("\n");
     const blob = new Blob([lines], { type: "text/plain;charset=utf-8" });
@@ -629,18 +655,19 @@ export default function ResultPinsPage() {
     URL.revokeObjectURL(url);
   };
 
-  const handleNotifySelected = async () => {
-    if (!selectedPinIds.length || isNotifying) return;
+  const handleNotifySelected = async (scope: 'student' | 'generic') => {
+    const selectedIds = scope === 'generic' ? selectedGenericPinIds : selectedStudentPinIds;
+    if (!selectedIds.length || isNotifying) return;
 
     setIsNotifying(true);
     setNotifyModal({ open: true, title: 'Sending notifications', message: 'Please wait while the selected PIN notifications are being sent.' });
 
     try {
-      const response = await fetch(`${backendUrl}/api/result-pins/pins/bulk/notify`, {
+      const response = await fetch('/api/admin/result-pins/pins/bulk/notify', {
         method: 'POST',
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids: selectedPinIds }),
+        headers: { 'Content-Type': 'application/json', 'x-school-id': localStorage.getItem('schoolId') || '' },
+        body: JSON.stringify({ ids: selectedIds }),
       });
 
       const data = await response.json().catch(() => null);
@@ -653,6 +680,12 @@ export default function ResultPinsPage() {
         title: 'Notifications sent',
         message: `Sent ${data?.sent || 0} PIN delivery notification(s) to guardians${batchCount}.`,
       });
+
+      if (scope === 'generic') {
+        setSelectedGenericPinIds([]);
+      } else {
+        setSelectedStudentPinIds([]);
+      }
     } catch (err) {
       setStatusModal({
         open: true,
@@ -666,8 +699,10 @@ export default function ResultPinsPage() {
     }
   };
 
-  const handlePrintSelected = async () => {
-    const selectedPins = pins.filter((pin) => selectedPinIds.includes(pin.id));
+  const handlePrintSelected = async (scope: 'student' | 'generic') => {
+    const selectedPins = scope === 'generic'
+      ? genericServerPins.filter((pin) => selectedGenericPinIds.includes(pin.id))
+      : pins.filter((pin) => selectedStudentPinIds.includes(pin.id));
     if (!selectedPins.length) return;
 
     const cards = selectedPins.map((pin) => ({
@@ -708,14 +743,17 @@ export default function ResultPinsPage() {
     }, 900);
   };
 
-  const [confirmModal, setConfirmModal] = useState<{ open: boolean; kind: 'deactivate' | 'delete' | null }>({ open: false, kind: null });
+  const [confirmModal, setConfirmModal] = useState<{ open: boolean; kind: 'deactivate' | 'delete' | null; scope: 'student' | 'generic' | null }>({ open: false, kind: null, scope: null });
 
-  const handleOpenConfirm = (kind: 'deactivate' | 'delete') => {
-    setConfirmModal({ open: true, kind });
+  const handleOpenConfirm = (kind: 'deactivate' | 'delete', scope: 'student' | 'generic') => {
+    setConfirmModal({ open: true, kind, scope });
   };
 
   const performBulkAction = async () => {
-    if (!confirmModal.kind) return;
+    if (!confirmModal.kind || !confirmModal.scope) return;
+    const selectedIds = confirmModal.scope === 'generic' ? selectedGenericPinIds : selectedStudentPinIds;
+    if (!selectedIds.length) return;
+
     try {
       const backendUrl = getBackendUrl();
       if (confirmModal.kind === 'deactivate') {
@@ -723,29 +761,34 @@ export default function ResultPinsPage() {
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ids: selectedPinIds, status: 'INACTIVE' }),
+          body: JSON.stringify({ ids: selectedIds, status: 'INACTIVE' }),
         });
         const data = await response.json().catch(() => null);
         if (!response.ok) throw new Error(data?.error || 'Failed to deactivate selected PINs');
-        setStatusModal({ open: true, type: 'success', title: 'Deactivated', message: `Deactivated ${data.updated || selectedPinIds.length} PIN(s).` });
+        setStatusModal({ open: true, type: 'success', title: 'Deactivated', message: `Deactivated ${data.updated || selectedIds.length} PIN(s).` });
       } else if (confirmModal.kind === 'delete') {
         const response = await fetch(`${backendUrl}/api/result-pins/pins/bulk/delete`, {
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ids: selectedPinIds }),
+          body: JSON.stringify({ ids: selectedIds }),
         });
         const data = await response.json().catch(() => null);
         if (!response.ok) throw new Error(data?.error || 'Failed to delete selected PINs');
-        setStatusModal({ open: true, type: 'success', title: 'Deleted', message: `Deleted ${data.deleted || selectedPinIds.length} PIN(s).` });
+        setStatusModal({ open: true, type: 'success', title: 'Deleted', message: `Deleted ${data.deleted || selectedIds.length} PIN(s).` });
       }
 
-      setSelectedPinIds([]);
+      if (confirmModal.scope === 'generic') {
+        setSelectedGenericPinIds([]);
+      } else {
+        setSelectedStudentPinIds([]);
+      }
       await loadPins();
+      await loadGenericPins(pinSearch, genericCurrentPage);
     } catch (err) {
       setStatusModal({ open: true, type: 'error', title: 'Failed', message: err instanceof Error ? err.message : 'Bulk action failed' });
     } finally {
-      setConfirmModal({ open: false, kind: null });
+      setConfirmModal({ open: false, kind: null, scope: null });
     }
   };
 
@@ -794,10 +837,10 @@ export default function ResultPinsPage() {
   };
 
   const genericPagePinIds = useMemo(() => genericServerPins.map((pin) => pin.id), [genericServerPins]);
-  const pageAllSelectedGeneric = genericPagePinIds.length > 0 && genericPagePinIds.every((id) => selectedPinIds.includes(id));
+  const pageAllSelectedGeneric = genericPagePinIds.length > 0 && genericPagePinIds.every((id) => selectedGenericPinIds.includes(id));
 
   const handleToggleSelectAllGeneric = () => {
-    setSelectedPinIds((current) =>
+    setSelectedGenericPinIds((current) =>
       pageAllSelectedGeneric ? current.filter((id) => !genericPagePinIds.includes(id)) : Array.from(new Set([...current, ...genericPagePinIds])),
     );
   };
@@ -1164,11 +1207,11 @@ export default function ResultPinsPage() {
 
       <ErrorModal
         isOpen={confirmModal.open}
-        onClose={() => setConfirmModal({ open: false, kind: null })}
+        onClose={() => setConfirmModal({ open: false, kind: null, scope: null })}
         type="success"
         title={confirmModal.kind === 'delete' ? 'Delete selected PINs' : 'Deactivate selected PINs'}
-        message={`Are you sure you want to ${confirmModal.kind === 'delete' ? 'delete' : 'deactivate'} ${selectedPinIds.length} selected PIN(s)?`}
-        action={{ label: 'Cancel', onClick: () => setConfirmModal({ open: false, kind: null }) }}
+        message={`Are you sure you want to ${confirmModal.kind === 'delete' ? 'delete' : 'deactivate'} ${(confirmModal.scope === 'generic' ? selectedGenericPinIds : selectedStudentPinIds).length} selected PIN(s)?`}
+        action={{ label: 'Cancel', onClick: () => setConfirmModal({ open: false, kind: null, scope: null }) }}
         onSuccessAction={performBulkAction}
         confirmLabel="Confirm"
       />
@@ -1379,52 +1422,52 @@ export default function ResultPinsPage() {
               <div className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1 text-xs font-semibold text-foreground">
                 <input
                   type="checkbox"
-                  checked={pageAllSelected}
-                  onChange={handleToggleSelectAll}
+                  checked={studentPageAllSelected}
+                  onChange={() => handleToggleSelectAll('student')}
                   className="h-4 w-4 rounded border border-border text-brand focus:ring-brand"
                 />
-                {selectedPinIds.length ? `${selectedPinIds.length} selected` : "Select rows"}
+                {selectedStudentPinIds.length ? `${selectedStudentPinIds.length} selected` : "Select rows"}
               </div>
               <div className="hidden sm:inline">Use the table to choose rows for print or export.</div>
             </div>
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
-                disabled={!selectedPinIds.length}
-                onClick={handlePrintSelected}
-                className={`rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${selectedPinIds.length ? 'bg-brand border-brand text-white hover:bg-brand/90' : 'border-border bg-background text-foreground hover:bg-muted/30'}`}
+                disabled={!selectedStudentPinIds.length}
+                onClick={() => { void handlePrintSelected('student'); }}
+                className={`rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${selectedStudentPinIds.length ? 'bg-brand border-brand text-white hover:bg-brand/90' : 'border-border bg-background text-foreground hover:bg-muted/30'}`}
               >
                 Print Selected
               </button>
               <button
                 type="button"
-                disabled={!selectedPinIds.length}
-                onClick={handleExportSelected}
-                className={`rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${selectedPinIds.length ? 'bg-brand border-brand text-white hover:bg-brand/90' : 'border-border bg-background text-foreground hover:bg-muted/30'}`}
+                disabled={!selectedStudentPinIds.length}
+                onClick={() => handleExportSelected('student')}
+                className={`rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${selectedStudentPinIds.length ? 'bg-brand border-brand text-white hover:bg-brand/90' : 'border-border bg-background text-foreground hover:bg-muted/30'}`}
               >
                 Export Selected
               </button>
               <button
                 type="button"
-                disabled={!selectedPinIds.length || isNotifying}
-                onClick={() => { void handleNotifySelected(); }}
-                className={`rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${selectedPinIds.length && !isNotifying ? 'bg-brand border-brand text-white hover:bg-brand/90' : 'border-border bg-background text-foreground hover:bg-muted/30'}`}
+                disabled={!selectedStudentPinIds.length || isNotifying}
+                onClick={() => { void handleNotifySelected('student'); }}
+                className={`rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${selectedStudentPinIds.length && !isNotifying ? 'bg-brand border-brand text-white hover:bg-brand/90' : 'border-border bg-background text-foreground hover:bg-muted/30'}`}
               >
                 {isNotifying ? 'Sending…' : 'Notify Guardians'}
               </button>
               <button
                 type="button"
-                disabled={!selectedPinIds.length}
-                onClick={() => handleOpenConfirm('deactivate')}
-                className={`rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${selectedPinIds.length ? 'bg-brand border-brand text-white hover:bg-brand/90' : 'border-border bg-background/80 text-foreground opacity-50'}`}
+                disabled={!selectedStudentPinIds.length}
+                onClick={() => handleOpenConfirm('deactivate', 'student')}
+                className={`rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${selectedStudentPinIds.length ? 'bg-brand border-brand text-white hover:bg-brand/90' : 'border-border bg-background/80 text-foreground opacity-50'}`}
               >
                 Deactivate Selected
               </button>
               <button
                 type="button"
-                disabled={!selectedPinIds.length}
-                onClick={() => handleOpenConfirm('delete')}
-                className={`rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${selectedPinIds.length ? 'bg-brand border-brand text-white hover:bg-brand/90' : 'border-border bg-background/80 text-foreground opacity-50'}`}
+                disabled={!selectedStudentPinIds.length}
+                onClick={() => handleOpenConfirm('delete', 'student')}
+                className={`rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${selectedStudentPinIds.length ? 'bg-brand border-brand text-white hover:bg-brand/90' : 'border-border bg-background/80 text-foreground opacity-50'}`}
               >
                 Delete Selected
               </button>
@@ -1478,8 +1521,8 @@ export default function ResultPinsPage() {
                         <label className="inline-flex items-center gap-2">
                           <input
                             type="checkbox"
-                            checked={pageAllSelected}
-                            onChange={handleToggleSelectAll}
+                            checked={studentPageAllSelected}
+                            onChange={() => handleToggleSelectAll('student')}
                             className="h-4 w-4 rounded border border-border text-brand focus:ring-0"
                           />
                           <span className="sr-only">Select all</span>
@@ -1503,8 +1546,8 @@ export default function ResultPinsPage() {
                         <td className="px-3 py-3">
                           <input
                             type="checkbox"
-                            checked={selectedPinIds.includes(pin.id)}
-                            onChange={() => handleTogglePinSelection(pin.id)}
+                            checked={selectedStudentPinIds.includes(pin.id)}
+                            onChange={() => handleTogglePinSelection(pin.id, 'student')}
                             className="h-4 w-4 rounded border border-border text-brand"
                           />
                         </td>
@@ -1602,46 +1645,46 @@ export default function ResultPinsPage() {
                     onChange={handleToggleSelectAllGeneric}
                     className="h-4 w-4 rounded border border-border text-brand focus:ring-brand"
                   />
-                  {selectedPinIds.length ? `${selectedPinIds.length} selected` : 'Select rows'}
+                  {selectedGenericPinIds.length ? `${selectedGenericPinIds.length} selected` : 'Select rows'}
                 </div>
                 <div className="flex gap-2">
                   <button
                     type="button"
-                    disabled={!selectedPinIds.length}
-                    onClick={handlePrintSelected}
-                    className={`rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${selectedPinIds.length ? 'bg-brand border-brand text-white hover:bg-brand/90' : 'border-border bg-background text-foreground hover:bg-muted/30'}`}
+                    disabled={!selectedGenericPinIds.length}
+                    onClick={() => { void handlePrintSelected('generic'); }}
+                    className={`rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${selectedGenericPinIds.length ? 'bg-brand border-brand text-white hover:bg-brand/90' : 'border-border bg-background text-foreground hover:bg-muted/30'}`}
                   >
                     Print Selected
                   </button>
                   <button
                     type="button"
-                    disabled={!selectedPinIds.length}
-                    onClick={handleExportSelected}
-                    className={`rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${selectedPinIds.length ? 'bg-brand border-brand text-white hover:bg-brand/90' : 'border-border bg-background text-foreground hover:bg-muted/30'}`}
+                    disabled={!selectedGenericPinIds.length}
+                    onClick={() => handleExportSelected('generic')}
+                    className={`rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${selectedGenericPinIds.length ? 'bg-brand border-brand text-white hover:bg-brand/90' : 'border-border bg-background text-foreground hover:bg-muted/30'}`}
                   >
                     Export Selected
                   </button>
                   <button
                     type="button"
-                    disabled={!selectedPinIds.length}
-                    onClick={() => { void handleNotifySelected(); }}
-                    className={`rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${selectedPinIds.length ? 'bg-brand border-brand text-white hover:bg-brand/90' : 'border-border bg-background text-foreground hover:bg-muted/30'}`}
+                    disabled={!selectedGenericPinIds.length || isNotifying}
+                    onClick={() => { void handleNotifySelected('generic'); }}
+                    className={`rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${selectedGenericPinIds.length && !isNotifying ? 'bg-brand border-brand text-white hover:bg-brand/90' : 'border-border bg-background text-foreground hover:bg-muted/30'}`}
                   >
                     Notify Guardians
                   </button>
                   <button
                     type="button"
-                    disabled={!selectedPinIds.length}
-                    onClick={() => handleOpenConfirm('deactivate')}
-                    className={`rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${selectedPinIds.length ? 'bg-brand border-brand text-white hover:bg-brand/90' : 'border-border bg-background/80 text-foreground opacity-50'}`}
+                    disabled={!selectedGenericPinIds.length}
+                    onClick={() => handleOpenConfirm('deactivate', 'generic')}
+                    className={`rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${selectedGenericPinIds.length ? 'bg-brand border-brand text-white hover:bg-brand/90' : 'border-border bg-background/80 text-foreground opacity-50'}`}
                   >
                     Deactivate Selected
                   </button>
                   <button
                     type="button"
-                    disabled={!selectedPinIds.length}
-                    onClick={() => handleOpenConfirm('delete')}
-                    className={`rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${selectedPinIds.length ? 'bg-brand border-brand text-white hover:bg-brand/90' : 'border-border bg-background/80 text-foreground opacity-50'}`}
+                    disabled={!selectedGenericPinIds.length}
+                    onClick={() => handleOpenConfirm('delete', 'generic')}
+                    className={`rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${selectedGenericPinIds.length ? 'bg-brand border-brand text-white hover:bg-brand/90' : 'border-border bg-background/80 text-foreground opacity-50'}`}
                   >
                     Delete Selected
                   </button>
@@ -1670,8 +1713,8 @@ export default function ResultPinsPage() {
                         <td className="px-3 py-3">
                           <input
                             type="checkbox"
-                            checked={selectedPinIds.includes(pin.id)}
-                            onChange={() => handleTogglePinSelection(pin.id)}
+                            checked={selectedGenericPinIds.includes(pin.id)}
+                            onChange={() => handleTogglePinSelection(pin.id, 'generic')}
                             className="h-4 w-4 rounded border border-border text-brand focus:ring-brand"
                           />
                         </td>

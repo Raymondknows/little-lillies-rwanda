@@ -45,6 +45,7 @@ export default function WhatsAppSettingsPage() {
   const [pairingPhoneNumber, setPairingPhoneNumber] = useState('');
   const [usePairingCode, setUsePairingCode] = useState(false);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [lastRequestedMode, setLastRequestedMode] = useState<'qr' | 'pairing' | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successModalMessage, setSuccessModalMessage] = useState<string | null>(null);
   const [debugLog, setDebugLog] = useState<string[]>([]);
@@ -109,12 +110,38 @@ export default function WhatsAppSettingsPage() {
     return () => {
       if (timer) clearInterval(timer);
     };
-  }, [session?.status, isConnecting]);
+  }, [session?.status, isConnecting, isRunningDebug]);
 
   const syncSession = (nextSession: SessionStatus | null) => {
     setSession(nextSession);
     setDebugLog(nextSession?.debugLog || []);
     setDebugInfo(nextSession?.debugInfo || null);
+  };
+
+  const buildSessionActionMessage = (nextSession: SessionStatus | null, fallbackMessage: string | null = null) => {
+    if (!nextSession) {
+      return fallbackMessage || 'Waiting for the WhatsApp session to become ready.';
+    }
+
+    if (nextSession.status === 'qr') {
+      return lastRequestedMode === 'pairing'
+        ? 'The pairing flow is ready. Open WhatsApp and enter the pairing code shown below.'
+        : 'Connection is ready. Scan the QR code or use the pairing code shown below.';
+    }
+
+    if (nextSession.status === 'connected') {
+      return 'WhatsApp connected successfully.';
+    }
+
+    if (nextSession.status === 'error') {
+      return nextSession.lastError || nextSession.statusMessage || 'The WhatsApp connection could not be completed.';
+    }
+
+    if (nextSession.status === 'connecting') {
+      return nextSession.statusMessage || 'Connecting to WhatsApp. The pairing screen will appear soon.';
+    }
+
+    return nextSession.statusMessage || fallbackMessage || 'Waiting for the WhatsApp session to become ready.';
   };
 
   async function fetchStatus(showLoading = false) {
@@ -151,6 +178,7 @@ export default function WhatsAppSettingsPage() {
     }
     setIsConnecting(true);
     try {
+      setLastRequestedMode(usePairingCode ? 'pairing' : 'qr');
       const response = await fetch('/api/admin/whatsapp/connect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -159,8 +187,9 @@ export default function WhatsAppSettingsPage() {
       });
       const data = await response.json();
       if (response.ok) {
-        syncSession(data.session || null);
-        setActionMessage(usePairingCode ? 'Connection requested. Enter the pairing code in WhatsApp.' : 'Connection requested. Scan the QR code if shown.');
+        const nextSession = data.session || null;
+        syncSession(nextSession);
+        setActionMessage(buildSessionActionMessage(nextSession, usePairingCode ? 'Connection requested. Enter the pairing code in WhatsApp.' : 'Connection requested. Scan the QR code if shown.'));
       } else {
         setActionMessage(data.error || 'Failed to start WhatsApp connection.');
       }
@@ -263,10 +292,11 @@ export default function WhatsAppSettingsPage() {
   };
 
   const isConnected = session?.status === 'connected';
+  const isPendingPairing = session?.status === 'connecting' || session?.status === 'qr';
   const badgeLabel = isConnected
     ? 'Connected'
     : session?.status === 'qr'
-      ? 'Waiting for scan'
+      ? (lastRequestedMode === 'pairing' ? 'Pairing ready' : 'Waiting for scan')
       : session?.status === 'connecting'
         ? 'Connecting'
         : session?.status === 'error'
@@ -275,6 +305,37 @@ export default function WhatsAppSettingsPage() {
   const statusDescription = session?.statusMessage && !session.statusMessage.toLowerCase().includes(badgeLabel.toLowerCase())
     ? session.statusMessage
     : '';
+  const connectionStatusCopy = (() => {
+    if (!session) {
+      return 'Start a connection to generate the WhatsApp pairing details.';
+    }
+
+    if (session.status === 'connected') {
+      return 'WhatsApp is connected and ready to send test messages.';
+    }
+
+    if (session.status === 'qr') {
+      return lastRequestedMode === 'pairing'
+        ? 'The WhatsApp pairing flow is ready. Open WhatsApp and enter the pairing code shown below.'
+        : 'A WhatsApp pairing QR is ready. Scan it with your phone to link the device.';
+    }
+
+    if (session.status === 'connecting') {
+      return 'The connection is being established. The QR code or pairing code will appear here as soon as the session is ready.';
+    }
+
+    if (session.status === 'error') {
+      return session.lastError || session.statusMessage || 'The connection could not be completed.';
+    }
+
+    return session.statusMessage || 'No active WhatsApp connection yet.';
+  })();
+  const showWaitingFallback = Boolean(
+    (session?.status === 'qr' || session?.status === 'connecting') &&
+    !session?.qr &&
+    !session?.pairingCode &&
+    !session?.lastError
+  );
 
   const handleCopyPairingCode = async () => {
     if (!session?.pairingCode) return;
@@ -318,6 +379,8 @@ export default function WhatsAppSettingsPage() {
         <div className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm shadow-sm">
           {isConnected ? (
             <CheckCircle2 className="h-4 w-4 text-emerald-500 animate-pulse" />
+          ) : isPendingPairing ? (
+            <span className="inline-flex h-2.5 w-2.5 rounded-full bg-amber-500" />
           ) : (
             <span className="inline-flex h-2.5 w-2.5 rounded-full bg-slate-400" />
           )}
@@ -340,7 +403,12 @@ export default function WhatsAppSettingsPage() {
             {session?.pairingCode && <p className="text-xs text-muted">Pairing code: {session.pairingCode}</p>}
           </div>
 
-          {session?.qr && (
+          <div className="mt-6 rounded-lg border border-border bg-background/70 p-4">
+            <p className="text-sm font-semibold">Connection status</p>
+            <p className="mt-2 text-sm text-muted">{connectionStatusCopy}</p>
+          </div>
+
+          {session?.qr ? (
             <div className="mt-6">
               <p className="text-sm font-medium mb-2">Scan QR Code</p>
               <img
@@ -349,7 +417,12 @@ export default function WhatsAppSettingsPage() {
                 className="rounded-lg border border-border"
               />
             </div>
-          )}
+          ) : showWaitingFallback ? (
+            <div className="mt-6 rounded-lg border border-dashed border-brand/30 bg-brand/5 p-4">
+              <p className="text-sm font-semibold">Waiting for the pairing screen</p>
+              <p className="mt-2 text-sm text-muted">The WhatsApp session is active, but the QR code has not appeared yet. Refresh in a few seconds or try the connection again if it still does not appear.</p>
+            </div>
+          ) : null}
 
           {session?.pairingCode && (
             <div className="mt-6 rounded-lg border border-brand/30 bg-brand/5 p-4">

@@ -118,11 +118,10 @@ export default function FeesPage() {
 
   const handleIssueBills = async (termId: string) => {
     try {
-      const backendUrl = getBackendUrl();
-      const response = await fetch(`${backendUrl}/api/admin/fees/invoices/issue-bills`, {
+      const response = await fetch('/api/admin/fees/invoices/issue-bills', {
         method: "POST",
         credentials: "include",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "x-school-id": localStorage.getItem('schoolId') || '' },
         body: JSON.stringify({ termId, currency: data?.currency || 'NGN' }),
       });
 
@@ -142,11 +141,10 @@ export default function FeesPage() {
 
   const handleSendReminders = async (invoiceId?: string) => {
     try {
-      const backendUrl = getBackendUrl();
-      const response = await fetch(`${backendUrl}/api/admin/fees/invoices/send-reminders`, {
+      const response = await fetch('/api/admin/fees/invoices/send-reminders', {
           method: "POST",
           credentials: "include",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", "x-school-id": localStorage.getItem('schoolId') || '' },
           body: JSON.stringify(invoiceId ? { invoiceId, currency: data?.currency || 'NGN' } : { currency: data?.currency || 'NGN' }),
         });
 

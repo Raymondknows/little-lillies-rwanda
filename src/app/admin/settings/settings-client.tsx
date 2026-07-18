@@ -59,8 +59,10 @@ export default function SettingsPageClient({
   const router = useRouter();
   const [name, setName] = useState(school.name);
   const [initials, setInitials] = useState(school.initials ?? "");
-  const [country, setCountry] = useState(school.country ?? "NG");
-  const [currency, setCurrency] = useState(school.currency ?? "NGN");
+  const [country, setCountry] = useState(school.country ?? countriesData.default ?? "NG");
+  const [currency, setCurrency] = useState(
+    school.currency ?? countriesData.countries[(school.country ?? countriesData.default ?? "NG") as keyof typeof countriesData.countries]?.currency ?? "NGN",
+  );
   const [detectedCountryName, setDetectedCountryName] = useState<string | null>(null);
   const [detectedCurrency, setDetectedCurrency] = useState<string | null>(null);
   const [address, setAddress] = useState(school.address ?? "");
@@ -76,6 +78,21 @@ export default function SettingsPageClient({
   const [signatureUrl, setSignatureUrl] = useState<string | null>(school.principalSignatureUrl ?? null);
   const [stampUrl, setStampUrl] = useState<string | null>(school.stampUrl ?? null);
   
+  const countryOptions = useMemo(
+    () =>
+      Object.entries(countriesData.countries).map(([code, data]) => ({
+        code,
+        name: (data as { name: string }).name,
+        currency: (data as { currency: string }).currency,
+      })),
+    [],
+  );
+
+  const currencyOptions = useMemo(
+    () => Array.from(new Set(countryOptions.map((option) => option.currency))),
+    [countryOptions],
+  );
+
   useEffect(() => {
     let mounted = true;
 
@@ -86,13 +103,8 @@ export default function SettingsPageClient({
         const config = await response.json();
         if (!mounted) return;
 
-        const resolvedCountry = config.country || school.country || "NG";
-        const resolvedCurrency = config.data?.currency || school.currency || "NGN";
-        setCountry(resolvedCountry);
-        setCurrency(resolvedCurrency);
-
         setDetectedCountryName(config.data?.name || null);
-        setDetectedCurrency(resolvedCurrency || null);
+        setDetectedCurrency(config.data?.currency || school.currency || null);
       } catch (err) {
         console.error("Error loading country config:", err);
       }
@@ -183,6 +195,8 @@ export default function SettingsPageClient({
         body: JSON.stringify({
           name: name.trim(),
           initials: initials.trim().toUpperCase(),
+          country: country.trim() || null,
+          currency: currency.trim() || null,
           address: address.trim() || null,
           email: email.trim() || null,
           phone: phone.trim() || null,
@@ -413,25 +427,37 @@ export default function SettingsPageClient({
                 <label className="block text-sm font-medium text-foreground mb-2">Country *</label>
                 <select
                   value={country}
-                  disabled
-                  className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground opacity-80 cursor-not-allowed focus:outline-none"
+                  onChange={(event) => {
+                    const nextCountry = event.target.value;
+                    const nextCountryData = countriesData.countries[nextCountry as keyof typeof countriesData.countries];
+                    setCountry(nextCountry);
+                    setCurrency(nextCountryData?.currency || currency);
+                  }}
+                  className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand/50"
                 >
-                  {Object.entries(countriesData.countries).map(([code, data]) => (
-                    <option key={code} value={code}>{(data as any).name}</option>
+                  {countryOptions.map((option) => (
+                    <option key={option.code} value={option.code}>
+                      {option.name}
+                    </option>
                   ))}
                 </select>
                 <p className="mt-2 text-xs text-muted">
-                  This market is locked to the country selected when you first visited SchoolBase. To change it, contact support so we can help you update it safely.
+                  Choose the country that matches your school’s market. The currency will update to the default for that country.
                 </p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">Currency</label>
-                <input
-                  type="text"
+                <select
                   value={currency}
-                  readOnly
-                  className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-muted cursor-not-allowed"
-                />
+                  onChange={(event) => setCurrency(event.target.value)}
+                  className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand/50"
+                >
+                  {currencyOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
                 {!school.currency && detectedCurrency ? (
                   <p className="mt-2 text-xs text-muted">
                     Default currency for your region is {detectedCurrency}.

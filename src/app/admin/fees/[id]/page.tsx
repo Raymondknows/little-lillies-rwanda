@@ -75,7 +75,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 sm:p-8">
+      <div className="min-h-screen p-4 sm:p-8">
         <div className="mx-auto max-w-4xl">
           <div className="animate-pulse space-y-4">
             <div className="h-8 bg-gray-200 rounded w-1/3"></div>
@@ -88,7 +88,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
 
   if (error || !invoice) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 sm:p-8">
+      <div className="min-h-screen p-4 sm:p-8">
         <div className="mx-auto max-w-4xl">
           <Link href="/admin/fees" className="inline-flex items-center gap-2 text-sm font-medium mb-6 hover:opacity-70 transition" style={{ color: BRAND_BLUE }}>
             <ChevronLeft size={16} />
@@ -122,7 +122,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
   const dueDate = invoice.dueDate ? new Date(invoice.dueDate) : null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 sm:p-8">
+    <div className="min-h-screen p-4 sm:p-8">
       <div className="mx-auto max-w-4xl">
         {/* Navigation */}
         <div className="flex items-center justify-between mb-6 print:hidden">
@@ -150,180 +150,143 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
           </div>
         </div>
 
-        {/* Invoice Container */}
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden print:shadow-none print:rounded-none">
-          {/* Header Section with Brand Color */}
-          <div className="p-8 print:p-0" style={{ backgroundColor: BRAND_BLUE }}>
-            <div className="flex items-start justify-between">
-              <div>
-                <h1 className="text-3xl font-bold text-white">Invoice</h1>
-                <p className="text-blue-100 mt-1" style={{ color: "rgba(255, 255, 255, 0.9)" }}>{invoice.invoiceNo}</p>
-              </div>
-              <div className="text-right">
-                {school?.logoUrl && (
-                  <img src={school.logoUrl} alt="School Logo" className="h-12 mb-3 opacity-90" />
+        {/* Invoice Content */}
+        <div className="rounded-xl bg-white p-8 print:p-6 print:bg-white">
+          <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <div className="flex items-center gap-3">
+                {school?.logoUrl ? (
+                  <img src={school.logoUrl} alt="School logo" className="h-12 w-12 rounded-full border border-gray-300 object-cover" />
+                ) : (
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full text-lg font-semibold text-gray-700">
+                    {school?.name?.charAt(0) || "S"}
+                  </div>
                 )}
-                <p className="text-white text-sm font-medium">{school?.name || "School"}</p>
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-[0.3em] text-gray-500">Invoice</p>
+                  <h1 className="mt-1 text-3xl font-semibold text-gray-900">{school?.name || "School Name"}</h1>
+                </div>
+              </div>
+              <div className="mt-4 space-y-1 text-sm text-gray-600">
+                {school?.address && <p>{school.address}</p>}
+                {school?.email && <p>{school.email}</p>}
+                {school?.phone && <p>{school.phone}</p>}
+              </div>
+            </div>
+
+            <div className="lg:text-right">
+              <div className="text-sm font-semibold uppercase tracking-[0.3em] text-gray-500">Invoice No.</div>
+              <div className="mt-2 text-xl font-semibold text-gray-900">{invoice.invoiceNo}</div>
+              <div className="mt-4 inline-flex items-center gap-2 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-gray-700">
+                {isPaid ? <Check size={14} /> : <AlertCircle size={14} />}
+                {isPaid ? "Paid" : isPartPaid ? "Part Paid" : "Outstanding"}
               </div>
             </div>
           </div>
 
-          {/* Main Content */}
-          <div className="p-8 print:p-6">
-            {/* Two Column Layout */}
-            <div className="grid grid-cols-2 gap-8 mb-8 print:gap-4 print:mb-6">
-              {/* Left Column - Dates */}
+          <div className="mt-8">
+            <div className="grid gap-8 pb-8 md:grid-cols-[1.1fr_0.9fr]">
               <div>
-                <div className="space-y-6">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: MID_GRAY }}>Invoice Date</p>
-                    <p className="text-base font-semibold mt-1" style={{ color: DARK_GRAY }}>{invoiceDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: MID_GRAY }}>Due Date</p>
-                    <p className="text-base font-semibold mt-1" style={{ color: DARK_GRAY }}>{dueDate ? dueDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : "On Demand"}</p>
-                  </div>
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-500">Bill To</p>
+                <div className="mt-3 space-y-1 text-sm text-gray-700">
+                  <p className="text-lg font-semibold text-gray-900">{pupilFullName}</p>
+                  <p>{className}</p>
+                  <p>{termName}</p>
+                  {academicYear ? <p>{academicYear}</p> : null}
                 </div>
               </div>
 
-              {/* Right Column - Status & Invoice ID */}
-              <div className="text-right">
-                <div className="space-y-6">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: MID_GRAY }}>Status</p>
-                    <div className="mt-2 inline-flex">
-                      {isPaid ? (
-                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full" style={{ backgroundColor: `${BRAND_BLUE}15`, color: BRAND_BLUE }}>
-                          <Check size={14} />
-                          <span className="text-xs font-semibold">Paid</span>
-                        </div>
-                      ) : isPartPaid ? (
-                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full" style={{ backgroundColor: "#FEF3C7", color: "#92400E" }}>
-                          <AlertCircle size={14} />
-                          <span className="text-xs font-semibold">Part Paid</span>
-                        </div>
-                      ) : (
-                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full" style={{ backgroundColor: "#FCE7F3", color: "#831843" }}>
-                          <AlertCircle size={14} />
-                          <span className="text-xs font-semibold">Outstanding</span>
-                        </div>
-                      )}
-                    </div>
+              <div className="md:text-right">
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-500">Invoice Details</p>
+                <div className="mt-3 space-y-2 text-sm text-gray-700">
+                  <div className="flex items-center justify-between gap-4 md:justify-end">
+                    <span className="text-gray-500">Date</span>
+                    <span className="font-medium text-gray-900">{invoiceDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
                   </div>
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: MID_GRAY }}>Invoice ID</p>
-                    <p className="text-sm font-mono mt-1" style={{ color: DARK_GRAY }}>{invoice.invoiceNo}</p>
+                  <div className="flex items-center justify-between gap-4 md:justify-end">
+                    <span className="text-gray-500">Due</span>
+                    <span className="font-medium text-gray-900">{dueDate ? dueDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : "On Demand"}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-4 md:justify-end">
+                    <span className="text-gray-500">Status</span>
+                    <span className="font-medium text-gray-900">{invoiceStatusLabel(invoice.status)}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-4 md:justify-end">
+                    <span className="text-gray-500">Currency</span>
+                    <span className="font-medium text-gray-900">{currency}</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Divider */}
-            <div style={{ borderTop: `1px solid ${BORDER_GRAY}`, margin: "2rem 0" }}></div>
+            <div className="mt-8">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr>
+                    <th className="pb-3 text-left text-xs font-semibold uppercase tracking-[0.3em] text-gray-500">Description</th>
+                    <th className="pb-3 text-right text-xs font-semibold uppercase tracking-[0.3em] text-gray-500">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="py-4 text-sm text-gray-700">
+                      {invoice.feeSchedule?.name || "School Fees"} for {termName}{academicYear ? ` • ${academicYear}` : ""}
+                    </td>
+                    <td className="py-4 text-right text-lg font-bold text-gray-900">{formatMoney(invoice.amountDue, currency)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
 
-            {/* Bill To Section */}
-            <div className="grid grid-cols-2 gap-8 mb-8 print:gap-4 print:mb-6">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: MID_GRAY }}>Bill To</p>
-                <div className="mt-3 space-y-1">
-                  <p className="text-base font-semibold" style={{ color: DARK_GRAY }}>{pupilFullName}</p>
-                  <p className="text-sm" style={{ color: MID_GRAY }}>{className}</p>
-                  <p className="text-sm" style={{ color: MID_GRAY }}>{termName}, {academicYear}</p>
+            <div className="mt-8 flex justify-end">
+              <div className="w-full max-w-sm">
+                <div className="flex items-center justify-between px-4 py-3 text-sm text-gray-600">
+                  <span>Subtotal</span>
+                  <span className="font-medium text-gray-900">{formatMoney(invoice.amountDue, currency)}</span>
                 </div>
-              </div>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: MID_GRAY }}>School Details</p>
-                <div className="mt-3 space-y-1">
-                  <p className="text-sm" style={{ color: MID_GRAY }}>{school?.address}</p>
-                  {school?.email && <p className="text-sm" style={{ color: MID_GRAY }}>{school.email}</p>}
-                  {school?.phone && <p className="text-sm" style={{ color: MID_GRAY }}>{school.phone}</p>}
+                <div className="flex items-center justify-between px-4 py-3 text-sm text-gray-600">
+                  <span>Amount Paid</span>
+                  <span className="font-medium text-gray-900">{formatMoney(invoice.amountPaid, currency)}</span>
+                </div>
+                <div className="flex items-center justify-between px-4 py-4 text-base font-bold text-gray-900">
+                  <span>{outstanding > 0 ? "Outstanding Balance" : "Total Paid"}</span>
+                  <span>{formatMoney(outstanding > 0 ? outstanding : invoice.amountPaid, currency)}</span>
                 </div>
               </div>
             </div>
 
-            {/* Divider */}
-            <div style={{ borderTop: `1px solid ${BORDER_GRAY}`, margin: "2rem 0" }}></div>
-
-            {/* Line Items Table */}
-            <table className="w-full mb-8 print:mb-6">
-              <thead>
-                <tr style={{ borderBottom: `2px solid ${BRAND_BLUE}` }}>
-                  <th className="text-left py-3 px-0 text-xs font-semibold uppercase tracking-wide" style={{ color: BRAND_BLUE }}>Description</th>
-                  <th className="text-right py-3 px-0 text-xs font-semibold uppercase tracking-wide" style={{ color: BRAND_BLUE }}>Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr style={{ borderBottom: `1px solid ${BORDER_GRAY}` }}>
-                  <td className="py-4 px-0 text-sm" style={{ color: DARK_GRAY }}>{invoice.feeSchedule?.name || "School Fees"}</td>
-                  <td className="text-right py-4 px-0 text-sm font-semibold" style={{ color: DARK_GRAY }}>{formatMoney(invoice.amountDue, currency)}</td>
-                </tr>
-              </tbody>
-            </table>
-
-            {/* Summary Section */}
-            <div className="space-y-3 mb-8 print:mb-6">
-              <div className="flex justify-between items-center py-3 px-4 rounded-lg" style={{ backgroundColor: LIGHT_GRAY }}>
-                <p className="text-sm" style={{ color: MID_GRAY }}>Subtotal</p>
-                <p className="text-sm font-semibold" style={{ color: DARK_GRAY }}>{formatMoney(invoice.amountDue, currency)}</p>
-              </div>
-              <div className="flex justify-between items-center py-3 px-4 rounded-lg" style={{ backgroundColor: LIGHT_GRAY }}>
-                <p className="text-sm" style={{ color: MID_GRAY }}>Amount Paid</p>
-                <p className="text-sm font-semibold" style={{ color: BRAND_BLUE }}>{formatMoney(invoice.amountPaid, currency)}</p>
-              </div>
-              {outstanding > 0 && (
-                <div className="flex justify-between items-center py-4 px-4 rounded-lg text-white font-semibold" style={{ backgroundColor: BRAND_BLUE }}>
-                  <p className="text-sm">Outstanding Balance</p>
-                  <p className="text-lg">{formatMoney(outstanding, currency)}</p>
-                </div>
-              )}
-              {isPaid && (
-                <div className="flex justify-between items-center py-4 px-4 rounded-lg text-white font-semibold" style={{ backgroundColor: `${BRAND_BLUE}` }}>
-                  <p className="text-sm">Total Paid</p>
-                  <p className="text-lg">{formatMoney(invoice.amountPaid, currency)}</p>
-                </div>
-              )}
-            </div>
-
-            {/* Payment History */}
             {invoice.payments && invoice.payments.length > 0 && (
-              <div className="mt-8 pt-8 print:mt-6 print:pt-6" style={{ borderTop: `1px solid ${BORDER_GRAY}` }}>
-                <h3 className="text-sm font-bold uppercase tracking-wide mb-4" style={{ color: DARK_GRAY }}>Payment History</h3>
-                <div className="space-y-2">
+              <div className="mt-8 pt-8">
+                <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-gray-500">Payment History</h3>
+                <div className="mt-4 space-y-3">
                   {invoice.payments.map((payment: any, idx: number) => (
-                    <div key={payment.id || idx} className="flex justify-between items-start py-3 px-4 rounded-lg" style={{ backgroundColor: LIGHT_GRAY }}>
+                    <div key={payment.id || idx} className="flex flex-col gap-2 py-3 text-sm text-gray-700 sm:flex-row sm:items-center sm:justify-between">
                       <div>
-                        <p className="text-sm font-medium" style={{ color: DARK_GRAY }}>{payment.method.replace(/_/g, " ")}</p>
-                        <p className="text-xs mt-1" style={{ color: MID_GRAY }}>{new Date(payment.paidAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
-                        {payment.reference && <p className="text-xs" style={{ color: MID_GRAY }}>Ref: {payment.reference}</p>}
+                        <p className="font-medium text-gray-900">{(payment.method || "Payment").replace(/_/g, " ")}</p>
+                        <p className="text-xs text-gray-500">{new Date(payment.paidAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
+                        {payment.reference && <p className="text-xs text-gray-500">Ref: {payment.reference}</p>}
                       </div>
-                      <p className="text-sm font-semibold" style={{ color: BRAND_BLUE }}>{formatMoney(payment.amount, currency)}</p>
+                      <p className="font-semibold text-gray-900">{formatMoney(payment.amount, currency)}</p>
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Payment Instructions */}
-            {outstanding > 0 && school && (school.manualPaymentAccountName || school.manualPaymentAccountNumber) && (
-              <div className="mt-8 p-6 rounded-lg print:mt-6" style={{ backgroundColor: LIGHT_BLUE, borderLeft: `4px solid ${BRAND_BLUE}` }}>
-                <h3 className="text-sm font-bold uppercase tracking-wide mb-4" style={{ color: BRAND_BLUE }}>Payment Instructions</h3>
-                <div className="space-y-2 text-sm">
-                  {school.manualPaymentAccountName && (
-                    <p><span style={{ color: MID_GRAY }}>Account Name:</span> <span className="font-medium" style={{ color: DARK_GRAY }}>{school.manualPaymentAccountName}</span></p>
-                  )}
-                  {school.manualPaymentAccountNumber && (
-                    <p><span style={{ color: MID_GRAY }}>Account Number:</span> <span className="font-medium" style={{ color: DARK_GRAY }}>{school.manualPaymentAccountNumber}</span></p>
-                  )}
-                  {school.manualPaymentBankName && (
-                    <p><span style={{ color: MID_GRAY }}>Bank:</span> <span className="font-medium" style={{ color: DARK_GRAY }}>{school.manualPaymentBankName}</span></p>
-                  )}
-                </div>
+            <div className="mt-8 pt-8">
+              <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-gray-500">Payment Instructions</h3>
+              <div className="mt-3 space-y-1 text-sm text-gray-700">
+                {school?.manualPaymentAccountName && <p><span className="font-medium text-gray-900">Account Name:</span> {school.manualPaymentAccountName}</p>}
+                {school?.manualPaymentAccountNumber && <p><span className="font-medium text-gray-900">Account Number:</span> {school.manualPaymentAccountNumber}</p>}
+                {school?.manualPaymentBankName && <p><span className="font-medium text-gray-900">Bank:</span> {school.manualPaymentBankName}</p>}
+                {!school?.manualPaymentAccountName && !school?.manualPaymentAccountNumber && !school?.manualPaymentBankName && (
+                  <p>Payments should be made through the school’s approved payment channel. Kindly keep a copy of the receipt for reference.</p>
+                )}
               </div>
-            )}
+            </div>
 
-            {/* Footer */}
-            <div className="mt-8 pt-6 print:mt-6 print:pt-4 text-center" style={{ borderTop: `1px solid ${BORDER_GRAY}` }}>
-              <p className="text-xs" style={{ color: MID_GRAY }}>This invoice was generated by SchoolBase. Please retain for your records.</p>
+            <div className="mt-8 pt-6 text-center text-xs text-gray-500">
+              <p>This invoice was generated by SchoolBase and should be retained for your records.</p>
             </div>
           </div>
         </div>

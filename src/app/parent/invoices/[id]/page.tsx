@@ -76,6 +76,7 @@ export default function InvoiceDetailPage() {
   const [school, setSchool] = useState<SchoolDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const currency = useEffectiveCurrency(school);
 
   useEffect(() => {
     async function loadInvoice() {
@@ -156,7 +157,6 @@ export default function InvoiceDetailPage() {
   const className = invoice.pupil.class ? `${invoice.pupil.class.name}${invoice.pupil.class.arm ? ` ${invoice.pupil.class.arm}` : ""}` : "Unassigned";
   const termName = invoice.feeSchedule?.term?.name || "Current Term";
   const academicYear = invoice.feeSchedule?.term?.academicYear?.name || "";
-  const currency = useEffectiveCurrency(school);
   const invoiceDate = new Date(invoice.createdAt);
   const dueDate = invoice.dueDate ? new Date(invoice.dueDate) : null;
   const payments = invoice.payments || [];

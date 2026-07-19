@@ -86,11 +86,11 @@ export function ClassStatistics({ assessmentId, schoolId }: ClassStatisticsProps
   const { statistics } = stats;
 
   return (
-    <div className="space-y-6 rounded-lg border border-border bg-surface p-6">
+    <div className="space-y-5 rounded-xl border border-border bg-white p-6 shadow-sm">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-foreground">Class Statistics</h3>
-          <p className="text-sm text-muted">Detailed class performance analytics</p>
+          <h3 className="text-lg font-semibold text-gray-900">Class Statistics</h3>
+          <p className="text-sm text-gray-600">Simple view of performance for this assessment.</p>
         </div>
         <Button
           onClick={() => {
@@ -116,104 +116,56 @@ export function ClassStatistics({ assessmentId, schoolId }: ClassStatisticsProps
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <div className="group rounded-lg border border-border bg-surface p-5 shadow-sm transition hover:border-brand/50 hover:shadow-md">
-          <div className="flex items-start gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-100 text-blue-800">
-              <TrendingUp className="h-5 w-5" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Average Score</p>
-              <p className="mt-3 text-3xl font-semibold text-foreground">{statistics.averageScore.toFixed(1)}</p>
-            </div>
-          </div>
-          <p className="mt-4 text-xs text-muted">Class average</p>
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">Average</p>
+          <p className="mt-2 text-2xl font-semibold text-gray-900">{statistics.averageScore.toFixed(1)}</p>
+          <p className="mt-1 text-xs text-gray-500">Class average</p>
         </div>
-
-        <div className="group rounded-lg border border-border bg-surface p-5 shadow-sm transition hover:border-brand/50 hover:shadow-md">
-          <div className="flex items-start gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
-              <Activity className="h-5 w-5" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Pass Rate</p>
-              <p className="mt-3 text-3xl font-semibold text-foreground">{statistics.passRate.toFixed(1)}%</p>
-            </div>
-          </div>
-          <p className="mt-4 text-xs text-muted">{statistics.passCount} passed</p>
+        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">Pass Rate</p>
+          <p className="mt-2 text-2xl font-semibold text-gray-900">{statistics.passRate.toFixed(1)}%</p>
+          <p className="mt-1 text-xs text-gray-500">{statistics.passCount} passed</p>
         </div>
-
-        <div className="group rounded-lg border border-border bg-surface p-5 shadow-sm transition hover:border-brand/50 hover:shadow-md">
-          <div className="flex items-start gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-purple-100 text-purple-800">
-              <Users className="h-5 w-5" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Total Students</p>
-              <p className="mt-3 text-3xl font-semibold text-foreground">{stats.totalStudents}</p>
-            </div>
-          </div>
-          <p className="mt-4 text-xs text-muted">Students with results</p>
+        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">Students</p>
+          <p className="mt-2 text-2xl font-semibold text-gray-900">{stats.totalStudents}</p>
+          <p className="mt-1 text-xs text-gray-500">Distinct pupils</p>
         </div>
-
-        <div className="group rounded-lg border border-border bg-surface p-5 shadow-sm transition hover:border-brand/50 hover:shadow-md">
-          <div className="flex items-start gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-orange-100 text-orange-800">
-              <BarChart3 className="h-5 w-5" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Median Score</p>
-              <p className="mt-3 text-3xl font-semibold text-foreground">{statistics.medianScore.toFixed(1)}</p>
-            </div>
-          </div>
-          <p className="mt-4 text-xs text-muted">Middle score</p>
+        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">Median</p>
+          <p className="mt-2 text-2xl font-semibold text-gray-900">{statistics.medianScore.toFixed(1)}</p>
+          <p className="mt-1 text-xs text-gray-500">Middle score</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(420px,1.4fr)]">
-        <div className="group rounded-lg border border-border bg-surface p-5 shadow-sm transition hover:border-brand/50 hover:shadow-md">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-muted">Score Range</p>
-              <p className="text-3xl font-semibold text-foreground mt-2">
-                {(statistics.highestScore - statistics.lowestScore).toFixed(1)}
-              </p>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(360px,1.1fr)]">
+        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-gray-500">Score Range</p>
+          <p className="mt-2 text-3xl font-semibold text-gray-900">{(statistics.highestScore - statistics.lowestScore).toFixed(1)}</p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-lg border border-gray-200 bg-white p-3 text-center">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-500">High</p>
+              <p className="mt-2 text-lg font-semibold text-gray-900">{statistics.highestScore.toFixed(1)}</p>
             </div>
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-lg border border-border bg-background p-3 text-center">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">High</p>
-                <p className="text-lg font-semibold text-foreground mt-2">
-                  {statistics.highestScore.toFixed(1)}
-                </p>
-              </div>
-              <div className="rounded-lg border border-border bg-background p-3 text-center">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Low</p>
-                <p className="text-lg font-semibold text-foreground mt-2">
-                  {statistics.lowestScore.toFixed(1)}
-                </p>
-              </div>
-              <div className="rounded-lg border border-border bg-background p-3 text-center">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Avg.</p>
-                <p className="text-lg font-semibold text-foreground mt-2">
-                  {statistics.averageScore.toFixed(1)}
-                </p>
-              </div>
+            <div className="rounded-lg border border-gray-200 bg-white p-3 text-center">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-500">Low</p>
+              <p className="mt-2 text-lg font-semibold text-gray-900">{statistics.lowestScore.toFixed(1)}</p>
+            </div>
+            <div className="rounded-lg border border-gray-200 bg-white p-3 text-center">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-500">Avg</p>
+              <p className="mt-2 text-lg font-semibold text-gray-900">{statistics.averageScore.toFixed(1)}</p>
             </div>
           </div>
         </div>
 
-        <div className="group rounded-lg border border-border bg-surface p-6 shadow-sm transition hover:border-brand/50 hover:shadow-md overflow-hidden">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <BarChart3 className="h-5 w-5 text-slate-600" />
-              <h2 className="text-lg font-semibold text-slate-900">Grade Distribution</h2>
-            </div>
-            <div className="text-sm text-slate-600">
-              Total: <span className="font-semibold text-slate-900">{stats.totalResults}</span>
-            </div>
+        <div className="rounded-lg border border-gray-200 bg-white p-4">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-base font-semibold text-gray-900">Grade Distribution</h2>
+            <span className="text-sm text-gray-500">{stats.totalResults} entries</span>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-3">
             {Object.entries(statistics.gradeDistribution)
               .sort(([a], [b]) => a.localeCompare(b))
               .map(([grade, count]) => {
@@ -222,16 +174,13 @@ export function ClassStatistics({ assessmentId, schoolId }: ClassStatisticsProps
                 const totalPercentage = stats.totalResults > 0 ? (count / stats.totalResults) * 100 : 0;
                 return (
                   <div key={grade}>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-semibold text-slate-900">Grade {grade}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-slate-600">{count} students</span>
-                        <span className="text-xs text-slate-500">({totalPercentage.toFixed(1)}%)</span>
-                      </div>
+                    <div className="mb-1 flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-700">Grade {grade}</span>
+                      <span className="text-sm text-gray-500">{count} ({totalPercentage.toFixed(1)}%)</span>
                     </div>
-                    <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
+                    <div className="h-2.5 overflow-hidden rounded-full bg-gray-100">
                       <div
-                        className="h-full rounded-full transition-all duration-300"
+                        className="h-full rounded-full"
                         style={{
                           width: `${percentageOfMax}%`,
                           backgroundColor: GRADE_COLOR_MAP[grade] || '#0A66C2',

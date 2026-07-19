@@ -1,11 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ChevronLeft, Download, Printer, AlertCircle, CheckCircle2, Clock3 } from "lucide-react";
+import { ChevronLeft, Download, Printer, AlertCircle, Check, CheckCircle2, Clock3 } from "lucide-react";
 import { getBackendUrl } from "@/lib/backend-url";
-import { formatMoney, pupilName as formatPupilName } from "@/lib/format";
+import { formatMoney, pupilName as formatPupilName, invoiceStatusLabel, type InvoiceStatusLike } from "@/lib/format";
 import { resolveSchoolAssetUrl } from "@/lib/asset-urls";
 import { useEffectiveCurrency } from "../../parent-school-context";
 
@@ -22,7 +21,7 @@ type InvoiceDetail = {
   invoiceNo?: string;
   amountDue: number;
   amountPaid: number;
-  status: string;
+  status: InvoiceStatusLike;
   dueDate: string | null;
   createdAt: string;
   updatedAt: string;
@@ -58,7 +57,17 @@ type SchoolDetail = {
   principalName?: string;
   tagline?: string;
   principalComment?: string;
+  manualPaymentAccountName?: string;
+  manualPaymentAccountNumber?: string;
+  manualPaymentBankName?: string;
 };
+
+const BRAND_BLUE = "#0A66C2";
+const LIGHT_BLUE = "#E7F1F8";
+const DARK_GRAY = "#1F2937";
+const MID_GRAY = "#6B7280";
+const LIGHT_GRAY = "#F3F4F6";
+const BORDER_GRAY = "#E5E7EB";
 
 export default function InvoiceDetailPage() {
   const params = useParams<{ id: string }>();
@@ -99,23 +108,15 @@ export default function InvoiceDetailPage() {
   }, [params.id]);
 
   const handlePrint = () => window.print();
-
-  const handleDownload = () => {
-    window.print();
-  };
+  const handleDownload = () => window.print();
 
   if (loading) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="w-full max-w-2xl space-y-4 px-4">
-          <div className="h-8 w-32 bg-slate-200 rounded-lg animate-pulse"></div>
-          <div className="space-y-3">
-            <div className="h-6 w-full bg-slate-100 rounded animate-pulse"></div>
-            <div className="h-6 w-3/4 bg-slate-100 rounded animate-pulse"></div>
-          </div>
-          <div className="rounded-lg border border-slate-200 p-4 space-y-3 animate-pulse">
-            <div className="h-5 w-24 bg-slate-200 rounded"></div>
-            <div className="h-20 w-full bg-slate-100 rounded"></div>
+      <div className="min-h-screen p-4 sm:p-8">
+        <div className="mx-auto max-w-4xl">
+          <div className="animate-pulse space-y-4">
+            <div className="h-8 w-1/3 rounded bg-gray-200"></div>
+            <div className="h-96 rounded bg-gray-200"></div>
           </div>
         </div>
       </div>
@@ -124,19 +125,24 @@ export default function InvoiceDetailPage() {
 
   if (error || !invoice) {
     return (
-      <div className="space-y-4">
-        <button
-          onClick={() => router.push("/parent/invoices")}
-          className="inline-flex items-center gap-2 text-sm font-medium text-brand hover:opacity-80"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          Back to invoices
-        </button>
-        <div className="rounded-xl border border-red-200 bg-red-50 p-5 flex gap-3">
-          <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
-          <div>
-            <p className="font-semibold text-red-900">Invoice unavailable</p>
-            <p className="text-sm text-red-700 mt-1">{error || "This invoice could not be loaded."}</p>
+      <div className="min-h-screen p-4 sm:p-8">
+        <div className="mx-auto max-w-4xl">
+          <button
+            onClick={() => router.push("/parent/invoices")}
+            className="mb-6 inline-flex items-center gap-2 text-sm font-medium transition hover:opacity-70"
+            style={{ color: BRAND_BLUE }}
+          >
+            <ChevronLeft size={16} />
+            Back to invoices
+          </button>
+          <div className="rounded-xl border-l-4 border-red-500 bg-white p-6 shadow-sm">
+            <div className="flex items-start gap-3">
+              <AlertCircle size={20} className="mt-0.5 flex-shrink-0 text-red-500" />
+              <div>
+                <h3 className="font-semibold text-gray-900">Invoice Unavailable</h3>
+                <p className="mt-1 text-sm text-gray-600">{error || "This invoice could not be loaded."}</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -151,13 +157,12 @@ export default function InvoiceDetailPage() {
   const termName = invoice.feeSchedule?.term?.name || "Current Term";
   const academicYear = invoice.feeSchedule?.term?.academicYear?.name || "";
   const currency = useEffectiveCurrency(school);
+  const invoiceDate = new Date(invoice.createdAt);
+  const dueDate = invoice.dueDate ? new Date(invoice.dueDate) : null;
+  const payments = invoice.payments || [];
+
   let schoolLogo = resolveSchoolAssetUrl(school?.logoUrl);
   if (schoolLogo === "/api/admin/school-logo" && school?.name && school?.logoUrl) {
-    // prefer public route with school id to avoid session-protected admin route
-    // invoice data includes school info from backend; use school id if available in logoUrl or data
-    // try to parse id from original logoUrl if possible, else use invoice school id from `school` object if present
-    // here `school` may not contain id in this shape; fallback to leaving as-is if we can't determine id
-    // If `school` has an `id` field, prefer that
     // @ts-ignore - some responses include `id`
     const maybeId = (school as any)?.id;
     if (maybeId) {
@@ -166,207 +171,192 @@ export default function InvoiceDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background py-8 px-4 sm:px-8">
+    <div className="min-h-screen p-4 sm:p-8">
       <div className="mx-auto max-w-4xl">
-        {/* Navigation */}
-        <div className="flex items-center justify-between mb-6 print:hidden">
+        <div className="mb-6 flex items-center justify-between print:hidden">
           <button
             onClick={() => router.push("/parent/invoices")}
-            className="inline-flex items-center gap-2 text-sm font-medium text-brand hover:opacity-80"
+            className="inline-flex items-center gap-2 text-sm font-medium transition hover:opacity-70"
+            style={{ color: BRAND_BLUE }}
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft size={16} />
             Back to invoices
           </button>
-          <div className="flex items-center gap-2">
+          <div className="flex gap-2">
             <button
               onClick={handleDownload}
-              className="inline-flex items-center gap-2 rounded-lg border border-brand/20 bg-brand/5 px-4 py-2 text-sm font-semibold text-brand hover:bg-brand/10"
+              className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 hover:opacity-90"
+              style={{ backgroundColor: LIGHT_BLUE, color: BRAND_BLUE }}
             >
-              <Download className="h-4 w-4" />
+              <Download size={16} />
               Download
             </button>
             <button
               onClick={handlePrint}
-              className="inline-flex items-center gap-2 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+              className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 hover:opacity-90"
+              style={{ backgroundColor: LIGHT_BLUE, color: BRAND_BLUE }}
             >
-              <Printer className="h-4 w-4" />
+              <Printer size={16} />
               Print
             </button>
           </div>
         </div>
 
-        {/* Invoice Container */}
-        <div className="rounded-xl border border-border bg-surface shadow-sm overflow-hidden print:shadow-none print:rounded-none">
-          {/* Header Section with Brand Color */}
-          <div className="p-6 md:p-8 bg-brand print:p-0">
-            <div className="flex items-start justify-between gap-4">
-              <div className="text-white flex-1">
-                <div className="inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider mb-3 text-white/80">
-                  Invoice details
-                </div>
-                <h1 className="text-3xl font-bold">{invoice.invoiceNo || invoice.id.slice(0, 8).toUpperCase()}</h1>
-                <p className="mt-2 max-w-2xl text-sm text-white/80">
-                  A full breakdown of the billed amount, payment status, and school fee information for {pupilName}.
-                </p>
-              </div>
-              <div className="text-right text-white">
+        <div className="rounded-xl bg-white p-8 shadow-sm print:bg-white print:p-6">
+          <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <div className="flex items-center gap-3">
                 {schoolLogo ? (
-                  <img src={schoolLogo} alt={school?.name || "School Logo"} className="h-14 w-14 rounded-lg bg-white/10 object-contain p-1.5 ml-auto mb-2" />
+                  <img src={schoolLogo} alt="School logo" className="h-12 w-12 rounded-full border border-gray-300 object-cover" />
                 ) : (
-                  <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-white/10 text-xl ml-auto mb-2">🏫</div>
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full text-lg font-semibold text-gray-700">
+                    {school?.name?.charAt(0) || "S"}
+                  </div>
                 )}
-                <p className="text-sm font-semibold">{school?.name || "School"}</p>
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-[0.3em] text-gray-500">Invoice</p>
+                  <h1 className="mt-1 text-3xl font-semibold text-gray-900">{school?.name || "School Name"}</h1>
+                </div>
+              </div>
+              <div className="mt-4 space-y-1 text-sm text-gray-600">
+                {school?.address && <p>{school.address}</p>}
+                {school?.city && <p>{school.city}</p>}
+                {school?.email && <p>{school.email}</p>}
+                {school?.phone && <p>{school.phone}</p>}
+              </div>
+            </div>
+
+            <div className="lg:text-right">
+              <div className="text-sm font-semibold uppercase tracking-[0.3em] text-gray-500">Invoice No.</div>
+              <div className="mt-2 text-xl font-semibold text-gray-900">{invoice.invoiceNo || invoice.id}</div>
+              <div className="mt-4 inline-flex items-center gap-2 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-gray-700">
+                {isPaid ? <Check size={14} /> : <AlertCircle size={14} />}
+                {isPaid ? "Paid" : isPartPaid ? "Part Paid" : "Outstanding"}
               </div>
             </div>
           </div>
 
-          {/* Student/Term/Status Row */}
-          <div className="grid grid-cols-3 gap-4 border-b border-border bg-background/50 p-6 md:p-8 md:gap-6">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted">Student</p>
-              <p className="mt-1.5 text-sm font-semibold text-foreground">{pupilName}</p>
-              <p className="text-xs text-muted mt-0.5">{className}</p>
-            </div>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted">Term</p>
-              <p className="mt-1.5 text-sm font-semibold text-foreground">{termName}</p>
-              <p className="text-xs text-muted mt-0.5">{academicYear}</p>
-            </div>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted">Status</p>
-              <div className="mt-1.5 inline-flex">
-                {isPaid ? (
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold">
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                    Paid
-                  </div>
-                ) : isPartPaid ? (
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-semibold">
-                    <Clock3 className="h-3.5 w-3.5" />
-                    Partial
-                  </div>
-                ) : (
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-semibold">
-                    <AlertCircle className="h-3.5 w-3.5" />
-                    Outstanding
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Main Content */}
-          <div className="grid gap-6 p-6 md:grid-cols-[1.1fr_0.9fr] md:p-8 md:gap-8">
-            {/* Left Column */}
-            <div className="space-y-6">
-              {/* Amount Cards */}
-              <div className="grid gap-4 sm:grid-cols-3">
-                <div className="rounded-xl border border-border bg-background/50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted">Billed</p>
-                  <p className="mt-2 text-2xl font-bold text-foreground">{formatMoney(invoice.amountDue, currency)}</p>
-                </div>
-                <div className="rounded-xl border border-border bg-background/50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted">Paid</p>
-                  <p className="mt-2 text-2xl font-bold text-emerald-600">{formatMoney(invoice.amountPaid, currency)}</p>
-                </div>
-                <div className="rounded-xl border border-border bg-background/50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted">Outstanding</p>
-                  <p className={`mt-2 text-2xl font-bold ${outstanding > 0 ? "text-red-600" : "text-emerald-600"}`}>
-                    {formatMoney(outstanding, currency)}
-                  </p>
+          <div className="mt-8">
+            <div className="grid gap-8 pb-8 md:grid-cols-[1.1fr_0.9fr]">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-500">Bill To</p>
+                <div className="mt-3 space-y-1 text-sm text-gray-700">
+                  <p className="text-lg font-semibold text-gray-900">{pupilName}</p>
+                  <p>{className}</p>
+                  <p>{termName}</p>
+                  {academicYear ? <p>{academicYear}</p> : null}
                 </div>
               </div>
 
-              {/* Invoice Summary */}
-              <div className="rounded-xl border border-border p-5">
-                <h2 className="text-lg font-bold text-foreground">Invoice summary</h2>
-                <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted">Invoice date</p>
-                    <p className="mt-1 text-sm text-foreground">{new Date(invoice.createdAt).toLocaleDateString()}</p>
+              <div className="md:text-right">
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-500">Invoice Details</p>
+                <div className="mt-3 space-y-2 text-sm text-gray-700">
+                  <div className="flex items-center justify-between gap-4 md:justify-end">
+                    <span className="text-gray-500">Date</span>
+                    <span className="font-medium text-gray-900">{invoiceDate.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</span>
                   </div>
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted">Due date</p>
-                    <p className="mt-1 text-sm text-foreground">{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : "On demand"}</p>
+                  <div className="flex items-center justify-between gap-4 md:justify-end">
+                    <span className="text-gray-500">Due</span>
+                    <span className="font-medium text-gray-900">{dueDate ? dueDate.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) : "On Demand"}</span>
                   </div>
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted">Description</p>
-                    <p className="mt-1 text-sm text-foreground">{invoice.feeSchedule?.name || "School fees"}</p>
+                  <div className="flex items-center justify-between gap-4 md:justify-end">
+                    <span className="text-gray-500">Status</span>
+                    <span className="font-medium text-gray-900">{invoiceStatusLabel(invoice.status)}</span>
                   </div>
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted">Reference</p>
-                    <p className="mt-1 text-sm text-foreground">{invoice.invoiceNo || invoice.id}</p>
+                  <div className="flex items-center justify-between gap-4 md:justify-end">
+                    <span className="text-gray-500">Currency</span>
+                    <span className="font-medium text-gray-900">{currency}</span>
                   </div>
                 </div>
               </div>
+            </div>
 
-              {/* Payments */}
-              <div className="rounded-xl border border-border overflow-hidden">
-                <div className="border-b border-border bg-background/50 px-5 py-4">
-                  <h2 className="text-lg font-bold text-foreground">Payments</h2>
+            <div className="mt-8">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr>
+                    <th className="pb-3 text-left text-xs font-semibold uppercase tracking-[0.3em] text-gray-500">Description</th>
+                    <th className="pb-3 text-right text-xs font-semibold uppercase tracking-[0.3em] text-gray-500">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="py-4 text-sm text-gray-700">
+                      {invoice.feeSchedule?.name || "School Fees"} for {termName}{academicYear ? ` • ${academicYear}` : ""}
+                    </td>
+                    <td className="py-4 text-right text-lg font-bold text-gray-900">{formatMoney(invoice.amountDue, currency)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div className="mt-8 flex justify-end">
+              <div className="w-full max-w-sm">
+                <div className="flex items-center justify-between px-4 py-3 text-sm text-gray-600">
+                  <span>Subtotal</span>
+                  <span className="font-medium text-gray-900">{formatMoney(invoice.amountDue, currency)}</span>
                 </div>
-                {invoice.payments.length === 0 ? (
-                  <div className="px-5 py-8 text-sm text-muted">No payments recorded for this invoice yet.</div>
-                ) : (
-                  <div className="divide-y divide-border">
-                    {invoice.payments.map((payment) => (
-                      <div key={payment.id} className="flex items-center justify-between gap-4 px-5 py-4">
-                        <div>
-                          <p className="text-sm font-semibold text-foreground">{payment.method || "Payment"}</p>
-                          <p className="text-xs text-muted">{new Date(payment.paidAt).toLocaleString()}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm font-bold text-foreground">{formatMoney(payment.amount, currency)}</p>
-                          <p className="text-xs text-muted">{payment.reference || "No reference"}</p>
-                        </div>
+                <div className="flex items-center justify-between px-4 py-3 text-sm text-gray-600">
+                  <span>Amount Paid</span>
+                  <span className="font-medium text-gray-900">{formatMoney(invoice.amountPaid, currency)}</span>
+                </div>
+                <div className="flex items-center justify-between px-4 py-4 text-base font-bold text-gray-900">
+                  <span>{outstanding > 0 ? "Outstanding Balance" : "Total Paid"}</span>
+                  <span>{formatMoney(outstanding > 0 ? outstanding : invoice.amountPaid, currency)}</span>
+                </div>
+              </div>
+            </div>
+
+            {payments.length > 0 && (
+              <div className="mt-8 pt-8">
+                <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-gray-500">Payment History</h3>
+                <div className="mt-4 space-y-3">
+                  {payments.map((payment, idx) => (
+                    <div key={payment.id || idx} className="flex flex-col gap-2 py-3 text-sm text-gray-700 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="font-medium text-gray-900">{(payment.method || "Payment").replace(/_/g, " ")}</p>
+                        <p className="text-xs text-gray-500">{new Date(payment.paidAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}</p>
+                        {payment.reference && <p className="text-xs text-gray-500">Ref: {payment.reference}</p>}
                       </div>
-                    ))}
-                  </div>
+                      <p className="font-semibold text-gray-900">{formatMoney(payment.amount, currency)}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="mt-8 pt-8">
+              <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-gray-500">Payment Instructions</h3>
+              <div className="mt-3 space-y-1 text-sm text-gray-700">
+                {school?.manualPaymentAccountName && <p><span className="font-medium text-gray-900">Account Name:</span> {school.manualPaymentAccountName}</p>}
+                {school?.manualPaymentAccountNumber && <p><span className="font-medium text-gray-900">Account Number:</span> {school.manualPaymentAccountNumber}</p>}
+                {school?.manualPaymentBankName && <p><span className="font-medium text-gray-900">Bank:</span> {school.manualPaymentBankName}</p>}
+                {!school?.manualPaymentAccountName && !school?.manualPaymentAccountNumber && !school?.manualPaymentBankName && (
+                  <p>Payments should be made through the school&apos;s approved payment channel. Kindly keep a copy of the receipt for reference.</p>
                 )}
               </div>
             </div>
 
-            {/* Right Column */}
-            <div className="space-y-6">
-              {/* School Details */}
-              <div className="rounded-xl border border-border bg-background/50 p-5">
-                <h2 className="text-lg font-bold text-foreground">School details</h2>
-                {school?.tagline && <p className="mt-2 text-sm text-muted italic">{school.tagline}</p>}
-                <div className="mt-4 space-y-3 text-sm text-foreground">
-                  <p>{school?.address}</p>
-                  <p>{school?.city}</p>
-                  {school?.phone && <p>{school.phone}</p>}
-                  {school?.email && <p>{school.email}</p>}
-                </div>
-              </div>
-
-              {/* Principal Comment */}
-              {school?.principalComment && (
-                <div className="rounded-xl border border-border p-5">
-                  <h2 className="text-lg font-bold text-foreground">Note from the school</h2>
-                  <p className="mt-3 text-sm leading-6 text-muted">{school.principalComment}</p>
-                </div>
-              )}
-
-              {/* Payment Status */}
-              <div className="rounded-xl border border-border p-5">
-                <h2 className="text-lg font-bold text-foreground">Payment status</h2>
-                <div className="mt-4 flex items-center gap-3 rounded-lg bg-background/50 px-4 py-3">
-                  {isPaid ? (
-                    <CheckCircle2 className="h-5 w-5 text-emerald-600 flex-shrink-0" />
-                  ) : (
-                    <Clock3 className="h-5 w-5 text-amber-600 flex-shrink-0" />
-                  )}
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">{isPaid ? "Fully settled" : isPartPaid ? "Partially settled" : "Awaiting payment"}</p>
-                    <p className="text-xs text-muted">{invoice.status}</p>
-                  </div>
-                </div>
-              </div>
+            <div className="mt-8 pt-6 text-center text-xs text-gray-500">
+              <p>This invoice was generated by SchoolBase and should be retained for your records.</p>
             </div>
           </div>
         </div>
       </div>
+
+      <style jsx global>{`
+        @media print {
+          body {
+            background: white;
+            margin: 0;
+            padding: 0;
+          }
+
+          .print\\:hidden {
+            display: none !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

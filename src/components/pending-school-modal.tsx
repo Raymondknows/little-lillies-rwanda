@@ -13,12 +13,12 @@ export default function PendingSchoolModal({ schoolStatus, schoolName }: Pending
   const router = useRouter();
   const pathname = usePathname();
 
-  // List of allowed paths for PENDING schools
-  const allowedPaths = ["/admin/settings", "/admin/subscribe", "/auth/logout"];
+  // List of allowed paths for onboarding schools
+  const allowedPaths = ["/admin/getting-started", "/admin/settings", "/admin/subscribe", "/auth/logout"];
 
   useEffect(() => {
-    // Check if school is PENDING and current path is not in allowed list
-    if (schoolStatus === "TRIAL") {
+    const normalizedStatus = (schoolStatus || "").toUpperCase();
+    if (normalizedStatus === "PENDING" || normalizedStatus === "TRIAL") {
       const isAllowed = allowedPaths.some((path) => pathname.startsWith(path));
       if (!isAllowed) {
         setIsOpen(true);
@@ -26,11 +26,11 @@ export default function PendingSchoolModal({ schoolStatus, schoolName }: Pending
     }
   }, [schoolStatus, pathname]);
 
-  if (!isOpen || schoolStatus !== "PENDING") return null;
+  if (!isOpen || !schoolStatus || !["PENDING", "TRIAL"].includes(schoolStatus.toUpperCase())) return null;
 
   const handleGoToSetup = () => {
     setIsOpen(false);
-    router.push("/admin/settings?onboarding=1");
+    router.push("/admin/getting-started");
   };
 
   const handleGoToSubscribe = () => {

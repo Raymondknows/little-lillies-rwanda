@@ -6,8 +6,9 @@ import PendingSchoolModal from '@/components/pending-school-modal';
 import SubscriptionModal from '@/components/subscription-modal';
 import AdminSkeleton from '@/components/ui/skeleton';
 
-const nav = [
+const baseNav = [
   { href: "/admin", label: "Dashboard", icon: "LayoutDashboard" },
+  { href: "/admin/getting-started", label: "Getting Started", icon: "Sparkles" },
   { href: "/admin/fees", label: "Fees", icon: "CreditCard" },
   { href: "/admin/students", label: "Students", icon: "Users" },
   { href: "/admin/classes", label: "Classes", icon: "Layers" },
@@ -35,6 +36,7 @@ export default function AdminLayout({
   const [subscriptionBlocked, setSubscriptionBlocked] = useState<{ reason: string } | null>(null);
   const [session, setSession] = useState<any>(null);
   const [school, setSchool] = useState<any>(null);
+  const [showGettingStarted, setShowGettingStarted] = useState(true);
 
   async function exchangeImpersonationToken(impersonationToken: string) {
     try {
@@ -139,6 +141,23 @@ export default function AdminLayout({
 
         const schoolData = await schoolRes.json();
         setSchool(schoolData);
+
+        try {
+          const setupStatusRes = await fetch(`/api/admin/school/${encodeURIComponent(schoolId)}/setup-status`, {
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+          });
+          if (setupStatusRes.ok) {
+            const setupStatusData = await setupStatusRes.json().catch(() => null);
+            setShowGettingStarted(setupStatusData?.isComplete !== true);
+          } else {
+            setShowGettingStarted(true);
+          }
+        } catch (setupErr) {
+          console.error('Error loading setup status for sidebar:', setupErr);
+          setShowGettingStarted(true);
+        }
+
         setLoading(false);
       } catch (err) {
         console.error('Error loading layout data:', err);
@@ -182,10 +201,12 @@ export default function AdminLayout({
     );
   }
 
+  const navItems = baseNav.filter((item) => item.href !== '/admin/getting-started' || showGettingStarted);
+
   return (
     <>
       <SharedLayout
-        navItems={nav}
+        navItems={navItems}
         school={school}
         session={session}
         logoHref="/admin"

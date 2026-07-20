@@ -193,6 +193,9 @@ export default function ParentResultsPage() {
 
   const selectedChild = children.find((child) => child.id === selectedChildId) || null;
   const selectedAssessment = results.find((result) => result.assessmentId === selectedAssessmentId) || null;
+  const activeResultsLabel = selectedTerm
+    ? `${selectedTerm.name}${selectedAssessment?.subject ? ` • ${selectedAssessment.subject}` : ""}`
+    : selectedAssessment?.subject || "Results";
 
   const handleUnlockResults = async () => {
     if (!selectedChild) return;
@@ -201,8 +204,9 @@ export default function ParentResultsPage() {
     setPinError(null);
 
     try {
-      const response = await fetch(
-        `${backendUrl}/api/parent/results?childId=${selectedChild.id}&pin=${encodeURIComponent(pinInput)}`,
+const termParam = selectedTerm ? `&termId=${selectedTerm.id}` : "";
+        const response = await fetch(
+          `${backendUrl}/api/parent/results?childId=${selectedChild.id}&pin=${encodeURIComponent(pinInput)}${termParam}`,
         {
           credentials: "include",
           headers: { "Content-Type": "application/json" },
@@ -228,7 +232,7 @@ export default function ParentResultsPage() {
         }
         return nextResults[0]?.assessmentId ?? null;
       });
-      if (data.term && !selectedTerm) {
+      if (data.term) {
         setSelectedTerm(data.term);
       }
     } catch (err) {
@@ -462,7 +466,7 @@ export default function ParentResultsPage() {
               <h2 className="font-semibold text-slate-900">
                 Results for {selectedChild.firstName} {selectedChild.lastName}
               </h2>
-              {selectedTerm && <p className="text-xs text-slate-600 mt-1">{selectedTerm.name}</p>}
+              <p className="text-xs text-slate-600 mt-1">{activeResultsLabel}</p>
             </div>
           </div>
 

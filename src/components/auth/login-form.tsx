@@ -77,8 +77,8 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
         redirectUrl = "/schoolbase-admin";
         console.log('Platform admin login detected, redirecting to /schoolbase-admin');
       } else if (data.session?.role === "SCHOOL_ADMIN" || data.session?.role === "BURSAR") {
-        redirectUrl = "/admin";
-        console.log('School admin/bursar login detected, redirecting to /admin');
+        redirectUrl = "/admin?onboarding=1";
+        console.log('School admin/bursar login detected, redirecting to /admin?onboarding=1');
       }
       
       console.log('Performing full page redirect to:', redirectUrl);

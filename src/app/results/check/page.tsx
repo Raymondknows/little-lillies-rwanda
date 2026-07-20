@@ -62,6 +62,10 @@ export default function PublicResultCheckPage() {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   const backendUrl = getBackendUrl();
+  const selectedResult = results.find((result) => result.assessmentId === selectedAssessmentId) ?? null;
+  const activeResultsLabel = selectedTerm
+    ? `${selectedTerm.name}${selectedResult?.subject ? ` • ${selectedResult.subject}` : ""}`
+    : selectedResult?.subject || "Results";
 
   const loadData = async () => {
     setError(null);
@@ -519,7 +523,7 @@ export default function PublicResultCheckPage() {
                   </div>
                   <div className="mb-4 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">End of Term Examination</p>
-                    <p className="mt-1 text-sm font-semibold text-slate-900">First Term - End of Term Assessment</p>
+                    <p className="mt-1 text-sm font-semibold text-slate-900">{activeResultsLabel}</p>
                   </div>
                   <div className="overflow-x-auto pb-1">
                     <div className="flex gap-2 min-w-[max-content]">

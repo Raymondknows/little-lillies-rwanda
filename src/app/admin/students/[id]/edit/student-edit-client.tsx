@@ -91,6 +91,7 @@ export default function StudentEditClient({ studentId }: { studentId: string }) 
           setGuardianRelationship(g.relationship || "Parent");
           setGuardianEmail(g.guardian?.email || "");
           setGuardianPhone(g.guardian?.phone || "");
+          setGuardianAltPhone(g.guardian?.altPhone || "");
           setGuardianOccupation(g.guardian?.occupation || "");
         }
 

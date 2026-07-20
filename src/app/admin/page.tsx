@@ -23,7 +23,6 @@ export default function AdminDashboardPage() {
   const [cardScroll, setCardScroll] = useState(0);
   const [whatsAppConnected, setWhatsAppConnected] = useState<boolean | null>(null);
   const [whatsAppStatusMessage, setWhatsAppStatusMessage] = useState<string | null>(null);
-  const [setupResume, setSetupResume] = useState<{ completed: number; total: number; nextTitle: string; nextHref: string } | null>(null);
   const [refreshNonce, setRefreshNonce] = useState(0);
 
   useEffect(() => {
@@ -259,24 +258,9 @@ export default function AdminDashboardPage() {
           recentAnnouncements: announcements,
           currency: dashboardCurrency,
         });
-        const profileComplete = Boolean(schoolNameToUse);
-        const classComplete = (classesData.classes || []).length > 0;
-        const teacherComplete = (teachersData.teachers || []).length > 0;
-        const studentComplete = (pupils.filter((p: any) => p.isActive).length) > 0;
-        const feesComplete = (feesData.invoices || []).length > 0;
-        const checklist = [
-          { title: "Profile", href: "/admin/settings", complete: profileComplete },
-          { title: "Classes", href: "/admin/classes", complete: classComplete },
-          { title: "Teachers", href: "/admin/teachers", complete: teacherComplete },
-          { title: "Students", href: "/admin/students", complete: studentComplete },
-          { title: "Fees", href: "/admin/fees", complete: feesComplete },
-        ];
-        const completedCount = checklist.filter((step) => step.complete).length;
-        const nextStep = checklist.find((step) => !step.complete) || checklist[0];
         const setupComplete = setupStatus?.isComplete === true;
         const setupIncomplete = !setupComplete;
         const shouldShowOnboarding = searchParams.get("onboarding") === "1";
-        setSetupResume(setupIncomplete ? { completed: completedCount, total: checklist.length, nextTitle: nextStep.title, nextHref: nextStep.href } : null);
 
         if (setupIncomplete && shouldShowOnboarding) {
           router.replace('/admin/getting-started?onboarding=1');
@@ -501,40 +485,15 @@ export default function AdminDashboardPage() {
       </div>
       </div>
 
-      {setupResume ? (
-        <div className="mb-6 rounded-3xl border border-brand/30 bg-gradient-to-br from-brand/15 via-brand/5 to-background p-5 shadow-sm">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <div className="inline-flex items-center gap-2 text-sm font-semibold text-brand">
-                <CheckCircle2 className="h-4 w-4" />
-                Required next action
-              </div>
-              <p className="mt-2 text-sm text-muted">
-                You have {setupResume.completed}/{setupResume.total} setup essentials completed. The next step is still required to keep your school operating smoothly.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Link href="/admin/getting-started" className="rounded-full bg-brand px-3 py-2 text-sm font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-brand/90">
-                Complete setup
-              </Link>
-              <Link href={setupResume.nextHref} className="rounded-full border border-border bg-background px-3 py-2 text-sm font-semibold text-foreground transition-all duration-300 hover:border-brand/30 hover:bg-brand/5">
-                Continue with {setupResume.nextTitle}
-              </Link>
-            </div>
-          </div>
-        </div>
-      ) : null}
 
       {/* Quick Actions */}
       <div className="mb-10">
         <div className="mb-3 flex items-center justify-between">
           <h3 className="text-sm font-semibold text-foreground">Quick Actions</h3>
-          {setupResume ? (
-            <Link href="/admin/getting-started" className="inline-flex items-center gap-2 rounded-full border border-brand/20 bg-brand/10 px-3 py-2 text-sm font-semibold text-brand hover:bg-brand/20">
-              <CheckCircle2 className="h-4 w-4" />
-              Start guide
-            </Link>
-          ) : null}
+          <Link href="/admin/getting-started" className="inline-flex items-center gap-2 rounded-full border border-brand/20 bg-brand/10 px-3 py-2 text-sm font-semibold text-brand hover:bg-brand/20">
+            <CheckCircle2 className="h-4 w-4" />
+            Start guide
+          </Link>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <Link href="/admin/fees">

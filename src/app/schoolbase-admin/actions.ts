@@ -78,6 +78,35 @@ export async function sendPlatformCommunicationEmailAction(...args: any[]): Prom
   }
 }
 
+export async function sendDirectCampaignEmailAction(data: {
+  recipients: string[];
+  emailType: string;
+  subject: string;
+  body: string;
+}): Promise<any> {
+  try {
+    const backendUrl = getBackendUrl();
+    const cookieStore = await cookies();
+    const sessionCookie = cookieStore.get('schoolbase_session')?.value;
+
+    const response = await fetch(`${backendUrl}/schoolbase-admin/api/campaigns/send`, {
+      method: 'POST',
+      headers: await buildPlatformAdminHeaders(sessionCookie),
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+
+    const responseData = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(responseData.message || `Failed to send campaign (${response.status})`);
+    }
+
+    return responseData;
+  } catch (error) {
+    throw new Error(error instanceof Error ? error.message : 'Failed to send campaign');
+  }
+}
+
 export async function sendSetupCompletionRemindersAction(...args: any[]): Promise<any> {
   try {
     const backendUrl = getBackendUrl();

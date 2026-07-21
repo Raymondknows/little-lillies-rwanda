@@ -9,6 +9,7 @@ const nav = [
   { href: "/schoolbase-admin/schools", label: "Schools", icon: "Users" },
   { href: "/schoolbase-admin/setup-reminders", label: "Setup Reminders", icon: "Mail" },
   { href: "/schoolbase-admin/email-center", label: "Email Center", icon: "Mail" },
+  { href: "/schoolbase-admin/campaign", label: "Campaign", icon: "Send" },
   { href: "/schoolbase-admin/support", label: "Support", icon: "Bell" },
   { href: "/schoolbase-admin/videos", label: "Video Library", icon: "FileText" },
   { href: "/schoolbase-admin/subscriptions", label: "Subscriptions", icon: "CreditCard" },

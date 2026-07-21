@@ -34,6 +34,7 @@ import {
   TrendingUp,
   Award,
   Megaphone,
+  Send,
   Sparkles,
 } from "lucide-react";
 import { WhatsAppIcon } from "@/components/ui/icons";
@@ -73,6 +74,7 @@ const icons: Record<string, any> = {
   TrendingUp,
   Award,
   Megaphone,
+  Send,
   Sparkles,
 };
 

@@ -12,6 +12,9 @@ export async function POST(
     // Get x-school-id from request headers
     const schoolId = request.headers.get('x-school-id');
     
+    // Forward request body (e.g., optional `reason`) to backend
+    const body = await request.json().catch(() => null);
+
     const response = await fetch(`${backendUrl}/api/results/unlock/${id}`, {
       method: 'POST',
       credentials: 'include',
@@ -26,6 +29,7 @@ export async function POST(
           cookie: request.headers.get('cookie') || '',
         }),
       },
+      body: body ? JSON.stringify(body) : undefined,
     });
 
     if (!response.ok) {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -36,9 +36,12 @@ export function AssessmentActionsPanel({
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [validationResult, setValidationResult] = useState<any>(null);
-  const [showValidation, setShowValidation] = useState(false);
   const [validationPassed, setValidationPassed] = useState(false);
-  const [showModal, setShowModal] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [showUnlockModal, setShowUnlockModal] = useState(false);
+  const [unlockReason, setUnlockReason] = useState('Reopen for corrections');
+  const [unlockError, setUnlockError] = useState<string | null>(null);
+  const [isConfirmingUnlock, setIsConfirmingUnlock] = useState(false);
   const [shouldReloadOnClose, setShouldReloadOnClose] = useState(false);
 
   const canLockResults = isConfigured && (status === 'VALIDATED' || validationPassed || workflowState === 'VALIDATED');
@@ -69,7 +72,12 @@ export function AssessmentActionsPanel({
     : status !== 'APPROVED'
     ? 'Assessment must be approved before results can be published'
     : undefined;
-  const handleAction = async (action: string, endpoint: string) => {
+  const handleAction = async (
+    action: string,
+    endpoint: string,
+    body?: any,
+    onError?: (errorText: string) => void
+  ): Promise<boolean> => {
     setLoading(true);
     setMessage(null);
 
@@ -81,6 +89,7 @@ export function AssessmentActionsPanel({
           'x-school-id': schoolId,
           'Content-Type': 'application/json',
         },
+        body: body ? JSON.stringify(body) : undefined,
       });
 
       const data = await response.json();
@@ -88,7 +97,6 @@ export function AssessmentActionsPanel({
         throw new Error(data.message || data.error || `Failed to ${action}`);
       }
 
-      // Friendly, school-like success copy when backend message is absent
       const successText =
         data?.message || `${action} completed successfully.`;
 
@@ -99,12 +107,11 @@ export function AssessmentActionsPanel({
 
       if (validationPayload) {
         setValidationResult(validationPayload);
-        setShowValidation(true);
-        setShowModal(true);
+        setShowFeedbackModal(true);
         setShouldReloadOnClose(false);
       } else {
         setMessage({ type: 'success', text: successText });
-        setShowModal(true);
+        setShowFeedbackModal(true);
         setShouldReloadOnClose(Boolean(data.success));
       }
 
@@ -119,12 +126,46 @@ export function AssessmentActionsPanel({
       if (data.success && validationPayload) {
         setShouldReloadOnClose(false);
       }
+
+      return true;
     } catch (err) {
       const text = err instanceof Error ? err.message : 'An error occurred';
+      if (onError) {
+        onError(text);
+      }
       setMessage({ type: 'error', text });
-      setShowModal(true);
+      setShowFeedbackModal(true);
+      return false;
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleUnlockConfirm = async () => {
+    setUnlockError(null);
+    const trimmed = unlockReason?.trim();
+    if (!trimmed) {
+      setUnlockError('Please provide a reason for reopening this assessment.');
+      return false;
+    }
+    setIsConfirmingUnlock(true);
+    try {
+      const success = await handleAction(
+        'Unlock Results',
+        `/api/results/unlock/${assessmentId}`,
+        { reason: trimmed },
+        (errorText) => {
+          setUnlockError(errorText);
+        }
+      );
+
+      if (success) {
+        setShowUnlockModal(false);
+      }
+
+      return success;
+    } finally {
+      setIsConfirmingUnlock(false);
     }
   };
 
@@ -147,7 +188,7 @@ export function AssessmentActionsPanel({
   const modalType = message?.type === 'success' || validationResult?.isValid ? 'success' : 'error';
 
   const handleModalClose = () => {
-    setShowModal(false);
+    setShowFeedbackModal(false);
     if (shouldReloadOnClose) {
       window.location.reload();
     }
@@ -167,7 +208,7 @@ export function AssessmentActionsPanel({
 
       {/* Modal feedback */}
       <ErrorModal
-        isOpen={showModal}
+        isOpen={showFeedbackModal}
         onClose={handleModalClose}
         type={modalType}
         title={validationResult ? (validationResult.isValid ? 'Validation Passed' : 'Pending Action Required') : (message?.type === 'success' ? 'Completed Successfully' : undefined)}
@@ -175,6 +216,36 @@ export function AssessmentActionsPanel({
         details={modalDetails}
         confirmLabel={validationResult && validationResult.isValid ? 'Understood' : (message?.type === 'success' ? 'Understood' : 'Review items')}
       />
+
+      <ErrorModal
+        isOpen={showUnlockModal}
+        onClose={() => {
+          setShowUnlockModal(false);
+          setUnlockError(null);
+        }}
+        type="success"
+        title="Unlock Results"
+        message="Enter a reason for reopening this assessment so it is captured in the audit log."
+        confirmLabel="Unlock"
+        confirmDisabled={isConfirmingUnlock}
+        onConfirm={handleUnlockConfirm}
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-slate-600">
+            Teachers will be able to edit results again after unlock. This reason is stored with the audit entry.
+          </p>
+          <label className="block text-sm font-medium text-slate-800">
+            Reason
+            <textarea
+              value={unlockReason}
+              onChange={(event) => setUnlockReason(event.target.value)}
+              className="mt-2 h-28 w-full rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-900 outline-none focus:border-brand focus:ring-2 focus:ring-brand/10"
+              placeholder="Enter a short audit reason"
+            />
+          </label>
+          {unlockError && <p className="text-sm text-red-600">{unlockError}</p>}
+        </div>
+      </ErrorModal>
 
       {/* Action Buttons - All managed by backend state machine */}
       <div className="flex flex-wrap gap-2">
@@ -247,12 +318,7 @@ export function AssessmentActionsPanel({
         </Button>
 
         <Button
-          onClick={() =>
-            handleAction(
-              'Unlock Results',
-              `/api/results/unlock/${assessmentId}`
-            )
-          }
+          onClick={() => setShowUnlockModal(true)}
           disabled={loading || !canUnlockResults}
           variant="outline"
           className="h-10 whitespace-nowrap px-4"

@@ -16,7 +16,9 @@ interface ErrorModalProps {
     label: string;
     onClick: () => void;
   };
+  onConfirm?: () => Promise<boolean | void> | boolean | void;
   onSuccessAction?: () => void; // For success modal primary button
+  confirmDisabled?: boolean;
   confirmLabel?: string;
   children?: React.ReactNode;
 }
@@ -29,7 +31,9 @@ export function ErrorModal({
   details,
   type = "error",
   action,
+  onConfirm,
   onSuccessAction,
+  confirmDisabled,
   confirmLabel,
   children,
 }: ErrorModalProps) {
@@ -163,13 +167,20 @@ export function ErrorModal({
           )}
           <button
             type="button"
-            onClick={() => {
+            onClick={async () => {
+              if (onConfirm) {
+                const result = await onConfirm();
+                if (result === false) {
+                  return;
+                }
+              }
               if (isSuccess && onSuccessAction) {
                 onSuccessAction();
               }
               onClose();
             }}
-            className="flex-1 rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-colors hover:opacity-90"
+            disabled={confirmDisabled}
+            className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-colors ${confirmDisabled ? 'cursor-not-allowed opacity-60' : 'hover:opacity-90'}`}
             style={{ background: BUTTON_BG }}
           >
             {confirmLabel ?? (isSuccess ? "Understood" : "Try again")}

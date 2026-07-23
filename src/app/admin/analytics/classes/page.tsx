@@ -8,7 +8,7 @@ import { Users, Search, ChevronLeft, ChevronRight, Download } from "lucide-react
 interface Class {
   id: string;
   name: string;
-  phase: string;
+  phase: string; 
 }
 
 interface AnalyticsData {

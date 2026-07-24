@@ -6,7 +6,6 @@ import { useSearchParams } from "next/navigation";
 import {
   ArrowRight,
   BookOpen,
-  CheckCircle2,
   Compass,
   DollarSign,
   GraduationCap,
@@ -29,19 +28,37 @@ type Step = {
   hint: string;
 };
 
+type SchoolConfig = {
+  name?: string | null;
+  country?: string | null;
+  currency?: string | null;
+  principalSignatureUrl?: string | null;
+  stampUrl?: string | null;
+};
+
+type Counts = {
+  classCount: number;
+  subjectCount: number;
+  academicTermCount: number;
+  teacherCount: number;
+  studentCount: number;
+  feeCount: number;
+  feeScheduleCount: number;
+  announcementCount: number;
+  assessmentCount: number;
+};
+
+type StudentRecord = {
+  isActive?: boolean | null;
+};
+
+type StudentsResponse = {
+  pupils?: StudentRecord[] | null;
+};
+
 function buildSteps(
-  schoolConfig: any,
-  counts: {
-    classCount: number;
-    subjectCount: number;
-    academicTermCount: number;
-    teacherCount: number;
-    studentCount: number;
-    feeCount: number;
-    feeScheduleCount: number;
-    announcementCount: number;
-    assessmentCount: number;
-  }
+  schoolConfig: SchoolConfig | null,
+  counts: Counts
 ): Step[] {
   return [
     {
@@ -175,7 +192,7 @@ export default function GettingStartedPage() {
           subjectCount: subjectsData?.subjects?.length || 0,
           academicTermCount: termsData?.terms?.length || 0,
           teacherCount: teachersData?.teachers?.length || 0,
-          studentCount: studentsData?.pupils?.filter((p: any) => p.isActive !== false).length || 0,
+          studentCount: (studentsData as StudentsResponse | null)?.pupils?.filter((p: StudentRecord) => p.isActive !== false).length || 0,
           feeCount: feesData?.invoices?.length || 0,
           feeScheduleCount: feesData?.feeSchedules?.length || 0,
           announcementCount: announcementsData?.announcements?.length || 0,
@@ -338,140 +355,79 @@ export default function GettingStartedPage() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-[28px] border border-brand/20 bg-gradient-to-br from-brand/15 via-background to-brand/5 p-4 sm:p-6 shadow-[0_20px_50px_-24px_rgba(0,0,0,0.28)]">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="space-y-3 flex-1">
-            <div>
-              <h1 className="text-2xl font-semibold text-foreground">Let&apos;s get {schoolName} ready to run smoothly</h1>
-              <p className="mt-2 max-w-2xl text-sm text-muted">
-                {isOnboarding
-                  ? "This smart checklist helps your team complete the essentials fast and move into daily use with confidence."
-                  : "Use this guided checklist to make sure nothing important is missed as your school grows with SchoolBase."}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex shrink-0 items-center justify-start lg:justify-end">
-            <div className="text-left lg:text-right">
-              <div className="text-3xl sm:text-4xl font-semibold text-foreground">{completedCount}/{steps.length}</div>
-              <div className="mt-1 text-sm text-muted">tasks complete</div>
-              {remainingCount > 0 ? (
-                <div className="mt-2 inline-flex items-center rounded-full bg-brand/10 px-3 py-1 text-xs font-semibold text-brand">
-                  {remainingCount} left to finish
+      <div className="overflow-hidden rounded-[32px] border border-border/80 bg-surface shadow-[0_24px_70px_-40px_rgba(15,23,42,0.35)]">
+        <div className="grid gap-0 xl:grid-cols-[1.05fr_0.95fr]">
+          <div className="border-b border-border/70 bg-gradient-to-br from-brand/20 via-background to-brand/5 p-6 sm:p-8 xl:border-b-0 xl:border-r">
+            <div className="rounded-[28px] border border-brand/20 bg-background/80 p-5 shadow-[0_20px_50px_-30px_rgba(15,23,42,0.4)] sm:p-6">
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-4">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-brand/20 bg-brand/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-brand">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Setup your workspace
+                  </div>
+                  <div>
+                    <h1 className="text-2xl font-semibold text-foreground">Get {schoolName} ready to run smoothly</h1>
+                    <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
+                      {isOnboarding
+                        ? "This guided workspace setup helps your team complete the essentials quickly and move into daily use with confidence."
+                        : "Use this guided checklist to make sure nothing important is missed as your school grows with SchoolBase."}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-3">
+                    <Link
+                      href={nextStep?.href || "/admin/settings"}
+                      className="inline-flex items-center justify-center gap-2 rounded-full bg-brand px-4 py-2.5 text-sm font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-brand/90"
+                    >
+                      <Zap className="h-4 w-4" />
+                      Continue
+                    </Link>
+                    <Link
+                      href="/admin/settings"
+                      className="inline-flex items-center justify-center rounded-full border border-border bg-background px-4 py-2.5 text-sm font-semibold text-foreground transition-all duration-300 hover:border-brand/30 hover:bg-brand/5"
+                    >
+                      Open settings
+                    </Link>
+                  </div>
                 </div>
-              ) : null}
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex-1">
-            <div className="mb-2 flex items-center justify-between text-sm text-muted">
-              <span>Progress</span>
-              <span>{progressPercent}%</span>
-            </div>
-            <div className="h-2.5 w-full overflow-hidden rounded-full bg-border">
-              <div className="h-full rounded-full bg-brand transition-all duration-500" style={{ width: `${progressPercent}%` }} />
-            </div>
-          </div>
-          <Link
-            href={nextStep?.href || "/admin/settings"}
-            className="group inline-flex w-full items-center justify-center gap-2 rounded-full bg-brand px-4 py-2.5 text-sm font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-brand/90 sm:w-auto"
-          >
-            <Zap className="h-4 w-4" />
-            Continue
-            <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-          </Link>
-        </div>
-      </div>
-
-      <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <div className="rounded-3xl border border-border bg-surface p-4 shadow-sm sm:p-5">
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-foreground">Setup checklist</h2>
-              <p className="text-sm text-muted">Each step is arranged to move the school from configuration to everyday use.</p>
-            </div>
-          </div>
-
-          {loading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 4 }).map((_, index) => (
-                <div key={index} className="h-16 animate-pulse rounded-2xl bg-background" />
-              ))}
-            </div>
-          ) : (
-            <div>
-              {steps.filter((step) => !step.complete).length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-border bg-background/70 p-4 text-sm text-muted">
-                  Everything is in place. You can keep working from the main admin pages.
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[22px] border border-brand/20 bg-brand/10 shadow-sm">
+                  <Sparkles className="h-8 w-8 text-brand" />
                 </div>
-              ) : (
-                <ol className="space-y-3">
-                  {steps
-                    .filter((step) => !step.complete)
-                    .map((step) => {
-                      const Icon = step.icon;
-                      const isNext = step.title === nextStep?.title;
-
-                      return (
-                        <li key={step.title}>
-                          <Link
-                            href={step.href}
-                            className={`group flex flex-col gap-3 rounded-2xl border p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-brand/30 hover:shadow-lg sm:flex-row sm:items-start ${
-                              isNext
-                                ? "border-brand/30 bg-brand/5 shadow-sm"
-                                : "border-border bg-background"
-                            }`}
-                          >
-                            <div className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${isNext ? "bg-brand text-white" : "bg-brand/10 text-brand"}`}>
-                              <Icon className="h-5 w-5" />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-2">
-                                <h3 className="font-semibold text-foreground">{step.title}</h3>
-                                <span className="rounded-full bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">
-                                  {step.hint}
-                                </span>
-                              </div>
-                              <p className="mt-1 text-sm text-muted">{step.description}</p>
-                            </div>
-                            <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-muted transition-transform duration-300 group-hover:translate-x-1" />
-                          </Link>
-                        </li>
-                      );
-                    })}
-                </ol>
-              )}
-            </div>
-          )}
-        </div>
-
-        <div className="space-y-6">
-          <div className="rounded-3xl border border-brand/20 bg-brand/5 p-4 shadow-sm sm:p-5">
-            <div className="flex items-center gap-2 text-sm font-semibold text-brand">
-              <Compass className="h-4 w-4" />
-              Smart guidance
-            </div>
-            <h2 className="mt-2 text-lg font-semibold text-foreground">Next step</h2>
-            <div className="mt-3">
-              <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                <ShieldCheck className="h-4 w-4 text-brand" />
-                {nextStep?.title || "School setup"}
               </div>
-              <p className="mt-2 text-sm text-muted">{nextStep?.description || "Get everything ready for your first active school month."}</p>
-            </div>
 
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Link href={nextStep?.href || "/admin/settings"} className="flex items-center justify-center rounded-full bg-brand px-3 py-2 text-sm font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-brand/90">
-                Launch now
+              <div className="mt-6 rounded-[24px] border border-brand/20 bg-gradient-to-br from-brand/10 via-background to-brand/5 p-5 shadow-inner">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-medium text-foreground">Workspace progress</span>
+                  <span className="font-semibold text-brand">{progressPercent}%</span>
+                </div>
+                <div className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-border">
+                  <div className="h-full rounded-full bg-brand transition-all duration-500" style={{ width: `${progressPercent}%` }} />
+                </div>
+                <div className="mt-4 flex items-center justify-between text-sm text-muted">
+                  <span>{completedCount} completed</span>
+                  <span>{remainingCount} remaining</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-6 sm:p-8">
+            <div className="rounded-[24px] border border-border bg-background p-5 shadow-sm">
+              <div className="flex items-center gap-2 text-sm font-semibold text-brand">
+                <Compass className="h-4 w-4" />
+                Next step
+              </div>
+              <h2 className="mt-3 text-lg font-semibold text-foreground">{nextStep?.title || "School setup"}</h2>
+              <p className="mt-2 text-sm leading-6 text-muted">{nextStep?.description || "Get everything ready for your first active school month."}</p>
+              <Link
+                href={nextStep?.href || "/admin/settings"}
+                className="mt-4 inline-flex items-center gap-2 rounded-full bg-brand/10 px-3.5 py-2 text-sm font-semibold text-brand transition-all duration-300 hover:bg-brand/20"
+              >
+                Open now
+                <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
-          </div>
 
-          <div className="rounded-3xl border border-border bg-surface p-4 shadow-sm sm:p-5">
-            <h2 className="text-lg font-semibold text-foreground">Quick access</h2>
-            <div className="mt-4 space-y-3">
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
               {[
                 { title: "School settings", href: "/admin/settings", description: "Complete your profile" },
                 { title: "Classes & subjects", href: "/admin/classes", description: "Build the structure" },
@@ -480,18 +436,84 @@ export default function GettingStartedPage() {
                 <Link
                   key={item.title}
                   href={item.href}
-                  className="group flex items-center justify-between rounded-2xl border border-border bg-background px-4 py-3 text-sm font-medium text-foreground transition-all duration-300 hover:-translate-y-0.5 hover:border-brand/30 hover:bg-brand/5"
+                  className="rounded-[20px] border border-border bg-background px-4 py-3 text-sm font-medium text-foreground transition-all duration-300 hover:-translate-y-0.5 hover:border-brand/30 hover:bg-brand/5"
                 >
-                  <span>
-                    <span className="block">{item.title}</span>
-                    <span className="mt-0.5 block text-xs font-normal text-muted">{item.description}</span>
-                  </span>
-                  <ArrowRight className="h-4 w-4 text-muted transition-transform duration-300 group-hover:translate-x-1" />
+                  <span className="block">{item.title}</span>
+                  <span className="mt-1 block text-xs font-normal text-muted">{item.description}</span>
                 </Link>
               ))}
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="rounded-[28px] border border-border/80 bg-surface p-4 shadow-sm sm:p-6">
+        <div className="mb-5 flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold text-foreground">Setup checklist</h2>
+            <p className="text-sm text-muted">Each step is arranged to move the school from configuration to everyday use.</p>
+          </div>
+          <div className="rounded-full border border-border bg-background px-3 py-1.5 text-sm font-semibold text-muted">
+            {completedCount}/{steps.length}
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="space-y-3">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div key={index} className="h-16 animate-pulse rounded-2xl bg-background" />
+            ))}
+          </div>
+        ) : (
+          <div>
+            {steps.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-border bg-background/70 p-4 text-sm text-muted">
+                Everything is in place. You can keep working from the main admin pages.
+              </div>
+            ) : (
+              <ol className="space-y-2">
+                {steps.map((step) => {
+                  const Icon = step.icon;
+                  const isNext = step.title === nextStep?.title;
+
+                  return (
+                    <li key={step.title}>
+                      <Link
+                        href={step.href}
+                        className={`group flex flex-col gap-3 rounded-[18px] border px-4 py-3 transition-all duration-300 hover:-translate-y-0.5 hover:border-brand/30 hover:shadow-sm sm:flex-row sm:items-center ${
+                          step.complete
+                            ? "border-border/70 bg-background/70"
+                            : isNext
+                              ? "border-brand/30 bg-brand/5"
+                              : "border-border bg-background"
+                        }`}
+                      >
+                        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${step.complete ? "bg-emerald-500/10 text-emerald-600" : isNext ? "bg-brand text-white" : "bg-brand/10 text-brand"}`}>
+                          <Icon className="h-4.5 w-4.5" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h3 className="text-sm font-semibold text-foreground">{step.title}</h3>
+                            <span className="rounded-full bg-background/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted">
+                              {step.hint}
+                            </span>
+                          </div>
+                          <p className="mt-1 text-sm leading-6 text-muted">{step.description}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] ${step.complete ? "bg-emerald-50 text-emerald-700" : "bg-background text-muted"}`}>
+                            {step.complete ? "Done" : isNext ? "Next" : "Open"}
+                          </span>
+                          <ArrowRight className="h-4 w-4 shrink-0 text-muted transition-transform duration-300 group-hover:translate-x-1" />
+                        </div>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

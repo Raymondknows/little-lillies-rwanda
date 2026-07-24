@@ -18,6 +18,7 @@ export default function SharedLayout({
   navItems,
   school,
   session,
+  setupProgress,
   logoHref = "/",
   logoutRedirectUrl = "/login",
 }: {
@@ -25,6 +26,7 @@ export default function SharedLayout({
   navItems: NavItem[];
   school?: { name?: string | null; city?: string | null; country?: string | null } | null;
   session?: { name?: string } | null;
+  setupProgress?: number | null;
   logoHref?: string;
   logoutRedirectUrl?: string;
 }) {
@@ -48,6 +50,7 @@ export default function SharedLayout({
         navItems={navItems}
         school={school}
         session={session}
+        setupProgress={setupProgress}
         logoHref={logoHref}
         logoutRedirectUrl={logoutRedirectUrl}
       />
@@ -70,6 +73,7 @@ export default function SharedLayout({
           navItems={navItems}
           school={school}
           session={session}
+          setupProgress={setupProgress}
           logoHref={logoHref}
           logoutRedirectUrl={logoutRedirectUrl}
           isMobile

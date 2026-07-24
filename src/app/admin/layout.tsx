@@ -7,8 +7,8 @@ import SubscriptionModal from '@/components/subscription-modal';
 import AdminSkeleton from '@/components/ui/skeleton';
 
 const baseNav = [
+  { href: "/admin/getting-started", label: "Setup your workspace", icon: "Sparkles" },
   { href: "/admin", label: "Dashboard", icon: "LayoutDashboard" },
-  { href: "/admin/getting-started", label: "Getting Started", icon: "Sparkles" },
   { href: "/admin/fees", label: "Fees", icon: "CreditCard" },
   { href: "/admin/students", label: "Students", icon: "Users" },
   { href: "/admin/classes", label: "Classes", icon: "Layers" },
@@ -34,9 +34,10 @@ export default function AdminLayout({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [subscriptionBlocked, setSubscriptionBlocked] = useState<{ reason: string } | null>(null);
-  const [session, setSession] = useState<any>(null);
-  const [school, setSchool] = useState<any>(null);
+  const [session, setSession] = useState<{ id?: string; email?: string; name?: string; role?: string } | null>(null);
+  const [school, setSchool] = useState<{ name?: string; status?: string; [key: string]: unknown } | null>(null);
   const [showGettingStarted, setShowGettingStarted] = useState(true);
+  const [setupProgress, setSetupProgress] = useState<number | null>(null);
 
   async function exchangeImpersonationToken(impersonationToken: string) {
     try {
@@ -150,8 +151,10 @@ export default function AdminLayout({
           if (setupStatusRes.ok) {
             const setupStatusData = await setupStatusRes.json().catch(() => null);
             setShowGettingStarted(setupStatusData?.isComplete !== true);
+            setSetupProgress(typeof setupStatusData?.completionPercentage === 'number' ? setupStatusData.completionPercentage : null);
           } else {
             setShowGettingStarted(true);
+            setSetupProgress(null);
           }
         } catch (setupErr) {
           console.error('Error loading setup status for sidebar:', setupErr);
@@ -209,6 +212,7 @@ export default function AdminLayout({
         navItems={navItems}
         school={school}
         session={session}
+        setupProgress={setupProgress}
         logoHref="/admin"
         logoutRedirectUrl="/login"
       >

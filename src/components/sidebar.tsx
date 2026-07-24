@@ -1,10 +1,9 @@
 "use client";
 
-import { createElement } from "react";
+import { createElement, type ComponentType } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AppLogo } from "@/components/app-logo";
-import { Button } from "@/components/ui/button";
 import { LogoutButton } from "@/components/logout-button";
 import { resolveSchoolAssetUrl } from "@/lib/asset-urls";
 import {
@@ -25,6 +24,7 @@ import {
   Globe,
   Layers,
   HelpCircle,
+  Check,
   MessageSquare,
   PenTool,
   Building2,
@@ -46,7 +46,7 @@ type NavItem = {
   section?: string;
 };
 
-const icons: Record<string, any> = {
+const icons: Record<string, ComponentType<{ className?: string }>> = {
   Home,
   LayoutDashboard,
   BookOpen,
@@ -84,6 +84,7 @@ export default function Sidebar({
   session,
   logoHref = "/",
   logoutRedirectUrl = "/login",
+  setupProgress,
   isMobile = false,
   onClose,
 }: {
@@ -92,13 +93,19 @@ export default function Sidebar({
   session?: { name?: string } | null;
   logoHref?: string;
   logoutRedirectUrl?: string;
+  setupProgress?: number | null;
   isMobile?: boolean;
   onClose?: () => void;
 }) {
   const pathname = usePathname();
-  let lastSection: string | undefined;
   const schoolLogo = school?.logoUrl ? resolveSchoolAssetUrl(school.logoUrl) : null;
   const schoolName = school?.name || "SchoolBase";
+  const normalizedProgress = typeof setupProgress === "number" ? Math.max(0, Math.min(100, setupProgress)) : 0;
+  const progressCircumference = 2 * Math.PI * 10;
+  const navItemsWithSectionVisibility = navItems.map((item, index) => ({
+    ...item,
+    showSection: Boolean(item.section && (index === 0 || navItems[index - 1].section !== item.section)),
+  }));
 
   const handleNavClick = () => {
     if (isMobile && onClose) {
@@ -127,10 +134,8 @@ export default function Sidebar({
       </div>
 
       <nav className="flex-1 space-y-2 p-2 overflow-y-auto">
-        {navItems.map(({ href, label, icon, section }) => {
+        {navItemsWithSectionVisibility.map(({ href, label, icon, section, showSection }) => {
           const isActive = pathname === href || pathname.startsWith(`${href}/`);
-          const showSection = section && section !== lastSection;
-          lastSection = section;
 
           return (
             <div key={href}>
@@ -148,7 +153,29 @@ export default function Sidebar({
                     : "text-muted hover:bg-brand-light hover:text-brand"
                 }`}
               >
-                {icons[icon] ? createElement(icons[icon], { className: "h-4 w-4" }) : null}
+                {href === "/admin/getting-started" ? (
+                  <div className="relative flex h-5 w-5 shrink-0 items-center justify-center">
+                    <svg viewBox="0 0 24 24" className={`h-5 w-5 -rotate-90 ${isActive ? "text-brand" : "text-muted/70"}`}>
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" opacity="0.22" />
+                      <circle
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        fill="none"
+                        strokeLinecap="round"
+                        strokeDasharray={progressCircumference}
+                        strokeDashoffset={progressCircumference - (progressCircumference * normalizedProgress) / 100}
+                      />
+                    </svg>
+                    {normalizedProgress >= 100 ? (
+                      <Check className="absolute h-3.5 w-3.5 text-brand" />
+                    ) : (
+                      <Sparkles className="absolute h-3 w-3 text-brand" />
+                    )}
+                  </div>
+                ) : icons[icon] ? createElement(icons[icon], { className: "h-4 w-4" }) : null}
                 {label}
               </Link>
             </div>

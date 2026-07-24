@@ -34,7 +34,7 @@ function getNextPlan(currentPlan: string): string {
   return planProgression[currentPlan] || currentPlan;
 }
 
-function ActionMenu({
+export function ActionMenu({
   school,
   performAction,
   impersonate,

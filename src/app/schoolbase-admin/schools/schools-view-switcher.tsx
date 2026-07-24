@@ -4,7 +4,7 @@ import { useMemo, useState, useEffect } from "react";
 import AdminSkeleton from "@/components/ui/skeleton";
 import Link from "next/link";
 import { Activity, AlertTriangle, Building2, CheckCircle2, Clock, Users, XCircle, Zap } from "lucide-react";
-import { SchoolTable, type SchoolRow } from "@/components/platform-admin/school-table";
+import { SchoolTable, type SchoolRow, ActionMenu } from "@/components/platform-admin/school-table";
 import { resolveSchoolAssetUrl } from "@/lib/asset-urls";
 
 function getInitials(name: string) {
@@ -171,6 +171,77 @@ export default function SchoolsViewSwitcher({
     });
   }, [schools, search, statusFilter, verificationFilter, countryFilter, sortBy]);
 
+  const [busy, setBusy] = useState(false);
+
+  const performAction = async (
+    schoolId: string,
+    action: string,
+    payload?: Record<string, unknown>,
+  ) => {
+    setBusy(true);
+    try {
+      const response = await fetch("/schoolbase-admin/api/schools", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ schoolId, action, ...payload }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        console.error(result.message || "Action failed.");
+        return;
+      }
+      setSchools((current) => current.map((s) => (s.id === schoolId ? { ...s, ...(result.school || {}) } : s)));
+    } catch (err) {
+      console.error("Action failed", err);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const sendReminder = async (schoolId: string) => {
+    setBusy(true);
+    try {
+      const response = await fetch("/schoolbase-admin/api/reminders/send-single", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ schoolId }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        console.error(result.message || "Failed to send reminder.");
+      }
+    } catch (err) {
+      console.error("Failed to send reminder", err);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const impersonate = async (schoolId: string) => {
+    setBusy(true);
+    try {
+      const response = await fetch("/schoolbase-admin/api/impersonate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ schoolId }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        console.error(result.message || "Impersonation failed.");
+        return;
+      }
+      const redirectUrl = result.redirectUrl || `/admin?impersonate=${encodeURIComponent(result.token)}`;
+      window.location.href = redirectUrl;
+    } catch (err) {
+      console.error("Impersonation failed", err);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="py-12">
@@ -333,56 +404,71 @@ export default function SchoolsViewSwitcher({
             </div>
           ) : (
             filteredSchools.map((school: any) => (
-              <Link
-                key={school.id}
-                href={`/schoolbase-admin/schools/${school.id}`}
-                className="group overflow-hidden rounded-3xl border border-border bg-surface p-6 shadow-sm transition hover:border-brand hover:shadow-lg"
-              >
-                <div className="flex items-start gap-4">
-                  <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-3xl bg-brand/10 text-3xl font-semibold text-brand shadow-sm">
-                    {school.logoUrl ? (
-                      <img
-                        src={resolveSchoolAssetUrl(school.logoUrl) || school.logoUrl}
-                        alt={`${school.name} logo`}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <span>{getInitials(school.name)}</span>
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h2 className="truncate text-xl font-semibold text-foreground">{school.name}</h2>
-                      <span className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusClasses(school.status)}`}>
-                        {school.status}
-                      </span>
-                      <span className={`rounded-full px-3 py-1 text-xs font-semibold ${(school as any).isVerified ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-700"}`}>
-                        {(school as any).isVerified ? "✓ Verified" : "Unverified"}
-                      </span>
-                    </div>
-                    <p className="mt-2 text-sm text-muted line-clamp-2">{school.email || school.country}</p>
-                  </div>
-                </div>
+              <div
+                  key={school.id}
+                  className="relative group overflow-hidden rounded-3xl border border-border bg-surface p-6 shadow-sm transition hover:border-brand hover:shadow-lg"
+                >
+                  <Link href={`/schoolbase-admin/schools/${school.id}`} className="absolute inset-0 z-0" aria-hidden="true">
+                    <span className="sr-only">View {school.name}</span>
+                  </Link>
 
-                <div className="mt-6 grid gap-3 text-sm sm:grid-cols-2">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted">Country</p>
-                    <p className="mt-1 text-foreground">{school.country || "—"}</p>
+                  <div className="relative z-10">
+                    <div className="flex items-start gap-4">
+                      <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-3xl bg-brand/10 text-3xl font-semibold text-brand shadow-sm">
+                        {school.logoUrl ? (
+                          <img
+                            src={resolveSchoolAssetUrl(school.logoUrl) || school.logoUrl}
+                            alt={`${school.name} logo`}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <span>{getInitials(school.name)}</span>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h2 className="truncate text-xl font-semibold text-foreground">{school.name}</h2>
+                          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusClasses(school.status)}`}>
+                            {school.status}
+                          </span>
+                          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${(school as any).isVerified ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-700"}`}>
+                            {(school as any).isVerified ? "✓ Verified" : "Unverified"}
+                          </span>
+                        </div>
+                        <p className="mt-2 text-sm text-muted line-clamp-2">{school.email || school.country}</p>
+                      </div>
+                    </div>
+
+                    <div className="mt-6 grid gap-3 text-sm sm:grid-cols-2">
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.18em] text-muted">Country</p>
+                        <p className="mt-1 text-foreground">{school.country || "—"}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.18em] text-muted">Plan</p>
+                        <p className="mt-1 text-foreground">{school.plan}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.18em] text-muted">Trial ends</p>
+                        <p className="mt-1 text-foreground">{formatDate(school.trialEndsAt)}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.18em] text-muted">Registered</p>
+                        <p className="mt-1 text-foreground">{formatDate(school.createdAt)}</p>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted">Plan</p>
-                    <p className="mt-1 text-foreground">{school.plan}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted">Trial ends</p>
-                    <p className="mt-1 text-foreground">{formatDate(school.trialEndsAt)}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted">Registered</p>
-                    <p className="mt-1 text-foreground">{formatDate(school.createdAt)}</p>
+
+                  <div className="absolute top-4 right-4 z-20">
+                    <ActionMenu
+                      school={school}
+                      performAction={performAction}
+                      sendReminder={sendReminder}
+                      impersonate={impersonate}
+                      busy={busy}
+                    />
                   </div>
                 </div>
-              </Link>
             ))
           )}
         </div>

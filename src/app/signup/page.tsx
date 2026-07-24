@@ -78,7 +78,7 @@ export default function SignupPage() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
       <div className="w-full max-w-4xl rounded-xl border border-border bg-surface p-8 shadow-sm">
         <div className="mb-6 flex justify-center">
-          <AppLogo href="/" size="lg" />
+          <AppLogo href="/" size="lg" showSpinner />
         </div>
         <h1 className="text-center text-xl font-bold">Create a new school</h1>
         <p className="mt-2 text-center text-sm text-muted">

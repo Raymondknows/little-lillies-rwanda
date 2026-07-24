@@ -21,12 +21,12 @@ export default async function LoginPage({
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="w-full max-w-md rounded-xl border border-border bg-surface p-8 shadow-sm">
+      <div className="w-full max-w-md rounded-2xl border border-border bg-surface/80 backdrop-blur-sm p-8 shadow-lg">
         <div className="mb-8 flex justify-center">
-          <AppLogo href="/" size="lg" />
+          <AppLogo href="/" size="lg" showSpinner />
         </div>
 
-        <h1 className="text-center text-xl font-bold text-foreground">
+        <h1 className="text-center text-2xl font-bold text-foreground">
           Sign in to SchoolBase
         </h1>
 

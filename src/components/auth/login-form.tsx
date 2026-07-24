@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
@@ -118,50 +118,71 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
         </p>
       )}
 
-      <label className="block text-sm font-medium text-foreground">
-        Email
+      <div className="relative">
+        <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted">
+          <Mail className="h-4 w-4" />
+        </div>
         <input
           name="email"
           type="email"
           required
-          placeholder="you@schoolbase.live"
-          className="mt-1 w-full rounded-lg border border-border px-3 py-2.5 text-sm"
+          placeholder=" "
+          aria-label="Email"
+          className="peer mt-1 w-full rounded-xl border border-border bg-background px-3 pl-10 py-3 text-sm text-foreground placeholder-transparent transition focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
         />
-      </label>
-
-      <label className="block text-sm font-medium text-foreground">
-        Password
-        <div className="relative mt-1">
-          <input
-            name="password"
-            type={showPassword ? "text" : "password"}
-            required
-            placeholder="Enter your password"
-            className="w-full rounded-lg border border-border px-3 py-2.5 pr-10 text-sm"
-          />
-
-          <button
-            type="button"
-            onClick={() => setShowPassword((value) => !value)}
-            className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-500 transition hover:text-foreground"
-            aria-label={showPassword ? "Hide password" : "Show password"}
-          >
-            {showPassword ? (
-              <EyeOff className="h-4 w-4" />
-            ) : (
-              <Eye className="h-4 w-4" />
-            )}
-          </button>
-        </div>
-      </label>
-
-      <div className="text-right text-sm">
-        <a href="/forgot-password" className="text-brand hover:underline">
-          Forgot password?
-        </a>
+        <label className="absolute left-10 top-3 text-sm text-muted transition-all peer-placeholder-shown:top-3 peer-placeholder-shown:text-sm peer-focus:-top-2 peer-focus:text-xs">
+          Email
+        </label>
       </div>
 
-      <Button type="submit" className="w-full" disabled={pending}>
+      <div className="relative">
+        <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted">
+          <Lock className="h-4 w-4" />
+        </div>
+        <input
+          name="password"
+          type={showPassword ? "text" : "password"}
+          required
+          placeholder=" "
+          aria-label="Password"
+          className="peer mt-1 w-full rounded-xl border border-border bg-background px-3 pl-10 py-3 text-sm text-foreground placeholder-transparent transition focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
+        />
+
+        <label className="absolute left-10 top-3 text-sm text-muted transition-all peer-placeholder-shown:top-3 peer-placeholder-shown:text-sm peer-focus:-top-2 peer-focus:text-xs">
+          Password
+        </label>
+
+        <button
+          type="button"
+          onClick={() => setShowPassword((value) => !value)}
+          className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-500 transition hover:text-foreground"
+          aria-label={showPassword ? "Hide password" : "Show password"}
+        >
+          {showPassword ? (
+            <EyeOff className="h-4 w-4" />
+          ) : (
+            <Eye className="h-4 w-4" />
+          )}
+        </button>
+      </div>
+
+      <div className="flex items-center justify-between text-sm">
+        <label className="inline-flex items-center gap-2">
+          <input type="checkbox" className="h-4 w-4 rounded border-border text-brand" />
+          <span className="text-muted">Remember me</span>
+        </label>
+        <div>
+          <a href="/forgot-password" className="text-brand hover:underline">
+            Forgot password?
+          </a>
+        </div>
+      </div>
+
+      <Button
+        type="submit"
+        className="w-full rounded-xl bg-gradient-to-r from-brand to-indigo-600 text-white px-4 py-3 font-medium shadow-md hover:opacity-95 transition disabled:opacity-50"
+        disabled={pending}
+      >
         {pending ? "Signing in…" : "Sign in"}
       </Button>
     </form>

@@ -55,7 +55,7 @@ export default async function Header() {
         {/* Main header - shown only on public pages (no logged-in session) */}
         {!isLoggedIn && (
           <div className="flex items-center justify-between gap-4">
-            <AppLogo />
+            <AppLogo showSpinner />
 
             {/* Navigation */}
             <nav className="hidden items-center gap-5 text-sm font-medium text-muted md:flex">

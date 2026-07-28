@@ -312,7 +312,7 @@ export default function NewStudentClient() {
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
               <label className="text-sm font-semibold text-slate-800">
                 Admission number
-                <input name="admissionNo" defaultValue={nextAdmissionNo} readOnly className="mt-2 w-full rounded-2xl border border-border bg-slate-100 px-4 py-3 text-sm text-slate-600" />
+                <input name="admissionNo" defaultValue={nextAdmissionNo} readOnly placeholder="Admission number generated automatically" className="mt-2 w-full rounded-2xl border border-border bg-slate-100 px-4 py-3 text-sm text-slate-600" />
               </label>
 
               <label className="text-sm font-semibold text-slate-800">
@@ -337,7 +337,7 @@ export default function NewStudentClient() {
 
               <label className="text-sm font-semibold text-slate-800">
                 Admission date
-                <input name="admissionDate" type="date" value={admissionDate} onChange={(e) => setAdmissionDate(e.target.value)} className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
+                <input name="admissionDate" type="date" value={admissionDate} onChange={(e) => setAdmissionDate(e.target.value)} placeholder="Select admission date" className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
               </label>
             </div>
           </div>
@@ -348,17 +348,17 @@ export default function NewStudentClient() {
             <div className="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
               <label className="text-sm font-semibold text-slate-800">
                 Surname *
-                <input name="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} required className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
+                <input name="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} required placeholder="e.g., Adekunle" className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
               </label>
 
               <label className="text-sm font-semibold text-slate-800">
                 First name *
-                <input name="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} required className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
+                <input name="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} required placeholder="e.g., Chidi" className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
               </label>
 
               <label className="text-sm font-semibold text-slate-800">
                 Middle name
-                <input name="middleName" value={middleName} onChange={(e) => setMiddleName(e.target.value)} className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
+                <input name="middleName" value={middleName} onChange={(e) => setMiddleName(e.target.value)} placeholder="Optional" className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
               </label>
 
               <label className="text-sm font-semibold text-slate-800">
@@ -371,7 +371,7 @@ export default function NewStudentClient() {
 
               <label className="text-sm font-semibold text-slate-800">
                 Date of birth
-                <input name="dateOfBirth" type="date" value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
+                <input name="dateOfBirth" type="date" value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} placeholder="Select birth date" className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
               </label>
 
               <label className="text-sm font-semibold text-slate-800">
@@ -386,7 +386,7 @@ export default function NewStudentClient() {
 
               <label className="text-sm font-semibold text-slate-800 xl:col-span-3">
                 Address
-                <textarea name="address" value={address} onChange={(e) => setAddress(e.target.value)} rows={3} className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
+                <textarea name="address" value={address} onChange={(e) => setAddress(e.target.value)} rows={3} placeholder="Street address, city, state" className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
               </label>
             </div>
           </div>
@@ -397,12 +397,12 @@ export default function NewStudentClient() {
             <div className="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
               <label className="text-sm font-semibold text-slate-800">
                 First name
-                <input name="guardianFirst" value={guardianFirst} onChange={(e) => setGuardianFirst(e.target.value)} className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
+                <input name="guardianFirst" value={guardianFirst} onChange={(e) => setGuardianFirst(e.target.value)} placeholder="Guardian first name" className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
               </label>
 
               <label className="text-sm font-semibold text-slate-800">
                 Last name
-                <input name="guardianLast" value={guardianLast} onChange={(e) => setGuardianLast(e.target.value)} className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
+                <input name="guardianLast" value={guardianLast} onChange={(e) => setGuardianLast(e.target.value)} placeholder="Guardian last name" className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
               </label>
 
               <label className="text-sm font-semibold text-slate-800">
@@ -418,7 +418,7 @@ export default function NewStudentClient() {
 
               <label className="text-sm font-semibold text-slate-800">
                 Phone number *
-                <input name="guardianPhone" value={guardianPhone} onChange={(e) => setGuardianPhone(e.target.value)} required placeholder="+234..." className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
+                <input name="guardianPhone" value={guardianPhone} onChange={(e) => setGuardianPhone(e.target.value)} required placeholder="+234 800 123 4567" className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
               </label>
 
               <label className="text-sm font-semibold text-slate-800">
@@ -455,17 +455,17 @@ export default function NewStudentClient() {
                 <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
                   <label className="text-sm font-semibold text-slate-800">
                     Blood group
-                    <input name="bloodGroup" value={bloodGroup} onChange={(e) => setBloodGroup(e.target.value)} className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
+                    <input name="bloodGroup" value={bloodGroup} onChange={(e) => setBloodGroup(e.target.value)} placeholder="A+, O-, B+" className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
                   </label>
 
                   <label className="text-sm font-semibold text-slate-800">
                     Genotype
-                    <input name="genotype" value={genotype} onChange={(e) => setGenotype(e.target.value)} className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
+                    <input name="genotype" value={genotype} onChange={(e) => setGenotype(e.target.value)} placeholder="AA, AS, SS" className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
                   </label>
 
                   <label className="text-sm font-semibold text-slate-800 xl:col-span-3">
                     Medical notes
-                    <textarea name="medicalNotes" value={medicalNotes} onChange={(e) => setMedicalNotes(e.target.value)} rows={3} className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
+                    <textarea name="medicalNotes" value={medicalNotes} onChange={(e) => setMedicalNotes(e.target.value)} rows={3} placeholder="Allergies, conditions, or doctor notes" className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
                   </label>
                 </div>
               </div>
@@ -489,12 +489,12 @@ export default function NewStudentClient() {
                 <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
                   <label className="text-sm font-semibold text-slate-800">
                     Previous school
-                    <input name="previousSchool" value={previousSchool} onChange={(e) => setPreviousSchool(e.target.value)} className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
+                    <input name="previousSchool" value={previousSchool} onChange={(e) => setPreviousSchool(e.target.value)} placeholder="Previous school name" className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
                   </label>
 
                   <label className="text-sm font-semibold text-slate-800">
                     Previous class
-                    <input name="previousClass" value={previousClass} onChange={(e) => setPreviousClass(e.target.value)} className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
+                    <input name="previousClass" value={previousClass} onChange={(e) => setPreviousClass(e.target.value)} placeholder="Previous class or grade" className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
                   </label>
                 </div>
               </div>

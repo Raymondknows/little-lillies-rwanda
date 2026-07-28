@@ -291,7 +291,7 @@ const termParam = selectedTerm ? `&termId=${selectedTerm.id}` : "";
               </div>
               <h2 className="text-2xl font-bold text-slate-900">Result PIN Required</h2>
               <p className="text-sm text-slate-600 mt-2">
-                Enter the result PIN provided by the school to view {selectedChild.firstName}'s results.
+                Enter the result PIN provided by the school to view {[selectedChild.lastName, selectedChild.firstName].filter(Boolean).join(' ')}'s results.
               </p>
             </div>
 
@@ -423,7 +423,7 @@ const termParam = selectedTerm ? `&termId=${selectedTerm.id}` : "";
                         : "bg-slate-100 text-slate-900 border border-slate-200 hover:border-slate-300"
                     }`}
                   >
-                    {child.firstName}
+                    {[child.lastName, child.firstName].filter(Boolean).join(' ')}
                   </button>
                 ))}
               </div>
@@ -464,7 +464,7 @@ const termParam = selectedTerm ? `&termId=${selectedTerm.id}` : "";
             <GraduationCap className="h-5 w-5 text-slate-600" />
             <div>
               <h2 className="font-semibold text-slate-900">
-                Results for {selectedChild.firstName} {selectedChild.lastName}
+                Results for {[selectedChild.lastName, selectedChild.firstName].filter(Boolean).join(' ')}
               </h2>
               <p className="text-xs text-slate-600 mt-1">{activeResultsLabel}</p>
             </div>
@@ -512,7 +512,7 @@ const termParam = selectedTerm ? `&termId=${selectedTerm.id}` : "";
                 <p className="font-semibold text-slate-900">Selected report card</p>
                 <p className="mt-1">
                   {selectedAssessment
-                    ? `Showing ${selectedAssessment.subject} for ${selectedChild.firstName} ${selectedChild.lastName}`
+                    ? `Showing ${selectedAssessment.subject} for ${[selectedChild.lastName, selectedChild.firstName].filter(Boolean).join(' ')}`
                     : "Select an assessment to view the full report card."}
                 </p>
               </div>

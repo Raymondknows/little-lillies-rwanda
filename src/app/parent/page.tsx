@@ -223,7 +223,7 @@ export default function ParentDashboardPage() {
                 <li key={child.id} className="flex items-center justify-between gap-2 py-3 first:pt-0 last:pb-0">
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-foreground text-sm">
-                      {child.firstName} {child.lastName}
+                      {[child.lastName, child.firstName].filter(Boolean).join(' ')}
                     </p>
                     <p className="text-xs text-muted mt-1">
                       {child.class?.name || "Class"}{child.class?.section ? ` ${child.class.section}` : ""} • {child.status === 'ACTIVE' ? 'Active' : 'Inactive'}

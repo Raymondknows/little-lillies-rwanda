@@ -177,7 +177,7 @@ export default async function BroadsheetPage({
           if (classCompare !== 0) return classCompare;
         }
 
-        return `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`);
+        return `${a.lastName} ${a.firstName}`.localeCompare(`${b.lastName} ${b.firstName}`);
       });
 
     const selectedClassResults = assessment.results.filter((result) => {
@@ -245,7 +245,7 @@ export default async function BroadsheetPage({
 
       return {
         pupilId: pupil.id,
-        name: `${pupil.firstName} ${pupil.lastName}`.trim(),
+        name: `${pupil.lastName} ${pupil.firstName}`.trim(),
         admissionNo: pupil.admissionNo ?? null,
         className: pupil.class ? getDisplayClassName(pupil.class) : null,
         subjectScores,

@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { UserGuide } from "@/components/ui/user-guide";
 import { getBackendUrl } from "@/lib/backend-url";
-import { Search, BookPlus } from "lucide-react";
+import { Search, BookPlus, Trash2, X, Check, AlertCircle, Edit2 } from "lucide-react";
 
 const SUBJECTS_GUIDE = {
   title: "Subjects Management",
@@ -87,6 +87,10 @@ export default function SubjectsPageClient({
   const [selectedClassIds, setSelectedClassIds] = useState<string[]>([]);
   const [subjects, setSubjects] = useState(initialSubjects);
   const [subjectClasses, setSubjectClasses] = useState(initialSubjectClasses);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deletingSubjectId, setDeletingSubjectId] = useState<string | null>(null);
+  const [deletingSubjectName, setDeletingSubjectName] = useState("");
+  const [deleteAnimateState, setDeleteAnimateState] = useState<"enter" | "exit">("enter");
 
   useEffect(() => {
     if (isSearchOpen && searchInputRef.current) {
@@ -133,6 +137,7 @@ export default function SubjectsPageClient({
     }
     setError(null);
     setIsOpen(true);
+    playOpenTone();
   };
 
   const handleClassToggle = (classId: string) => {
@@ -229,15 +234,31 @@ export default function SubjectsPageClient({
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!selectedSubject) return;
-    if (!confirm(`Delete "${selectedSubject.name}"? This cannot be undone.`)) return;
+    setDeletingSubjectId(selectedSubject.id);
+    setDeletingSubjectName(selectedSubject.name);
+    setDeleteAnimateState("enter");
+    setDeleteModalOpen(true);
+    playOpenTone();
+  };
 
+  const openDeleteModal = (subject: any) => {
+    setSelectedSubject(subject);
+    setDeletingSubjectId(subject.id);
+    setDeletingSubjectName(subject.name);
+    setDeleteAnimateState("enter");
+    setDeleteModalOpen(true);
+    playOpenTone();
+  };
+
+  const confirmDeleteSubject = async () => {
+    if (!deletingSubjectId) return;
     try {
       setLoading(true);
       const backendUrl = getBackendUrl();
 
-      const response = await fetch(`${backendUrl}/api/admin/subjects/${selectedSubject.id}`, {
+      const response = await fetch(`${backendUrl}/api/admin/subjects/${deletingSubjectId}`, {
         method: 'DELETE',
         credentials: 'include',
       });
@@ -247,7 +268,6 @@ export default function SubjectsPageClient({
         throw new Error(errorData.error || 'Failed to delete subject');
       }
 
-      // Refresh data
       const dataResponse = await fetch(`${backendUrl}/api/admin/subjects/data`, {
         credentials: 'include',
       });
@@ -259,12 +279,24 @@ export default function SubjectsPageClient({
       }
 
       setIsOpen(false);
+      setSelectedSubject(null);
       setError(null);
+      closeDeleteModal();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete subject');
     } finally {
       setLoading(false);
     }
+  };
+
+  const closeDeleteModal = () => {
+    setDeleteAnimateState("exit");
+    playCloseTone();
+    setTimeout(() => {
+      setDeleteModalOpen(false);
+      setDeletingSubjectId(null);
+      setDeletingSubjectName("");
+    }, 320);
   };
 
   const iconSubjectCount = (subject: any) =>
@@ -353,9 +385,24 @@ export default function SubjectsPageClient({
                       {teacherNames.length > 0 ? teacherNames.join(", ") : "No teachers assigned"}
                     </td>
                     <td className="px-4 py-2">
-                      <Button type="button" variant="secondary" onClick={() => openSubjectModal(subject)}>
-                        Details
-                      </Button>
+                      <div className="flex items-center gap-2 justify-end">
+                        <button
+                          type="button"
+                          onClick={() => openSubjectModal(subject)}
+                          aria-label="Edit subject"
+                          className="flex h-10 w-10 items-center justify-center rounded-full border border-[#0A66C2]/20 bg-[#0A66C2]/10 text-[#0A66C2] transition hover:bg-[#0A66C2]/15 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]/30"
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openDeleteModal(subject)}
+                          aria-label="Delete subject"
+                          className="flex h-10 w-10 items-center justify-center rounded-full border border-red-200 bg-red-50 text-red-700 transition hover:bg-red-100"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -404,114 +451,213 @@ export default function SubjectsPageClient({
 
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-2xl rounded-3xl border border-border bg-surface p-4 sm:p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold text-foreground">
-                {selectedSubject ? "Edit subject" : "Add new subject"}
-              </h2>
-              <p className="mt-2 text-sm text-muted">
-                {selectedSubject
-                  ? "Update the subject name and the classes it belongs to."
-                  : "Create a new subject and assign it to one or more classes."}
-              </p>
+          <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_50px_rgba(10,102,194,0.16)]">
+            <div className="border-b border-slate-100 px-6 py-5" style={{ background: "linear-gradient(90deg, rgba(10,102,194,0.12), rgba(10,102,194,0.04))" }}>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-foreground">
+                    {selectedSubject ? "Edit subject" : "Add new subject"}
+                  </h2>
+                  <p className="mt-1 text-sm text-muted">
+                    {selectedSubject
+                      ? "Update the subject name and the classes it belongs to."
+                      : "Create a new subject and assign it to one or more classes."}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  {selectedSubject && (
+                    <button
+                      type="button"
+                      onClick={handleDelete}
+                      title="Delete subject"
+                      className="flex h-10 w-10 items-center justify-center rounded-full border border-[#0A66C2]/20 bg-[#0A66C2]/10 text-[#0A66C2] transition hover:bg-[#0A66C2]/15 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]/30"
+                      aria-label="Delete subject"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playCloseTone();
+                      setIsOpen(false);
+                    }}
+                    title="Close modal"
+                    className="flex h-10 w-10 items-center justify-center rounded-full border border-[#0A66C2]/20 bg-[#0A66C2]/10 text-[#0A66C2] transition hover:bg-[#0A66C2]/15 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]/30"
+                    aria-label="Close modal"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-5 px-6 py-6">
               {error && (
                 <div className="rounded-lg border border-red-200 bg-red-50 p-4">
                   <p className="text-sm text-red-700">{error}</p>
                 </div>
               )}
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <label className="text-sm font-medium">
-                  Subject name
-                  <input
-                    name="name"
-                    value={subjectName}
-                    onChange={(event) => setSubjectName(event.target.value)}
-                    required
-                    placeholder="Mathematics"
-                    className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
-                  />
-                </label>
+              <div className="grid gap-4 lg:grid-cols-3">
+                <div className="space-y-4">
+                  <label className="text-sm font-medium block">
+                    Subject name
+                    <input
+                      name="name"
+                      value={subjectName}
+                      onChange={(event) => setSubjectName(event.target.value)}
+                      required
+                      placeholder="Mathematics"
+                      className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                    />
+                  </label>
+                </div>
 
-                <div className="text-sm font-medium">
-                  <span>Assign classes</span>
-                  <div className="mt-1 grid gap-2 rounded-lg border border-border bg-background p-3">
-                    {initialClasses.length === 0 ? (
-                      <p className="text-sm text-muted">No classes available</p>
+                <div className="space-y-4">
+                  <div className="text-sm font-medium">
+                    <span>Assign classes</span>
+                    <div className="mt-1 grid gap-2 rounded-lg border border-border bg-background p-3">
+                      {initialClasses.length === 0 ? (
+                        <p className="text-sm text-muted">No classes available</p>
+                      ) : (
+                        initialClasses.map((classItem) => {
+                          const isSelected = selectedClassIds.includes(classItem.id);
+                          return (
+                            <label
+                              key={classItem.id}
+                              className="flex cursor-pointer items-center gap-3 rounded-lg border border-border bg-surface px-3 py-2 transition hover:bg-background"
+                            >
+                              <input
+                                type="checkbox"
+                                name="classIds"
+                                value={classItem.id}
+                                checked={isSelected}
+                                onChange={() => handleClassToggle(classItem.id)}
+                                className="h-4 w-4"
+                              />
+                              <span className="text-sm">
+                                {classItem.name}
+                                {classItem.arm ? ` ${classItem.arm}` : ""}
+                              </span>
+                            </label>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="rounded-3xl border border-border bg-background p-4">
+                    <p className="text-sm font-semibold text-foreground">Teachers assigned to this subject</p>
+                    {selectedSubject ? (
+                      teacherSubjects.filter((ts) => ts.subjectId === selectedSubject.id).length > 0 ? (
+                        <ul className="mt-3 space-y-2 text-sm text-foreground">
+                          {teacherSubjects
+                            .filter((ts) => ts.subjectId === selectedSubject.id)
+                            .map((ts) => (
+                              <li key={ts.id} className="rounded-2xl bg-surface p-3">
+                                {ts.teacher?.name ?? "Unnamed teacher"}
+                              </li>
+                            ))}
+                        </ul>
+                      ) : (
+                        <p className="mt-3 text-sm text-muted">No teachers currently assigned.</p>
+                      )
                     ) : (
-                      initialClasses.map((classItem) => {
-                        const isSelected = selectedClassIds.includes(classItem.id);
-                        return (
-                          <label
-                            key={classItem.id}
-                            className="flex cursor-pointer items-center gap-3 rounded-lg border border-border bg-surface px-3 py-2 transition hover:bg-background"
-                          >
-                            <input
-                              type="checkbox"
-                              name="classIds"
-                              value={classItem.id}
-                              checked={isSelected}
-                              onChange={() => handleClassToggle(classItem.id)}
-                              className="h-4 w-4"
-                            />
-                            <span className="text-sm">
-                              {classItem.name}
-                              {classItem.arm ? ` ${classItem.arm}` : ""}
-                            </span>
-                          </label>
-                        );
-                      })
+                      <p className="mt-3 text-sm text-muted">Teachers assigned to this subject will appear after it is saved.</p>
                     )}
                   </div>
                 </div>
               </div>
 
-              {selectedSubject && (
-                <div className="rounded-3xl border border-border bg-background p-4">
-                  <p className="text-sm font-semibold text-foreground">Teachers assigned to this subject</p>
-                  {teacherSubjects.filter((ts) => ts.subjectId === selectedSubject.id).length > 0 ? (
-                    <ul className="mt-3 space-y-2 text-sm text-foreground">
-                      {teacherSubjects
-                        .filter((ts) => ts.subjectId === selectedSubject.id)
-                        .map((ts) => (
-                          <li key={ts.id} className="rounded-2xl bg-surface p-3">
-                            {ts.teacher?.name ?? "Unnamed teacher"}
-                          </li>
-                        ))}
-                    </ul>
+              <div className="flex items-end justify-end pt-4 border-t border-border">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  title={selectedSubject ? "Save changes" : "Add subject"}
+                  aria-label={selectedSubject ? "Save changes" : "Add subject"}
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0A66C2] text-white transition hover:bg-[#0858a8] disabled:opacity-50"
+                >
+                  {loading ? (
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                   ) : (
-                    <p className="mt-3 text-sm text-muted">No teachers currently assigned.</p>
+                    <Check className="h-4 w-4" />
                   )}
-                </div>
-              )}
-
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pt-4 border-t border-border">
-                <div>
-                  {selectedSubject && (
-                    <Button
-                      type="button"
-                      onClick={handleDelete}
-                      variant="destructive"
-                      disabled={loading}
-                      className="w-full sm:w-auto"
-                    >
-                      Delete subject
-                    </Button>
-                  )}
-                </div>
-                <div className="flex flex-col gap-2 sm:flex-row sm:gap-3 w-full sm:w-auto">
-                  <Button type="button" variant="outline" onClick={() => setIsOpen(false)} disabled={loading} className="w-full sm:w-auto">
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={loading} className="w-full sm:w-auto">
-                    {loading ? "Saving..." : selectedSubject ? "Save changes" : "Add subject"}
-                  </Button>
-                </div>
+                </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {deleteModalOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4">
+          <style>{`
+            @keyframes subjects_delete_enter { from { transform: translateX(36px) scale(.98); opacity: 0 } to { transform: translateX(0) scale(1); opacity: 1 } }
+            @keyframes subjects_delete_exit { from { transform: translateX(0) scale(1); opacity: 1 } to { transform: translateX(36px) scale(.98); opacity: 0 } }
+          `}</style>
+
+          <div
+            className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_50px_rgba(220,38,38,0.16)]"
+            style={{
+              animation: `${deleteAnimateState === "enter" ? "subjects_delete_enter" : "subjects_delete_exit"} 320ms cubic-bezier(.2,.9,.2,1)`,
+            }}
+          >
+            <div className="border-b border-slate-100 px-6 py-5" style={{ background: "linear-gradient(90deg, rgba(220,38,38,0.12), rgba(220,38,38,0.04))" }}>
+              <div className="flex items-start gap-3">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/70 bg-red-100 shadow-sm">
+                  <AlertCircle className="h-6 w-6 text-red-600" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-slate-900">Delete Subject?</h2>
+                  <p className="mt-1 text-sm text-slate-600">This action cannot be undone.</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="px-6 py-5">
+              <p className="text-sm leading-6 text-slate-700">
+                You are about to permanently delete <strong>“{deletingSubjectName}”</strong>.
+              </p>
+              <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3">
+                <p className="text-xs text-red-700">
+                  <strong>Warning:</strong> This will remove the subject from the system and unassign it from all classes.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4">
+              <button
+                type="button"
+                onClick={closeDeleteModal}
+                disabled={loading}
+                className="flex-1 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-slate-100 disabled:opacity-50 text-slate-700"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmDeleteSubject}
+                disabled={loading}
+                className="flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-colors disabled:opacity-50"
+                style={{ background: "#DC2626" }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "#991B1B")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "#DC2626")}
+              >
+                {loading ? (
+                  <>
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4" />
+                    Delete Permanently
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -519,4 +665,51 @@ export default function SubjectsPageClient({
       <UserGuide guide={SUBJECTS_GUIDE} />
     </>
   );
+}
+
+function playOpenTone() {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const now = ctx.currentTime;
+    const playTone = (freq: number, duration: number, gain: number, delay = 0) => {
+      const osc = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, now + delay);
+      gainNode.gain.setValueAtTime(0.0001, now + delay);
+      gainNode.gain.exponentialRampToValueAtTime(gain, now + delay + 0.01);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, now + delay + duration);
+      osc.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      osc.start(now + delay);
+      osc.stop(now + delay + duration);
+    };
+
+    playTone(880, 0.16, 0.05, 0);
+    playTone(1174, 0.16, 0.05, 0.08);
+    setTimeout(() => ctx.close(), 700);
+  } catch (e) {
+    // ignore
+  }
+}
+
+function playCloseTone() {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = "sine";
+    o.frequency.value = 420;
+    g.gain.value = 0.0001;
+    o.connect(g);
+    g.connect(ctx.destination);
+    const now = ctx.currentTime;
+    g.gain.linearRampToValueAtTime(0.045, now + 0.01);
+    o.start(now);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+    o.stop(now + 0.24);
+    setTimeout(() => ctx.close(), 500);
+  } catch (e) {
+    // ignore
+  }
 }

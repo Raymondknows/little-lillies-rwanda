@@ -552,7 +552,7 @@ export default function PublicResultCheckPage() {
                               : "border-slate-200 bg-slate-50 text-slate-900 hover:border-slate-300"
                           }`}
                         >
-                          {`${child.firstName} ${child.lastName}`.trim()} ({child.admissionNo || "—"})
+                          {[child.lastName, child.firstName].filter(Boolean).join(" ")} ({child.admissionNo || "—"})
                         </button>
                       ))}
                     </div>
@@ -566,7 +566,7 @@ export default function PublicResultCheckPage() {
                         </div>
                         <div className="min-w-0">
                           <p className="text-sm font-semibold text-slate-900">
-                            {`${selectedChild.firstName} ${selectedChild.lastName}`.trim()}
+                            {[selectedChild.lastName, selectedChild.firstName].filter(Boolean).join(" ")}
                           </p>
                           <p className="mt-1 text-xs text-slate-600">Admission No: {selectedChild.admissionNo || "—"}</p>
                           <p className="text-xs text-slate-500">Class: {student?.className || "—"}</p>

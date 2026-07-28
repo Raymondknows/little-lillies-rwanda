@@ -227,7 +227,7 @@ export default function ChildrenPage() {
                     <Users className="h-6 w-6 text-blue-600" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-lg font-semibold text-foreground truncate">{child.firstName} {child.lastName}</p>
+                    <p className="text-lg font-semibold text-foreground truncate">{[child.lastName, child.firstName].filter(Boolean).join(' ')}</p>
                     <p className="text-xs text-muted truncate">Admission: <span className="font-semibold text-foreground">{child.admissionNo}</span></p>
                   </div>
                   <div className="space-y-2 text-right">

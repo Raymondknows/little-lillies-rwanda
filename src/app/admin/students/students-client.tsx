@@ -167,7 +167,7 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
   };
 
   const getStudentInitials = (student: any) => {
-    const displayName = pupilName(student?.firstName, student?.lastName).trim();
+    const displayName = [student?.lastName, student?.firstName].filter(Boolean).join(" ").trim();
     const parts = displayName.split(/\s+/).filter(Boolean);
 
     if (parts.length === 0) return "S";
@@ -191,9 +191,10 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter((p) => {
-        const fullName = `${p.firstName} ${p.lastName}`.toLowerCase();
+        const firstLast = `${p.firstName} ${p.lastName}`.toLowerCase();
+        const lastFirst = `${p.lastName} ${p.firstName}`.toLowerCase();
         const admissionNo = (p.admissionNo || "").toLowerCase();
-        return fullName.includes(query) || admissionNo.includes(query);
+        return firstLast.includes(query) || lastFirst.includes(query) || admissionNo.includes(query);
       });
     }
 
@@ -420,7 +421,7 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
                         {p.photoUrl ? (
                           <img
                             src={resolveFileUrl(p.photoUrl, p.id) ?? undefined}
-                            alt={`${p.firstName} ${p.lastName}`}
+                            alt={[p.lastName, p.firstName].filter(Boolean).join(" ")}
                             className="h-10 w-10 rounded-full object-cover"
                           />
                         ) : (
@@ -430,7 +431,7 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
                         )}
                       </td>
                       <td className="px-4 py-2 font-medium text-foreground">
-                        {pupilName(p.firstName, p.lastName)}
+                        {[p.lastName, p.firstName].filter(Boolean).join(" ")}
                       </td>
                       <td className="px-4 py-2">
                         <span className="inline-block rounded px-2 py-0.5 text-xs font-semibold bg-primary/10 text-primary">
@@ -477,7 +478,7 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <p className="font-medium text-sm truncate">
-                        {pupilName(p.firstName, p.lastName)}
+                        {[p.lastName, p.firstName].filter(Boolean).join(" ")}
                       </p>
                       <p className="text-xs text-muted mt-1">{classLabel}</p>
                     </div>
@@ -571,7 +572,7 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
             <div className="flex flex-col gap-4 border-b border-border px-6 py-5 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.24em] text-muted">Student Transcript</p>
-                <h2 className="mt-2 text-3xl font-semibold text-foreground">{pupilName(profileStudent.firstName, profileStudent.lastName)}</h2>
+                <h2 className="mt-2 text-3xl font-semibold text-foreground">{[profileStudent.lastName, profileStudent.firstName].filter(Boolean).join(" ")}</h2>
                 <p className="mt-1 text-sm text-muted">{profileStudent.class?.name}{profileStudent.class?.arm ? ` ${profileStudent.class.arm}` : ""}</p>
               </div>
               <button
@@ -592,12 +593,12 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
                       {profileStudent.photoUrl ? (
                         <img
                           src={resolveFileUrl(profileStudent.photoUrl, profileStudent.id) ?? undefined}
-                          alt={pupilName(profileStudent.firstName, profileStudent.lastName)}
+                          alt={[profileStudent.lastName, profileStudent.firstName].filter(Boolean).join(" ")}
                           className="h-full w-full object-cover"
                         />
                       ) : (
                         <span className="text-4xl font-semibold text-primary">
-                          {pupilName(profileStudent.firstName, profileStudent.lastName)
+                          {[profileStudent.lastName, profileStudent.firstName].filter(Boolean).join(" ")
                             .split(" ")
                             .map((part) => part[0])
                             .join("")}

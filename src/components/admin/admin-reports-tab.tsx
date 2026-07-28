@@ -80,7 +80,7 @@ export function AdminReportsTab({ assessmentId, pupils, status }: ReportsTabProp
         const data = await response.json();
         setSelectedPupilDetails({
           id: data.id,
-          name: `${data.firstName} ${data.lastName}`.trim(),
+          name: `${data.lastName} ${data.firstName}`.trim(),
           admissionNo: data.admissionNo,
           photoUrl: data.photoUrl,
           className: data.class?.name,

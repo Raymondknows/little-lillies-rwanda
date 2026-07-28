@@ -226,7 +226,7 @@ const subjectId = result.subjectRef?.id ?? null;
 
       const pupil = group.pupils.get(result.pupilId) ?? {
         pupilId: result.pupilId,
-        name: `${result.pupil.firstName} ${result.pupil.lastName}`.trim(),
+        name: `${result.pupil.lastName} ${result.pupil.firstName}`.trim(),
         admissionNo: result.pupil.admissionNo ?? undefined,
         className,
         resultsBySubject: new Map(),
@@ -488,7 +488,7 @@ const subjectId = result.subjectRef?.id ?? null;
   );
   const reportPupils = pupils.map((pupil) => ({
     ...pupil,
-    name: `${pupil.firstName} ${pupil.lastName}`.trim(),
+    name: `${pupil.lastName} ${pupil.firstName}`.trim(),
   }));
   const isConfigured = Boolean(assessment.componentData);
 

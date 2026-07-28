@@ -5,9 +5,10 @@ import { getBackendUrl } from "@/lib/backend-url";
 
 
 
-import { useMemo, useState, useEffect, useRef } from "react";
+import { useMemo, useState, useEffect, useRef, useCallback, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ErrorModal } from "@/components/ui/error-modal";
 import { UserGuide } from "@/components/ui/user-guide";
 import SubscriptionModal from "@/components/subscription-modal";
 import AdminSkeleton from "@/components/ui/skeleton";
@@ -98,6 +99,10 @@ export default function ClassesPageClient({ classes: initialClasses }: { classes
   const [classes, setClasses] = useState<any[]>(initialClasses || []);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [statusModalOpen, setStatusModalOpen] = useState(false);
+  const [statusModalType, setStatusModalType] = useState<'success' | 'error'>('success');
+  const [statusModalTitle, setStatusModalTitle] = useState<string | undefined>(undefined);
+  const [statusModalMessage, setStatusModalMessage] = useState("");
   const [subscriptionBlocked, setSubscriptionBlocked] = useState<{ reason: string; schoolName?: string } | null>(null);
   const [schoolName, setSchoolName] = useState("");
   const [activePhase, setActivePhase] = useState("ALL");
@@ -121,71 +126,74 @@ export default function ClassesPageClient({ classes: initialClasses }: { classes
     }
   }, [isSearchOpen]);
 
-  useEffect(() => {
-    const fetchClasses = async () => {
-      try {
-        setLoading(true);
-        const backendUrl = getBackendUrl();
-        const [response, verifyResponse] = await Promise.all([
-          fetch(`${backendUrl}/api/admin/classes/data`, {
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-          }),
-          fetch(`${backendUrl}/api/admin/verify`, {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-          }),
-        ]);
+  const fetchClasses = useCallback(async () => {
+    try {
+      setLoading(true);
+      const backendUrl = getBackendUrl();
+      const [response, verifyResponse] = await Promise.all([
+        fetch(`${backendUrl}/api/admin/classes/data`, {
+          credentials: 'include',
+          cache: 'no-store',
+          headers: { 'Content-Type': 'application/json' },
+        }),
+        fetch(`${backendUrl}/api/admin/verify`, {
+          method: 'POST',
+          credentials: 'include',
+          cache: 'no-store',
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      ]);
 
-        let schoolNameToUse = "";
-        if (verifyResponse.ok) {
-          const verifyData = await verifyResponse.json().catch(() => null);
-          if (verifyData?.authenticated && verifyData.session?.schoolId) {
-            try {
-              const schoolResponse = await fetch(`${backendUrl}/api/admin/school/${verifyData.session.schoolId}`, {
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
-              });
-              if (schoolResponse.ok) {
-                const schoolData = await schoolResponse.json().catch(() => null);
-                schoolNameToUse = schoolData?.name || "";
-              }
-            } catch (err) {
-              console.error("Error fetching school name:", err);
+      let schoolNameToUse = "";
+      if (verifyResponse.ok) {
+        const verifyData = await verifyResponse.json().catch(() => null);
+        if (verifyData?.authenticated && verifyData.session?.schoolId) {
+          try {
+            const schoolResponse = await fetch(`${backendUrl}/api/admin/school/${verifyData.session.schoolId}`, {
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+            });
+            if (schoolResponse.ok) {
+              const schoolData = await schoolResponse.json().catch(() => null);
+              schoolNameToUse = schoolData?.name || "";
             }
+          } catch (err) {
+            console.error("Error fetching school name:", err);
           }
         }
-
-        if (!response.ok) {
-          if (response.status === 403) {
-            const errorBody = await response.json().catch(() => null);
-            if (errorBody?.code === 'SUBSCRIPTION_INACTIVE') {
-              setSubscriptionBlocked({
-                reason: errorBody.reason || 'Your school subscription is not active',
-                schoolName: schoolNameToUse || undefined,
-              });
-              setSchoolName(schoolNameToUse);
-              setLoading(false);
-              return;
-            }
-          }
-          throw new Error("Failed to fetch classes");
-        }
-        const data = await response.json();
-        setSchoolName(schoolNameToUse);
-        setClasses(data.classes || []);
-        setError(null);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load classes");
-        setClasses([]);
-      } finally {
-        setLoading(false);
       }
-    };
-    
-    fetchClasses();
+
+      if (!response.ok) {
+        if (response.status === 403) {
+          const errorBody = await response.json().catch(() => null);
+          if (errorBody?.code === 'SUBSCRIPTION_INACTIVE') {
+            setSubscriptionBlocked({
+              reason: errorBody.reason || 'Your school subscription is not active',
+              schoolName: schoolNameToUse || undefined,
+            });
+            setSchoolName(schoolNameToUse);
+            setLoading(false);
+            return;
+          }
+        }
+        throw new Error("Failed to fetch classes");
+      }
+
+      const data = await response.json();
+      setSchoolName(schoolNameToUse);
+      setClasses(data.classes || []);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load classes");
+      setClasses([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    void fetchClasses();
+  }, [fetchClasses]);
 
   const filteredClasses = useMemo(() => {
     let visible = classes;
@@ -226,9 +234,10 @@ export default function ClassesPageClient({ classes: initialClasses }: { classes
       setClassArm("");
     }
     setIsOpen(true);
+    playOpenTone();
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     try {
@@ -238,7 +247,7 @@ export default function ClassesPageClient({ classes: initialClasses }: { classes
       const payload = {
         name: className,
         phase: classPhase,
-        arm: classArm || undefined,
+        arm: classArm.trim() === "" ? null : classArm.trim(),
       };
 
       const url = selectedClass
@@ -261,18 +270,12 @@ export default function ClassesPageClient({ classes: initialClasses }: { classes
         throw new Error(errorData.error || 'Failed to save class');
       }
 
-      // Refresh the classes list
-      const classesResponse = await fetch(`${backendUrl}/api/admin/classes/data`, {
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-      });
-
-      if (classesResponse.ok) {
-        const data = await classesResponse.json();
-        setClasses(data.classes || []);
-      }
-
+      await fetchClasses();
       setIsOpen(false);
+      setStatusModalType('success');
+      setStatusModalTitle(selectedClass ? 'Class updated' : 'Class created');
+      setStatusModalMessage(selectedClass ? 'Class updated successfully.' : 'Class created successfully.');
+      setStatusModalOpen(true);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save class');
@@ -698,30 +701,44 @@ export default function ClassesPageClient({ classes: initialClasses }: { classes
 
           {/* Modal */}
           {isOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-              <div className="w-full max-w-2xl rounded-lg border border-border bg-surface p-6 shadow-lg">
-                <div className="mb-6 flex items-start justify-between gap-4">
-                  <div>
-                    <h2 className="text-2xl font-bold text-foreground">
-                      {selectedClass ? "Edit class" : "Add new class"}
-                    </h2>
-                    <p className="mt-1 text-sm text-muted">
-                      {selectedClass
-                        ? "Update the class details and phase assignment."
-                        : "Create a new class group for your school."}
-                    </p>
+            <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4">
+              <style>{`
+                @keyframes classes_modal_enter { from { transform: translateX(36px) scale(.98); opacity: 0 } to { transform: translateX(0) scale(1); opacity: 1 } }
+                @keyframes classes_modal_exit  { from { transform: translateX(0) scale(1); opacity: 1 } to { transform: translateX(36px) scale(.98); opacity: 0 } }
+              `}</style>
+
+              <div
+                className="w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_50px_rgba(10,102,194,0.16)]"
+                style={{ animation: `classes_modal_enter 320ms cubic-bezier(.2,.9,.2,1)` }}
+              >
+                <div className="border-b border-slate-100 px-6 py-5" style={{ background: "linear-gradient(90deg, rgba(10,102,194,0.12), rgba(10,102,194,0.04))" }}>
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <h2 className="text-2xl font-bold text-foreground">
+                        {selectedClass ? "Edit class" : "Add new class"}
+                      </h2>
+                      <p className="mt-1 text-sm text-muted">
+                        {selectedClass
+                          ? "Update the class details and phase assignment."
+                          : "Create a new class group for your school."}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        playCloseTone();
+                        setIsOpen(false);
+                      }}
+                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-border hover:bg-background transition-colors"
+                    >
+                      ✕
+                    </button>
                   </div>
-                  <button
-                    onClick={() => setIsOpen(false)}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-border hover:bg-background transition-colors"
-                  >
-                    ✕
-                  </button>
                 </div>
 
-                <form 
+                <form
                   onSubmit={handleSubmit}
-                  className="space-y-5"
+                  className="space-y-5 px-6 py-6"
                 >
                   {selectedClass && <input type="hidden" name="id" value={selectedClass.id} />}
 
@@ -787,7 +804,10 @@ export default function ClassesPageClient({ classes: initialClasses }: { classes
                     <div className="flex gap-3">
                       <button
                         type="button"
-                        onClick={() => setIsOpen(false)}
+                        onClick={() => {
+                          playCloseTone();
+                          setIsOpen(false);
+                        }}
                         className="px-4 py-2 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-background transition-colors"
                       >
                         Cancel
@@ -802,6 +822,14 @@ export default function ClassesPageClient({ classes: initialClasses }: { classes
         </div>
       )}
       <UserGuide guide={CLASS_GUIDE} />
+      <ErrorModal
+        isOpen={statusModalOpen}
+        onClose={() => setStatusModalOpen(false)}
+        type={statusModalType}
+        title={statusModalTitle}
+        message={statusModalMessage}
+        confirmLabel="Okay"
+      />
     </>
   );
 }

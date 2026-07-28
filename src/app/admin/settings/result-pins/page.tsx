@@ -189,7 +189,7 @@ function PinModal({
         </div>
 
         <div className="space-y-2">
-          <div><span className="font-medium text-foreground">Student:</span> {pin.student ? `${pin.student.firstName || ''} ${pin.student.lastName || ''}`.trim() : '—'}</div>
+          <div><span className="font-medium text-foreground">Student:</span> {pin.student ? `${pin.student.lastName || ''} ${pin.student.firstName || ''}`.trim() : '—'}</div>
           <div><span className="font-medium text-foreground">School code:</span> {schoolMeta?.slug || schoolMeta?.initials || '—'}</div>
           <div><span className="font-medium text-foreground">Admission number:</span> {pin.student?.admissionNo || '—'}</div>
           <div><span className="font-medium text-foreground">Session:</span> {pin.term?.academicYear?.name || '—'}</div>
@@ -238,7 +238,7 @@ function GeneratedPinModal({
         </div>
 
         <div className="space-y-2">
-          <div><span className="font-medium text-foreground">Student:</span> {data.student ? `${data.student.firstName || ''} ${data.student.lastName || ''}`.trim() : '—'}</div>
+          <div><span className="font-medium text-foreground">Student:</span> {data.student ? `${data.student.lastName || ''} ${data.student.firstName || ''}`.trim() : '—'}</div>
           <div><span className="font-medium text-foreground">School code:</span> {data.schoolCode || schoolMeta?.slug || schoolMeta?.initials || '—'}</div>
           <div><span className="font-medium text-foreground">Admission number:</span> {data.student?.admissionNo || '—'}</div>
           <div><span className="font-medium text-foreground">Session:</span> {data.sessionName || '—'}</div>
@@ -645,7 +645,7 @@ export default function ResultPinsPage() {
       : pins.filter((pin) => selectedStudentPinIds.includes(pin.id));
 
     if (!selectedPins.length) return;
-    const lines = selectedPins.map((pin) => `${pin.pinValue || "—"}\t${pin.student ? `${pin.student.firstName || ""} ${pin.student.lastName || ""}`.trim() : "Unassigned"}`).join("\n");
+    const lines = selectedPins.map((pin) => `${pin.pinValue || "—"}\t${pin.student ? `${pin.student.lastName || ""} ${pin.student.firstName || ""}`.trim() : "Unassigned"}`).join("\n");
     const blob = new Blob([lines], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
@@ -710,7 +710,7 @@ export default function ResultPinsPage() {
       schoolLogoUrl: schoolMeta?.logoUrl || (schoolMeta?.id ? `/api/school-logo/${encodeURIComponent(schoolMeta.id)}` : undefined),
       schoolId: schoolMeta?.id,
       schoolCode: schoolMeta?.slug || schoolMeta?.initials || "school-code",
-      studentName: pin.student ? `${pin.student.firstName || ""} ${pin.student.lastName || ""}`.trim() : "Student",
+      studentName: pin.student ? `${pin.student.lastName || ""} ${pin.student.firstName || ""}`.trim() : "Student",
       admissionNo: pin.student?.admissionNo || "N/A",
       session: pin.term?.academicYear?.name || "—",
       term: pin.term?.name || "—",
@@ -897,7 +897,7 @@ export default function ResultPinsPage() {
   const handlePrintSheet = async () => {
     if (!generatedStudent?.pin) return;
 
-    const studentName = generatedStudent.student ? `${generatedStudent.student.firstName || ""} ${generatedStudent.student.lastName || ""}`.trim() : "Student";
+    const studentName = generatedStudent.student ? `${generatedStudent.student.lastName || ""} ${generatedStudent.student.firstName || ""}`.trim() : "Student";
     const schoolCode = generatedStudent.schoolCode || schoolMeta?.slug || schoolMeta?.initials || "school-code";
     const admissionNo = generatedStudent.student?.admissionNo || "N/A";
     const printWindow = window.open("", "_blank", "width=900,height=700");
@@ -974,7 +974,7 @@ export default function ResultPinsPage() {
         schoolLogoUrl: schoolMeta?.logoUrl || (schoolMeta?.id ? `/api/school-logo/${encodeURIComponent(schoolMeta.id)}` : undefined),
         schoolId: data.school?.id || schoolMeta?.id,
         schoolCode: data.school?.slug || data.school?.initials || schoolMeta?.slug || schoolMeta?.initials || "school-code",
-        studentName: `${entry.student?.firstName || ""} ${entry.student?.lastName || ""}`.trim(),
+        studentName: `${entry.student?.lastName || ""} ${entry.student?.firstName || ""}`.trim(),
         admissionNo: entry.student?.admissionNo || "N/A",
         session: entry.sessionName || data.sessionName || "—",
         term: entry.termName || data.termName || "—",
@@ -1110,7 +1110,7 @@ export default function ResultPinsPage() {
   const handlePrintPin = async (pin: PinRecord) => {
     const schoolCode = schoolMeta?.slug || schoolMeta?.initials || "school-code";
     const admissionNo = pin.student?.admissionNo || "N/A";
-    const studentName = pin.student ? `${pin.student.firstName || ""} ${pin.student.lastName || ""}`.trim() : "Unassigned";
+    const studentName = pin.student ? `${pin.student.lastName || ""} ${pin.student.firstName || ""}`.trim() : "Unassigned";
     const printWindow = window.open("", "_blank", "width=900,height=700");
     if (!printWindow) return;
 
@@ -1556,7 +1556,7 @@ export default function ResultPinsPage() {
                           <div className="mt-1 text-xs text-muted">{pin.batch?.batchName || 'Generated individually'}</div>
                         </td>
                         <td className="px-3 py-3">
-                          <div className="font-medium text-foreground">{pin.student ? `${pin.student.firstName || ''} ${pin.student.lastName || ''}`.trim() : 'Unassigned'}</div>
+                          <div className="font-medium text-foreground">{pin.student ? `${pin.student.lastName || ''} ${pin.student.firstName || ''}`.trim() : 'Unassigned'}</div>
                           <div className="text-xs text-muted">{pin.student?.class?.name || '—'}</div>
                         </td>
                         <td className="px-3 py-3 text-foreground">{pin.student?.admissionNo || '—'}</td>
@@ -1779,7 +1779,7 @@ export default function ResultPinsPage() {
                   <option value="">Select a student</option>
                   {filteredStudents.map((student) => (
                     <option key={student.id} value={student.id}>
-                      {`${student.firstName || ""} ${student.lastName || ""}`.trim() || student.admissionNo || student.id}
+                      {`${student.lastName || ""} ${student.firstName || ""}`.trim() || student.admissionNo || student.id}
                     </option>
                   ))}
                 </select>

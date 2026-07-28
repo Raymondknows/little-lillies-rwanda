@@ -785,14 +785,14 @@ export default function FeesPageClient({
               <Search className="h-4 w-4" />
               {isSearchOpen ? "Close Search" : "Search Fees"}
             </Button>
-            <form onSubmit={handleIssueBillsSubmit} className="flex items-center gap-2">
-              <div className="flex items-center gap-2 rounded-md border border-[#0A66C2] bg-background px-2.5 py-1.5 text-sm text-foreground shadow-sm">
+            <form onSubmit={handleIssueBillsSubmit} className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <div className="flex items-center gap-2 rounded-md border border-[#0A66C2] bg-background px-2.5 py-1.5 text-sm text-foreground shadow-sm w-full sm:w-auto">
                 <CalendarDays className="h-4 w-4 text-[#0A66C2]" />
                 <div className="flex items-center gap-2">
                   <select
                     value={selectedAcademicYearId}
                     onChange={(e) => setSelectedAcademicYearId(e.target.value)}
-                    className="bg-transparent text-sm text-foreground outline-none"
+                    className="bg-transparent text-sm text-foreground outline-none w-full sm:w-auto"
                   >
                     <option value="">Session</option>
                     {academicYears.map((y) => (
@@ -806,7 +806,7 @@ export default function FeesPageClient({
                     value={selectedTermId}
                     onChange={(e) => setSelectedTermId(e.target.value)}
                     required
-                    className="bg-transparent text-sm text-foreground outline-none"
+                    className="bg-transparent text-sm text-foreground outline-none w-full sm:w-auto"
                   >
                     <option value="">Select term</option>
                     {filteredTerms.map((term: any) => (
@@ -821,7 +821,7 @@ export default function FeesPageClient({
                 type="submit"
                 disabled={issuingBills}
                 variant="primary"
-                className="h-9 rounded-md border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8]"
+                className="w-full sm:w-auto h-9 rounded-md border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8]"
               >
                 <ReceiptText className="h-4 w-4" />
                 {issuingBills ? "Issuing..." : "Issue Bills"}

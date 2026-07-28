@@ -77,6 +77,7 @@ const doPlayCloseTone = () => {
 import { useRouter } from "next/navigation";
 import { X, TrendingUp, CheckCircle, AlertCircle, ArrowUpRight, Edit2, Trash2, Search, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { UserGuide, type PageHelpGuide } from "@/components/ui/user-guide";
 import { formatMoney } from "@/lib/format";
 import { getBackendUrl } from "@/lib/backend-url";
 
@@ -253,6 +254,16 @@ export default function FeeSchedulesPageClient({
     const years = Array.from(new Set(terms.map((term) => term.academicYear.name)));
     return years.sort((a, b) => b.localeCompare(a));
   }, [terms]);
+
+  // Default to the most recent academic year and its first term when the page loads
+  useEffect(() => {
+    if (!selectedAcademicYearName && yearOptions.length > 0) {
+      const firstYear = yearOptions[0];
+      setSelectedAcademicYearName(firstYear);
+      const firstTerm = terms.find((t) => t.academicYear.name === firstYear);
+      if (firstTerm) setTermFilter(firstTerm.id);
+    }
+  }, [yearOptions, terms, selectedAcademicYearName]);
 
   // Default selected academic year to first available (if any)
   useEffect(() => {
@@ -484,8 +495,43 @@ export default function FeeSchedulesPageClient({
           </div>
         </div>
 
-        {/* Table */}
-        <div className="overflow-hidden rounded-lg border border-border bg-background">
+        {/* Mobile list (mobile-only) */}
+        <div className="sm:hidden space-y-3">
+          {filteredSchedules.length === 0 ? (
+            <div className="rounded-lg border border-border bg-background p-6 text-center text-sm text-muted">No fee schedules found for the selected filters</div>
+          ) : (
+            filteredSchedules.map((schedule) => (
+              <div key={schedule.id} className="rounded-lg border border-border bg-surface p-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="font-medium text-foreground">{schedule.name}</p>
+                    <p className="text-sm text-muted">{schedule.term.name} • {schedule.term.academicYear.name}</p>
+                    <p className="text-sm text-muted mt-1">{schedule.class ? `${schedule.class.name}${schedule.class.arm ? ` ${schedule.class.arm}` : ""}` : "All classes"}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold text-foreground">{formatStatMoney(schedule.amount)}</p>
+                    <p className="text-sm text-muted mt-1">{new Date(schedule.createdAt).toLocaleDateString()}</p>
+                  </div>
+                </div>
+
+                <div className="mt-3 flex gap-2">
+                  <button onClick={() => startEdit(schedule)} className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg border border-border px-3 py-2 text-sm">
+                    <Edit2 className="h-4 w-4" /> Edit
+                  </button>
+                  <button
+                    onClick={() => { setDeleteAnimateState("enter"); setDeleteId(schedule.id); doPlayOpenTone(); }}
+                    className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 text-red-700 px-3 py-2 text-sm"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Table (desktop only) */}
+        <div className="hidden sm:block overflow-hidden rounded-lg border border-border bg-background">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="border-b border-border bg-surface text-muted">
@@ -837,6 +883,36 @@ export default function FeeSchedulesPageClient({
           </div>
         </div>
       )}
+      <UserGuide
+        guide={SCHEDULES_HELP}
+      />
     </>
   );
 }
+
+const SCHEDULES_HELP: PageHelpGuide = {
+  title: "Managing Fee Schedules",
+  overview: "Create and manage fee schedules for terms and classes. Use schedules to automate invoicing and apply consistent fees across students.",
+  steps: [
+    "Create a fee schedule and set an amount for a term. Leave class empty to apply to all students.",
+    "Edit a schedule to update amounts or names — edits affect future invoices.",
+    "Delete schedules you no longer need; this will not retroactively remove invoices already issued.",
+    "Use the search, session and term filters to find specific schedules quickly.",
+  ],
+  commonTasks: [
+    {
+      title: "Create a New Schedule",
+      description: "Click '+ New Schedule', choose term and class (optional), set the name and amount, then create.",
+      tips: ["Use clear schedule names (e.g., 'First Term Tuition').", "Amounts are entered in the school's currency."],
+    },
+    {
+      title: "Apply Schedule to All Classes",
+      description: "Leave the Class field empty when creating a schedule to apply it to all students in the term.",
+      tips: ["This is useful for school-wide fees like examination or registration charges."],
+    },
+  ],
+  faqs: [
+    { question: "Will deleting a schedule remove issued invoices?", answer: "No — deleting only removes the schedule; issued invoices remain unchanged." },
+    { question: "How do I find schedules for a past academic year?", answer: "Use the Session dropdown to select the academic year, then choose the term." },
+  ],
+};

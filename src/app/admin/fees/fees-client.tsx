@@ -151,6 +151,8 @@ export default function FeesPageClient({
   const [issuingBills, setIssuingBills] = useState(false);
   const [sendingReminders, setSendingReminders] = useState(false);
   const [selectedTermId, setSelectedTermId] = useState("");
+  const [academicYears, setAcademicYears] = useState<any[]>([]);
+  const [selectedAcademicYearId, setSelectedAcademicYearId] = useState<string>("");
   
   // Search panel state
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -203,6 +205,33 @@ export default function FeesPageClient({
     playOpenTone();
   }, [searchParams]);
 
+  // Fetch academic years and set defaults (select current by default)
+  useEffect(() => {
+    const fetchAcademicYears = async () => {
+      try {
+        const res = await fetch("/api/admin/academic-years", { credentials: "include" });
+        if (!res.ok) return;
+        const data = await res.json();
+        const years = (data.academicYears || []).sort((a: any, b: any) => {
+          if (a.isCurrent !== b.isCurrent) return a.isCurrent ? -1 : 1;
+          return b.name.localeCompare(a.name);
+        });
+        setAcademicYears(years);
+
+        const defaultYear = years.find((y: any) => y.isCurrent) || years[0];
+        if (defaultYear) {
+          setSelectedAcademicYearId(defaultYear.id);
+          const defaultTerm = defaultYear.terms?.[0];
+          if (defaultTerm) setSelectedTermId(defaultTerm.id);
+        }
+      } catch (err) {
+        console.error("Failed to load academic years:", err);
+      }
+    };
+
+    fetchAcademicYears();
+  }, []);
+
   const handleIssueBillsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedTermId) return;
@@ -227,10 +256,26 @@ export default function FeesPageClient({
 
   const phaseOptions = getPhaseFilterOptions();
 
+  // Memoized filtered terms based on selected academic year
+  const filteredTerms = useMemo(() => {
+    if (!selectedAcademicYearId) return [] as any[];
+    const year = academicYears.find((y) => y.id === selectedAcademicYearId);
+    return (year?.terms || []).sort((a: any, b: any) => (a.sortOrder || 0) - (b.sortOrder || 0));
+  }, [academicYears, selectedAcademicYearId]);
+
   // Filter invoices
   const filteredInvoices = useMemo(() => {
     let filtered = invoices;
 
+    // Filter by academic year if selected
+    if (selectedAcademicYearId) {
+      filtered = filtered.filter((inv) => (inv.academicYear?.id || inv.feeSchedule?.term?.academicYear?.id) === selectedAcademicYearId);
+    }
+
+    // Filter by term if selected
+    if (selectedTermId) {
+      filtered = filtered.filter((inv) => (inv.feeSchedule?.term?.id || inv.termId || "") === selectedTermId);
+    }
     // Filter by phase
     if (activePhase !== "ALL") {
       filtered = filtered.filter((inv) => {
@@ -258,7 +303,7 @@ export default function FeesPageClient({
     }
 
     return filtered;
-  }, [invoices, activePhase, activeStatus, searchQuery]);
+  }, [invoices, activePhase, activeStatus, searchQuery, selectedAcademicYearId, selectedTermId]);
 
   const totalPages = Math.max(1, Math.ceil(filteredInvoices.length / itemsPerPage));
   const paginatedInvoices = filteredInvoices.slice(
@@ -743,19 +788,34 @@ export default function FeesPageClient({
             <form onSubmit={handleIssueBillsSubmit} className="flex items-center gap-2">
               <div className="flex items-center gap-2 rounded-md border border-[#0A66C2] bg-background px-2.5 py-1.5 text-sm text-foreground shadow-sm">
                 <CalendarDays className="h-4 w-4 text-[#0A66C2]" />
-                <select
-                  value={selectedTermId}
-                  onChange={(e) => setSelectedTermId(e.target.value)}
-                  required
-                  className="bg-transparent text-sm text-foreground outline-none"
-                >
-                  <option value="">Select term</option>
-                  {terms.map((term) => (
-                    <option key={term.id} value={term.id}>
-                      {term.name}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={selectedAcademicYearId}
+                    onChange={(e) => setSelectedAcademicYearId(e.target.value)}
+                    className="bg-transparent text-sm text-foreground outline-none"
+                  >
+                    <option value="">Session</option>
+                    {academicYears.map((y) => (
+                      <option key={y.id} value={y.id}>
+                        {y.name}{y.isCurrent ? ' (Current)' : ''}
+                      </option>
+                    ))}
+                  </select>
+
+                  <select
+                    value={selectedTermId}
+                    onChange={(e) => setSelectedTermId(e.target.value)}
+                    required
+                    className="bg-transparent text-sm text-foreground outline-none"
+                  >
+                    <option value="">Select term</option>
+                    {filteredTerms.map((term: any) => (
+                      <option key={term.id} value={term.id}>
+                        {term.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
               <Button
                 type="submit"

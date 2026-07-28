@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { X, TrendingUp, CheckCircle, AlertCircle, ArrowUpRight, Edit2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,7 @@ export default function FeeSchedulesPageClient({
   const [searchQuery, setSearchQuery] = useState("");
   const [yearFilter, setYearFilter] = useState("ALL");
   const [termFilter, setTermFilter] = useState("ALL");
+  const [selectedAcademicYearName, setSelectedAcademicYearName] = useState<string>("");
   const [showModal, setShowModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -166,16 +167,31 @@ export default function FeeSchedulesPageClient({
   };
 
   const yearOptions = useMemo(() => {
-    const years = Array.from(
-      new Set(terms.map((term) => term.academicYear.name)),
-    );
+    const years = Array.from(new Set(terms.map((term) => term.academicYear.name)));
     return years.sort((a, b) => b.localeCompare(a));
   }, [terms]);
+
+  // Default selected academic year to first available (if any)
+  useEffect(() => {
+    if (!selectedAcademicYearName && yearOptions.length > 0) {
+      setSelectedAcademicYearName(yearOptions[0]);
+    }
+  }, [yearOptions, selectedAcademicYearName]);
+
+  const filteredTerms = useMemo(() => {
+    if (!selectedAcademicYearName) return terms || [];
+    return terms.filter((t) => t.academicYear.name === selectedAcademicYearName);
+  }, [terms, selectedAcademicYearName]);
 
   const filteredSchedules = useMemo(() => {
     let filtered = feeSchedules;
 
-    if (yearFilter !== "ALL") {
+    // filter by academic year name if selected
+    if (selectedAcademicYearName) {
+      filtered = filtered.filter(
+        (schedule) => (schedule.term.academicYear?.name || "") === selectedAcademicYearName,
+      );
+    } else if (yearFilter !== "ALL") {
       filtered = filtered.filter(
         (schedule) => schedule.term.academicYear.name === yearFilter,
       );
@@ -201,7 +217,7 @@ export default function FeeSchedulesPageClient({
     }
 
     return filtered;
-  }, [feeSchedules, yearFilter, termFilter, searchQuery]);
+  }, [feeSchedules, yearFilter, termFilter, searchQuery, selectedAcademicYearName]);
 
   // Calculate summary stats
   const summaryStats = useMemo(() => {
@@ -362,8 +378,8 @@ export default function FeeSchedulesPageClient({
           {/* Filter Dropdowns - Right */}
           <div className="flex flex-wrap gap-2 sm:justify-end">
             <select
-              value={yearFilter}
-              onChange={(e) => setYearFilter(e.target.value)}
+              value={selectedAcademicYearName || "ALL"}
+              onChange={(e) => setSelectedAcademicYearName(e.target.value === "ALL" ? "" : e.target.value)}
               className="rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-brand"
             >
               <option value="ALL">All years</option>
@@ -380,7 +396,7 @@ export default function FeeSchedulesPageClient({
               className="rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-brand"
             >
               <option value="ALL">All terms</option>
-              {terms.map((term) => (
+              {filteredTerms.map((term) => (
                 <option key={term.id} value={term.id}>
                   {term.name} • {term.academicYear.name}
                 </option>

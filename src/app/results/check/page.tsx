@@ -222,7 +222,7 @@ export default function PublicResultCheckPage() {
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
-      const studentName = [student?.firstName, student?.lastName].filter(Boolean).join(" ").trim() || student?.admissionNo || "student";
+      const studentName = [student?.lastName, student?.firstName].filter(Boolean).join(" ").trim() || student?.admissionNo || "student";
       const termName = selectedTerm?.name || "results";
       const safeStudentName = studentName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
       const safeTermName = termName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
@@ -360,7 +360,7 @@ export default function PublicResultCheckPage() {
               </div>
               <h2 className="text-2xl font-bold text-slate-900">PIN Required</h2>
               <p className="text-sm text-slate-600 mt-2">
-                Enter the result PIN provided by the school to view the results for {student.firstName || "this student"}.
+                Enter the result PIN provided by the school to view the results for {[student.lastName, student.firstName].filter(Boolean).join(" ") || "this student"}.
               </p>
             </div>
 

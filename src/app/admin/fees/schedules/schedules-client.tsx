@@ -276,42 +276,42 @@ export default function FeeSchedulesPageClient({
 
         {/* Summary Cards - Desktop */}
         <div className="hidden sm:grid grid-cols-3 gap-3">
-          <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50 flex flex-col">
+          <div className="group rounded-xl border border-border bg-surface p-6 hover:shadow-lg transition-shadow cursor-pointer hover:border-brand/50 flex flex-col">
             <div className="flex items-start gap-3">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
-                <TrendingUp className="h-4 w-4 text-brand" />
+              <div className="p-3 bg-blue-100 rounded-lg">
+                <TrendingUp className="h-6 w-6 text-blue-600" />
               </div>
               <div className="flex-1">
                 <p className="text-xs text-muted">Total Amount</p>
-                <p className="mt-1 text-lg font-bold text-foreground">{formatStatMoney(summaryStats.total)}</p>
+                <p className="mt-2 text-2xl font-bold text-foreground">{formatStatMoney(summaryStats.total)}</p>
               </div>
               <ArrowUpRight className="h-3 w-3 text-muted opacity-0 transition-opacity group-hover:opacity-100 flex-shrink-0" />
             </div>
             <p className="mt-2 text-[11px] text-muted">{summaryStats.scheduleCount} schedule{summaryStats.scheduleCount !== 1 ? "s" : ""}</p>
           </div>
 
-          <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50 flex flex-col">
+          <div className="group rounded-xl border border-border bg-surface p-6 hover:shadow-lg transition-shadow cursor-pointer hover:border-brand/50 flex flex-col">
             <div className="flex items-start gap-3">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
-                <CheckCircle className="h-4 w-4 text-brand" />
+              <div className="p-3 bg-emerald-100 rounded-lg">
+                <CheckCircle className="h-6 w-6 text-emerald-600" />
               </div>
               <div className="flex-1">
                 <p className="text-xs text-muted">Terms Covered</p>
-                <p className="mt-1 text-lg font-bold text-foreground">{summaryStats.termCount}</p>
+                <p className="mt-2 text-2xl font-bold text-foreground">{summaryStats.termCount}</p>
               </div>
               <ArrowUpRight className="h-3 w-3 text-muted opacity-0 transition-opacity group-hover:opacity-100 flex-shrink-0" />
             </div>
             <p className="mt-2 text-[11px] text-muted">Academic terms</p>
           </div>
 
-          <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50 flex flex-col">
+          <div className="group rounded-xl border border-border bg-surface p-6 hover:shadow-lg transition-shadow hover:border-brand/50 flex flex-col">
             <div className="flex items-start gap-3">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
-                <AlertCircle className="h-4 w-4 text-brand" />
+              <div className="p-3 bg-orange-100 rounded-lg">
+                <AlertCircle className="h-6 w-6 text-orange-600" />
               </div>
               <div className="flex-1">
                 <p className="text-xs text-muted">Classes</p>
-                <p className="mt-1 text-lg font-bold text-foreground">{summaryStats.classCount}</p>
+                <p className="mt-2 text-2xl font-bold text-foreground">{summaryStats.classCount}</p>
               </div>
               <ArrowUpRight className="h-3 w-3 text-muted opacity-0 transition-opacity group-hover:opacity-100 flex-shrink-0" />
             </div>
@@ -321,42 +321,42 @@ export default function FeeSchedulesPageClient({
 
         {/* Summary Cards - Mobile */}
         <div className="sm:hidden space-y-3">
-          <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50">
+          <div className="group rounded-xl border border-border bg-surface p-6 hover:shadow-lg transition-shadow cursor-pointer hover:border-brand/50">
             <div className="flex items-start gap-3">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
-                <TrendingUp className="h-4 w-4 text-brand" />
+              <div className="p-3 bg-blue-100 rounded-lg">
+                <TrendingUp className="h-6 w-6 text-blue-600" />
               </div>
               <div className="flex-1">
                 <p className="text-xs text-muted">Total Amount</p>
-                <p className="mt-1 text-lg font-bold text-foreground">{formatStatMoney(summaryStats.total)}</p>
+                <p className="mt-2 text-2xl font-bold text-foreground">{formatStatMoney(summaryStats.total)}</p>
               </div>
               <ArrowUpRight className="h-3 w-3 text-muted opacity-0 transition-opacity group-hover:opacity-100 flex-shrink-0" />
             </div>
             <p className="mt-2 text-[11px] text-muted">{summaryStats.scheduleCount} schedule{summaryStats.scheduleCount !== 1 ? "s" : ""}</p>
           </div>
 
-          <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50">
+          <div className="group rounded-xl border border-border bg-surface p-6 hover:shadow-lg transition-shadow cursor-pointer hover:border-brand/50">
             <div className="flex items-start gap-3">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
-                <CheckCircle className="h-4 w-4 text-brand" />
+              <div className="p-3 bg-emerald-100 rounded-lg">
+                <CheckCircle className="h-6 w-6 text-emerald-600" />
               </div>
               <div className="flex-1">
                 <p className="text-xs text-muted">Terms Covered</p>
-                <p className="mt-1 text-lg font-bold text-foreground">{summaryStats.termCount}</p>
+                <p className="mt-2 text-2xl font-bold text-foreground">{summaryStats.termCount}</p>
               </div>
               <ArrowUpRight className="h-3 w-3 text-muted opacity-0 transition-opacity group-hover:opacity-100 flex-shrink-0" />
             </div>
             <p className="mt-2 text-[11px] text-muted">Academic terms</p>
           </div>
 
-          <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50">
+          <div className="group rounded-xl border border-border bg-surface p-6 hover:shadow-lg transition-shadow cursor-pointer hover:border-brand/50">
             <div className="flex items-start gap-3">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
-                <AlertCircle className="h-4 w-4 text-brand" />
+              <div className="p-3 bg-orange-100 rounded-lg">
+                <AlertCircle className="h-6 w-6 text-orange-600" />
               </div>
               <div className="flex-1">
                 <p className="text-xs text-muted">Classes</p>
-                <p className="mt-1 text-lg font-bold text-foreground">{summaryStats.classCount}</p>
+                <p className="mt-2 text-2xl font-bold text-foreground">{summaryStats.classCount}</p>
               </div>
               <ArrowUpRight className="h-3 w-3 text-muted opacity-0 transition-opacity group-hover:opacity-100 flex-shrink-0" />
             </div>

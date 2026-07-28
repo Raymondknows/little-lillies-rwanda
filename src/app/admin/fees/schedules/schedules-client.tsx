@@ -1,8 +1,81 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
+import { playOpenTone, playCloseTone } from "@/lib/sounds";
+import { ErrorModal } from "@/components/ui/error-modal";
+
+// Safe play helpers: use global if present, otherwise play a short beep via WebAudio
+const safePlayTone = (freq: number, dur = 0.12) => {
+  if (typeof window !== "undefined" && typeof (window as any).playOpenTone === "function") {
+    // prefer layout-provided handlers if available
+    try {
+      if (freq === 880) (window as any).playOpenTone();
+      else (window as any).playCloseTone();
+      return;
+    } catch (e) {}
+  }
+
+  try {
+    const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = "sine";
+    o.frequency.value = freq;
+    o.connect(g);
+    g.connect(ctx.destination);
+    g.gain.value = 0.0001;
+    o.start();
+    g.gain.exponentialRampToValueAtTime(0.08, ctx.currentTime + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + dur);
+    o.stop(ctx.currentTime + dur + 0.02);
+    setTimeout(() => { try { ctx.close(); } catch (e) {} }, (dur + 50) );
+  } catch (e) {
+    // no-op on failure
+  }
+};
+
+const safePlayOpenTone = () => safePlayTone(880, 0.12);
+const safePlayCloseTone = () => safePlayTone(520, 0.12);
+// Guarded play helpers: prefer canonical handlers, fallback to layout/global then safe beeps.
+const doPlayOpenTone = () => {
+  try {
+    if (typeof playOpenTone === "function") {
+      playOpenTone();
+      return;
+    }
+  } catch (e) {}
+
+  try {
+    if (typeof (window as any).playOpenTone === "function") {
+      (window as any).playOpenTone();
+      return;
+    }
+  } catch (e) {}
+
+  safePlayOpenTone();
+};
+
+const doPlayCloseTone = () => {
+  try {
+    if (typeof playCloseTone === "function") {
+      playCloseTone();
+      return;
+    }
+  } catch (e) {}
+
+  try {
+    if (typeof (window as any).playCloseTone === "function") {
+      (window as any).playCloseTone();
+      return;
+    }
+  } catch (e) {}
+
+  safePlayCloseTone();
+};
 import { useRouter } from "next/navigation";
-import { X, TrendingUp, CheckCircle, AlertCircle, ArrowUpRight, Edit2, Trash2 } from "lucide-react";
+import { X, TrendingUp, CheckCircle, AlertCircle, ArrowUpRight, Edit2, Trash2, Search, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatMoney } from "@/lib/format";
 import { getBackendUrl } from "@/lib/backend-url";
@@ -33,9 +106,10 @@ export default function FeeSchedulesPageClient({
 }) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
-  const [yearFilter, setYearFilter] = useState("ALL");
   const [termFilter, setTermFilter] = useState("ALL");
   const [selectedAcademicYearName, setSelectedAcademicYearName] = useState<string>("");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,11 +119,15 @@ export default function FeeSchedulesPageClient({
   const [editFormData, setEditFormData] = useState<{ name: string; amount: string } | null>(null);
   const [editError, setEditError] = useState<string | null>(null);
   const [editSubmitting, setEditSubmitting] = useState(false);
+  const [successModalOpen, setSuccessModalOpen] = useState(false);
+  const [successModalMessage, setSuccessModalMessage] = useState<string>("");
+  const [feeScheduleItems, setFeeScheduleItems] = useState<FeeScheduleItem[]>(feeSchedules);
   
   // Delete state
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleteAnimateState, setDeleteAnimateState] = useState<"enter" | "exit">("enter");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -79,9 +157,21 @@ export default function FeeSchedulesPageClient({
         throw new Error(data.error || "Failed to create fee schedule");
       }
 
-      router.refresh();
+      const result = await response.json();
+      const created = result.feeSchedule ?? result;
+      const newSchedule: FeeScheduleItem = {
+        id: created.id,
+        name: created.name,
+        amount: created.amount,
+        createdAt: created.createdAt,
+        term: created.term,
+        class: created.class,
+      };
+      setFeeScheduleItems((current) => [newSchedule, ...current]);
       setShowModal(false);
-      router.push("?success=1");
+      setError(null);
+      setSuccessModalMessage("A new fee schedule has been created successfully.");
+      setSuccessModalOpen(true);
     } catch (err) {
       console.error("Error creating fee schedule:", err);
       setError(err instanceof Error ? err.message : "Failed to create fee schedule");
@@ -93,7 +183,6 @@ export default function FeeSchedulesPageClient({
   const handleEditSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!editingId || !editFormData) return;
-
     setEditSubmitting(true);
     setEditError(null);
 
@@ -103,18 +192,13 @@ export default function FeeSchedulesPageClient({
       const response = await fetch(`${backendUrl}/api/admin/fees/schedules/${editingId}`, {
         method: "PATCH",
         credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: editFormData.name,
-          amount: editFormData.amount,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: editFormData.name, amount: editFormData.amount }),
       });
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to update fee schedule");
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.error || "Failed to update fee schedule");
       }
 
       router.refresh();
@@ -124,8 +208,16 @@ export default function FeeSchedulesPageClient({
       console.error("Error updating fee schedule:", err);
       setEditError(err instanceof Error ? err.message : "Failed to update fee schedule");
     } finally {
-      setEditSubmitting(false);
-    }
+        setEditSubmitting(false);
+        doPlayCloseTone();
+      }
+  };
+
+  const startEdit = (schedule: FeeScheduleItem) => {
+    setEditingId(schedule.id);
+    setEditFormData({ name: schedule.name, amount: (schedule.amount / 100).toFixed(2) });
+    setEditError(null);
+    doPlayOpenTone();
   };
 
   const handleDelete = async () => {
@@ -136,34 +228,25 @@ export default function FeeSchedulesPageClient({
 
     try {
       const backendUrl = getBackendUrl();
-
       const response = await fetch(`${backendUrl}/api/admin/fees/schedules/${deleteId}`, {
         method: "DELETE",
         credentials: "include",
       });
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to delete fee schedule");
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.error || "Failed to delete fee schedule");
       }
 
-      router.refresh();
+      setFeeScheduleItems((current) => current.filter((item) => item.id !== deleteId));
       setDeleteId(null);
     } catch (err) {
       console.error("Error deleting fee schedule:", err);
       setDeleteError(err instanceof Error ? err.message : "Failed to delete fee schedule");
     } finally {
       setDeleteLoading(false);
+      doPlayCloseTone();
     }
-  };
-
-  const startEdit = (schedule: FeeScheduleItem) => {
-    setEditingId(schedule.id);
-    setEditFormData({
-      name: schedule.name,
-      amount: (schedule.amount / 100).toFixed(2),
-    });
-    setEditError(null);
   };
 
   const yearOptions = useMemo(() => {
@@ -173,10 +256,10 @@ export default function FeeSchedulesPageClient({
 
   // Default selected academic year to first available (if any)
   useEffect(() => {
-    if (!selectedAcademicYearName && yearOptions.length > 0) {
-      setSelectedAcademicYearName(yearOptions[0]);
+    if (isSearchOpen) {
+      searchInputRef.current?.focus();
     }
-  }, [yearOptions, selectedAcademicYearName]);
+  }, [isSearchOpen]);
 
   const filteredTerms = useMemo(() => {
     if (!selectedAcademicYearName) return terms || [];
@@ -184,16 +267,11 @@ export default function FeeSchedulesPageClient({
   }, [terms, selectedAcademicYearName]);
 
   const filteredSchedules = useMemo(() => {
-    let filtered = feeSchedules;
+    let filtered = feeScheduleItems;
 
-    // filter by academic year name if selected
     if (selectedAcademicYearName) {
       filtered = filtered.filter(
         (schedule) => (schedule.term.academicYear?.name || "") === selectedAcademicYearName,
-      );
-    } else if (yearFilter !== "ALL") {
-      filtered = filtered.filter(
-        (schedule) => schedule.term.academicYear.name === yearFilter,
       );
     }
 
@@ -217,7 +295,7 @@ export default function FeeSchedulesPageClient({
     }
 
     return filtered;
-  }, [feeSchedules, yearFilter, termFilter, searchQuery, selectedAcademicYearName]);
+  }, [feeScheduleItems, termFilter, searchQuery, selectedAcademicYearName]);
 
   // Calculate summary stats
   const summaryStats = useMemo(() => {
@@ -237,29 +315,14 @@ export default function FeeSchedulesPageClient({
 
   return (
     <>
-      {/* Success Modal */}
-      {success ? (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 px-4 py-8">
-          <div className="w-full max-w-xl rounded-3xl border border-border bg-surface p-8 shadow-2xl">
-            <div className="flex items-start gap-4">
-              <div className="mt-1 rounded-2xl bg-green-100 p-3 text-green-600">✓</div>
-              <div>
-                <h3 className="text-xl font-semibold text-foreground">Fee schedule saved</h3>
-                <p className="mt-2 text-sm text-muted">Your new fee schedule has been created and applied to the selected term.</p>
-              </div>
-            </div>
-            <div className="mt-6 flex justify-end">
-              <button
-                type="button"
-                onClick={() => router.push("/admin/fees/schedules")}
-                className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white transition hover:bg-brand/90"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      <ErrorModal
+        isOpen={successModalOpen}
+        onClose={() => setSuccessModalOpen(false)}
+        title="Fee schedule saved"
+        message={successModalMessage}
+        type="success"
+        confirmLabel="Okay"
+      />
 
       {/* Main Page */}
       <div className="space-y-6">
@@ -269,7 +332,7 @@ export default function FeeSchedulesPageClient({
             <h1 className="text-3xl font-bold text-foreground">Fee Schedules</h1>
             <p className="mt-1 text-muted">Manage billing rules by term and class for automated invoicing</p>
           </div>
-          <Button type="button" onClick={() => setShowModal(true)} className="gap-2">
+          <Button type="button" onClick={() => { setShowModal(true); doPlayOpenTone(); }} className="gap-2">
             <span>+ New Schedule</span>
           </Button>
         </div>
@@ -366,42 +429,58 @@ export default function FeeSchedulesPageClient({
 
         {/* Search & Filters */}
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          {/* Search Box - Left */}
-          <input
-            type="text"
-            placeholder="Search by name, term, year, or class..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1 rounded-lg border border-border bg-surface px-4 py-2 text-sm text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-brand"
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <div className={`overflow-hidden transition-all duration-300 ease-out flex-shrink-0 ${isSearchOpen ? "w-72 opacity-100 translate-x-0" : "w-0 opacity-0 translate-x-full"}`}>
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Search by name, term, year, or class..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full rounded-lg border-2 border-[#0A66C2] bg-background px-4 py-2 text-sm text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+              />
+            </div>
 
-          {/* Filter Dropdowns - Right */}
-          <div className="flex flex-wrap gap-2 sm:justify-end">
-            <select
-              value={selectedAcademicYearName || "ALL"}
-              onChange={(e) => setSelectedAcademicYearName(e.target.value === "ALL" ? "" : e.target.value)}
-              className="rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-brand"
+            <Button
+              type="button"
+              variant="primary"
+              onClick={() => setIsSearchOpen((open) => !open)}
+              className="h-9 rounded-md border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8]"
             >
-              <option value="ALL">All years</option>
-              {yearOptions.map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
-              ))}
-            </select>
+              <Search className="h-4 w-4" />
+              {isSearchOpen ? "Close Search" : "Search Schedules"}
+            </Button>
+          </div>
 
-            <select
-              value={termFilter}
-              onChange={(e) => setTermFilter(e.target.value)}
-              className="rounded-lg border border-border bg-surface px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-brand"
-            >
-              <option value="ALL">All terms</option>
-              {filteredTerms.map((term) => (
-                <option key={term.id} value={term.id}>
-                  {term.name} • {term.academicYear.name}
-                </option>
-              ))}
-            </select>
+          <div className="flex items-center gap-2 rounded-md border border-[#0A66C2] bg-background px-2.5 py-1.5 text-sm text-foreground shadow-sm">
+            <CalendarDays className="h-4 w-4 text-[#0A66C2]" />
+            <div className="flex items-center gap-2">
+              <select
+                value={selectedAcademicYearName}
+                onChange={(e) => setSelectedAcademicYearName(e.target.value)}
+                className="bg-transparent text-sm text-foreground outline-none"
+              >
+                <option value="">Session</option>
+                {yearOptions.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={termFilter}
+                onChange={(e) => setTermFilter(e.target.value)}
+                className="bg-transparent text-sm text-foreground outline-none"
+              >
+                <option value="ALL">Select term</option>
+                {filteredTerms.map((term) => (
+                  <option key={term.id} value={term.id}>
+                    {term.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
 
@@ -456,24 +535,26 @@ export default function FeeSchedulesPageClient({
                         {new Date(schedule.createdAt).toLocaleDateString()}
                       </td>
                       <td className="px-4 py-3">
-                        <div className="flex items-center justify-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => startEdit(schedule)}
-                            className="rounded-lg p-2 text-muted transition hover:bg-surface hover:text-foreground"
-                            title="Edit schedule"
-                          >
-                            <Edit2 className="h-4 w-4" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setDeleteId(schedule.id)}
-                            className="rounded-lg p-2 text-muted transition hover:bg-red-50 hover:text-red-600"
-                            title="Delete schedule"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
+                          <div className="flex items-center gap-2 justify-end">
+                            <button
+                              onClick={() => startEdit(schedule)}
+                              className="flex items-center gap-2 inline-flex px-3 py-1.5 rounded-lg border border-border bg-surface hover:bg-background text-sm font-medium transition-colors"
+                            >
+                              <Edit2 className="h-3.5 w-3.5" />
+                              Edit
+                            </button>
+
+                            <button
+                              onClick={() => {
+                                setDeleteAnimateState("enter");
+                                setDeleteId(schedule.id);
+                                doPlayOpenTone();
+                              }}
+                              className="inline-flex px-3 py-1.5 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 text-sm font-medium transition-colors"
+                            >
+                              Delete
+                            </button>
+                          </div>
                       </td>
                     </tr>
                   ))
@@ -486,125 +567,83 @@ export default function FeeSchedulesPageClient({
 
       {/* Create Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm px-4 py-8">
-          <div className="w-full max-w-2xl overflow-hidden rounded-3xl bg-surface shadow-2xl">
-            <div className="flex items-start justify-between border-b border-border px-6 py-5">
-              <div>
-                <h2 className="text-lg font-semibold text-foreground">Create Fee Schedule</h2>
-                <p className="mt-1 text-sm text-muted">
-                  Add a new fee schedule for a term. Leave class empty to apply to all students.
-                </p>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4">
+          <style>{`
+            @keyframes classes_modal_enter { from { transform: translateX(36px) scale(.98); opacity: 0 } to { transform: translateX(0) scale(1); opacity: 1 } }
+            @keyframes classes_modal_exit  { from { transform: translateX(0) scale(1); opacity: 1 } to { transform: translateX(36px) scale(.98); opacity: 0 } }
+          `}</style>
+
+          <div
+            className="w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_50px_rgba(10,102,194,0.16)]"
+            style={{ animation: `classes_modal_enter 320ms cubic-bezier(.2,.9,.2,1)` }}
+          >
+            <div className="border-b border-slate-100 px-6 py-5" style={{ background: "linear-gradient(90deg, rgba(10,102,194,0.12), rgba(10,102,194,0.04))" }}>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-foreground">Create Fee Schedule</h2>
+                  <p className="mt-1 text-sm text-muted">Add a new fee schedule for a term. Leave class empty to apply to all students.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    doPlayCloseTone();
+                    setShowModal(false);
+                    setError(null);
+                  }}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-border hover:bg-background transition-colors"
+                >
+                  ✕
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowModal(false);
-                  setError(null);
-                }}
-                className="rounded-full p-2 text-muted transition hover:bg-background"
-              >
-                <X className="h-5 w-5" />
-              </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="grid gap-4 p-6 sm:grid-cols-2">
-              <div>
-                <label className="text-sm font-medium text-foreground mb-1 block">
-                  Term *
-                </label>
-                <select
-                  name="termId"
-                  defaultValue={terms[0]?.id ?? ""}
-                  required
-                  className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
-                >
-                  <option value="" disabled>
-                    Select a term
-                  </option>
-                  {terms.map((term) => (
-                    <option key={term.id} value={term.id}>
-                      {term.name} • {term.academicYear.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <form onSubmit={handleSubmit} className="space-y-5 px-6 py-6">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-1 block">Term *</label>
+                  <select name="termId" required className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand">
+                    <option value="">Select term</option>
+                    {filteredTerms.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.name} • {t.academicYear.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-              <div>
-                <label className="text-sm font-medium text-foreground mb-1 block">
-                  Class (optional)
-                </label>
-                <select
-                  name="classId"
-                  defaultValue=""
-                  className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
-                >
-                  <option value="">All classes</option>
-                  {classes.map((cls) => (
-                    <option key={cls.id} value={cls.id}>
-                      {cls.name}
-                      {cls.arm ? ` ${cls.arm}` : ""}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-1 block">Class (optional)</label>
+                  <select name="classId" className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand">
+                    <option value="">All classes</option>
+                    {classes.map((c) => (
+                      <option key={c.id} value={c.id}>{c.name}{c.arm ? ` ${c.arm}` : ""}</option>
+                    ))}
+                  </select>
+                </div>
 
-              <div className="sm:col-span-2">
-                <label className="text-sm font-medium text-foreground mb-1 block">
-                  Schedule Name *
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  required
-                  placeholder="e.g., First Term Tuition or JSS1 Fees"
-                  className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground placeholder-muted focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
-                />
-              </div>
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-1 block">Schedule Name *</label>
+                  <input type="text" name="name" required placeholder="e.g., First Term Tuition or JSS1 Fees" className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground placeholder-muted focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20" />
+                </div>
 
-              <div className="sm:col-span-2">
-                <label className="text-sm font-medium text-foreground mb-1 block">
-                  Amount ({currency}) *
-                </label>
-                <input
-                  type="number"
-                  name="amount"
-                  required
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
-                  className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground placeholder-muted focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
-                />
+                <div>
+                  <label className="text-sm font-medium text-foreground mb-1 block">Amount ({currency}) *</label>
+                  <input type="number" name="amount" required min="0" step="0.01" placeholder="0.00" className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground placeholder-muted focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20" />
+                </div>
               </div>
 
               {error && (
-                <div className="sm:col-span-2 rounded-lg bg-red-50 border border-red-200 p-3">
+                <div className="rounded-lg bg-red-50 border border-red-200 p-3">
                   <p className="text-sm text-red-800">{error}</p>
                 </div>
               )}
 
-              <div className="sm:col-span-2 flex flex-col gap-3 sm:flex-row sm:justify-end">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowModal(false);
-                    setError(null);
-                  }}
-                  className="rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition hover:bg-surface"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white transition hover:bg-brand/90 disabled:opacity-50"
-                >
-                  {submitting ? "Creating..." : "Create Schedule"}
+              <div className="flex justify-end gap-3 pt-4 border-t border-border">
+                <button type="button" onClick={() => { doPlayCloseTone(); setShowModal(false); setError(null); }} disabled={submitting} className="flex-1 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-slate-100 disabled:opacity-50 text-slate-700">Cancel</button>
+                <button type="submit" disabled={submitting} className="flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-colors disabled:opacity-50" style={{ background: "#0A66C2" }}>
+                  {submitting ? (<><div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />Creating...</>) : (<>Create Schedule</>)}
                 </button>
               </div>
-
-              <p className="sm:col-span-2 text-xs text-muted">
-                * Required fields. Leave class empty to apply the schedule to all students in the selected term.
-              </p>
             </form>
           </div>
         </div>
@@ -612,27 +651,38 @@ export default function FeeSchedulesPageClient({
 
       {/* Edit Modal */}
       {editingId && editFormData && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm px-4 py-8">
-          <div className="w-full max-w-2xl overflow-hidden rounded-3xl bg-surface shadow-2xl">
-            <div className="flex items-start justify-between border-b border-border px-6 py-5">
-              <div>
-                <h2 className="text-lg font-semibold text-foreground">Edit Fee Schedule</h2>
-                <p className="mt-1 text-sm text-muted">Update schedule name and amount</p>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4">
+          <style>{`
+            @keyframes classes_modal_enter { from { transform: translateX(36px) scale(.98); opacity: 0 } to { transform: translateX(0) scale(1); opacity: 1 } }
+            @keyframes classes_modal_exit  { from { transform: translateX(0) scale(1); opacity: 1 } to { transform: translateX(36px) scale(.98); opacity: 0 } }
+          `}</style>
+
+          <div
+            className="w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_50px_rgba(10,102,194,0.16)]"
+            style={{ animation: `classes_modal_enter 320ms cubic-bezier(.2,.9,.2,1)` }}
+          >
+            <div className="border-b border-slate-100 px-6 py-5" style={{ background: "linear-gradient(90deg, rgba(10,102,194,0.12), rgba(10,102,194,0.04))" }}>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-foreground">Edit Fee Schedule</h2>
+                  <p className="mt-1 text-sm text-muted">Update schedule name and amount</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    doPlayCloseTone();
+                    setEditingId(null);
+                    setEditFormData(null);
+                    setEditError(null);
+                  }}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-border hover:bg-background transition-colors"
+                >
+                  ✕
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setEditingId(null);
-                  setEditFormData(null);
-                  setEditError(null);
-                }}
-                className="rounded-full p-2 text-muted transition hover:bg-background"
-              >
-                <X className="h-5 w-5" />
-              </button>
             </div>
 
-            <form onSubmit={handleEditSubmit} className="grid gap-4 p-6 sm:grid-cols-2">
+            <form onSubmit={handleEditSubmit} className="space-y-5 px-6 py-6">
               <div className="sm:col-span-2">
                 <label className="text-sm font-medium text-foreground mb-1 block">
                   Schedule Name *
@@ -673,24 +723,34 @@ export default function FeeSchedulesPageClient({
                 </div>
               )}
 
-              <div className="sm:col-span-2 flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <div className="flex gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4">
                 <button
                   type="button"
                   onClick={() => {
+                    playCloseTone();
                     setEditingId(null);
                     setEditFormData(null);
                     setEditError(null);
                   }}
-                  className="rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition hover:bg-surface"
+                  disabled={editSubmitting}
+                  className="flex-1 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-slate-100 disabled:opacity-50 text-slate-700"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={editSubmitting}
-                  className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white transition hover:bg-brand/90 disabled:opacity-50"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-colors disabled:opacity-50"
+                  style={{ background: "#0A66C2" }}
                 >
-                  {editSubmitting ? "Updating..." : "Update Schedule"}
+                  {editSubmitting ? (
+                    <>
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      Updating...
+                    </>
+                  ) : (
+                    <>Update Schedule</>
+                  )}
                 </button>
               </div>
             </form>
@@ -700,47 +760,78 @@ export default function FeeSchedulesPageClient({
 
       {/* Delete Confirmation Modal */}
       {deleteId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm px-4 py-8">
-          <div className="w-full max-w-md overflow-hidden rounded-3xl bg-surface shadow-2xl">
-            <div className="flex items-start gap-4 border-b border-border px-6 py-5">
-              <div className="mt-1 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-red-100">
-                <AlertCircle className="h-5 w-5 text-red-600" />
-              </div>
-              <div className="flex-1">
-                <h2 className="text-lg font-semibold text-foreground">Delete Schedule</h2>
-                <p className="mt-1 text-sm text-muted">This action cannot be undone.</p>
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4">
+          <style>{`
+            @keyframes classes_delete_enter { from { transform: translateX(36px) scale(.98); opacity: 0 } to { transform: translateX(0) scale(1); opacity: 1 } }
+            @keyframes classes_delete_exit { from { transform: translateX(0) scale(1); opacity: 1 } to { transform: translateX(36px) scale(.98); opacity: 0 } }
+          `}</style>
+
+          <div
+            className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_50px_rgba(220,38,38,0.16)]"
+            style={{
+              animation: `${deleteAnimateState === "enter" ? "classes_delete_enter" : "classes_delete_exit"} 320ms cubic-bezier(.2,.9,.2,1)`,
+            }}
+          >
+            <div className="border-b border-slate-100 px-6 py-5" style={{ background: "linear-gradient(90deg, rgba(220,38,38,0.12), rgba(220,38,38,0.04))" }}>
+              <div className="flex items-start gap-3">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/70 bg-red-100 shadow-sm">
+                  <AlertCircle className="h-6 w-6 text-red-600" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-slate-900">Delete Schedule?</h2>
+                  <p className="mt-1 text-sm text-slate-600">This action cannot be undone.</p>
+                </div>
               </div>
             </div>
 
-            <div className="px-6 py-4">
+            <div className="px-6 py-5">
               {deleteError && (
                 <div className="mb-4 rounded-lg bg-red-50 border border-red-200 p-3">
                   <p className="text-sm text-red-800">{deleteError}</p>
                 </div>
               )}
-              <p className="text-sm text-muted">
-                Are you sure you want to delete this fee schedule? If this schedule has already been used to generate invoices, you won't be able to delete it.
+              <p className="text-sm leading-6 text-slate-700">
+                You are about to permanently delete this fee schedule.
               </p>
             </div>
 
-            <div className="flex gap-3 border-t border-border px-6 py-4">
-              <button
+            <div className="flex gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4">
+                <button
                 type="button"
                 onClick={() => {
+                  doPlayCloseTone();
                   setDeleteId(null);
                   setDeleteError(null);
                 }}
-                className="flex-1 rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition hover:bg-surface"
+                className="flex-1 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-slate-100 disabled:opacity-50 text-slate-700"
               >
                 Cancel
               </button>
               <button
                 type="button"
-                onClick={handleDelete}
+                onClick={() => {
+                  setDeleteAnimateState("exit");
+                  setTimeout(() => {
+                    handleDelete();
+                  }, 220);
+                }}
                 disabled={deleteLoading}
-                className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700 disabled:opacity-50"
+                className="flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-colors disabled:opacity-50"
+                style={{ background: "#DC2626" }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "#991B1B")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "#DC2626")}
               >
-                {deleteLoading ? "Deleting..." : "Delete"}
+                {deleteLoading ? (
+                  <>
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4" />
+                    Delete Permanently
+                  </>
+                )}
               </button>
             </div>
           </div>

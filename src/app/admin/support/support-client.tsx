@@ -3,6 +3,7 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { ErrorModal } from "@/components/ui/error-modal";
 import { getBackendUrl } from "@/lib/backend-url";
 
 export type SupportRequestRow = {
@@ -304,7 +305,14 @@ export default function SupportClient({
         </div>
       </div>
 
-      {success ? <div className="rounded-2xl bg-emerald-50 p-3 text-sm text-emerald-700">{success}</div> : null}
+      <ErrorModal
+        isOpen={Boolean(success)}
+        onClose={() => setSuccess(null)}
+        type="success"
+        title="Support request created"
+        message={success ?? "Support request created."}
+        confirmLabel="OK"
+      />
 
       <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
         <aside className="rounded-3xl border border-border bg-surface p-4 shadow-sm lg:max-h-[70vh] lg:overflow-y-auto lg:overflow-x-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
@@ -398,21 +406,26 @@ export default function SupportClient({
 
                 <div className="space-y-2">
                   {selectedRequest.messages?.length ? (
-                    selectedRequest.messages.map((message) => (
-                      <div key={message.id} className="rounded-2xl border border-border bg-background p-3">
-                        <div className="flex items-center justify-between gap-3 text-xs text-muted">
-                          <span className="font-semibold text-foreground">
-                            {message.senderRole === "SCHOOL"
-                              ? (message.senderName && !/schoolbase support|schoolbase admin|support team|support|admin|platform admin/i.test(message.senderName)
-                                ? message.senderName
-                                : "Your school")
-                              : (message.senderName || "SchoolBase Support")}
-                          </span>
-                          <span>{formatDate(message.createdAt)}</span>
+                    selectedRequest.messages.map((message) => {
+                      const isSchoolMessage = message.senderRole === "SCHOOL";
+                      const senderName = isSchoolMessage
+                        ? (message.senderName && !/schoolbase support|schoolbase admin|support team|support|admin|platform admin/i.test(message.senderName)
+                          ? message.senderName
+                          : "Your school")
+                        : (message.senderName || "SchoolBase Support");
+
+                      return (
+                        <div key={message.id} className={`flex ${isSchoolMessage ? "justify-end" : "justify-start"}`}>
+                          <div className={`max-w-[85%] rounded-3xl border px-4 py-3 shadow-sm ${isSchoolMessage ? "border-[#0A66C2]/30 bg-[#0A66C2]/10 text-[#0A66C2]" : "border-border bg-background text-foreground"}`}>
+                            <div className="flex items-center justify-between gap-3 text-xs text-muted">
+                              <span className="font-semibold text-[#0A66C2]">{senderName}</span>
+                              <span>{formatDate(message.createdAt)}</span>
+                            </div>
+                            <p className={`mt-2 text-sm whitespace-pre-line ${isSchoolMessage ? "text-[#0A66C2]" : "text-foreground"}`}>{message.body}</p>
+                          </div>
                         </div>
-                        <p className="mt-2 text-sm text-foreground whitespace-pre-line">{message.body}</p>
-                      </div>
-                    ))
+                      );
+                    })
                   ) : (
                     <div className="rounded-2xl border border-dashed border-border bg-background px-3 py-4 text-sm text-muted">
                       {selectedRequest.message}
@@ -430,7 +443,14 @@ export default function SupportClient({
                   placeholder="Write a reply to the support team..."
                 />
                 {replyError ? <div className="mt-2 rounded-2xl bg-rose-50 p-3 text-sm text-rose-700">{replyError}</div> : null}
-                {replySuccess ? <div className="mt-2 rounded-2xl bg-emerald-50 p-3 text-sm text-emerald-700">{replySuccess}</div> : null}
+                <ErrorModal
+                  isOpen={Boolean(replySuccess)}
+                  onClose={() => setReplySuccess(null)}
+                  type="success"
+                  title="Reply sent"
+                  message={replySuccess ?? "Reply sent successfully."}
+                  confirmLabel="OK"
+                />
                 <div className="mt-3 flex gap-2">
                   <Button
                     type="button"

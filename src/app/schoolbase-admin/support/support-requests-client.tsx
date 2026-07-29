@@ -507,17 +507,19 @@ export default function SupportRequestsClient({
                         : "bg-brand/10 text-brand";
 
                       return (
-                        <div key={message.id} className="rounded-2xl border border-brand/20 bg-background/80 px-3 py-2.5 sm:px-4">
-                          <div className="flex flex-col gap-2 text-[11px] text-muted sm:flex-row sm:items-start sm:justify-between sm:gap-3">
-                            <div className="flex items-center gap-2">
-                              <span className={`inline-flex rounded-full px-2 py-1 text-[10px] font-semibold ${badgeClasses}`}>
-                                {badgeLabel}
-                              </span>
-                              <span className="font-semibold text-foreground">{senderName}</span>
+                        <div key={message.id} className={`flex ${isSchoolMessage ? "justify-start" : "justify-end"}`}>
+                          <div className={`max-w-[85%] rounded-3xl border px-3 py-2.5 sm:px-4 ${isSchoolMessage ? "border-[#0A66C2]/30 bg-[#0A66C2]/10 text-[#0A66C2]" : "border-brand/20 bg-background/80 text-foreground"}`}>
+                            <div className="flex flex-col gap-2 text-[11px] text-muted sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+                              <div className="flex items-center gap-2">
+                                <span className={`inline-flex rounded-full px-2 py-1 text-[10px] font-semibold ${badgeClasses}`}>
+                                  {badgeLabel}
+                                </span>
+                                <span className={`${isSchoolMessage ? "text-[#0A66C2]" : "text-foreground"} font-semibold`}>{senderName}</span>
+                              </div>
+                              <span>{formatDate(message.createdAt)}</span>
                             </div>
-                            <span>{formatDate(message.createdAt)}</span>
+                            <p className={`mt-1 text-sm leading-6 whitespace-pre-line ${isSchoolMessage ? "text-[#0A66C2]" : "text-foreground"}`}>{message.body}</p>
                           </div>
-                          <p className="mt-1 text-sm leading-6 text-foreground whitespace-pre-line">{message.body}</p>
                         </div>
                       );
                     })

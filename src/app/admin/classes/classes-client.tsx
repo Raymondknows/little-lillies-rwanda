@@ -856,7 +856,7 @@ function playOpenTone() {
     playTone(1180, 0.14, 0.05, 0.07);
     setTimeout(() => ctx.close(), 700);
   } catch (e) {
-    // ignore
+    // ignore it
   }
 }
 

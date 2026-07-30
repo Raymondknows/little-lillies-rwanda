@@ -10,41 +10,6 @@ import { getBackendUrl } from "@/lib/backend-url";
 import SubscriptionModal from "@/components/subscription-modal";
 import { useRouter, useSearchParams } from "next/navigation";
 
-const dashboardSectionThemes = [
-  {
-    shell: "border-slate-200 bg-white",
-    iconWrap: "bg-blue-50",
-    iconColor: "text-blue-700",
-    badge: "border-blue-100 bg-blue-50 text-blue-700",
-    link: "text-blue-700 hover:text-blue-800",
-    row: "border-l-4 border-l-blue-400 bg-blue-50/50",
-  },
-  {
-    shell: "border-slate-200 bg-white",
-    iconWrap: "bg-blue-50",
-    iconColor: "text-blue-700",
-    badge: "border-blue-100 bg-blue-50 text-blue-700",
-    link: "text-blue-700 hover:text-blue-800",
-    row: "border-l-4 border-l-blue-400 bg-blue-50/50",
-  },
-  {
-    shell: "border-slate-200 bg-white",
-    iconWrap: "bg-blue-100",
-    iconColor: "text-blue-700",
-    badge: "border-blue-200 bg-blue-100 text-blue-700",
-    link: "text-blue-700 hover:text-blue-800",
-    row: "border-l-4 border-l-blue-500 bg-blue-100/70",
-  },
-  {
-    shell: "border-slate-200 bg-white",
-    iconWrap: "bg-blue-100",
-    iconColor: "text-blue-700",
-    badge: "border-blue-200 bg-blue-100 text-blue-700",
-    link: "text-blue-700 hover:text-blue-800",
-    row: "border-l-4 border-l-blue-500 bg-blue-100/70",
-  },
-] as const;
-
 export default function AdminDashboardPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -531,21 +496,29 @@ export default function AdminDashboardPage() {
           </Link>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          <Link href="/admin/fees" className="w-full inline-flex cursor-pointer items-center justify-center px-4 py-3 bg-brand text-white rounded-lg hover:bg-brand/90 transition-colors font-medium shadow-sm hover:shadow-md">
-            <CreditCard className="h-4 w-4 mr-2" />
-            Fees
+          <Link href="/admin/fees">
+            <button className="w-full inline-flex items-center justify-center px-4 py-3 bg-brand text-white rounded-lg hover:bg-brand/90 transition-colors font-medium shadow-sm hover:shadow-md">
+              <CreditCard className="h-4 w-4 mr-2" />
+              Fees
+            </button>
           </Link>
-          <Link href="/admin/students" className="w-full inline-flex cursor-pointer items-center justify-center px-4 py-3 bg-brand text-white rounded-lg hover:bg-brand/90 transition-colors font-medium shadow-sm hover:shadow-md">
-            <Users className="h-4 w-4 mr-2" />
-            Students
+          <Link href="/admin/students">
+            <button className="w-full inline-flex items-center justify-center px-4 py-3 bg-brand text-white rounded-lg hover:bg-brand/90 transition-colors font-medium shadow-sm hover:shadow-md">
+              <Users className="h-4 w-4 mr-2" />
+              Students
+            </button>
           </Link>
-          <Link href="/admin/teachers" className="w-full inline-flex cursor-pointer items-center justify-center px-4 py-3 bg-brand text-white rounded-lg hover:bg-brand/90 transition-colors font-medium shadow-sm hover:shadow-md">
-            <BookOpen className="h-4 w-4 mr-2" />
-            Teachers
+          <Link href="/admin/teachers">
+            <button className="w-full inline-flex items-center justify-center px-4 py-3 bg-brand text-white rounded-lg hover:bg-brand/90 transition-colors font-medium shadow-sm hover:shadow-md">
+              <BookOpen className="h-4 w-4 mr-2" />
+              Teachers
+            </button>
           </Link>
-          <Link href="/admin/website" className="w-full inline-flex cursor-pointer items-center justify-center px-4 py-3 bg-brand text-white rounded-lg hover:bg-brand/90 transition-colors font-medium shadow-sm hover:shadow-md">
-            <MessageSquare className="h-4 w-4 mr-2" />
-            Announcements
+          <Link href="/admin/website">
+            <button className="w-full inline-flex items-center justify-center px-4 py-3 bg-brand text-white rounded-lg hover:bg-brand/90 transition-colors font-medium shadow-sm hover:shadow-md">
+              <MessageSquare className="h-4 w-4 mr-2" />
+              Announcements
+            </button>
           </Link>
         </div>
       </div>
@@ -553,24 +526,24 @@ export default function AdminDashboardPage() {
       {/* Grid of sections - Responsive: 1 col mobile, 2 col tablet, 2 col desktop */}
       <section className="grid gap-6 grid-cols-1 lg:grid-cols-2">
         {/* Recent Payments */}
-        <div className={`rounded-xl border p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col ${dashboardSectionThemes[1].shell}`}>
+        <div className="rounded-xl border border-border bg-surface p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col">
           <div className="flex items-center justify-between gap-3 mb-4">
             <div className="flex items-center gap-3">
-              <div className={`flex h-10 w-10 items-center justify-center rounded-full ${dashboardSectionThemes[1].iconWrap}`}>
-                <DollarSign className={`h-5 w-5 ${dashboardSectionThemes[1].iconColor}`} />
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
+                <DollarSign className="h-5 w-5 text-blue-600" />
               </div>
               <h2 className="font-semibold text-foreground">Recent payments</h2>
             </div>
-            <span className={`rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-wider font-medium ${dashboardSectionThemes[1].badge}`}>
+            <span className="rounded-full border border-border px-2.5 py-1 text-[10px] uppercase tracking-wider font-medium text-muted bg-background">
               Latest
             </span>
           </div>
-          <ul className="mt-4 divide-y divide-border/70 flex-1">
+          <ul className="mt-4 divide-y divide-border flex-1">
             {!dashboardData?.recentPayments || dashboardData.recentPayments.length === 0 ? (
               <li className="py-3 text-sm text-muted">No payments yet.</li>
             ) : (
               dashboardData.recentPayments.slice(0, 3).map((p: any, idx: number) => (
-                <li key={idx} className={`flex items-center justify-between gap-2 px-3 py-2.5 first:pt-2.5 last:pb-2.5 ${dashboardSectionThemes[1].row}`}>
+                <li key={idx} className="flex items-center justify-between gap-2 py-2.5 first:pt-0 last:pb-0">
                   <span className="font-medium text-foreground text-sm truncate">{p.invoice?.pupil?.firstName} {p.invoice?.pupil?.lastName}</span>
                   <span className="text-xs text-muted flex-shrink-0">{new Date(p.paidAt || Date.now()).toLocaleDateString("en-NG", { month: "short", day: "numeric" })}</span>
                   <span className="text-sm font-bold text-green-600 flex-shrink-0 text-right min-w-fit">{formatMoney(p.amount, dashboardData?.currency || "NGN")}</span>
@@ -578,30 +551,30 @@ export default function AdminDashboardPage() {
               ))
             )}
           </ul>
-          <Link href="/admin/fees" className={`mt-4 flex justify-end items-center gap-1 text-sm font-semibold transition ${dashboardSectionThemes[1].link}`}>
+          <Link href="/admin/fees" className="mt-4 flex justify-end items-center gap-1 text-sm font-semibold text-brand hover:text-brand/80 transition">
             View all <ArrowUpRight className="h-3 w-3" />
           </Link>
         </div>
 
         {/* Latest Students */}
-        <div className={`rounded-xl border p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col ${dashboardSectionThemes[2].shell}`}>
+        <div className="rounded-xl border border-border bg-surface p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col">
           <div className="flex items-center justify-between gap-3 mb-4">
             <div className="flex items-center gap-3">
-              <div className={`flex h-10 w-10 items-center justify-center rounded-full ${dashboardSectionThemes[2].iconWrap}`}>
-                <Users className={`h-5 w-5 ${dashboardSectionThemes[2].iconColor}`} />
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
+                <Users className="h-5 w-5 text-blue-600" />
               </div>
               <h2 className="font-semibold text-foreground">Latest students</h2>
             </div>
-            <span className={`rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-wider font-medium ${dashboardSectionThemes[2].badge}`}>
+            <span className="rounded-full border border-border px-2.5 py-1 text-[10px] uppercase tracking-wider font-medium text-muted bg-background">
               New
             </span>
           </div>
-          <ul className="mt-4 divide-y divide-border/70 flex-1">
+          <ul className="mt-4 divide-y divide-border flex-1">
             {!dashboardData?.recentPupils || dashboardData.recentPupils.length === 0 ? (
               <li className="py-3 text-sm text-muted">No new students yet.</li>
             ) : (
               dashboardData.recentPupils.slice(0, 3).map((pupil: any, idx: number) => (
-                <li key={idx} className={`flex items-center justify-between gap-2 px-3 py-2.5 first:pt-2.5 last:pb-2.5 ${dashboardSectionThemes[2].row}`}>
+                <li key={idx} className="flex items-center justify-between gap-2 py-2.5 first:pt-0 last:pb-0">
                   <span className="font-medium text-foreground text-sm truncate">{pupil.firstName} {pupil.lastName}</span>
                   <span className="text-xs text-muted flex-shrink-0">{pupil.class?.name || "Unassigned"} {pupil.class?.arm ? `(${pupil.class.arm})` : ""}</span>
                   <span className="text-xs text-muted flex-shrink-0">
@@ -614,60 +587,60 @@ export default function AdminDashboardPage() {
               ))
             )}
           </ul>
-          <Link href="/admin/students" className={`mt-4 flex justify-end items-center gap-1 text-sm font-semibold transition ${dashboardSectionThemes[2].link}`}>
+          <Link href="/admin/students" className="mt-4 flex justify-end items-center gap-1 text-sm font-semibold text-brand hover:text-brand/80 transition">
             View all <ArrowUpRight className="h-3 w-3" />
           </Link>
         </div>
 
         {/* Latest Teachers */}
-        <div className={`rounded-xl border p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col ${dashboardSectionThemes[0].shell}`}>
+        <div className="rounded-xl border border-border bg-surface p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col">
           <div className="flex items-center justify-between gap-3 mb-4">
             <div className="flex items-center gap-3">
-              <div className={`flex h-10 w-10 items-center justify-center rounded-full ${dashboardSectionThemes[0].iconWrap}`}>
-                <BookOpen className={`h-5 w-5 ${dashboardSectionThemes[0].iconColor}`} />
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
+                <BookOpen className="h-5 w-5 text-blue-600" />
               </div>
               <h2 className="font-semibold text-foreground">Latest teachers</h2>
             </div>
-            <span className={`rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-wider font-medium ${dashboardSectionThemes[0].badge}`}>
+            <span className="rounded-full border border-border px-2.5 py-1 text-[10px] uppercase tracking-wider font-medium text-muted bg-background">
               New
             </span>
           </div>
-          <ul className="mt-4 divide-y divide-border/70 flex-1">
+          <ul className="mt-4 divide-y divide-border flex-1">
             {!dashboardData?.recentTeachers || dashboardData.recentTeachers.length === 0 ? (
               <li className="py-3 text-sm text-muted">No recent teachers yet.</li>
             ) : (
               dashboardData.recentTeachers.slice(0, 3).map((teacher: any, idx: number) => (
-                <li key={idx} className={`flex items-center justify-between gap-2 px-3 py-2.5 first:pt-2.5 last:pb-2.5 ${dashboardSectionThemes[0].row}`}>
+                <li key={idx} className="flex items-center justify-between gap-2 py-2.5 first:pt-0 last:pb-0">
                   <span className="font-medium text-foreground text-sm truncate">{teacher.name || "Unknown"}</span>
                   <span className="text-xs text-muted truncate flex-shrink-0">{teacher.email || "No email"}</span>
                 </li>
               ))
             )}
           </ul>
-          <Link href="/admin/teachers" className={`mt-4 flex justify-end items-center gap-1 text-sm font-semibold transition ${dashboardSectionThemes[0].link}`}>
+          <Link href="/admin/teachers" className="mt-4 flex justify-end items-center gap-1 text-sm font-semibold text-brand hover:text-brand/80 transition">
             View all <ArrowUpRight className="h-3 w-3" />
           </Link>
         </div>
 
         {/* Latest Announcements */}
-        <div className={`rounded-xl border p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col ${dashboardSectionThemes[3].shell}`}>
+        <div className="rounded-xl border border-border bg-surface p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col">
           <div className="flex items-center justify-between gap-3 mb-4">
             <div className="flex items-center gap-3">
-              <div className={`flex h-10 w-10 items-center justify-center rounded-full ${dashboardSectionThemes[3].iconWrap}`}>
-                <MessageSquare className={`h-5 w-5 ${dashboardSectionThemes[3].iconColor}`} />
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
+                <MessageSquare className="h-5 w-5 text-blue-600" />
               </div>
               <h2 className="font-semibold text-foreground">Latest announcements</h2>
             </div>
-            <span className={`rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-wider font-medium ${dashboardSectionThemes[3].badge}`}>
+            <span className="rounded-full border border-border px-2.5 py-1 text-[10px] uppercase tracking-wider font-medium text-muted bg-background">
               New
             </span>
           </div>
-          <ul className="mt-4 divide-y divide-border/70 flex-1">
+          <ul className="mt-4 divide-y divide-border flex-1">
             {!dashboardData?.recentAnnouncements || dashboardData.recentAnnouncements.length === 0 ? (
               <li className="py-3 text-sm text-muted">No announcements yet.</li>
             ) : (
               dashboardData.recentAnnouncements.slice(0, 3).map((announcement: any, idx: number) => (
-                <li key={idx} className={`flex items-center justify-between gap-2 px-3 py-2.5 first:pt-2.5 last:pb-2.5 ${dashboardSectionThemes[3].row}`}>
+                <li key={idx} className="flex items-center justify-between gap-2 py-2.5 first:pt-0 last:pb-0">
                   <span className="font-medium text-foreground text-sm truncate flex-1">{announcement.title || "Untitled"}</span>
                   <span className="text-xs text-muted flex-shrink-0">
                     {new Date(announcement.publishedAt || announcement.createdAt || Date.now()).toLocaleDateString("en-NG", {
@@ -679,7 +652,7 @@ export default function AdminDashboardPage() {
               ))
             )}
           </ul>
-          <Link href="/admin/website" className={`mt-4 flex justify-end items-center gap-1 text-sm font-semibold transition ${dashboardSectionThemes[3].link}`}>
+          <Link href="/admin/website" className="mt-4 flex justify-end items-center gap-1 text-sm font-semibold text-brand hover:text-brand/80 transition">
             View all <ArrowUpRight className="h-3 w-3" />
           </Link>
         </div>

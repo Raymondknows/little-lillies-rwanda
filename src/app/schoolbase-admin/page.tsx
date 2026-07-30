@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Building2,
   Users,
@@ -31,6 +31,7 @@ import AdminPageShell from "@/components/admin-page-shell";
 import AdminSkeleton from "@/components/ui/skeleton";
 import { getBackendUrl } from "@/lib/backend-url";
 import { resolveSchoolAssetUrl } from "@/lib/asset-urls";
+import { announceSupportAlert, stopSupportAlertSpeech, unlockAudio } from "@/lib/sounds";
 
 function getActivityTitle(log: any) {
   const raw = log?.event ?? log?.action;
@@ -51,6 +52,19 @@ function getSchoolInitials(name?: string) {
     .toUpperCase();
 }
 
+function isUnattendedSupportRequest(request: any) {
+  return ["OPEN"].includes((request?.status || "").toString().toUpperCase());
+}
+
+function hasSupportBeenAttended(request: any) {
+  if (!request) return false;
+  if (request.response) return true;
+  const messages = request.messages || [];
+  if (!messages.length) return false;
+  const lastSender = messages[messages.length - 1]?.senderRole?.toString().toUpperCase();
+  return lastSender && lastSender !== "SCHOOL";
+}
+
 export default function PlatformOverviewPage() {
   const [stats, setStats] = useState<any>(null);
   const [schools, setSchools] = useState<any[]>([]);
@@ -58,6 +72,9 @@ export default function PlatformOverviewPage() {
   const [emailLogs, setEmailLogs] = useState<any[]>([]);
   const [trialSchools, setTrialSchools] = useState<any[]>([]);
   const [supportRequests, setSupportRequests] = useState<any[]>([]);
+  const [newSupportAlert, setNewSupportAlert] = useState<{ open: boolean; request: any | null }>({ open: false, request: null });
+  const newSupportAlertRef = useRef<{ open: boolean; request: any | null }>({ open: false, request: null });
+  const knownSupportIdsRef = useRef<Set<string | number>>(new Set());
   const [loading, setLoading] = useState(true);
   const [dashboardMessage, setDashboardMessage] = useState<string | null>(null);
   const [reminding, setReminding] = useState(false);
@@ -71,6 +88,17 @@ export default function PlatformOverviewPage() {
   });
 
   useEffect(() => {
+    unlockAudio();
+
+    const unlockHandler = () => {
+      unlockAudio();
+      window.removeEventListener("pointerdown", unlockHandler);
+      window.removeEventListener("keydown", unlockHandler);
+    };
+
+    window.addEventListener("pointerdown", unlockHandler, { once: true, passive: true });
+    window.addEventListener("keydown", unlockHandler, { once: true, passive: true });
+
     async function loadData() {
       try {
         const backendUrl = getBackendUrl();
@@ -118,6 +146,17 @@ export default function PlatformOverviewPage() {
         setTrialSchools(trialData.schools || []);
         setSupportRequests(supportData.supportRequests || []);
         setLoading(false);
+
+        const openRequests = (supportData.supportRequests || []).filter(isUnattendedSupportRequest);
+        if (openRequests.length > 0) {
+          const latestOpen = openRequests[0];
+          updateNewSupportAlert({ open: true, request: latestOpen });
+          announceSupportAlert();
+        }
+
+        knownSupportIdsRef.current = new Set<string | number>(
+          (supportData.supportRequests || []).map((request: any) => request.id as string | number)
+        );
       } catch (err) {
         console.error("Error loading platform data:", err);
         setLoading(false);
@@ -126,6 +165,72 @@ export default function PlatformOverviewPage() {
 
     loadData();
   }, []);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(async () => {
+      try {
+        const backendUrl = getBackendUrl();
+        const res = await fetch(`${backendUrl}/schoolbase-admin/api/support`, {
+          credentials: "include",
+          cache: "no-store",
+          headers: { "Content-Type": "application/json" },
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        const incoming = data.supportRequests || [];
+
+        const unattended = incoming.filter(isUnattendedSupportRequest);
+        const currentAlertRequestId = newSupportAlertRef.current.request?.id;
+        const currentAlertRequest = currentAlertRequestId ? incoming.find((request: any) => request.id === currentAlertRequestId) : null;
+
+        if (currentAlertRequestId && currentAlertRequest && (currentAlertRequest.status !== "OPEN" || hasSupportBeenAttended(currentAlertRequest))) {
+          closeSupportAlert();
+        } else if (currentAlertRequestId && !currentAlertRequest) {
+          closeSupportAlert();
+        }
+
+        const unseenUnattended = unattended.filter((request: any) => !knownSupportIdsRef.current.has(request.id));
+        if (unseenUnattended.length > 0) {
+          const latest = unseenUnattended[0];
+          announceSupportAlert();
+          updateNewSupportAlert({ open: true, request: latest });
+        }
+
+        if (unattended.length > 0) {
+          const unattendedIds = new Set<string | number>(unattended.map((request: any) => request.id));
+          knownSupportIdsRef.current = unattendedIds;
+
+          if (!newSupportAlertRef.current.open) {
+            updateNewSupportAlert({ open: true, request: unattended[0] });
+          }
+        } else {
+          knownSupportIdsRef.current = new Set<string | number>(incoming.map((request: any) => request.id));
+          closeSupportAlert();
+        }
+
+        setSupportRequests(incoming);
+      } catch (err) {
+        console.error("Error polling support requests:", err);
+      }
+    }, 15000);
+
+    return () => window.clearInterval(intervalId);
+  }, []);
+
+  const updateNewSupportAlert = (value: { open: boolean; request: any | null }) => {
+    newSupportAlertRef.current = value;
+    setNewSupportAlert(value);
+  };
+
+  const dismissNewSupportAlert = () => {
+    updateNewSupportAlert({ open: false, request: null });
+    stopSupportAlertSpeech();
+  };
+
+  const closeSupportAlert = () => {
+    updateNewSupportAlert({ open: false, request: null });
+    stopSupportAlertSpeech();
+  };
 
   const sendSetupReminders = async () => {
     setReminding(true);
@@ -214,6 +319,45 @@ export default function PlatformOverviewPage() {
         </button>
       }
     >
+      {newSupportAlert.open && newSupportAlert.request ? (
+        <>
+          <div className="fixed inset-x-0 top-20 z-50 flex justify-center px-4">
+            <div className="w-full max-w-3xl rounded-[2rem] border border-brand/20 bg-blue-50/95 p-4 shadow-2xl shadow-blue-600/10 backdrop-blur-sm transition-transform duration-300 ease-out hover:-translate-y-0.5">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="relative inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#0A66C2] text-white shadow-lg shadow-blue-500/20 ring-2 ring-white animate-bell">
+                    <Bell className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">New support ticket received</p>
+                    <p className="mt-1 text-sm text-slate-700">{newSupportAlert.request.subject || "New ticket"} from {newSupportAlert.request.school?.name || "a school"}</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={dismissNewSupportAlert}
+                  className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          </div>
+          <style jsx>{`
+            .animate-bell {
+              animation: wiggle 1.2s ease-in-out infinite;
+            }
+
+            @keyframes wiggle {
+              0%, 100% { transform: rotate(0deg); }
+              20% { transform: rotate(-12deg); }
+              40% { transform: rotate(12deg); }
+              60% { transform: rotate(-9deg); }
+              80% { transform: rotate(9deg); }
+            }
+          `}</style>
+        </>
+      ) : null}
       {/* Stats Cards */}
       <div className="mb-10 hidden sm:block pt-4">
         <div className="relative flex items-center gap-4">

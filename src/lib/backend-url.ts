@@ -34,10 +34,9 @@ export function getBackendUrl(): string {
   // Client-side: detect from window.location
   if (typeof window !== 'undefined') {
     const host = window.location.hostname;
-    const protocol = window.location.protocol;
 
-    if (host === 'localhost' || host === '127.0.0.1') {
-      return normalizeBackendUrl(`${protocol}//localhost:3006`);
+    if (host === 'localhost' || host === '127.0.0.1' || host === '::1') {
+      return 'http://localhost:3006';
     }
 
     if (host.includes('schoolbase.live')) {

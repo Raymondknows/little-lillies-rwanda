@@ -78,6 +78,7 @@ export default function SupportRequestsClient({
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
   const [replyStatus, setReplyStatus] = useState("IN_PROGRESS");
+  const [replyStatuses, setReplyStatuses] = useState<Record<string, string>>({});
   const [readRequestIds, setReadRequestIds] = useState<string[]>([]);
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
@@ -97,14 +98,17 @@ export default function SupportRequestsClient({
       const backendUrl = getBackendUrl();
       const res = await fetch(`${backendUrl}/schoolbase-admin/api/support`, {
         credentials: "include",
+        cache: "no-store",
       });
 
       if (!res.ok) {
-        throw new Error("Unable to load support requests.");
+        throw new Error(`Unable to load support requests. Status: ${res.status}`);
       }
 
       const data = await res.json();
-      setRequests(data.supportRequests || []);
+      if (data?.supportRequests) {
+        setRequests(data.supportRequests);
+      }
     } catch (err) {
       console.error("Error loading support requests:", err);
     } finally {
@@ -216,6 +220,13 @@ export default function SupportRequestsClient({
     : null;
 
   useEffect(() => {
+    if (!selectedRequest) return;
+
+    const nextStatus = replyStatuses[selectedRequest.id] ?? (selectedRequest.status === "OPEN" ? "IN_PROGRESS" : selectedRequest.status);
+    setReplyStatus(nextStatus);
+  }, [selectedRequest, replyStatuses]);
+
+  useEffect(() => {
     if (filtered.length === 0) {
       if (selectedRequestId) setSelectedRequestId(null);
       return;
@@ -225,14 +236,6 @@ export default function SupportRequestsClient({
       setSelectedRequestId(filtered[0].id);
     }
   }, [filtered, selectedRequestId]);
-
-  if (loading) {
-    return (
-      <div className="py-12">
-        <AdminSkeleton />
-      </div>
-    );
-  }
 
   const quickReplies = [
     {
@@ -261,52 +264,110 @@ export default function SupportRequestsClient({
     },
   ];
 
+  const persistRequestUpdate = useCallback(
+    async (nextStatus: string, draftText = "", options?: { showSuccess?: boolean; clearDraft?: boolean }) => {
+      if (!selectedRequest) return null;
+
+      const currentDraft = draftText.trim();
+      const normalizedStatus = String(nextStatus || selectedRequest.status).trim().toUpperCase();
+      const hasReplyText = currentDraft.length > 0;
+
+      if (!hasReplyText && normalizedStatus === selectedRequest.status) {
+        return null;
+      }
+
+      setBusy(true);
+
+      try {
+        const requestPayload: Record<string, unknown> = {
+          requestId: selectedRequest.id,
+          status: normalizedStatus,
+        };
+        if (hasReplyText) {
+          requestPayload.response = currentDraft;
+        }
+
+        const backendUrl = getBackendUrl();
+        const response = await fetch(`${backendUrl}/schoolbase-admin/api/support/reply`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          cache: "no-store",
+          body: JSON.stringify(requestPayload),
+        });
+
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.message || "Unable to update support ticket.");
+        }
+
+        const updatedRequest = result.supportRequest;
+        if (updatedRequest) {
+          const nextPersistedStatus = String(updatedRequest.status || "").trim().toUpperCase() || selectedRequest.status;
+          setRequests((current) =>
+            current.map((request) =>
+              request.id === updatedRequest.id
+                ? {
+                    ...request,
+                    ...updatedRequest,
+                    status: nextPersistedStatus,
+                    updatedAt: updatedRequest.updatedAt || request.updatedAt,
+                    response: updatedRequest.response ?? request.response,
+                    messages: updatedRequest.messages || request.messages,
+                  }
+                : request,
+            ),
+          );
+          setSelectedRequestId(updatedRequest.id);
+          setReplyStatus(nextPersistedStatus);
+          setReplyStatuses((current) => ({ ...current, [updatedRequest.id]: nextPersistedStatus }));
+        }
+
+        await refreshRequests(false);
+
+        if (options?.showSuccess) {
+          setStatusModal({ open: true, type: "success", title: "Reply sent", message: "Your reply was sent successfully." });
+        }
+
+        if (options?.clearDraft) {
+          setReplyDrafts((current) => {
+            const next = { ...current };
+            delete next[selectedRequest.id];
+            return next;
+          });
+        }
+
+        return updatedRequest;
+      } catch (err) {
+        setStatusModal({ open: true, type: "error", title: "Update failed", message: err instanceof Error ? err.message : "Unable to update support ticket." });
+        return null;
+      } finally {
+        setBusy(false);
+      }
+    },
+    [refreshRequests, selectedRequest],
+  );
+
   const handleReply = async () => {
     if (!selectedRequest) return;
     const currentDraft = replyDrafts[selectedRequest.id] ?? "";
-    if (!currentDraft.trim()) {
-      setStatusModal({ open: true, type: "error", title: "Reply required", message: "Reply cannot be empty." });
+    const hasReplyText = currentDraft.trim().length > 0;
+
+    if (!hasReplyText && replyStatus === selectedRequest.status) {
+      setStatusModal({ open: true, type: "error", title: "Reply required", message: "Reply cannot be empty unless you change the ticket status." });
       return;
     }
 
-    setBusy(true);
-
-    try {
-      const backendUrl = getBackendUrl();
-      const response = await fetch(`${backendUrl}/schoolbase-admin/api/support/reply`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: 'include',
-        body: JSON.stringify({
-          requestId: selectedRequest.id,
-          response: currentDraft,
-          status: replyStatus,
-        }),
-      });
-      const result = await response.json();
-      if (!response.ok) {
-        setStatusModal({ open: true, type: "error", title: "Reply failed", message: result.message || "Unable to send reply." });
-        return;
-      }
-
-      setRequests((current) =>
-        current.map((request) =>
-          request.id === selectedRequest.id ? result.supportRequest : request,
-        ),
-      );
-      setStatusModal({ open: true, type: "success", title: "Reply sent", message: "Your reply was sent successfully." });
-      setReplyDrafts((current) => {
-        const next = { ...current };
-        delete next[selectedRequest.id];
-        return next;
-      });
-      setSelectedRequestId(selectedRequest.id);
-    } catch (err) {
-      setStatusModal({ open: true, type: "error", title: "Reply failed", message: err instanceof Error ? err.message : "Unable to send reply." });
-    } finally {
-      setBusy(false);
-    }
+    await persistRequestUpdate(replyStatus, currentDraft, { showSuccess: true, clearDraft: true });
   };
+
+  if (loading) {
+    return (
+      <div className="py-12">
+        <AdminSkeleton />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-2.5 sm:space-y-4">
@@ -418,8 +479,9 @@ export default function SupportRequestsClient({
                     key={request.id}
                     type="button"
                     onClick={() => {
+                      const nextStatus = replyStatuses[request.id] ?? (request.status === "OPEN" ? "IN_PROGRESS" : request.status);
                       setSelectedRequestId(request.id);
-                      setReplyStatus(request.status === "OPEN" ? "IN_PROGRESS" : request.status);
+                      setReplyStatus(nextStatus);
                       setStatusModal((prev) => ({ ...prev, open: false }));
                     }}
                     className={`w-full rounded-2xl border p-2.5 text-left transition sm:p-3 ${isActive ? "border-brand bg-brand/5 shadow-sm" : "border-border bg-background hover:border-brand/40 hover:bg-brand/5"}`}
@@ -536,7 +598,14 @@ export default function SupportRequestsClient({
                   <label className="mb-2 block text-sm font-medium text-foreground">Set status</label>
                   <select
                     value={replyStatus}
-                    onChange={(event) => setReplyStatus(event.target.value)}
+                    onChange={(event) => {
+                      const nextStatus = event.target.value;
+                      setReplyStatus(nextStatus);
+                      if (selectedRequest) {
+                        setReplyStatuses((current) => ({ ...current, [selectedRequest.id]: nextStatus }));
+                        void persistRequestUpdate(nextStatus, replyDrafts[selectedRequest.id] ?? "");
+                      }
+                    }}
                     className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none"
                   >
                     <option value="IN_PROGRESS">In progress</option>

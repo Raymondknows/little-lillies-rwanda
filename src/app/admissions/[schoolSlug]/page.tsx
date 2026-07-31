@@ -98,18 +98,28 @@ export default function PublicAdmissionsPage() {
   }, [settings, openingDate, closingDate, today]);
 
   const contactInfoItems = useMemo<string[]>(() => {
-    if (settings?.contactInfo) {
-      return settings.contactInfo
-        .split(/\r?\n/)
-        .map((line: string) => line.trim())
-        .filter(Boolean);
-    }
+    const rawItems: string[] = settings?.contactInfo
+      ? settings.contactInfo
+          .split(/\r?\n/)
+          .map((line: string) => line.trim())
+          .filter(Boolean) as string[]
+      : [
+          school?.email ? `Email: ${school.email}` : null,
+          school?.phone ? `Phone: ${school.phone}` : null,
+          school?.address ? `${school.address}${school?.city ? `, ${school.city}` : ""}` : null,
+        ].filter(Boolean) as string[];
 
-    return [
-      school?.email ? `Email: ${school.email}` : null,
-      school?.phone ? `Phone: ${school.phone}` : null,
-      school?.address ? `${school.address}${school?.city ? `, ${school.city}` : ""}` : null,
-    ].filter(Boolean) as string[];
+    return rawItems.flatMap((item: string) => {
+      if (!item) return [];
+      const normalized = item.replace(/\s*•\s*|\s*·\s*|\s*\|\s*/g, '|');
+      if (/email/i.test(item) && /phone/i.test(item)) {
+        return normalized
+          .split('|')
+          .map((part: string) => part.trim())
+          .filter(Boolean);
+      }
+      return [item];
+    });
   }, [settings, school]);
 
   const contactButtonHref = useMemo(() => {
@@ -308,7 +318,6 @@ export default function PublicAdmissionsPage() {
                 <div className="mt-6 space-y-3 text-sm text-slate-700">
                   {contactItems.map((item: string, index: number) => (
                     <div key={index} className="flex items-center gap-2">
-                      <span className="inline-flex h-2.5 w-2.5 rounded-full bg-[#0A66C2]" />
                       <span>{item}</span>
                     </div>
                   ))}
@@ -355,7 +364,7 @@ export default function PublicAdmissionsPage() {
                     key={tab.id}
                     type="button"
                     onClick={() => setActiveTab(tab.id)}
-                    className={`rounded-full px-4 py-2 text-sm font-semibold transition ${activeTab === tab.id ? "bg-[#0A66C2] text-white shadow-sm" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
+                    className={`cursor-pointer rounded-full px-4 py-2 text-sm font-semibold transition ${activeTab === tab.id ? "bg-[#0A66C2] text-white shadow-sm" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
                   >
                     {tab.label}
                   </button>
@@ -429,7 +438,7 @@ export default function PublicAdmissionsPage() {
                   <div>
                     <a
                       href={contactButtonHref}
-                      className="inline-flex items-center justify-center rounded-full bg-[#0A66C2] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0959a8] focus:outline-none focus:ring-2 focus:ring-[#0A66C2]/30"
+                      className="cursor-pointer inline-flex items-center justify-center rounded-full bg-[#0A66C2] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0959a8] focus:outline-none focus:ring-2 focus:ring-[#0A66C2]/30"
                     >
                       Contact the school
                     </a>
@@ -442,9 +451,14 @@ export default function PublicAdmissionsPage() {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6" encType="multipart/form-data">
             {activeTab === "applicant" && (
-              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-                <h3 className="text-base font-semibold text-slate-900">Applicant details</h3>
-                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <div className="space-y-4">
+                <h3 className="w-full border-b border-slate-200 pb-3 text-xl font-semibold text-[#0A66C2]">
+                  <span className="inline-flex items-center gap-2">
+                    <CheckCircle2 className="h-5 w-5" />
+                    Applicant details
+                  </span>
+                </h3>
+                <div className="grid gap-4 sm:grid-cols-2">
                   <label className="block text-sm font-medium text-slate-700">
                     Your first name
                     <input placeholder="First name" required value={form.firstName} onChange={(event) => setForm({ ...form, firstName: event.target.value })} className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400" />
@@ -466,9 +480,14 @@ export default function PublicAdmissionsPage() {
             )}
 
             {activeTab === "student" && (
-              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-                <h3 className="text-base font-semibold text-slate-900">Student details</h3>
-                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <div className="space-y-4">
+                <h3 className="w-full border-b border-slate-200 pb-3 text-xl font-semibold text-[#0A66C2]">
+                  <span className="inline-flex items-center gap-2">
+                    <GraduationCap className="h-5 w-5" />
+                    Student details
+                  </span>
+                </h3>
+                <div className="grid gap-4 sm:grid-cols-2">
                   <label className="block text-sm font-medium text-slate-700">
                     Student first name
                     <input placeholder="First name" required value={form.studentFirstName} onChange={(event) => setForm({ ...form, studentFirstName: event.target.value })} className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400" />
@@ -533,7 +552,7 @@ export default function PublicAdmissionsPage() {
                     <input placeholder="Genotype" value={form.genotype} onChange={(event) => setForm({ ...form, genotype: event.target.value })} className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400" />
                   </label>
                 </div>
-                <div className="mt-4">
+                <div>
                   <label className="block text-sm font-medium text-slate-700">
                     Medical notes
                     <textarea placeholder="Medical notes (allergies, conditions, medications)" value={form.medicalNotes} onChange={(event) => setForm({ ...form, medicalNotes: event.target.value })} rows={4} className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400" />
@@ -553,9 +572,14 @@ export default function PublicAdmissionsPage() {
             )}
 
             {activeTab === "guardian" && (
-              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-                <h3 className="text-base font-semibold text-slate-900">Guardian details</h3>
-                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <div className="space-y-4">
+                <h3 className="w-full border-b border-slate-200 pb-3 text-xl font-semibold text-[#0A66C2]">
+                  <span className="inline-flex items-center gap-2">
+                    <Mail className="h-5 w-5" />
+                    Guardian details
+                  </span>
+                </h3>
+                <div className="grid gap-4 sm:grid-cols-2">
                   <label className="block text-sm font-medium text-slate-700">
                     Guardian first name
                     <input placeholder="First name" value={form.guardianFirst} onChange={(event) => setForm({ ...form, guardianFirst: event.target.value })} className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-slate-400" />
@@ -595,22 +619,27 @@ export default function PublicAdmissionsPage() {
             )}
 
             {activeTab === "photo" && (
-              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
-                <h3 className="text-base font-semibold text-slate-900">Student photo</h3>
-                <div className="mt-4 flex items-center gap-4">
-                  <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-3xl bg-white shadow-sm">
+              <div className="space-y-4">
+                <h3 className="w-full border-b border-slate-200 pb-3 text-xl font-semibold text-[#0A66C2]">
+                  <span className="inline-flex items-center gap-2">
+                    <Upload className="h-5 w-5" />
+                    Student photo
+                  </span>
+                </h3>
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                  <label htmlFor="photo-upload-input" className="flex h-28 w-28 cursor-pointer items-center justify-center overflow-hidden rounded-3xl bg-slate-100 text-slate-400 transition hover:bg-slate-200">
                     {photoPreview ? (
                       <img src={photoPreview} alt="Selected student" className="h-full w-full object-cover" />
                     ) : (
-                      <Upload className="h-8 w-8 text-slate-400" />
+                      <Upload className="h-8 w-8" />
                     )}
-                  </div>
-                  <label className="block text-sm font-medium text-slate-700">
+                  </label>
+                  <label className="block text-sm font-medium text-slate-700 flex-1">
                     Upload photo
-                    <input required type="file" accept="image/png,image/jpeg,image/jpg,image/webp" onChange={handlePhotoChange} className="mt-2 block w-full text-sm text-slate-600" />
+                    <input id="photo-upload-input" required type="file" accept="image/png,image/jpeg,image/jpg,image/webp" onChange={handlePhotoChange} className="mt-2 block w-full text-sm text-slate-600" />
                   </label>
                 </div>
-                <p className="mt-3 text-sm text-slate-500">JPG, PNG, WEBP only. Keep files under 4MB.</p>
+                <p className="text-sm text-slate-500">JPG, PNG, WEBP only. Keep files under 4MB.</p>
               </div>
             )}
 
@@ -627,14 +656,14 @@ export default function PublicAdmissionsPage() {
                       setActiveTab(tabs[currentIndex + 1].id);
                     }
                   }}
-                  className="inline-flex items-center gap-2 rounded-xl bg-[#0A66C2] px-4 py-2.5 font-semibold text-white transition hover:opacity-90"
+                  className="cursor-pointer inline-flex items-center gap-2 rounded-xl bg-[#0A66C2] px-4 py-2.5 font-semibold text-white transition hover:opacity-90"
                 >
                   Next
                 </button>
               ) : (
-                <button type="submit" disabled={submitting} className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70" style={{ backgroundColor: primaryColor }}>
+                <button type="submit" disabled={submitting} className="cursor-pointer inline-flex items-center gap-2 rounded-xl px-4 py-2.5 font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70" style={{ backgroundColor: primaryColor }}>
                   <Send className="h-4 w-4" />
-                  {submitting ? "Submitting..." : "Submit request"}
+                  {submitting ? "Submitting..." : "Submit"}
                 </button>
               )}
             </div>
@@ -670,7 +699,7 @@ export default function PublicAdmissionsPage() {
               <button
                 type="button"
                 onClick={() => setModalOpen(false)}
-                className="w-full rounded-lg px-4 py-2.5 font-medium text-sm transition-colors text-white"
+                className="cursor-pointer w-full rounded-lg px-4 py-2.5 font-medium text-sm transition-colors text-white"
                 style={{ background: "#0A66C2" }}
                 onMouseEnter={(e) => (e.currentTarget.style.background = "#084B8A")}
                 onMouseLeave={(e) => (e.currentTarget.style.background = "#0A66C2")}

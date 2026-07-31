@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ErrorModal } from "@/components/ui/error-modal";
-import { Building2, MapPin, DollarSign, FileText, Upload, Save, AlertCircle, Zap, X, KeyRound, CalendarDays, ShieldCheck } from "lucide-react";
+import { Building2, MapPin, DollarSign, FileText, Upload, Save, AlertCircle, Zap, X, KeyRound, CalendarDays, ShieldCheck, Copy } from "lucide-react";
 import { UserGuide, type PageHelpGuide } from "@/components/ui/user-guide";
 import { WhatsAppIcon } from "@/components/ui/icons";
 import countriesData from "../../../../config/countries.json";
@@ -35,6 +35,12 @@ interface SchoolSettingsProps {
     manualPaymentBankName?: string | null;
     enabledPhases: Array<{ phase: string }>;
     partner?: { name: string } | null;
+    admissionsEnabled?: boolean;
+    admissionsOpeningDate?: string | null;
+    admissionsClosingDate?: string | null;
+    admissionsIntroText?: string | null;
+    admissionsRequirements?: string | null;
+    admissionsContactInfo?: string | null;
     resultAccess?: {
       enabled?: boolean;
       mode?: string;
@@ -123,11 +129,22 @@ export default function SettingsPageClient({
   const [successModalTitle, setSuccessModalTitle] = useState<string | undefined>("Success");
   const [successModalMessage, setSuccessModalMessage] = useState<string>("Your settings were saved successfully.");
   const [status, setStatus] = useState<any>(null);
+  const [isLinkCopied, setIsLinkCopied] = useState(false);
   const [resultAccessEnabled, setResultAccessEnabled] = useState(Boolean(school.resultAccess?.enabled));
   const [resultAccessMode, setResultAccessMode] = useState(school.resultAccess?.mode || "NONE");
   const [resultAccessPinType, setResultAccessPinType] = useState(school.resultAccess?.pinType || "NONE");
   const [resultAccessPinValidity, setResultAccessPinValidity] = useState(school.resultAccess?.pinValidity || "TERM");
   const [resultAccessAllowRegeneration, setResultAccessAllowRegeneration] = useState(Boolean(school.resultAccess?.allowRegeneration));
+  const [admissionsEnabled, setAdmissionsEnabled] = useState(Boolean(school.admissionsEnabled));
+  const [admissionsOpeningDate, setAdmissionsOpeningDate] = useState(school.admissionsOpeningDate ? school.admissionsOpeningDate.slice(0, 10) : "");
+  const [admissionsClosingDate, setAdmissionsClosingDate] = useState(school.admissionsClosingDate ? school.admissionsClosingDate.slice(0, 10) : "");
+  const publicAdmissionsUrl = useMemo(() => {
+    if (typeof window === "undefined") return "";
+    return `${window.location.origin}/admissions/${school.slug}`;
+  }, [school.slug]);
+  const [admissionsIntroText, setAdmissionsIntroText] = useState(school.admissionsIntroText ?? "");
+  const [admissionsRequirements, setAdmissionsRequirements] = useState(school.admissionsRequirements ?? "");
+  const [admissionsContactInfo, setAdmissionsContactInfo] = useState(school.admissionsContactInfo ?? "");
 
   useEffect(() => {
     fetchStatus();
@@ -215,6 +232,12 @@ export default function SettingsPageClient({
             pinValidity: resultAccessPinValidity,
             allowRegeneration: resultAccessAllowRegeneration,
           },
+          admissionsEnabled,
+          admissionsOpeningDate,
+          admissionsClosingDate,
+          admissionsIntroText,
+          admissionsRequirements,
+          admissionsContactInfo,
         }),
       });
 
@@ -315,7 +338,7 @@ export default function SettingsPageClient({
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand">Configuration</p>
           <h1 className="mt-2 text-3xl font-bold text-foreground">School Settings</h1>
-          <p className="mt-3 max-w-2xl text-sm text-muted">Manage your school profile, location, branding, and system configuration</p>
+          <p className="mt-3 max-w-2xl text-sm text-muted">Manage your school profile, location, branding, payments, and online admissions settings from a single secure dashboard.</p>
           {detectedCountryName && detectedCurrency ? (
             <p className="mt-3 text-sm text-muted">
               Detected market: <span className="font-semibold text-foreground">{detectedCountryName}</span> · <span className="font-semibold text-brand">{detectedCurrency}</span>
@@ -617,6 +640,106 @@ export default function SettingsPageClient({
                   </label>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Admissions Settings Section */}
+        <div className="rounded-lg border border-border bg-surface overflow-hidden">
+          <div className="border-b border-border bg-background px-6 py-4 flex items-center gap-3">
+            <FileText className="h-5 w-5 text-brand" />
+            <div>
+              <h2 className="font-semibold text-foreground">Online Admissions</h2>
+              <p className="text-xs text-muted">Enable and configure the public admissions portal, application dates, guidance text, requirements, and contact details for families.</p>
+            </div>
+          </div>
+
+          <div className="p-6 space-y-5">
+            <div className="flex flex-col gap-4 rounded-lg border border-border bg-background p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3">
+                <input
+                  id="admissions-enabled"
+                  type="checkbox"
+                  checked={admissionsEnabled}
+                  onChange={(e) => setAdmissionsEnabled(e.target.checked)}
+                  className="h-4 w-4 rounded border-border text-brand focus:ring-brand"
+                />
+                <label htmlFor="admissions-enabled" className="text-sm font-medium text-foreground">
+                  Enable online admissions
+                </label>
+              </div>
+              {publicAdmissionsUrl ? (
+                <div className="flex flex-wrap items-center gap-3 text-sm text-slate-700">
+                  <span className="truncate rounded-full border border-slate-200 bg-white px-3 py-2">
+                    {publicAdmissionsUrl}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await navigator.clipboard.writeText(publicAdmissionsUrl);
+                      setIsLinkCopied(true);
+                      window.setTimeout(() => setIsLinkCopied(false), 2000);
+                    }}
+                    className="inline-flex items-center gap-2 rounded-full bg-[#0A66C2] px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0959a8]"
+                  >
+                    <Copy className="h-4 w-4" /> {isLinkCopied ? 'Copied' : 'Copy'}
+                  </button>
+                </div>
+              ) : null}
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">Opening Date</label>
+                <input
+                  type="date"
+                  value={admissionsOpeningDate}
+                  onChange={(e) => setAdmissionsOpeningDate(e.target.value)}
+                  className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand/50"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">Closing Date</label>
+                <input
+                  type="date"
+                  value={admissionsClosingDate}
+                  onChange={(e) => setAdmissionsClosingDate(e.target.value)}
+                  className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand/50"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">Admission Intro Text</label>
+              <textarea
+                value={admissionsIntroText}
+                onChange={(e) => setAdmissionsIntroText(e.target.value)}
+                rows={3}
+                placeholder="Welcome to our admissions portal..."
+                className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-brand/50"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">Admission Requirements</label>
+              <textarea
+                value={admissionsRequirements}
+                onChange={(e) => setAdmissionsRequirements(e.target.value)}
+                rows={5}
+                placeholder="One item per line"
+                className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-brand/50"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">Contact Information</label>
+              <textarea
+                value={admissionsContactInfo}
+                onChange={(e) => setAdmissionsContactInfo(e.target.value)}
+                rows={3}
+                placeholder="Email: admissions@school.com\nPhone: +234 ..."
+                className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-brand/50"
+              />
             </div>
           </div>
         </div>

@@ -17,6 +17,10 @@ export async function GET(request: Request) {
         backendUrl = `${backendUrl}${sep}schoolId=${encodeURIComponent(schoolId)}`;
       } catch (e) {
         console.warn('Could not determine current school id for settings data proxy');
+        return NextResponse.json(
+          { error: 'Unauthorized', code: 'AUTH_REQUIRED', message: 'Please sign in to continue.' },
+          { status: 401 }
+        );
       }
     }
 

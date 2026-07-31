@@ -16,6 +16,7 @@ const baseNav = [
   // { href: "/admin/teacher-assignments", label: "Assignments", icon: "BookOpen" },
   { href: "/admin/subjects", label: "Subjects", icon: "BookOpen" },
   { href: "/admin/results", label: "Results", icon: "GraduationCap" },
+  { href: "/admin/admissions", label: "Admissions", icon: "GraduationCap" },
   { href: "/admin/promotions", label: "Promotions", icon: "TrendingUp" },
   { href: "/admin/analytics", label: "Analytics", icon: "BarChart3" },
   { href: "/admin/attendance", label: "Attendance", icon: "ClipboardList" },

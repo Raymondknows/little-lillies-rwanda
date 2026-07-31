@@ -19,11 +19,15 @@ export default function SettingsPage() {
         const backendUrl = getBackendUrl();
         const response = await fetch(`${backendUrl}/api/admin/settings/data`, {
           credentials: "include",
+          headers: { "Content-Type": "application/json" },
         });
 
-        // Check for subscription error
+        let errorBody = null;
+        if (!response.ok) {
+          errorBody = await response.json().catch(() => null);
+        }
+
         if (response.status === 403) {
-          const errorBody = await response.json().catch(() => null);
           if (errorBody?.code === 'SUBSCRIPTION_INACTIVE') {
             setSubscriptionBlocked({ reason: errorBody.reason || 'Your school subscription is not active' });
             setLoading(false);
@@ -31,8 +35,16 @@ export default function SettingsPage() {
           }
         }
 
+        if (response.status === 401 || response.status === 400) {
+          if (typeof window !== 'undefined') {
+            window.location.href = '/login?next=/admin/settings';
+          }
+          setLoading(false);
+          return;
+        }
+
         if (!response.ok) {
-          throw new Error("Failed to load settings");
+          throw new Error(errorBody?.message || 'Failed to load settings');
         }
 
         const data = await response.json();

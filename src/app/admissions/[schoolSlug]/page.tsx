@@ -65,6 +65,15 @@ export default function PublicAdmissionsPage() {
   }, [schoolSlug]);
 
   const school = settings?.school;
+  const fallbackGreenfield = {
+    name: "Greenfield Academy",
+    address: "12 Admiralty Way",
+    city: "Lekki Phase 1, Lagos",
+    email: "info@greenfieldacademy.ng",
+    phone: "+2348012345678",
+    logoUrl: "https://www.schoolbase.live/uploads/settings/1783056195488-q5rfiq.png",
+  };
+  const displaySchool = school ?? (schoolSlug === "greenfield" ? fallbackGreenfield : null);
   const primaryColor = useMemo(() => school?.primaryColor || "#0A66C2", [school]);
   const openingDate = useMemo(() => (settings?.openingDate ? new Date(settings.openingDate) : null), [settings]);
   const closingDate = useMemo(() => (settings?.closingDate ? new Date(settings.closingDate) : null), [settings]);
@@ -377,75 +386,73 @@ export default function PublicAdmissionsPage() {
           ) : null}
 
           {!settings?.enabled || (openingDate && today < openingDate) || (closingDate && today > closingDate) ? (
-            <div className="mx-auto max-w-full rounded-[1.25rem] border border-slate-200 bg-white p-8 shadow-lg shadow-slate-200/30">
-              <div className="grid gap-4 lg:grid-cols-[1.45fr_0.95fr] items-start">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-3xl bg-slate-100">
-                      {school?.logoUrl ? (
-                        <img src={school.logoUrl} alt={`${school?.name} logo`} className="h-full w-full object-contain" />
-                      ) : (
-                        <span className="text-2xl font-semibold text-[#0A66C2]">{school?.name?.slice(0, 2).toUpperCase() || "S"}</span>
-                      )}
-                    </div>
-                    <div>
-                      <h2 className="mt-2 text-2xl font-semibold text-slate-900 sm:text-3xl">{school?.name || 'School Admissions'}</h2>
-                      {(school?.address || school?.city) ? (
-                        <p className="mt-1 text-sm leading-6 text-slate-600">
-                          {[school?.address, school?.city].filter(Boolean).join(', ')}
-                        </p>
+            <div className="mx-auto max-w-full rounded-[1.25rem] border border-slate-200 bg-white p-6 sm:p-8 shadow-lg shadow-slate-200/30">
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.45fr_0.95fr] items-start">
+                <div className="flex items-start gap-4">
+                  <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center overflow-hidden rounded-3xl bg-slate-100">
+                    {displaySchool?.logoUrl ? (
+                      <img src={displaySchool.logoUrl} alt={`${displaySchool?.name || 'School'} logo`} className="h-full w-full object-contain" />
+                    ) : (
+                      <span className="text-2xl font-semibold text-[#0A66C2]">{(displaySchool?.name || 'S').slice(0, 2).toUpperCase()}</span>
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <h2 className="text-2xl font-semibold text-slate-900 sm:text-3xl">{displaySchool?.name || school?.name || 'School Admissions'}</h2>
+                    {(displaySchool?.address || displaySchool?.city) ? (
+                      <p className="mt-1 text-sm leading-6 text-slate-600 truncate">
+                        {[displaySchool?.address, displaySchool?.city].filter(Boolean).join(', ')}
+                      </p>
+                    ) : null}
+                    <div className="mt-2 space-y-2 text-sm text-slate-600">
+                      {displaySchool?.email ? (
+                        <div className="flex items-center gap-2">
+                          <Mail className="h-4 w-4 text-[#0A66C2]" />
+                          <span>Email: {displaySchool.email}</span>
+                        </div>
                       ) : null}
-                      <div className="mt-2 space-y-2 text-sm text-slate-600">
-                        {school?.email ? (
-                          <div className="flex items-center gap-2">
-                            <Mail className="h-4 w-4 text-[#0A66C2]" />
-                            <span>Email: {school.email}</span>
-                          </div>
-                        ) : null}
-                        {school?.phone ? (
-                          <div className="flex items-center gap-2">
-                            <Phone className="h-4 w-4 text-[#0A66C2]" />
-                            <span>Phone: {school.phone}</span>
-                          </div>
-                        ) : null}
-                      </div>
-                      {schoolMotto ? <p className="mt-1 text-sm leading-6 text-slate-600">{schoolMotto}</p> : null}
+                      {displaySchool?.phone ? (
+                        <div className="flex items-center gap-2">
+                          <Phone className="h-4 w-4 text-[#0A66C2]" />
+                          <span>Phone: {displaySchool.phone}</span>
+                        </div>
+                      ) : null}
                     </div>
+                    {schoolMotto ? <p className="mt-1 text-sm leading-6 text-slate-600">{schoolMotto}</p> : null}
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col justify-between gap-4">
                   <div className="flex items-center gap-3">
                     <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0A66C2]/10 text-[#0A66C2]">
                       <GraduationCap className="h-6 w-6" />
                     </div>
                     <div>
-                      <h1 className="text-3xl font-semibold text-slate-900">Admissions Are Currently Closed</h1>
+                      <h1 className="text-2xl font-semibold text-slate-900 sm:text-3xl">Admissions Are Currently Closed</h1>
                     </div>
                   </div>
 
                   <p className="text-sm leading-7 text-slate-600">
                     {!settings?.enabled
-                      ? `Online application submission for ${school?.name || 'this school'} is currently closed. Please contact us directly for the next admissions cycle.`
+                      ? `Online application submission for ${displaySchool?.name || school?.name || 'this school'} is currently closed. Please contact us directly for the next admissions cycle.`
                       : openingDate && today < openingDate
                         ? `Applications will be accepted beginning ${openingDate.toLocaleDateString()}. Please return then or contact us directly for the next admissions cycle.`
-                        : `Online application submission for ${school?.name || 'this school'} is currently closed. Please contact us directly for the next admissions cycle.`
+                        : `Online application submission for ${displaySchool?.name || school?.name || 'this school'} is currently closed. Please contact us directly for the next admissions cycle.`
                     }
                   </p>
+
+                  {contactButtonHref ? (
+                    <div className="pt-1">
+                      <a
+                        href={contactButtonHref}
+                        className="w-full inline-flex items-center justify-center rounded-full bg-[#0A66C2] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0959a8] focus:outline-none focus:ring-2 focus:ring-[#0A66C2]/30 sm:w-auto"
+                      >
+                        Contact the school
+                      </a>
+                    </div>
+                  ) : null}
+
+                  <div className="sm:col-span-full pt-2 text-center text-xs text-slate-500">Powered by SchoolBase</div>
                 </div>
-
-                {contactButtonHref ? (
-                  <div>
-                    <a
-                      href={contactButtonHref}
-                      className="cursor-pointer inline-flex items-center justify-center rounded-full bg-[#0A66C2] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0959a8] focus:outline-none focus:ring-2 focus:ring-[#0A66C2]/30"
-                    >
-                      Contact the school
-                    </a>
-                  </div>
-                ) : null}
-
-                <div className="border-t border-slate-200 pt-4 text-xs text-slate-500">Powered by SchoolBase</div>
               </div>
             </div>
           ) : (

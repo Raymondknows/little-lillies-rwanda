@@ -180,7 +180,7 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
 
       <Button
         type="submit"
-        className="w-full rounded-xl bg-gradient-to-r from-brand to-indigo-600 text-white px-4 py-3 font-medium shadow-md hover:opacity-95 transition disabled:opacity-50"
+        className="w-full rounded-xl bg-brand text-white px-4 py-3 font-medium shadow-md hover:bg-brand-hover transition disabled:opacity-50"
         disabled={pending}
       >
         {pending ? "Signing in…" : "Sign in"}

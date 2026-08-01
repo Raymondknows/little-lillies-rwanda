@@ -185,20 +185,6 @@ export default function Sidebar({
 
       <div className="border-t border-border px-3 py-3 space-y-2 flex-shrink-0">
         <LogoutButton redirectUrl={logoutRedirectUrl} />
-        <Link 
-          href="/demo" 
-          onClick={handleNavClick}
-          className="mb-1 flex items-center gap-2 text-sm text-brand hover:underline"
-        >
-          Public website
-        </Link>
-        <Link 
-          href="/" 
-          onClick={handleNavClick}
-          className="flex items-center gap-2 text-sm text-muted hover:text-brand"
-        >
-          SchoolBase home
-        </Link>
       </div>
     </aside>
   );

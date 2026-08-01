@@ -65,6 +65,7 @@ export default function SettingsPageClient({
   const router = useRouter();
   const [name, setName] = useState(school.name);
   const [initials, setInitials] = useState(school.initials ?? "");
+  const [slug, setSlug] = useState(school.slug);
   const [country, setCountry] = useState(school.country ?? countriesData.default ?? "NG");
   const [currency, setCurrency] = useState(
     school.currency ?? countriesData.countries[(school.country ?? countriesData.default ?? "NG") as keyof typeof countriesData.countries]?.currency ?? "NGN",
@@ -140,8 +141,8 @@ export default function SettingsPageClient({
   const [admissionsClosingDate, setAdmissionsClosingDate] = useState(school.admissionsClosingDate ? school.admissionsClosingDate.slice(0, 10) : "");
   const publicAdmissionsUrl = useMemo(() => {
     if (typeof window === "undefined") return "";
-    return `${window.location.origin}/admissions/${school.slug}`;
-  }, [school.slug]);
+    return slug ? `${window.location.origin}/admissions/${slug}` : "";
+  }, [slug]);
   const [admissionsIntroText, setAdmissionsIntroText] = useState(school.admissionsIntroText ?? "");
   const [admissionsRequirements, setAdmissionsRequirements] = useState(school.admissionsRequirements ?? "");
   const [admissionsContactInfo, setAdmissionsContactInfo] = useState(school.admissionsContactInfo ?? "");
@@ -212,6 +213,7 @@ export default function SettingsPageClient({
         body: JSON.stringify({
           name: name.trim(),
           initials: initials.trim().toUpperCase(),
+          slug: slug.trim() || null,
           country: country.trim() || null,
           currency: currency.trim() || null,
           address: address.trim() || null,
@@ -407,7 +409,7 @@ export default function SettingsPageClient({
           </div>
           
           <div className="p-6 space-y-5">
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-3">
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">School Name *</label>
                 <input
@@ -431,6 +433,18 @@ export default function SettingsPageClient({
                   className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-brand/50"
                 />
                 <p className="text-xs text-muted mt-1">{previewPrefix}-2025-0001</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">School Slug *</label>
+                <input
+                  type="text"
+                  value={slug}
+                  onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''))}
+                  placeholder="greenfield-academy"
+                  required
+                  className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-brand/50"
+                />
+                <p className="text-xs text-muted mt-1">Used for your public admissions URL: <span className="font-semibold">/admissions/{slug || 'your-slug'}</span></p>
               </div>
             </div>
 

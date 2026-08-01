@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { getBackendUrl } from "@/lib/backend-url";
 import { Button } from "@/components/ui/button";
+import { UserGuide, type PageHelpGuide } from "@/components/ui/user-guide";
 import SubscriptionModal from "@/components/subscription-modal";
 import { playCloseTone, playOpenTone } from "@/lib/sounds";
 
@@ -217,6 +218,49 @@ export default function AdminAdmissionsPage() {
     }
   })();
 
+  const HELP_GUIDE: PageHelpGuide = {
+    title: "Managing Admissions Requests",
+    overview:
+      "Review incoming applications, confirm student and guardian details, and move applications through the correct workflow with confidence.",
+    steps: [
+      "Open application details to confirm contact information and student data.",
+      "Use the status selector to mark requests as Under Review, Approved, or Rejected.",
+      "Approve only when the application is complete and ready for enrollment.",
+      "Use the Refresh button after updates so summary counts stay in sync.",
+    ],
+    commonTasks: [
+      {
+        title: "Review application completeness",
+        description: "Check applicant contact details, student class, and supporting notes before approving.",
+        tips: [
+          "Verify the guardian email or phone number is filled in.",
+          "Confirm the intended class matches the school’s availability.",
+          "Look for any missing medical or background information that may require follow-up.",
+        ],
+      },
+      {
+        title: "Update status accurately",
+        description: "Move applications through the admin workflow based on readiness and review outcomes.",
+        tips: [
+          "Use Under Review for incomplete or clarifying cases.",
+          "Reject only when the application is invalid or the student cannot be admitted.",
+          "Approve once all required information is confirmed.",
+        ],
+      },
+    ],
+    faqs: [
+      {
+        question: "What if the application is missing information?",
+        answer: "Leave it Under Review and contact the applicant using the supplied email or phone number to request the missing details.",
+      },
+      {
+        question: "Can I change status after approval?",
+        answer: "Yes, you can move the application back to Under Review or Rejected if new information requires it.",
+      },
+    ],
+    videoUrl: "/video-tutorials?topic=admissions",
+  };
+
   return (
     <main className="min-h-screen px-4 py-10 text-slate-900 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl space-y-8">
@@ -285,12 +329,13 @@ export default function AdminAdmissionsPage() {
             <p className="mt-2 text-[11px] text-muted">Applications that were declined or require follow-up.</p>
           </div>
         </div>
-
         {message ? (
           <div className="rounded-3xl border border-amber-100 bg-amber-50 px-5 py-4 text-sm text-amber-900 shadow-sm">
             {message}
           </div>
         ) : null}
+
+        <UserGuide guide={HELP_GUIDE} />
 
         <section className="rounded-3xl border border-slate-200 bg-white shadow-sm">
           <div className="flex flex-col gap-4 border-b border-slate-200 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">

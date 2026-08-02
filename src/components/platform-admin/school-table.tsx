@@ -4,6 +4,7 @@ import { useMemo, useState, useRef, useEffect, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { resolveSchoolAssetUrl } from "@/lib/asset-urls";
+import { playCloseTone, playOpenTone } from "@/lib/sounds";
 import { Bell, CalendarPlus, CheckSquare, Download, Pause, Play, X } from "lucide-react";
 
 export type SchoolRow = {
@@ -17,6 +18,7 @@ export type SchoolRow = {
   status: string;
   isVerified?: boolean;
   trialEndsAt: string | null;
+  subscriptionExpiresAt?: string | null;
   createdAt: string;
   userCount?: number;
   pupilCount?: number;
@@ -146,6 +148,9 @@ export function ActionMenu({
 
 export function SchoolTable({ schools, filterControls }: { schools: SchoolRow[]; filterControls?: ReactNode }) {
   const [displaySchools, setDisplaySchools] = useState<SchoolRow[]>(schools);
+  const [editingExpiryId, setEditingExpiryId] = useState<string | null>(null);
+  const [editingExpiryValue, setEditingExpiryValue] = useState<string | null>(null);
+  const [savingExpiry, setSavingExpiry] = useState(false);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [busy, setBusy] = useState(false);
@@ -158,6 +163,16 @@ export function SchoolTable({ schools, filterControls }: { schools: SchoolRow[];
     setDisplaySchools(schools);
     setPage(1);
   }, [schools]);
+
+  function toInputDate(value?: string | null) {
+    if (!value) return "";
+    const d = new Date(value);
+    if (isNaN(d.getTime())) return "";
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
 
   const filteredSchools = useMemo(() => {
     return displaySchools.filter((school) => {
@@ -208,6 +223,18 @@ export function SchoolTable({ schools, filterControls }: { schools: SchoolRow[];
     });
   };
 
+  const openExpiryModal = (school: SchoolRow) => {
+    setEditingExpiryId(school.id);
+    setEditingExpiryValue(toInputDate(school.subscriptionExpiresAt || school.trialEndsAt));
+    playOpenTone();
+  };
+
+  const closeExpiryModal = () => {
+    playCloseTone();
+    setEditingExpiryId(null);
+    setEditingExpiryValue(null);
+  };
+
   const toggleSelectCurrentPage = () => {
     setSelectedSchoolIds((current) => {
       const next = new Set(current);
@@ -228,7 +255,7 @@ export function SchoolTable({ schools, filterControls }: { schools: SchoolRow[];
 
   const exportSelectedCsv = () => {
     const rows = selectedCount > 0 ? selectedSchools : filteredSchools;
-    const csvHeader = ["Name","Country","Email","Phone","Plan","Status","Verified","Trial Ends","Registered","Admins","Students","Classes"];
+    const csvHeader = ["Name","Country","Email","Phone","Plan","Status","Verified","Expiry","Registered","Admins","Students","Classes"];
     const csvRows = rows.map((school) => [
       school.name,
       school.country,
@@ -237,7 +264,7 @@ export function SchoolTable({ schools, filterControls }: { schools: SchoolRow[];
       school.plan,
       school.status,
       school.isVerified ? "Yes" : "No",
-      school.trialEndsAt ? new Date(school.trialEndsAt).toLocaleDateString() : "",
+      (school.subscriptionExpiresAt || school.trialEndsAt) ? new Date((school.subscriptionExpiresAt || school.trialEndsAt) as string).toLocaleDateString() : "",
       new Date(school.createdAt).toLocaleDateString(),
       String(school.userCount ?? 0),
       String(school.pupilCount ?? 0),
@@ -574,7 +601,7 @@ export function SchoolTable({ schools, filterControls }: { schools: SchoolRow[];
               <th className="px-4 py-3">Plan</th>
               <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3">Verification</th>
-              <th className="px-4 py-3">Trial ends</th>
+                <th className="px-4 py-3">Expiry</th>
               <th className="px-4 py-3">Registered</th>
               <th className="px-4 py-3">Actions</th>
             </tr>
@@ -642,7 +669,18 @@ export function SchoolTable({ schools, filterControls }: { schools: SchoolRow[];
                     {school.isVerified ? "✓ Verified" : "Unverified"}
                   </span>
                 </td>
-                <td className="px-4 py-4 text-muted">{school.trialEndsAt ? new Date(school.trialEndsAt).toLocaleDateString() : "n/a"}</td>
+                <td className="px-4 py-4 text-muted">
+                  <div className="flex items-center gap-2">
+                    <span>{(school.subscriptionExpiresAt || school.trialEndsAt) ? new Date((school.subscriptionExpiresAt || school.trialEndsAt) as string).toLocaleDateString() : 'n/a'}</span>
+                    <button
+                      type="button"
+                      onClick={() => openExpiryModal(school)}
+                      className="rounded bg-brand px-2 py-1 text-xs font-semibold text-white hover:bg-brand/90 transition-colors"
+                    >
+                      Edit
+                    </button>
+                  </div>
+                </td>
                 <td className="px-4 py-4 text-muted">{new Date(school.createdAt).toLocaleDateString()}</td>
                 <td className="px-4 py-4">
                   <ActionMenu
@@ -658,6 +696,79 @@ export function SchoolTable({ schools, filterControls }: { schools: SchoolRow[];
           </tbody>
         </table>
       </div>
+
+      {editingExpiryId && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4">
+          <style>{`
+            @keyframes schools_expiry_modal_enter { from { transform: translateY(24px) scale(.98); opacity: 0 } to { transform: translateY(0) scale(1); opacity: 1 } }
+          `}</style>
+          <div
+            className="w-full max-w-lg overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_50px_rgba(10,102,194,0.16)]"
+            style={{ animation: `schools_expiry_modal_enter 260ms cubic-bezier(.2,.9,.2,1)` }}
+          >
+            <div className="border-b border-slate-100 px-6 py-5" style={{ background: "linear-gradient(90deg, rgba(10,102,194,0.12), rgba(10,102,194,0.04))" }}>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-foreground">Edit expiry date</h2>
+                  <p className="mt-1 text-sm text-muted">Update the subscription expiry date for this school.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={closeExpiryModal}
+                  className="flex h-10 w-10 items-center justify-center rounded-lg border border-border hover:bg-background transition-colors"
+                  aria-label="Close expiry modal"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="px-6 py-6">
+              <label className="block text-sm font-medium text-foreground mb-2">Expiry date</label>
+              <input
+                type="date"
+                value={editingExpiryValue ?? ""}
+                onChange={(e) => setEditingExpiryValue(e.target.value)}
+                className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand"
+              />
+            </div>
+
+            <div className="flex flex-col gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={closeExpiryModal}
+                disabled={savingExpiry}
+                className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium text-foreground hover:bg-slate-100 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <Button
+                type="button"
+                onClick={async () => {
+                  if (!editingExpiryId) return;
+                  const expiresAt = editingExpiryValue;
+                  if (!expiresAt) return;
+
+                  try {
+                    setSavingExpiry(true);
+                    await performAction(editingExpiryId, 'setExpiry', { expiresAt });
+                  } catch (err) {
+                    console.error('Failed to set expiry', err);
+                  } finally {
+                    setSavingExpiry(false);
+                    setEditingExpiryId(null);
+                    setEditingExpiryValue(null);
+                    playCloseTone();
+                  }
+                }}
+                disabled={savingExpiry || !editingExpiryValue}
+              >
+                {savingExpiry ? 'Saving...' : 'Save changes'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted">Showing {paginated.length} of {filteredSchools.length} schools.</p>

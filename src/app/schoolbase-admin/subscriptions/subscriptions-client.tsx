@@ -1,11 +1,14 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useTransition, useRef } from "react";
+import { createPortal } from "react-dom";
+import { useRouter } from "next/navigation";
 import { setSchoolPlanAction, approveSchoolSubscriptionAction, rejectSchoolSubscriptionAction } from "../actions";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { getBackendUrl } from "@/lib/backend-url";
+import { playCloseTone, playOpenTone } from "@/lib/sounds";
 import type { School } from "@prisma/client";
 
 const PLAN_CONFIG = {
@@ -28,6 +31,21 @@ const STATUS_CONFIG = {
 };
 
 const ITEMS_PER_PAGE = 15;
+
+function toInputDate(value?: string | Date | null) {
+  if (!value) return "";
+  const date = typeof value === "string" ? new Date(value) : value;
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toISOString().slice(0, 10);
+}
+
+function formatExpiryDate(school: School) {
+  const value = school.subscriptionExpiresAt ?? school.trialEndsAt;
+  if (!value) return "—";
+  const date = typeof value === "string" ? new Date(value) : value;
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
 
 interface SubscriptionPaymentRecord {
   id: string;
@@ -60,6 +78,112 @@ export default function SubscriptionsPageClient({
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedPlans, setSelectedPlans] = useState<Record<string, string>>({});
+  const [editingExpiryId, setEditingExpiryId] = useState<string | null>(null);
+  const [editingExpiryValue, setEditingExpiryValue] = useState<string>("");
+  const [savingExpiry, setSavingExpiry] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
+
+  const handleSetExpiry = async (schoolId: string, expiresAt: string) => {
+    try {
+      setSavingExpiry(true);
+      const backendUrl = getBackendUrl();
+      const response = await fetch(`${backendUrl}/schoolbase-admin/api/schools`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ schoolId, action: "setExpiry", expiresAt }),
+      });
+      const data = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(data?.message || "Failed to save expiry date");
+      }
+      setSchools((current) =>
+        current.map((school) =>
+          school.id === schoolId
+            ? {
+                ...school,
+                subscriptionExpiresAt: new Date(expiresAt),
+                status: school.status === "ACTIVE" ? school.status : "ACTIVE",
+              }
+            : school,
+        ),
+      );
+    } catch (error) {
+      console.error("Failed to save expiry date:", error);
+    } finally {
+      setSavingExpiry(false);
+    }
+  };
+
+  const openExpiryModal = (school: School) => {
+    setEditingExpiryId(school.id);
+    setEditingExpiryValue(
+      toInputDate(school.subscriptionExpiresAt ?? school.trialEndsAt),
+    );
+    playOpenTone();
+  };
+
+  const closeExpiryModal = () => {
+    setEditingExpiryId(null);
+    setEditingExpiryValue("");
+    playCloseTone();
+  };
+
+  const handleSetPlan = async (formData: FormData) => {
+    startTransition(async () => {
+      try {
+        const result = await setSchoolPlanAction(formData);
+        if (result?.school) {
+          setSchools((current) =>
+            current.map((school) =>
+              school.id === result.school.id ? { ...school, ...result.school } : school,
+            ),
+          );
+        }
+      } catch (error) {
+        console.error("Failed to set plan:", error);
+      }
+    });
+  };
+
+  const handleApproveSubscription = async (formData: FormData) => {
+    startTransition(async () => {
+      try {
+        const result = await approveSchoolSubscriptionAction(formData);
+        if (result?.school) {
+          setSchools((current) =>
+            current.map((school) =>
+              school.id === result.school.id ? { ...school, ...result.school } : school,
+            ),
+          );
+          setSelectedPlans((current) => ({
+            ...current,
+            [result.school.id]: result.school.plan || current[result.school.id] || "STARTER",
+          }));
+        }
+      } catch (error) {
+        console.error("Failed to approve subscription:", error);
+      }
+    });
+  };
+
+  const handleRejectSubscription = async (formData: FormData) => {
+    startTransition(async () => {
+      try {
+        const result = await rejectSchoolSubscriptionAction(formData);
+        if (result?.school) {
+          setSchools((current) =>
+            current.map((school) =>
+              school.id === result.school.id ? { ...school, ...result.school } : school,
+            ),
+          );
+        }
+      } catch (error) {
+        console.error("Failed to reject subscription:", error);
+      }
+    });
+  };
 
   useEffect(() => {
     setPayments(initialPayments);
@@ -138,6 +262,68 @@ export default function SubscriptionsPageClient({
     setSearchQuery(e.target.value);
     setCurrentPage(1);
   };
+
+  function ActionDropdown({ onCancel }: { onCancel: () => void }) {
+    const [open, setOpen] = useState(false);
+    const btnRef = useRef<HTMLButtonElement | null>(null);
+    const menuRef = useRef<HTMLDivElement | null>(null);
+    const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+
+    useEffect(() => {
+      if (!open || !btnRef.current) return;
+      const rect = btnRef.current.getBoundingClientRect();
+      const top = rect.bottom + 8 + window.scrollY;
+      const left = Math.max(8 + window.scrollX, rect.right - 160 + window.scrollX);
+      setPos({ top, left });
+    }, [open]);
+
+    useEffect(() => {
+      function onDocClick(e: MouseEvent) {
+        if (!open) return;
+        const target = e.target as Node;
+        if (btnRef.current && btnRef.current.contains(target)) return;
+        if (menuRef.current && menuRef.current.contains(target)) return;
+        setOpen(false);
+      }
+      document.addEventListener("click", onDocClick);
+      return () => document.removeEventListener("click", onDocClick);
+    }, [open]);
+
+    return (
+      <div className="relative inline-block text-left">
+        <button
+          ref={btnRef}
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="inline-flex items-center justify-center gap-1 rounded px-2 py-1 text-xs font-medium border border-border bg-background"
+        >
+          •••
+        </button>
+        {open && pos
+          ? createPortal(
+              <div
+                ref={menuRef}
+                style={{ position: "absolute", top: `${pos.top}px`, left: `${pos.left}px`, width: "176px" }}
+                className="z-50 origin-top-right rounded-md border border-border bg-background shadow-lg"
+              >
+                <div className="py-1">
+                  <button
+                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-surface"
+                    onClick={() => {
+                      setOpen(false);
+                      onCancel();
+                    }}
+                  >
+                    Cancel subscription
+                  </button>
+                </div>
+              </div>,
+              document.body,
+            )
+          : null}
+      </div>
+    );
+  }
 
   return (
     <div className="w-full space-y-8">
@@ -319,21 +505,35 @@ export default function SubscriptionsPageClient({
                     ))}
                   </select>
                   <div className="flex gap-2">
-                    <form action={approveSchoolSubscriptionAction}>
+                    <form
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        const formData = new FormData(event.currentTarget);
+                        handleApproveSubscription(formData);
+                      }}
+                    >
                       <input type="hidden" name="schoolId" value={school.id} />
                       <input type="hidden" name="plan" value={selectedPlans[school.id] || "STARTER"} />
                       <button
                         type="submit"
-                        className="inline-flex items-center justify-center rounded-lg bg-success px-4 py-2 text-xs font-semibold text-white hover:bg-success/90 transition-colors whitespace-nowrap"
+                        disabled={isPending}
+                        className="inline-flex items-center justify-center rounded-lg bg-success px-4 py-2 text-xs font-semibold text-white hover:bg-success/90 transition-colors whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         ✓ Approve
                       </button>
                     </form>
-                    <form action={rejectSchoolSubscriptionAction}>
+                    <form
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        const formData = new FormData(event.currentTarget);
+                        handleRejectSubscription(formData);
+                      }}
+                    >
                       <input type="hidden" name="schoolId" value={school.id} />
                       <button
                         type="submit"
-                        className="inline-flex items-center justify-center rounded-lg bg-error px-4 py-2 text-xs font-semibold text-white hover:bg-error/90 transition-colors whitespace-nowrap"
+                        disabled={isPending}
+                        className="inline-flex items-center justify-center rounded-lg bg-error px-4 py-2 text-xs font-semibold text-white hover:bg-error/90 transition-colors whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         ✕ Reject
                       </button>
@@ -381,19 +581,35 @@ export default function SubscriptionsPageClient({
                             ? "success"
                             : school.status === "SUSPENDED"
                               ? "warning"
-                              : "default"
+                              : school.status === "CANCELLED"
+                                ? "error"
+                                : "default"
                         }
                       >
                         {school.status}
                       </Badge>
                     </td>
                     <td className="px-4 py-3 text-sm text-muted">
-                      {school.subscriptionExpiresAt
-                        ? new Date(school.subscriptionExpiresAt).toLocaleDateString()
-                        : "—"}
+                      <div className="flex items-center gap-2">
+                        <span>{formatExpiryDate(school)}</span>
+                        <button
+                          type="button"
+                          onClick={() => openExpiryModal(school)}
+                          className="rounded bg-brand px-2 py-1 text-xs font-semibold text-white hover:bg-brand/90 transition-colors"
+                        >
+                          Edit
+                        </button>
+                      </div>
                     </td>
                     <td className="px-4 py-3">
-                      <form action={setSchoolPlanAction} className="flex items-center gap-2">
+                      <form
+                        onSubmit={(event) => {
+                          event.preventDefault();
+                          const formData = new FormData(event.currentTarget);
+                          handleSetPlan(formData);
+                        }}
+                        className="flex items-center gap-2"
+                      >
                         <input type="hidden" name="schoolId" value={school.id} />
                         <select
                           name="plan"
@@ -407,10 +623,29 @@ export default function SubscriptionsPageClient({
                         </select>
                         <button
                           type="submit"
-                          className="rounded bg-brand px-2 py-1 text-xs font-medium text-white hover:bg-brand/90"
+                          disabled={isPending}
+                          className="rounded bg-brand px-2 py-1 text-xs font-medium text-white hover:bg-brand/90 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           Set
                         </button>
+                        <ActionDropdown
+                          onCancel={() =>
+                            startTransition(async () => {
+                              try {
+                                const formData = new FormData();
+                                formData.set("schoolId", school.id);
+                                const result = await rejectSchoolSubscriptionAction(formData);
+                                if (result?.school) {
+                                  setSchools((current) =>
+                                    current.map((s) => (s.id === result.school.id ? { ...s, ...result.school } : s)),
+                                  );
+                                }
+                              } catch (error) {
+                                console.error("Failed to cancel subscription:", error);
+                              }
+                            })
+                          }
+                        />
                       </form>
                     </td>
                   </tr>
@@ -442,7 +677,17 @@ export default function SubscriptionsPageClient({
                   <span>•</span>
                   <span>{school.status}</span>
                 </div>
-                <form action={setSchoolPlanAction} className="flex items-center gap-2">
+                <div className="flex items-center gap-2 text-xs text-muted mb-3">
+                  <span>Expires: {formatExpiryDate(school)}</span>
+                </div>
+                <form
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    const formData = new FormData(event.currentTarget);
+                    handleSetPlan(formData);
+                  }}
+                  className="flex items-center gap-2"
+                >
                   <input type="hidden" name="schoolId" value={school.id} />
                   <select
                     name="plan"
@@ -456,10 +701,29 @@ export default function SubscriptionsPageClient({
                   </select>
                   <button
                     type="submit"
-                    className="rounded bg-brand px-3 py-1 text-xs font-medium text-white hover:bg-brand/90"
+                    disabled={isPending}
+                    className="rounded bg-brand px-3 py-1 text-xs font-medium text-white hover:bg-brand/90 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Set
                   </button>
+                  <ActionDropdown
+                    onCancel={() =>
+                      startTransition(async () => {
+                        try {
+                          const formData = new FormData();
+                          formData.set("schoolId", school.id);
+                          const result = await rejectSchoolSubscriptionAction(formData);
+                          if (result?.school) {
+                            setSchools((current) =>
+                              current.map((s) => (s.id === result.school.id ? { ...s, ...result.school } : s)),
+                            );
+                          }
+                        } catch (error) {
+                          console.error("Failed to cancel subscription:", error);
+                        }
+                      })
+                    }
+                  />
                 </form>
               </div>
             ))}
@@ -517,6 +781,67 @@ export default function SubscriptionsPageClient({
         </div>
       )}
         </>
+      )}
+
+      {editingExpiryId && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4">
+          <style>{`
+            @keyframes subscriptions_expiry_modal_enter { from { transform: translateY(24px) scale(.98); opacity: 0 } to { transform: translateY(0) scale(1); opacity: 1 } }
+          `}</style>
+          <div
+            className="w-full max-w-lg overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_50px_rgba(10,102,194,0.16)]"
+            style={{ animation: `subscriptions_expiry_modal_enter 260ms cubic-bezier(.2,.9,.2,1)` }}
+          >
+            <div className="border-b border-slate-100 px-6 py-5" style={{ background: "linear-gradient(90deg, rgba(10,102,194,0.12), rgba(10,102,194,0.04))" }}>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-foreground">Edit expiry date</h2>
+                  <p className="mt-1 text-sm text-muted">Update the subscription expiry date for this school.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={closeExpiryModal}
+                  className="flex h-10 w-10 items-center justify-center rounded-lg border border-border hover:bg-background transition-colors"
+                  aria-label="Close expiry modal"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <div className="px-6 py-6">
+              <label className="block text-sm font-medium text-foreground mb-2">Expiry date</label>
+              <input
+                type="date"
+                value={editingExpiryValue}
+                onChange={(e) => setEditingExpiryValue(e.target.value)}
+                className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand"
+              />
+            </div>
+
+            <div className="flex flex-col gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={closeExpiryModal}
+                disabled={savingExpiry}
+                className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium text-foreground hover:bg-slate-100 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <Button
+                type="button"
+                onClick={async () => {
+                  if (!editingExpiryId || !editingExpiryValue) return;
+                  await handleSetExpiry(editingExpiryId, editingExpiryValue);
+                  closeExpiryModal();
+                }}
+                disabled={savingExpiry || !editingExpiryValue}
+              >
+                {savingExpiry ? "Saving..." : "Save changes"}
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

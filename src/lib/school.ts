@@ -7,26 +7,9 @@ async function fetchSchoolFromAPI(schoolId: string) {
 
   try {
     const url = `${baseUrl.replace(/\/$/, "")}/api/admin/school/${schoolId}`;
-    const headers: Record<string, string> = { "Content-Type": "application/json" };
-
-    try {
-      const nextHeaders = require("next/headers");
-      const jar = nextHeaders.cookies();
-      const cookieHeader = jar
-        .getAll()
-        .map((cookie: any) => `${cookie.name}=${encodeURIComponent(cookie.value)}`)
-        .join("; ");
-
-      if (cookieHeader) {
-        headers.cookie = cookieHeader;
-      }
-    } catch {
-      // Not in server context or next/headers unavailable.
-    }
-
     const response = await fetch(url, {
       method: "GET",
-      headers,
+      headers: { "Content-Type": "application/json" },
     });
 
     if (!response.ok) {

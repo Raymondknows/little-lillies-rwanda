@@ -129,6 +129,8 @@ export async function createAnnouncement(formData: FormData) {
     const title = formData.get("title") as string;
     const body = formData.get("body") as string;
     const publish = formData.get("publish") === "on";
+    const academicYearId = formData.get("academicYearId") as string | null;
+    const termId = formData.get("termId") as string | null;
 
     if (!title || !body) {
       throw new Error("Title and body are required");
@@ -150,7 +152,13 @@ export async function createAnnouncement(formData: FormData) {
     const response = await fetch(apiUrl, {
       method: "POST",
       headers: requestHeaders,
-      body: JSON.stringify({ title, body, publish }),
+      body: JSON.stringify({
+        title,
+        body,
+        publish,
+        academicYearId: academicYearId || undefined,
+        termId: termId || undefined,
+      }),
     });
 
     if (!response.ok) {

@@ -86,6 +86,9 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(DEFAULT_ITEMS_PER_PAGE);
+  const [sortMode, setSortMode] = useState("alphabet-asc");
+  const [selectedClassId, setSelectedClassId] = useState("ALL");
+  const [selectedLetter, setSelectedLetter] = useState("ALL");
   const searchParams = useSearchParams();
   const [successModalMessage, setSuccessModalMessage] = useState<string | null>(() => {
     if (searchParams?.get("saved")) {
@@ -178,9 +181,28 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
 
   const profileGuardian = profileStudent ? getGuardian(profileStudent) : null;
 
-  // Filter by phase and search
+  const classOptions = useMemo(() => {
+    const filteredClasses = (classes || []).filter(Boolean);
+    if (activePhase === "ALL") {
+      return Array.from(new Map(filteredClasses.map((cls) => [cls.id, cls])).values());
+    }
+
+    return Array.from(
+      new Map(
+        filteredClasses
+          .filter((cls) => cls.phase === activePhase)
+          .map((cls) => [cls.id, cls])
+      ).values()
+    );
+  }, [classes, activePhase]);
+
+  const alphabetOptions = useMemo(() => {
+    return ["ALL", ...Array.from({ length: 26 }, (_, index) => String.fromCharCode(65 + index))];
+  }, []);
+
+  // Filter by phase, search, class, alphabet, and sort
   const filteredPupils = useMemo(() => {
-    let filtered = pupils;
+    let filtered = [...pupils];
 
     // Filter by phase
     if (activePhase !== "ALL") {
@@ -198,8 +220,59 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
       });
     }
 
+    // Filter by class
+    if (selectedClassId !== "ALL") {
+      filtered = filtered.filter((p) => p.class?.id === selectedClassId);
+    }
+
+    // Filter by starting letter
+    if (selectedLetter !== "ALL") {
+      const letter = selectedLetter.toLowerCase();
+      filtered = filtered.filter((p) => {
+        const displayName = [p.lastName, p.firstName].filter(Boolean).join(" ").trim().toLowerCase();
+        return displayName.startsWith(letter);
+      });
+    }
+
+    // Sort results
+    filtered.sort((a, b) => {
+      switch (sortMode) {
+        case "alphabet-desc": {
+          const nameA = [a.lastName, a.firstName].filter(Boolean).join(" ").trim().toLowerCase();
+          const nameB = [b.lastName, b.firstName].filter(Boolean).join(" ").trim().toLowerCase();
+          return nameB.localeCompare(nameA);
+        }
+        case "date-asc": {
+          const dateA = new Date(a.createdAt || 0).getTime();
+          const dateB = new Date(b.createdAt || 0).getTime();
+          return dateA - dateB;
+        }
+        case "date-desc": {
+          const dateA = new Date(a.createdAt || 0).getTime();
+          const dateB = new Date(b.createdAt || 0).getTime();
+          return dateB - dateA;
+        }
+        case "admission-asc": {
+          const admissionA = (a.admissionNo || "").toLowerCase();
+          const admissionB = (b.admissionNo || "").toLowerCase();
+          return admissionA.localeCompare(admissionB);
+        }
+        case "admission-desc": {
+          const admissionA = (a.admissionNo || "").toLowerCase();
+          const admissionB = (b.admissionNo || "").toLowerCase();
+          return admissionB.localeCompare(admissionA);
+        }
+        case "alphabet-asc":
+        default: {
+          const nameA = [a.lastName, a.firstName].filter(Boolean).join(" ").trim().toLowerCase();
+          const nameB = [b.lastName, b.firstName].filter(Boolean).join(" ").trim().toLowerCase();
+          return nameA.localeCompare(nameB);
+        }
+      }
+    });
+
     return filtered;
-  }, [pupils, activePhase, searchQuery]);
+  }, [pupils, activePhase, searchQuery, selectedClassId, selectedLetter, sortMode]);
 
   // Pagination
   const totalPages = Math.max(1, Math.ceil(filteredPupils.length / itemsPerPage));
@@ -213,6 +286,28 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
     setCurrentPage(1);
   };
 
+  const handleSortChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSortMode(event.target.value);
+    setCurrentPage(1);
+  };
+
+  const handleClassChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedClassId(event.target.value);
+    setCurrentPage(1);
+  };
+
+  const handleLetterChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedLetter(event.target.value);
+    setCurrentPage(1);
+  };
+
+  const resetAdvancedFilters = () => {
+    setSortMode("alphabet-asc");
+    setSelectedClassId("ALL");
+    setSelectedLetter("ALL");
+    setCurrentPage(1);
+  };
+
   // Reset to page 1 when filters change
   const handleFilterChange = () => {
     setCurrentPage(1);
@@ -220,6 +315,7 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
 
   const handlePhaseChange = (phase: string) => {
     setActivePhase(phase);
+    setSelectedClassId("ALL");
     handleFilterChange();
   };
 
@@ -342,55 +438,113 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
           </div>
         ) : null}
 
-        {/* Tabs */}
-        <div className="mb-6 flex flex-wrap gap-1 border-b border-border sm:gap-2">
-        {PHASE_ORDER.map((phase) => {
-          const count = getPhaseStats(phase);
-          const config = PHASE_CONFIG[phase as keyof typeof PHASE_CONFIG];
-          const isActive = activePhase === phase;
+        {/* Phase tabs + filters */}
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
+          <div className="flex flex-wrap gap-1 sm:gap-2">
+            {PHASE_ORDER.map((phase) => {
+              const count = getPhaseStats(phase);
+              const config = PHASE_CONFIG[phase as keyof typeof PHASE_CONFIG];
+              const isActive = activePhase === phase;
 
-          return (
-            <button
-              key={phase}
-              onClick={() => handlePhaseChange(phase)}
-              className={`px-2 py-2 font-medium text-xs sm:px-4 sm:text-sm transition-colors border-b-2 ${
-                isActive
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted hover:text-foreground"
-              }`}
-            >
-              {config.label}
-              <span className="ml-1 inline-block rounded px-1.5 py-0.5 text-xs font-semibold bg-background text-foreground sm:ml-2 sm:px-2">
-                {count}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+              return (
+                <button
+                  key={phase}
+                  onClick={() => handlePhaseChange(phase)}
+                  className={`px-2 py-2 text-xs font-medium transition-colors sm:px-4 sm:text-sm ${
+                    isActive
+                      ? "border-b-2 border-primary text-primary"
+                      : "border-b-2 border-transparent text-muted hover:text-foreground"
+                  }`}
+                >
+                  {config.label}
+                  <span className="ml-1 inline-block rounded px-1.5 py-0.5 text-xs font-semibold bg-background text-foreground sm:ml-2 sm:px-2">
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
 
-      {/* Results Info */}
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-muted">
-          Showing {paginatedPupils.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0}–
-          {Math.min(currentPage * itemsPerPage, filteredPupils.length)} of {filteredPupils.length}{" "}
-          student{filteredPupils.length !== 1 ? "s" : ""}
-          {searchQuery && ` matching "${searchQuery}"`}
-        </p>
-        <label className="text-sm text-muted">
-          Rows per page
-          <select
-            value={itemsPerPage}
-            onChange={handlePageSizeChange}
-            className="ml-2 rounded-lg border border-border bg-background px-2 py-1 text-sm text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
-          >
-            {PAGE_SIZE_OPTIONS.map((size) => (
-              <option key={size} value={size}>
-                {size}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
+          <div className="flex flex-wrap items-center gap-2 text-sm text-muted">
+            <p className="whitespace-nowrap text-sm text-muted">
+              Showing {paginatedPupils.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0}–
+              {Math.min(currentPage * itemsPerPage, filteredPupils.length)} of {filteredPupils.length}
+              {searchQuery && ` matching "${searchQuery}"`}
+            </p>
+
+            <label className="flex items-center gap-2 text-sm text-muted">
+              <span className="hidden sm:inline">Sort</span>
+              <select
+                value={sortMode}
+                onChange={handleSortChange}
+                className="rounded-lg border border-border bg-transparent px-2.5 py-1.5 text-sm text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
+              >
+                <option value="alphabet-asc">A–Z</option>
+                <option value="alphabet-desc">Z–A</option>
+                <option value="date-desc">Newest</option>
+                <option value="date-asc">Oldest</option>
+                <option value="admission-asc">Admission ↑</option>
+                <option value="admission-desc">Admission ↓</option>
+              </select>
+            </label>
+
+            <label className="flex items-center gap-2 text-sm text-muted">
+              <span className="hidden sm:inline">Class</span>
+              <select
+                value={selectedClassId}
+                onChange={handleClassChange}
+                className="rounded-lg border border-border bg-transparent px-2.5 py-1.5 text-sm text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
+              >
+                <option value="ALL">All classes</option>
+                {classOptions.map((cls) => (
+                  <option key={cls.id} value={cls.id}>
+                    {cls.name}{cls.arm ? ` ${cls.arm}` : ""}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="flex items-center gap-2 text-sm text-muted">
+              <span className="hidden sm:inline">Starts with</span>
+              <select
+                value={selectedLetter}
+                onChange={handleLetterChange}
+                className="rounded-lg border border-border bg-transparent px-2.5 py-1.5 text-sm text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
+              >
+                {alphabetOptions.map((letter) => (
+                  <option key={letter} value={letter}>
+                    {letter === "ALL" ? "All" : letter}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="flex items-center gap-2 text-sm text-muted">
+              <span className="hidden sm:inline">Rows</span>
+              <select
+                value={itemsPerPage}
+                onChange={handlePageSizeChange}
+                className="rounded-lg border border-border bg-transparent px-2.5 py-1.5 text-sm text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
+              >
+                {PAGE_SIZE_OPTIONS.map((size) => (
+                  <option key={size} value={size}>
+                    {size}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            {(sortMode !== "alphabet-asc" || selectedClassId !== "ALL" || selectedLetter !== "ALL") && (
+              <button
+                type="button"
+                onClick={resetAdvancedFilters}
+                className="rounded-lg border border-border px-2.5 py-1.5 text-sm font-medium text-foreground transition hover:bg-background"
+              >
+                Reset
+              </button>
+            )}
+          </div>
+        </div>
 
       {/* Table */}
       {paginatedPupils.length > 0 ? (

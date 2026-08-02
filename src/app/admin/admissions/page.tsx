@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
   CheckCircle2,
@@ -16,6 +16,7 @@ import { getBackendUrl } from "@/lib/backend-url";
 import { Button } from "@/components/ui/button";
 import { UserGuide, type PageHelpGuide } from "@/components/ui/user-guide";
 import SubscriptionModal from "@/components/subscription-modal";
+import AdminSkeleton from "@/components/ui/skeleton";
 import { playCloseTone, playOpenTone } from "@/lib/sounds";
 
 const statusStyles: Record<string, string> = {
@@ -56,6 +57,9 @@ export default function AdminAdmissionsPage() {
   const [modalType, setModalType] = useState<"success" | "error" | "rejected">("success");
   const [selectedApplication, setSelectedApplication] = useState<any | null>(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [detailModalVisible, setDetailModalVisible] = useState(false);
+  const closeModalTimerRef = useRef<number | null>(null);
+  const openModalTimerRef = useRef<number | null>(null);
   const [updatingApplicationId, setUpdatingApplicationId] = useState<string | null>(null);
   const [subscriptionBlocked, setSubscriptionBlocked] = useState<{ reason: string } | null>(null);
 
@@ -186,13 +190,31 @@ export default function AdminAdmissionsPage() {
 
   function openApplicationDetail(application: any) {
     setSelectedApplication(application);
-    setDetailModalOpen(true);
+    setDetailModalVisible(true);
+    if (openModalTimerRef.current) {
+      clearTimeout(openModalTimerRef.current);
+    }
+    openModalTimerRef.current = window.setTimeout(() => {
+      setDetailModalOpen(true);
+      openModalTimerRef.current = null;
+    }, 10);
     playOpenTone();
   }
 
   function closeApplicationDetail() {
     setDetailModalOpen(false);
-    setSelectedApplication(null);
+    if (openModalTimerRef.current) {
+      clearTimeout(openModalTimerRef.current);
+      openModalTimerRef.current = null;
+    }
+    if (closeModalTimerRef.current) {
+      clearTimeout(closeModalTimerRef.current);
+    }
+    closeModalTimerRef.current = window.setTimeout(() => {
+      setDetailModalVisible(false);
+      setSelectedApplication(null);
+      closeModalTimerRef.current = null;
+    }, 500);
     playCloseTone();
   }
 
@@ -261,9 +283,17 @@ export default function AdminAdmissionsPage() {
     videoUrl: "/video-tutorials?topic=admissions",
   };
 
+  if (loading && applications.length === 0 && !message && !subscriptionBlocked) {
+    return (
+      <main className="min-h-screen bg-background">
+        <AdminSkeleton />
+      </main>
+    );
+  }
+
   return (
-    <main className="min-h-screen px-4 py-10 text-slate-900 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-6xl space-y-8">
+    <main className="min-h-screen text-slate-900">
+      <div className="space-y-8 w-full">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Admissions requests</h1>
@@ -272,9 +302,12 @@ export default function AdminAdmissionsPage() {
           <Button
             type="button"
             variant="primary"
-            className="h-10 px-4 py-2 text-sm"
+            className="inline-flex h-10 items-center gap-2 px-4 py-2 text-sm"
             onClick={() => void loadApplications()}
+            disabled={loading}
+            aria-busy={loading}
           >
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
             Refresh
           </Button>
         </div>
@@ -358,14 +391,6 @@ export default function AdminAdmissionsPage() {
                   <option value="REJECTED">Rejected</option>
                 </select>
               </div>
-              <Button
-                type="button"
-                variant="primary"
-                className="h-10 px-4 py-2 text-sm"
-                onClick={() => void loadApplications()}
-              >
-                Refresh
-              </Button>
             </div>
           </div>
 
@@ -520,9 +545,9 @@ export default function AdminAdmissionsPage() {
         </div>
       )}
 
-      {detailModalOpen && selectedApplication && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-3 py-4 sm:px-4">
-          <div className="w-full max-w-[1120px] max-h-[calc(100vh-1.5rem)] overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_24px_90px_rgba(15,23,42,0.18)]">
+      {detailModalVisible && selectedApplication && (
+        <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/40 px-3 py-4 sm:px-4 transition-opacity duration-300 ease-out ${detailModalOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
+          <div className={`w-full max-w-[1120px] max-h-[calc(100vh-1.5rem)] overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_24px_90px_rgba(15,23,42,0.18)] transition-all duration-500 ease-out ${detailModalOpen ? "translate-y-0 opacity-100" : "translate-y-16 opacity-0"}`}>
             <div
               className="flex flex-col gap-4 border-b border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6"
               style={{ background: "linear-gradient(90deg, rgba(10,102,194,0.12), rgba(10,102,194,0.04))" }}

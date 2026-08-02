@@ -1,13 +1,54 @@
 "use client";
 
+"use client";
+
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { createAnnouncement } from "@/app/admin/actions";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 
+interface AcademicYearItem {
+  id: string;
+  name: string;
+  isCurrent: boolean;
+  terms: Array<{ id: string; name: string }>;
+}
+
 export default function NewAnnouncementPage() {
   const [submitting, setSubmitting] = useState(false);
+  const [academicYears, setAcademicYears] = useState<AcademicYearItem[]>([]);
+  const [selectedAcademicYearId, setSelectedAcademicYearId] = useState("");
+  const [selectedTermId, setSelectedTermId] = useState("");
+
+  useEffect(() => {
+    async function loadAcademicYears() {
+      try {
+        const response = await fetch("/api/admin/academic-years", {
+          credentials: "include",
+        });
+        if (!response.ok) return;
+        const data = await response.json();
+        const years = (data.academicYears || []) as AcademicYearItem[];
+        setAcademicYears(years);
+
+        const defaultYear = years.find((year) => year.isCurrent) || years[0];
+        if (defaultYear) {
+          setSelectedAcademicYearId(defaultYear.id);
+          setSelectedTermId(defaultYear.terms?.[0]?.id || "");
+        }
+      } catch (error) {
+        console.error("Failed to load academic years:", error);
+      }
+    }
+
+    loadAcademicYears();
+  }, []);
+
+  const termOptions = useMemo(() => {
+    const year = academicYears.find((item) => item.id === selectedAcademicYearId);
+    return year?.terms || [];
+  }, [academicYears, selectedAcademicYearId]);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     if (submitting) {
@@ -62,6 +103,46 @@ export default function NewAnnouncementPage() {
             className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand"
           />
         </label>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="block text-sm font-medium">
+            Session
+            <select
+              name="academicYearId"
+              value={selectedAcademicYearId}
+              onChange={(event) => {
+                setSelectedAcademicYearId(event.target.value);
+                setSelectedTermId("");
+              }}
+              className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand"
+            >
+              <option value="">Select session (optional)</option>
+              {academicYears.map((year) => (
+                <option key={year.id} value={year.id}>
+                  {year.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="block text-sm font-medium">
+            Term
+            <select
+              name="termId"
+              value={selectedTermId}
+              onChange={(event) => setSelectedTermId(event.target.value)}
+              disabled={!selectedAcademicYearId || termOptions.length === 0}
+              className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <option value="">Select term (optional)</option>
+              {termOptions.map((term) => (
+                <option key={term.id} value={term.id}>
+                  {term.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
 
         <label className="flex items-center gap-2 text-sm font-medium">
           <input

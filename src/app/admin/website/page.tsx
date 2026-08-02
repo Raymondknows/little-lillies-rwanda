@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getBackendUrl } from "@/lib/backend-url";
+import { playCloseTone, playOpenTone } from "@/lib/sounds";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Trash2, Loader } from "lucide-react";
+import { ErrorModal } from "@/components/ui/error-modal";
+import { PlusCircle, Search, Trash2 } from "lucide-react";
 import { UserGuide, type PageHelpGuide } from "@/components/ui/user-guide";
 import SubscriptionModal from "@/components/subscription-modal";
 import AdminSkeleton from "@/components/ui/skeleton";
@@ -16,7 +18,33 @@ interface Announcement {
   published: boolean;
   publishedAt?: string;
   createdAt?: string;
+  academicYear?: {
+    id: string;
+    name: string;
+    isCurrent?: boolean;
+  } | null;
+  term?: {
+    id: string;
+    name: string;
+    academicYear?: {
+      id: string;
+      name: string;
+    } | null;
+  } | null;
 }
+
+const FILTER_STATUS = [
+  { value: "ALL", label: "All announcements" },
+  { value: "PUBLISHED", label: "Published" },
+  { value: "DRAFT", label: "Draft" },
+];
+
+const SORT_OPTIONS = [
+  { value: "date-desc", label: "Newest first" },
+  { value: "date-asc", label: "Oldest first" },
+  { value: "title-asc", label: "Title A–Z" },
+  { value: "title-desc", label: "Title Z–A" },
+];
 
 const HELP_GUIDE: PageHelpGuide = {
   title: "Managing Website & Announcements",
@@ -79,11 +107,163 @@ export default function WebsitePage() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [deleting, setDeleting] = useState<string | null>(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deletingAnnouncementId, setDeletingAnnouncementId] = useState<string | null>(null);
+  const [deletingAnnouncementTitle, setDeletingAnnouncementTitle] = useState<string>("");
+  const [deleteAnimateState, setDeleteAnimateState] = useState<"enter" | "exit">("enter");
+  const [isDeletingAnnouncement, setIsDeletingAnnouncement] = useState(false);
+  const [statusModalOpen, setStatusModalOpen] = useState(false);
+  const [statusModalType, setStatusModalType] = useState<'success' | 'error'>('success');
+  const [statusModalTitle, setStatusModalTitle] = useState<string | undefined>(undefined);
+  const [statusModalMessage, setStatusModalMessage] = useState("");
   const [subscriptionError, setSubscriptionError] = useState<{
     reason?: string;
     schoolName?: string;
   } | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("ALL");
+  const [selectedSessionId, setSelectedSessionId] = useState("ALL");
+  const [selectedTermId, setSelectedTermId] = useState("ALL");
+  const [sortMode, setSortMode] = useState("date-desc");
+
+  interface AnnouncementTermGroup {
+    termId: string;
+    termName: string;
+    announcements: Announcement[];
+  }
+
+  interface AnnouncementSessionGroup {
+    sessionId: string;
+    sessionName: string;
+    terms: AnnouncementTermGroup[];
+  }
+
+  const availableSessions = useMemo(
+    () => {
+      const sessionsMap = new Map<string, { id: string; name: string }>();
+      for (const announcement of announcements) {
+        const sessionId = announcement.term?.academicYear?.id || announcement.academicYear?.id || "unassigned";
+        const sessionName = announcement.term?.academicYear?.name || announcement.academicYear?.name || "No session assigned";
+        sessionsMap.set(sessionId, { id: sessionId, name: sessionName });
+      }
+      return Array.from(sessionsMap.values());
+    },
+    [announcements]
+  );
+
+  const availableTerms = useMemo(
+    () => {
+      const termsMap = new Map<string, { id: string; name: string }>();
+      for (const announcement of announcements) {
+        const sessionId = announcement.term?.academicYear?.id || announcement.academicYear?.id || "unassigned";
+        if (selectedSessionId !== "ALL" && sessionId !== selectedSessionId) continue;
+        const termId = announcement.term?.id || "all-terms";
+        const termName = announcement.term?.name || "All terms";
+        termsMap.set(termId, { id: termId, name: termName });
+      }
+      return Array.from(termsMap.values());
+    },
+    [announcements, selectedSessionId]
+  );
+
+  const filteredAnnouncements = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+
+    return announcements
+      .filter((announcement) => {
+        if (selectedStatus !== "ALL") {
+          if (selectedStatus === "PUBLISHED" && !announcement.published) return false;
+          if (selectedStatus === "DRAFT" && announcement.published) return false;
+        }
+
+        const sessionId = announcement.term?.academicYear?.id || announcement.academicYear?.id || "unassigned";
+        if (selectedSessionId !== "ALL" && sessionId !== selectedSessionId) return false;
+
+        const termId = announcement.term?.id || "all-terms";
+        if (selectedTermId !== "ALL" && termId !== selectedTermId) return false;
+
+        if (!query) return true;
+        const title = announcement.title?.toLowerCase() || "";
+        const body = announcement.body?.toLowerCase() || "";
+        return title.includes(query) || body.includes(query);
+      })
+      .sort((a, b) => {
+        if (sortMode === "date-asc") {
+          return new Date(a.publishedAt || a.createdAt || 0).getTime() - new Date(b.publishedAt || b.createdAt || 0).getTime();
+        }
+        if (sortMode === "date-desc") {
+          return new Date(b.publishedAt || b.createdAt || 0).getTime() - new Date(a.publishedAt || a.createdAt || 0).getTime();
+        }
+        if (sortMode === "title-asc") {
+          return (a.title || "").localeCompare(b.title || "");
+        }
+        if (sortMode === "title-desc") {
+          return (b.title || "").localeCompare(a.title || "");
+        }
+        return 0;
+      });
+  }, [announcements, selectedStatus, selectedSessionId, selectedTermId, searchQuery, sortMode]);
+
+  const groupedAnnouncements = useMemo<AnnouncementSessionGroup[]>(() => {
+    const sessions = new Map<
+      string,
+      {
+        sessionId: string;
+        sessionName: string;
+        terms: Map<
+          string,
+          {
+            termId: string;
+            termName: string;
+            announcements: Announcement[];
+          }
+        >;
+      }
+    >();
+
+    for (const announcement of filteredAnnouncements) {
+      const sessionId = announcement.term?.academicYear?.id || announcement.academicYear?.id || "unassigned";
+      const sessionName =
+        announcement.term?.academicYear?.name || announcement.academicYear?.name || "No session assigned";
+      const termId = announcement.term?.id || "all-terms";
+      const termName = announcement.term?.name || "All terms";
+
+      if (!sessions.has(sessionId)) {
+        sessions.set(sessionId, {
+          sessionId,
+          sessionName,
+          terms: new Map(),
+        });
+      }
+
+      const session = sessions.get(sessionId)!;
+      if (!session.terms.has(termId)) {
+        session.terms.set(termId, {
+          termId,
+          termName,
+          announcements: [],
+        });
+      }
+
+      session.terms.get(termId)!.announcements.push(announcement);
+    }
+
+    return Array.from(sessions.values()).map((session) => ({
+      ...session,
+      terms: Array.from(session.terms.values()),
+    }));
+  }, [filteredAnnouncements]);
+
+  const resetFilters = () => {
+    setSearchQuery("");
+    setSelectedStatus("ALL");
+    setSelectedSessionId("ALL");
+    setSelectedTermId("ALL");
+    setSortMode("date-desc");
+  };
+
+  const selectedCount = filteredAnnouncements.length;
+  const totalCount = announcements.length;
 
   useEffect(() => {
     async function fetchAnnouncements() {
@@ -121,26 +301,53 @@ export default function WebsitePage() {
     fetchAnnouncements();
   }, []);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this announcement?")) return;
+  const openDeleteModal = (announcement: Announcement) => {
+    setDeletingAnnouncementId(announcement.id);
+    setDeletingAnnouncementTitle(announcement.title || "this announcement");
+    setDeleteAnimateState("enter");
+    setDeleteModalOpen(true);
+    playOpenTone();
+  };
 
-    setDeleting(id);
+  const closeDeleteModal = () => {
+    setDeleteAnimateState("exit");
+    playCloseTone();
+    setTimeout(() => {
+      setDeleteModalOpen(false);
+      setDeletingAnnouncementId(null);
+      setDeletingAnnouncementTitle("");
+    }, 320);
+  };
+
+  const handleDeleteAnnouncement = async () => {
+    if (!deletingAnnouncementId) return;
+
+    setIsDeletingAnnouncement(true);
     try {
       const backendUrl = getBackendUrl();
-      const response = await fetch(`${backendUrl}/api/admin/announcements/${id}`, {
+      const response = await fetch(`${backendUrl}/api/admin/announcements/${deletingAnnouncementId}`, {
         method: "DELETE",
         credentials: "include",
       });
 
+      const responseData = await response.json().catch(() => null);
       if (!response.ok) {
-        throw new Error("Failed to delete announcement");
+        throw new Error(responseData?.error || "Failed to delete announcement");
       }
 
-      setAnnouncements(announcements.filter((a) => a.id !== id));
+      setAnnouncements((current) => current.filter((a) => a.id !== deletingAnnouncementId));
+      setStatusModalType('success');
+      setStatusModalTitle('Announcement deleted');
+      setStatusModalMessage(`"${deletingAnnouncementTitle}" has been permanently deleted.`);
+      setStatusModalOpen(true);
+      closeDeleteModal();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to delete announcement");
+      setStatusModalType('error');
+      setStatusModalTitle('Delete failed');
+      setStatusModalMessage(err instanceof Error ? err.message : 'Failed to delete announcement');
+      setStatusModalOpen(true);
     } finally {
-      setDeleting(null);
+      setIsDeletingAnnouncement(false);
     }
   };
 
@@ -150,13 +357,14 @@ export default function WebsitePage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Website & Announcements</h1>
+            <h1 className="text-3xl font-bold text-foreground">Announcements</h1>
             <p className="mt-1 text-muted">Manage your school's public announcements</p>
           </div>
           <Link href="/admin/website/new">
             <Button className="gap-2">
               <PlusCircle className="h-4 w-4" />
-              Post news
+              <span className="hidden sm:inline">Post news</span>
+              <span className="inline sm:hidden">New</span>
             </Button>
           </Link>
         </div>
@@ -175,69 +383,275 @@ export default function WebsitePage() {
           </div>
         )}
 
-        {/* Announcements list */}
-        {!loading && announcements.length === 0 && (
-          <div className="rounded-lg border border-border bg-surface p-8 text-center">
-            <p className="text-muted">No announcements yet.</p>
-            <Link href="/admin/website/new" className="mt-3 inline-block text-sm text-brand hover:underline">
-              Create your first announcement
-            </Link>
-          </div>
-        )}
-
-        {!loading && announcements.length > 0 && (
-          <div className="space-y-3">
-            {announcements.map((announcement) => (
-              <div
-                key={announcement.id}
-                className="rounded-lg border border-border bg-surface p-4 hover:shadow-sm transition-shadow"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <h2 className="text-lg font-semibold text-foreground">{announcement.title}</h2>
-                    <p className="mt-1 text-sm text-muted line-clamp-2">{announcement.body}</p>
-                    <div className="mt-3 flex items-center gap-4">
-                      <span
-                        className={`inline-block rounded-full px-2.5 py-1 text-xs font-medium ${
-                          announcement.published
-                            ? "bg-green-100 text-green-800"
-                            : "bg-gray-100 text-gray-800"
-                        }`}
-                      >
-                        {announcement.published ? "Published" : "Draft"}
-                      </span>
-                      <span className="text-xs text-muted">
-                        {announcement.publishedAt
-                          ? new Date(announcement.publishedAt).toLocaleDateString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                              year: "numeric",
-                            })
-                          : new Date(announcement.createdAt || "").toLocaleDateString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                              year: "numeric",
-                            })}
-                      </span>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => handleDelete(announcement.id)}
-                    disabled={deleting === announcement.id}
-                    className="flex-shrink-0 rounded-lg p-2 text-muted hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-50"
-                    title="Delete announcement"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
+        {!loading && (
+          <>
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
+              <div className="min-w-0">
+                <p className="text-sm text-muted">
+                  Showing {selectedCount} of {totalCount} announcement{totalCount !== 1 ? "s" : ""}
+                </p>
+                {searchQuery ? (
+                  <p className="mt-1 text-sm text-muted">Search results for "{searchQuery}"</p>
+                ) : null}
               </div>
-            ))}
-          </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <label className="relative block min-w-[240px]">
+                  <span className="sr-only">Search announcements</span>
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                    placeholder="Search announcements"
+                    className="w-full rounded-lg border border-border bg-background py-2 pl-10 pr-3 text-sm text-foreground placeholder:text-muted focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
+                  />
+                </label>
+                <label className="flex items-center gap-2 text-sm text-muted">
+                  <span className="hidden sm:inline">Status</span>
+                  <select
+                    value={selectedStatus}
+                    onChange={(event) => setSelectedStatus(event.target.value)}
+                    className="rounded-lg border border-border bg-transparent px-2.5 py-2 text-sm text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
+                  >
+                    {FILTER_STATUS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="flex items-center gap-2 text-sm text-muted">
+                  <span className="hidden sm:inline">Session</span>
+                  <select
+                    value={selectedSessionId}
+                    onChange={(event) => {
+                      setSelectedSessionId(event.target.value);
+                      setSelectedTermId("ALL");
+                    }}
+                    className="rounded-lg border border-border bg-transparent px-2.5 py-2 text-sm text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
+                  >
+                    <option value="ALL">All sessions</option>
+                    {availableSessions.map((session) => (
+                      <option key={session.id} value={session.id}>
+                        {session.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="flex items-center gap-2 text-sm text-muted">
+                  <span className="hidden sm:inline">Term</span>
+                  <select
+                    value={selectedTermId}
+                    onChange={(event) => setSelectedTermId(event.target.value)}
+                    className="rounded-lg border border-border bg-transparent px-2.5 py-2 text-sm text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
+                  >
+                    <option value="ALL">All terms</option>
+                    {availableTerms.map((term) => (
+                      <option key={term.id} value={term.id}>
+                        {term.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="flex items-center gap-2 text-sm text-muted">
+                  <span className="hidden sm:inline">Sort</span>
+                  <select
+                    value={sortMode}
+                    onChange={(event) => setSortMode(event.target.value)}
+                    className="rounded-lg border border-border bg-transparent px-2.5 py-2 text-sm text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
+                  >
+                    {SORT_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                {(searchQuery || selectedStatus !== "ALL" || selectedSessionId !== "ALL" || selectedTermId !== "ALL" || sortMode !== "date-desc") && (
+                  <button
+                    type="button"
+                    onClick={resetFilters}
+                    className="rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground transition hover:bg-background"
+                  >
+                    Reset
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {totalCount === 0 ? (
+              <div className="rounded-lg border border-border bg-surface p-8 text-center">
+                <p className="text-muted">No announcements yet.</p>
+                <Link href="/admin/website/new" className="mt-3 inline-block text-sm text-brand hover:underline">
+                  Create your first announcement
+                </Link>
+              </div>
+            ) : selectedCount === 0 ? (
+              <div className="rounded-lg border border-border bg-surface p-8 text-center">
+                <p className="text-muted">No announcements match the selected filters.</p>
+                <button
+                  type="button"
+                  onClick={resetFilters}
+                  className="mt-3 rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-surface"
+                >
+                  Clear filters
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {groupedAnnouncements.map((session) => (
+                  <section key={session.sessionId} className="space-y-4">
+                    <div className="space-y-4">
+                      {session.terms.map((term) => (
+                        <div key={term.termId} className="space-y-3">
+                          <div className="grid gap-3 md:grid-cols-2">
+                            {term.announcements.map((announcement) => (
+                              <div
+                                key={announcement.id}
+                                className="rounded-lg border border-border bg-surface p-4 hover:shadow-sm transition-shadow"
+                              >
+                                <div className="flex items-start justify-between gap-4">
+                                  <div className="flex-1">
+                                    <div className="mb-3 flex flex-wrap gap-2">
+                                      <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
+                                        {session.sessionName}
+                                      </span>
+                                      <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
+                                        {term.termName}
+                                      </span>
+                                    </div>
+                                    <h2 className="text-lg font-semibold text-foreground">{announcement.title}</h2>
+                                    <p className="mt-1 text-sm text-muted line-clamp-2">{announcement.body}</p>
+                                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                                      <span
+                                        className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
+                                          announcement.published
+                                            ? "bg-green-100 text-green-800"
+                                            : "bg-gray-100 text-gray-800"
+                                        }`}
+                                      >
+                                        {announcement.published ? "Published" : "Draft"}
+                                      </span>
+                                      <span className="text-xs text-muted">
+                                        {announcement.publishedAt
+                                          ? new Date(announcement.publishedAt).toLocaleDateString("en-US", {
+                                              month: "short",
+                                              day: "numeric",
+                                              year: "numeric",
+                                            })
+                                          : new Date(announcement.createdAt || "").toLocaleDateString("en-US", {
+                                              month: "short",
+                                              day: "numeric",
+                                              year: "numeric",
+                                            })}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <button
+                                    onClick={() => openDeleteModal(announcement)}
+                                    disabled={isDeletingAnnouncement && deletingAnnouncementId === announcement.id}
+                                    className="flex-shrink-0 rounded-lg p-2 text-muted hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-50"
+                                    title="Delete announcement"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
 
       {/* Help & Guide */}
       <UserGuide guide={HELP_GUIDE} />
+
+      <ErrorModal
+        isOpen={statusModalOpen}
+        onClose={() => setStatusModalOpen(false)}
+        title={statusModalTitle}
+        message={statusModalMessage}
+        type={statusModalType}
+        confirmLabel={statusModalType === 'success' ? 'Okay' : 'Review'}
+      />
+
+      {deleteModalOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 px-4">
+          <style>{`
+            @keyframes sb_modal_enter { from { transform: translateX(36px) scale(.98); opacity: 0 } to { transform: translateX(0) scale(1); opacity: 1 } }
+            @keyframes sb_modal_exit  { from { transform: translateX(0) scale(1); opacity: 1 } to { transform: translateX(36px) scale(.98); opacity: 0 } }
+          `}</style>
+
+          <div
+            className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_50px_rgba(220,38,38,0.16)]"
+            style={{
+              animation: `${deleteAnimateState === "enter" ? "sb_modal_enter" : "sb_modal_exit"} 320ms cubic-bezier(.2,.9,.2,1)`,
+            }}
+          >
+            <div className="border-b border-slate-100 px-6 py-5" style={{ background: "linear-gradient(90deg, rgba(220,38,38,0.12), rgba(220,38,38,0.04))" }}>
+              <div className="flex items-start gap-3">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/70 shadow-sm" style={{ background: "rgba(220,38,38,0.12)" }}>
+                  <Trash2 className="h-6 w-6" style={{ color: "#DC2626" }} />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-slate-900">Delete announcement?</h2>
+                  <p className="mt-1 text-sm text-slate-600">This action cannot be undone.</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="px-6 py-5">
+              <p className="text-sm leading-6 text-slate-700">
+                You are about to permanently delete <strong>"{deletingAnnouncementTitle}"</strong>.
+              </p>
+              <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3">
+                <p className="text-xs text-red-700">
+                  <strong>Warning:</strong> The announcement will be completely removed from the system.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4">
+              <button
+                type="button"
+                onClick={() => {
+                  closeDeleteModal();
+                }}
+                disabled={isDeletingAnnouncement}
+                className="flex-1 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-slate-100 disabled:opacity-50 text-slate-700"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteAnnouncement}
+                disabled={isDeletingAnnouncement}
+                className="flex-1 rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                style={{ background: "#DC2626" }}
+              >
+                {isDeletingAnnouncement ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    Delete Permanently
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {subscriptionError && (
         <SubscriptionModal reason={subscriptionError.reason} schoolName={subscriptionError.schoolName} />

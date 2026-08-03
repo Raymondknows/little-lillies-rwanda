@@ -1,11 +1,20 @@
 "use server";
 
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+
+const BACKEND_URL =
+  process.env.BACKEND_URL ||
+  process.env.NEXT_PUBLIC_BACKEND_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  "http://localhost:3006";
+
+function getSignupBackendUrl(path: string) {
+  return `${BACKEND_URL.replace(/\/+$/, "")}${path}`;
+}
 
 /**
  * Request OTP for signup verification
- * This is a server action that calls the API route to avoid client-side CORS issues
+ * This is a server action that calls the backend directly.
  */
 export async function requestSignupOtpAction(formData: FormData) {
   try {
@@ -23,16 +32,10 @@ export async function requestSignupOtpAction(formData: FormData) {
       throw new Error("Missing required fields");
     }
 
-    // Build absolute URL for server action
-    const headersList = await headers();
-    const protocol = headersList.get("x-forwarded-proto") || "https";
-    const host = headersList.get("x-forwarded-host") || headersList.get("host") || "localhost:3000";
-    const apiUrl = `${protocol}://${host}/api/signup/request-otp`;
-
+    const apiUrl = getSignupBackendUrl("/api/trial/request-otp");
     const response = await fetch(apiUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      credentials: "include",
       body: JSON.stringify({
         schoolName,
         slug,
@@ -94,16 +97,10 @@ export async function verifySignupOtpAction(formData: FormData) {
       throw new Error("OTP is required");
     }
 
-    // Build absolute URL for server action
-    const headersList = await headers();
-    const protocol = headersList.get("x-forwarded-proto") || "https";
-    const host = headersList.get("x-forwarded-host") || headersList.get("host") || "localhost:3000";
-    const apiUrl = `${protocol}://${host}/api/signup/verify-otp`;
-
+    const apiUrl = getSignupBackendUrl("/api/trial/verify-otp");
     const response = await fetch(apiUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      credentials: "include",
       body: JSON.stringify({
         schoolName,
         slug,

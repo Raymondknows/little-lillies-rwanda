@@ -202,7 +202,7 @@ export default function FeesManagementPage() {
           {[
             {
               name: "Starter",
-              price: "₦35,000",
+              price: "₦60,000",
               desc: "Up to 150 pupils",
               features: [
                 "✓ Fees & receipts",
@@ -214,7 +214,7 @@ export default function FeesManagementPage() {
             },
             {
               name: "Standard",
-              price: "₦45,000",
+              price: "₦85,000",
               desc: "Up to 600 pupils",
               features: [
                 "✓ Fees & receipts",
@@ -226,8 +226,8 @@ export default function FeesManagementPage() {
               highlighted: true,
             },
             {
-              name: "Group",
-              price: "Talk to us",
+              name: "Enterprise",
+              price: "Custom from ₦150,000",
               desc: "Multiple campuses",
               features: [
                 "✓ Fees & receipts",
@@ -339,33 +339,40 @@ export default function FeesManagementPage() {
 
         {/* Country Pricing Links */}
         <h3 className="text-xl font-bold text-foreground mt-12 mb-6">Fee Management in Your Country</h3>
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-5">
           <Link href="/ghana-school-software" className="flex items-center gap-3 rounded-lg border border-border bg-white p-4 hover:bg-brand/5 transition">
             <span className="text-2xl">🇬🇭</span>
             <div className="text-sm">
               <p className="font-semibold">Ghana</p>
-              <p className="text-muted">GHS 500/month</p>
+              <p className="text-muted">GHS 680 / term</p>
             </div>
           </Link>
           <Link href="/nigeria-school-software" className="flex items-center gap-3 rounded-lg border border-border bg-white p-4 hover:bg-brand/5 transition">
             <span className="text-2xl">🇳🇬</span>
             <div className="text-sm">
               <p className="font-semibold">Nigeria</p>
-              <p className="text-muted">₦35k/month</p>
+              <p className="text-muted">₦60,000 / term</p>
             </div>
           </Link>
-          <Link href="/kenya-school-software" className="flex items-center gap-3 rounded-lg border border-border bg-white p-4 hover:bg-brand/5 transition">
-            <span className="text-2xl">🇰🇪</span>
+          <Link href="/liberia" className="flex items-center gap-3 rounded-lg border border-border bg-white p-4 hover:bg-brand/5 transition">
+            <span className="text-2xl">🇱🇷</span>
             <div className="text-sm">
-              <p className="font-semibold">Kenya</p>
-              <p className="text-muted">KES 4k/month</p>
+              <p className="font-semibold">Liberia</p>
+              <p className="text-muted">L$7,500 / term</p>
             </div>
           </Link>
-          <Link href="/uganda-school-software" className="flex items-center gap-3 rounded-lg border border-border bg-white p-4 hover:bg-brand/5 transition">
-            <span className="text-2xl">🇺🇬</span>
+          <Link href="/sierra-leone" className="flex items-center gap-3 rounded-lg border border-border bg-white p-4 hover:bg-brand/5 transition">
+            <span className="text-2xl">🇸🇱</span>
             <div className="text-sm">
-              <p className="font-semibold">Uganda</p>
-              <p className="text-muted">UGX 150k/month</p>
+              <p className="font-semibold">Sierra Leone</p>
+              <p className="text-muted">Le 800,000 / term</p>
+            </div>
+          </Link>
+          <Link href="/the-gambia" className="flex items-center gap-3 rounded-lg border border-border bg-white p-4 hover:bg-brand/5 transition">
+            <span className="text-2xl">🇬🇲</span>
+            <div className="text-sm">
+              <p className="font-semibold">The Gambia</p>
+              <p className="text-muted">D2,500 / term</p>
             </div>
           </Link>
         </div>

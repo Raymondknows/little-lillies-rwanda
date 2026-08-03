@@ -16,23 +16,77 @@ export function VerifySignupClient() {
   const [error, setError] = useState<{ message: string; details?: string } | null>(null);
   const [otp, setOtp] = useState("");
   const [resendCooldown, setResendCooldown] = useState(0);
+  const [pendingLoaded, setPendingLoaded] = useState(false);
+  const [signupData, setSignupData] = useState({
+    schoolName: searchParams.get("schoolName") || "",
+    slug: searchParams.get("slug") || "",
+    tagline: searchParams.get("tagline") || "",
+    address: searchParams.get("address") || "",
+    phone: searchParams.get("phone") || "",
+    country: searchParams.get("country") || "",
+    adminName: searchParams.get("adminName") || "",
+    password: searchParams.get("password") || "",
+  });
 
   const adminEmail = searchParams.get("email") || "";
-  const schoolName = searchParams.get("schoolName") || "";
-  const slug = searchParams.get("slug") || "";
-  const tagline = searchParams.get("tagline") || "";
-  const address = searchParams.get("address") || "";
-  const phone = searchParams.get("phone") || "";
-  const country = searchParams.get("country") || "";
-  const adminName = searchParams.get("adminName") || "";
-  const password = searchParams.get("password") || "";
   const needsVerification = searchParams.get("needsVerification") === "true";
+  const {
+    schoolName,
+    slug,
+    tagline,
+    address,
+    phone,
+    country,
+    adminName,
+    password,
+  } = signupData;
 
   useEffect(() => {
+    async function loadPendingSignup() {
+      if (!adminEmail) {
+        setPendingLoaded(true);
+        return;
+      }
+
+      if (signupData.schoolName && signupData.slug && signupData.country && signupData.adminName) {
+        setPendingLoaded(true);
+        return;
+      }
+
+      try {
+        const backendUrl = getBackendUrl();
+        const response = await fetch(`${backendUrl}/api/trial/get-pending?email=${encodeURIComponent(adminEmail)}`);
+        if (!response.ok) {
+          setPendingLoaded(true);
+          return;
+        }
+
+        const data = await response.json();
+        if (data?.email) {
+          setSignupData((current) => ({
+            schoolName: current.schoolName || data.schoolName || "",
+            slug: current.slug || data.slug || "",
+            tagline: current.tagline || data.tagline || "",
+            address: current.address || data.address || "",
+            phone: current.phone || data.phone || "",
+            country: current.country || data.country || "",
+            adminName: current.adminName || data.adminName || "",
+            password: current.password || "",
+          }));
+        }
+      } catch (err) {
+        console.error('Failed to load pending signup data', err);
+      } finally {
+        setPendingLoaded(true);
+      }
+    }
+
+    loadPendingSignup();
+
     // Auto-focus the OTP input
     const input = document.querySelector('input[name="otp"]') as HTMLInputElement;
     if (input) input.focus();
-  }, []);
+  }, [adminEmail, signupData.schoolName, signupData.slug, signupData.country, signupData.adminName]);
 
   // Handle resend cooldown
   useEffect(() => {
@@ -51,20 +105,10 @@ export function VerifySignupClient() {
 
     try {
       const backendUrl = getBackendUrl();
-      const response = await fetch(`${backendUrl}/api/trial/request-otp`, {
+      const response = await fetch(`${backendUrl}/api/trial/resend-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          schoolName: schoolName || "Your School",
-          slug: slug || "",
-          tagline: tagline || "",
-          address: address || "",
-          phone: phone || "",
-          country: country || "",
-          adminName: adminName || "",
-          adminEmail: adminEmail,
-          password: password || "", // Required by endpoint
-        }),
+        body: JSON.stringify({ adminEmail }),
       });
 
       if (!response.ok) {
@@ -137,6 +181,19 @@ export function VerifySignupClient() {
             </Link>{" "}
             and try again.
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!pendingLoaded) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
+        <div className="w-full max-w-xl rounded-xl border border-border bg-surface p-8 shadow-sm">
+          <div className="mb-6 flex justify-center">
+            <AppLogo href="/" size="lg" />
+          </div>
+          <div className="h-8 w-32 animate-pulse rounded bg-border" />
         </div>
       </div>
     );

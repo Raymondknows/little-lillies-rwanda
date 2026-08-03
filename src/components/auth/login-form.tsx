@@ -29,8 +29,8 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
       console.log('Email:', email);
       console.log('Password length:', password.length);
 
-      // ✅ Call school login proxy route (for SCHOOL_ADMIN, STAFF, PARENT)
-      const res = await fetch("/api/auth/school-login", {
+      // ✅ Call the canonical auth proxy route
+      const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include", // ✅ CRITICAL: Allow cookies to be set
@@ -43,20 +43,23 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
       console.log('Status:', res.status);
       console.log('Data:', data);
 
-      // ✅ FIX: Correct backend response handling
       if (!res.ok) {
         const errorData = data as any;
-        
-        // Special handling for unverified accounts - show message with action
-        if (errorData.needsVerification && errorData.email) {
-          console.log('Account needs verification, showing verification prompt');
-          setPendingEmail(errorData.email);
-          setError(`Your email has a pending verification. We've sent a verification code to your inbox.`);
-          setPending(false);
+        const needsVerification = Boolean(errorData.needsVerification);
+        const pendingEmailFromResponse = errorData.email || email;
+
+        if (needsVerification) {
+          const verificationUrl = `/signup/verify?email=${encodeURIComponent(
+            pendingEmailFromResponse
+          )}&needsVerification=true`;
+
+          console.log('Account needs verification, redirecting to verify page:', verificationUrl);
+          window.location.href = verificationUrl;
           return;
         }
-        
-        setError(data.error || "Login failed");
+
+        setError(errorData.error || "Login failed");
+        setNotice(null);
         setPending(false);
         return;
       }

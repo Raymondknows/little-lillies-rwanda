@@ -128,7 +128,7 @@ export function ErrorModal({
                 <div className="mt-4 space-y-2">
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-semibold" style={{ color: BRAND }}>
-                      {isSuccess ? "Next steps" : "What teachers should do"}
+                      {isSuccess ? "Next steps" : "More details"}
                     </p>
                     <button
                       type="button"

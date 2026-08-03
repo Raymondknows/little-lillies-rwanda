@@ -22,7 +22,6 @@ import {
   ChevronRight,
   ChevronDown,
   ChevronUp,
-  FileText,
   MailCheck,
   GraduationCap,
   LifeBuoy,
@@ -165,6 +164,7 @@ export default function PlatformOverviewPage() {
 
     loadData();
   }, []);
+
 
   useEffect(() => {
     const intervalId = window.setInterval(async () => {
@@ -309,14 +309,16 @@ export default function PlatformOverviewPage() {
       title="Platform Overview"
       subtitle="Manage all schools and monitor platform health"
       actions={
-        <button
-          type="button"
-          onClick={() => setIsPanelOpen(true)}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0A66C2] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0952a4]"
-        >
-          <ShieldCheck className="h-4 w-4" />
-          Open admin panel
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setIsPanelOpen(true)}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0A66C2] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0952a4]"
+          >
+            <ShieldCheck className="h-4 w-4" />
+            Open admin panel
+          </button>
+        </div>
       }
     >
       {newSupportAlert.open && newSupportAlert.request ? (
@@ -457,6 +459,7 @@ export default function PlatformOverviewPage() {
           Send setup reminders
         </button>
       </div>
+
 
       {isPanelOpen ? (
         <div className="fixed inset-0 z-50 flex">

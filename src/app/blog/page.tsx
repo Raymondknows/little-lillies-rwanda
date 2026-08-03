@@ -74,7 +74,10 @@ export default function BlogPage() {
           </div>
 
           <div className="mt-12 grid gap-8 lg:grid-cols-2">
-            {blogPosts.map((post) => (
+            {blogPosts
+              .slice()
+              .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+              .map((post) => (
               <article key={post.slug} className="group rounded-2xl border border-border bg-surface p-8 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg">
                 <div className="flex items-center gap-2 text-sm font-medium text-brand">
                   <BookOpen className="h-4 w-4" />

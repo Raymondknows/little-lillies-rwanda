@@ -1,7 +1,14 @@
 import { MetadataRoute } from 'next'
+import { blogPosts } from './blog/data'
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://schoolbase.live'
+  const blogPages: MetadataRoute.Sitemap = blogPosts.map((post) => ({
+    url: `${baseUrl}/blog/${post.slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly',
+    priority: 0.9,
+  }))
 
   // Public pages
   const publicPages: MetadataRoute.Sitemap = [
@@ -23,132 +30,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'weekly',
       priority: 0.95,
     },
-    {
-      url: `${baseUrl}/blog/best-school-management-software`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/blog/school-fee-management-software`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/blog/parent-communication-software`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/blog/results-publishing-software`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/blog/student-attendance-management-software`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/blog/school-broadsheet-software`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/blog/digital-transformation-in-schools`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/blog/school-website-admissions-platform`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/blog/secure-school-data-management`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/blog/school-admin-productivity-automation`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/blog/school-management-software-for-private-schools`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.88,
-    },
-    {
-      url: `${baseUrl}/blog/school-software-for-primary-schools`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.88,
-    },
-    {
-      url: `${baseUrl}/blog/school-software-for-secondary-schools`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.88,
-    },
-    {
-      url: `${baseUrl}/blog/school-software-for-boarding-schools`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.88,
-    },
-    {
-      url: `${baseUrl}/blog/digital-report-cards-for-schools`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.88,
-    },
-    {
-      url: `${baseUrl}/blog/school-website-for-admissions`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.88,
-    },
-    {
-      url: `${baseUrl}/blog/school-analytics-dashboard`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.88,
-    },
-    {
-      url: `${baseUrl}/blog/automated-student-records-management`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.88,
-    },
-    {
-      url: `${baseUrl}/blog/school-communication-and-parent-portal`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.88,
-    },
-    {
-      url: `${baseUrl}/blog/school-operations-automation`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.88,
-    },
-    {
-      url: `${baseUrl}/blog/why-you-need-schoolbase`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.95,
-    },
+    ...blogPages,
     {
       url: `${baseUrl}/pricing`,
       lastModified: new Date(),

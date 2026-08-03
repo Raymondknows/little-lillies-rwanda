@@ -8,6 +8,9 @@ export type BlogPost = {
   publishedAt: string
   keywords: string[]
   hero: string
+  image?: string
+  authorName?: string
+  authorRole?: string
   sections: Array<{
     heading: string
     body: string[]
@@ -348,6 +351,124 @@ export const blogPosts: BlogPost[] = [
       'school-admin-productivity-automation',
       'secure-school-data-management',
     ],
+  },
+  {
+    slug: 'why-i-built-schoolbase',
+    title: 'Why I Built SchoolBase',
+    description:
+      'There comes a point where you stop asking "Why is this still a problem?" and start asking "What can I do to solve it?" — the founder story behind SchoolBase and how we built practical tools for African schools.',
+    excerpt:
+      'A founder narrative that describes the practical challenges schools face, the choices we made building SchoolBase, and the early impact we began to see in pilot schools.',
+    category: 'Founder Story',
+    readingTime: '8–10 min read',
+    publishedAt: 'August 03, 2026',
+    keywords: ['founder story', 'edtech', 'Africa', 'school management'],
+    hero:
+      'There comes a point where you stop asking, "Why is this still a problem?" and start asking, "What can I do to solve it?" For me, that question led to the creation of SchoolBase.',
+    image: '/ray2.jpg',
+    authorName: 'Nwokpor Raymond Ikenna',
+    authorRole: 'Chairman | ClickBase Group, Founder& CEO | ClickBase Technologies Ltd ',
+    sections: [
+      {
+        heading: 'Introduction',
+        body: [
+          "People often ask me, \"Why did you decide to build SchoolBase?\" — the short answer is that the idea began long before I became a software engineer. It began at home, watching my father dedicate his life to teaching and the immense administrative work that consumed his time.",
+          'Those early experiences — registers to complete, results to calculate, reports to prepare, student records to organise, and parents to communicate with — stuck with me and shaped the work that followed.'
+        ],
+      },
+      {
+        heading: 'Growing Up Around Education',
+        body: [
+          'My father was more than a teacher: he was a mentor, a guide, and someone who believed education could transform lives. As a child I watched him prepare lessons, mark assignments, and organise records — and I saw how much of his time was consumed by administrative work.',
+        ],
+      },
+      {
+        heading: 'Working Inside Schools Changed Everything',
+        body: [
+          'Later I worked as an ICT Manager and became part of daily school operations. I lived the challenges: teachers preparing results manually, administrators drowning in student records, fee reconciliation taking far longer than it should, attendance kept on paper, communications scattered across phone calls, printed notices and WhatsApp, and admissions handled with stacks of paper forms.',
+        ],
+      },
+      {
+        heading: 'Becoming a Software Engineer',
+        body: [
+          'As I moved deeper into software engineering, one question persisted: why should schools struggle with problems technology can solve? Technology transformed banking, commerce and communication — education deserved the same practical solutions.',
+        ],
+      },
+      {
+        heading: 'Building More Than Companies',
+        body: [
+          'My work at ClickBase Group and its companies has always started with a simple philosophy: find a real problem, build a practical solution, and keep improving until it genuinely changes lives. SchoolBase combined my background in education, experience inside schools, and years of engineering into one mission.'
+        ],
+      },
+      {
+        heading: 'We Didn\'t Want to Build Another School Management System',
+        body: [
+          'Instead of adding to the noise, we aimed to build software schools would actually enjoy using: affordable, practical, and respectful of teachers\' limited time. SchoolBase was never about feature count — it was about meaningful impact.'
+        ],
+      },
+      {
+        heading: 'Listening Before Building',
+        body: [
+          'We listened to school owners, principals, bursars, teachers and parents. Those conversations shaped every decision. Every feature exists because someone needed it — not because it looked impressive on a brochure.'
+        ],
+      },
+      {
+        heading: 'Solving Real Problems',
+        body: [
+          'SchoolBase focuses on operational challenges that consume thousands of hours each year: student and staff management, digital attendance, fee collection and reconciliation, academic results and report cards, parent communication, online admissions, school websites, secure academic records, and administrative reporting.'
+        ],
+        bullets: [
+          'Student management',
+          'Staff management',
+          'Digital attendance',
+          'Fee collection and payment tracking',
+          'Academic results and report cards',
+          'Parent communication',
+          'Online admissions',
+          'School websites',
+          'Academic records',
+          'Administrative reporting',
+        ],
+      },
+      {
+        heading: 'The Journey Hasn\'t Been Easy',
+        body: [
+          'Building meaningful technology is hard: technical and financial challenges, long nights, pivots and redesigns. Each obstacle reinforced why we started and every piece of feedback helped us improve.'
+        ],
+      },
+      {
+        heading: 'Why Africa Matters',
+        body: [
+          'SchoolBase is built with Africa in mind: tools that understand local workflows, affordability, and infrastructure realities. Digital transformation should be accessible to every school, not just a few elite institutions.'
+        ],
+      },
+      {
+        heading: 'Our Mission & Looking Ahead',
+        body: [
+          'We are committed to helping schools become more organised, reduce administrative stress, improve communication, and support educators. We continue investing in security, onboarding, analytics, local payments, and AI-assisted administration.'
+        ],
+      },
+      {
+        heading: 'A Personal Thank You',
+        body: [
+          'Every stage of my life prepared me for this: growing up as the son of a teacher, working inside schools, becoming an engineer, and building technology companies. SchoolBase is a mission to help schools build a better future.'
+        ],
+      },
+      {
+        heading: 'Explore SchoolBase',
+        body: [
+          'Website: https://schoolbase.live',
+          'WhatsApp: +234 903 225 0338'
+        ],
+      },
+      {
+        heading: 'About the Author',
+        body: [
+          'Nwokpor Raymond Ikenna — Chairman of ClickBase Group and Founder & CEO of ClickBase Technologies Ltd. A software engineer and entrepreneur focused on practical technology for Africa.'
+        ],
+      },
+    ],
+    relatedPosts: ['best-school-management-software', 'school-fee-management-software'],
   },
   {
     slug: 'school-website-admissions-platform',

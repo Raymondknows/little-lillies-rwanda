@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { getBackendUrl } from "@/lib/backend-url";
+import { resolveSchoolAssetUrl } from "@/lib/asset-urls";
 import { playCloseTone, playOpenTone } from "@/lib/sounds";
 import type { School } from "@prisma/client";
 
@@ -565,8 +566,23 @@ export default function SubscriptionsPageClient({
                 {paginatedSchools.map((school) => (
                   <tr key={school.id} className="border-t border-border hover:bg-background/50 transition-colors">
                     <td className="px-4 py-3 font-medium text-foreground">
-                      {school.name}
-                      <div className="text-xs text-muted mt-0.5">{school.slug}</div>
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-brand/10 text-sm font-semibold text-brand shadow-sm">
+                          {school.logoUrl ? (
+                            <img
+                              src={resolveSchoolAssetUrl(school.logoUrl) || school.logoUrl}
+                              alt={`${school.name} logo`}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <span>{school.name.slice(0, 2).toUpperCase()}</span>
+                          )}
+                        </div>
+                        <div>
+                          <div>{school.name}</div>
+                          <div className="text-xs text-muted mt-0.5">{school.slug}</div>
+                        </div>
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-muted text-sm">{school.country}</td>
                     <td className="px-4 py-3">
@@ -662,9 +678,22 @@ export default function SubscriptionsPageClient({
                 className="rounded-lg border border-border bg-surface px-4 py-3"
               >
                 <div className="flex items-start justify-between gap-2 mb-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm text-foreground">{school.name}</p>
-                    <p className="text-xs text-muted mt-0.5">{school.slug}</p>
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-3xl bg-brand/10 text-2xl font-semibold text-brand shadow-sm">
+                      {school.logoUrl ? (
+                        <img
+                          src={resolveSchoolAssetUrl(school.logoUrl) || school.logoUrl}
+                          alt={`${school.name} logo`}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <span>{school.name.slice(0, 2).toUpperCase()}</span>
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-medium text-sm text-foreground">{school.name}</p>
+                      <p className="text-xs text-muted mt-0.5">{school.slug}</p>
+                    </div>
                   </div>
                   <div>
                     <Badge variant="default" className="text-xs">

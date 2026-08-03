@@ -187,6 +187,15 @@ export default function SharedLayout({
 
   const openNotesModal = () => {
     playOpenTone();
+    // Ensure modal is visible on small viewports by clamping position
+    const modalW = Math.min(noteModalWidth, (typeof window !== 'undefined' ? window.innerWidth - 32 : noteModalWidth));
+    const modalH = Math.min(noteModalHeight, (typeof window !== 'undefined' ? window.innerHeight - 32 : noteModalHeight));
+    const maxLeft = (typeof window !== 'undefined') ? Math.max(16, window.innerWidth - modalW - 16) : noteModalPosition.left;
+    const maxTop = (typeof window !== 'undefined') ? Math.max(16, window.innerHeight - modalH - 16) : noteModalPosition.top;
+    setNoteModalPosition((current) => ({
+      top: Math.min(current.top, maxTop),
+      left: Math.min(current.left, maxLeft),
+    }));
     setIsNotesOpen(true);
   };
 

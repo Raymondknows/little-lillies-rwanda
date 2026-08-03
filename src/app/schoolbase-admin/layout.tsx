@@ -7,6 +7,7 @@ import { getPlatformAdminSession } from "@/lib/auth";
 const nav = [
   { href: "/schoolbase-admin", label: "Overview", icon: "LayoutDashboard" },
   { href: "/schoolbase-admin/schools", label: "Schools", icon: "Users" },
+  { href: "/schoolbase-admin/pending-signups", label: "Pending Signups", icon: "ClipboardCheck" },
   { href: "/schoolbase-admin/setup-reminders", label: "Setup Reminders", icon: "Mail" },
   { href: "/schoolbase-admin/email-center", label: "Email Center", icon: "Mail" },
   { href: "/schoolbase-admin/campaign", label: "Campaign", icon: "Send" },

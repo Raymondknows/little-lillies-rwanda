@@ -417,15 +417,6 @@ export default function SharedLayout({
                   ))}
                   <button
                     type="button"
-                    onClick={handlePlayerCollapseToggle}
-                    className="flex h-10 w-10 items-center justify-center rounded-full border border-white/50 bg-white/90 text-slate-700 shadow-sm transition hover:bg-white"
-                    title={playerCollapsed ? "Show player" : "Hide player"}
-                    aria-label={playerCollapsed ? "Show player" : "Hide player"}
-                  >
-                    {playerCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
-                  </button>
-                  <button
-                    type="button"
                     ref={volumeButtonRef}
                     onClick={() => setIsVolumePopoverOpen((open) => !open)}
                     className="relative flex h-10 w-10 items-center justify-center rounded-full border border-white/40 bg-white/90 text-slate-700 shadow-sm transition hover:bg-white"

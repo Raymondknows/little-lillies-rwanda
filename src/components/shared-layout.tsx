@@ -3,7 +3,7 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
 import Sidebar from "@/components/sidebar";
 import { usePathname } from "next/navigation";
-import { Menu, X, FileText, Music, Play, Pause, ChevronDown, ChevronUp, Volume2 } from "lucide-react";
+import { Menu, X, FileText, Music, Play, Pause, ChevronDown, Volume2, Calculator, Bell, Clock, Sparkles, Loader2, MoonStar, SunMedium, Equal, Delete, RefreshCcw, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { playCloseTone, playOpenTone } from "@/lib/sounds";
 
@@ -47,11 +47,36 @@ export default function SharedLayout({
   const [noteModalHeight, setNoteModalHeight] = useState(480);
   const [isResizingNotes, setIsResizingNotes] = useState(false);
   const [isVolumePopoverOpen, setIsVolumePopoverOpen] = useState(false);
+  const [isAudioPlayerOpen, setIsAudioPlayerOpen] = useState(false);
+  const [isAudioBuffering, setIsAudioBuffering] = useState(false);
+  const [themeMode, setThemeMode] = useState<"light" | "dark">("light");
+  const [isToolsOpen, setIsToolsOpen] = useState(false);
+  const [toolsPosition, setToolsPosition] = useState({ x: 24, y: 120 });
+  const [isDraggingTools, setIsDraggingTools] = useState(false);
+  const [toolPanelPosition, setToolPanelPosition] = useState({ x: 680, y: 120 });
+  const [audioPanelPosition, setAudioPanelPosition] = useState({ x: 24, y: 200 });
+  const [isDraggingToolPanel, setIsDraggingToolPanel] = useState(false);
+  const [isDraggingAudioPanel, setIsDraggingAudioPanel] = useState(false);
+  const [activeTool, setActiveTool] = useState<"notes" | "calculator" | "reminders" | "timer">("notes");
+  const [isToolPanelOpen, setIsToolPanelOpen] = useState(false);
+  const [calculatorExpression, setCalculatorExpression] = useState("12+34");
+  const [calculatorResult, setCalculatorResult] = useState("0");
+  const [calculatorHistory, setCalculatorHistory] = useState<string[]>([]);
+  const [reminderInput, setReminderInput] = useState("");
+  const [reminders, setReminders] = useState<string[]>([]);
+  const [timerInput, setTimerInput] = useState("05:00");
+  const [timerRemaining, setTimerRemaining] = useState(300);
+  const [timerRunning, setTimerRunning] = useState(false);
+  const timerIntervalRef = useRef<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const resizeStartRef = useRef<any>({ startX: 0, width: 720, startLeft: 0, startY: 0, height: 480, side: "right" });
   const volumeButtonRef = useRef<HTMLButtonElement | null>(null);
   const volumePopoverRef = useRef<HTMLDivElement | null>(null);
+  const toolPanelRef = useRef<HTMLDivElement | null>(null);
   const dragOffsetRef = useRef({ x: 0, y: 0 });
+  const toolPanelDragOffsetRef = useRef({ x: 0, y: 0 });
+  const audioPanelDragOffsetRef = useRef({ x: 0, y: 0 });
+  const toolsDragOffsetRef = useRef({ x: 0, y: 0 });
 
   const DEFAULT_JINGLES = [
     { name: "SchoolBase Jingle 1", src: "/audio-jingles/SchoolBase%20_%20Simple%20On%20Your%20Screen.mp3" },
@@ -64,6 +89,10 @@ export default function SharedLayout({
   useEffect(() => {
     setAdminSessionNotes(window.sessionStorage.getItem("schoolbase-admin-session-notes") || "");
     setPlayerCollapsed(window.localStorage.getItem("admin-notes-player-collapsed") === "true");
+
+    const storedTheme = window.localStorage.getItem("schoolbase-theme");
+    const nextTheme = storedTheme === "dark" ? "dark" : "light";
+    setThemeMode(nextTheme);
   }, []);
 
   useEffect(() => {
@@ -177,11 +206,272 @@ export default function SharedLayout({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isVolumePopoverOpen]);
 
+  useEffect(() => {
+    if (!isToolsOpen) return;
+
+    const handleToolClickOutside = (event: MouseEvent) => {
+      if (!toolPanelRef.current) return;
+      if (toolPanelRef.current.contains(event.target as Node)) return;
+      setIsToolsOpen(false);
+    };
+
+    window.addEventListener("mousedown", handleToolClickOutside);
+    return () => window.removeEventListener("mousedown", handleToolClickOutside);
+  }, [isToolsOpen]);
+
+  useEffect(() => {
+    if (!isToolPanelOpen) return;
+
+    const panelWidth = activeTool === "reminders" ? 560 : 320;
+    setToolPanelPosition((current) => clampToViewport(current, panelWidth, 520));
+  }, [activeTool, isToolPanelOpen]);
+
+  useEffect(() => {
+    if (!isAudioPlayerOpen) return;
+
+    setAudioPanelPosition((current) => clampPanelToViewport(current, 440, 520));
+  }, [isAudioPlayerOpen]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (isToolPanelOpen) {
+        const panelWidth = activeTool === "reminders" ? 560 : 320;
+        setToolPanelPosition((current) => clampToViewport(current, panelWidth, 520));
+      }
+      if (isAudioPlayerOpen) {
+        setAudioPanelPosition((current) => clampPanelToViewport(current, 440, 520));
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [activeTool, isAudioPlayerOpen, isToolPanelOpen]);
+
+  useEffect(() => {
+    if (!isDraggingToolPanel && !isDraggingAudioPanel) return;
+
+    const handleMouseMove = (event: MouseEvent) => {
+      if (isDraggingToolPanel) {
+        setToolPanelPosition({
+          x: Math.max(12, Math.min(window.innerWidth - 340, event.clientX - toolPanelDragOffsetRef.current.x)),
+          y: Math.max(12, Math.min(window.innerHeight - 240, event.clientY - toolPanelDragOffsetRef.current.y)),
+        });
+      }
+      if (isDraggingAudioPanel) {
+        setAudioPanelPosition({
+          x: Math.max(12, Math.min(window.innerWidth - 460, event.clientX - audioPanelDragOffsetRef.current.x)),
+          y: Math.max(12, Math.min(window.innerHeight - 320, event.clientY - audioPanelDragOffsetRef.current.y)),
+        });
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsDraggingToolPanel(false);
+      setIsDraggingAudioPanel(false);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isDraggingToolPanel, isDraggingAudioPanel]);
+
+  useEffect(() => {
+    if (!isDraggingTools) return;
+
+    const handleMouseMove = (event: MouseEvent) => {
+      const nextX = Math.max(12, Math.min(window.innerWidth - 60, event.clientX - toolsDragOffsetRef.current.x));
+      const nextY = Math.max(12, Math.min(window.innerHeight - 60, event.clientY - toolsDragOffsetRef.current.y));
+      setToolsPosition({ x: nextX, y: nextY });
+    };
+
+    const handleMouseUp = () => setIsDraggingTools(false);
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isDraggingTools]);
+
+  const sanitizeCalculatorInput = (expression: string) => {
+    return expression.replace(/[^0-9+\-*/().% ]/g, "");
+  };
+
+  const calculateExpression = (expression: string) => {
+    const sanitized = sanitizeCalculatorInput(expression);
+    try {
+      const result = Function(`"use strict"; return (${sanitized})`)();
+      if (typeof result === "number" && Number.isFinite(result)) {
+        return String(result);
+      }
+    } catch {
+      // ignore invalid expressions
+    }
+    return "Error";
+  };
+
+  const clampToViewport = (position: { x: number; y: number }, panelWidth: number, panelHeight: number) => {
+    if (typeof window === "undefined") return position;
+    const minX = 16;
+    const minY = 16;
+    const maxX = Math.max(minX, window.innerWidth - panelWidth - 16);
+    const maxY = Math.max(minY, window.innerHeight - panelHeight - 16);
+    return {
+      x: Math.min(Math.max(position.x, minX), maxX),
+      y: Math.min(Math.max(position.y, minY), maxY),
+    };
+  };
+
+  const openTool = (tool: "notes" | "calculator" | "reminders" | "timer") => {
+    setActiveTool(tool);
+    playCloseTone();
+    setIsToolsOpen(false);
+    if (tool === "notes") {
+      openNotesModal();
+    } else {
+      const panelWidth = tool === "reminders" ? 560 : 320;
+      const panelHeight = 520;
+      setToolPanelPosition((current) => clampToViewport(current, panelWidth, panelHeight));
+      setIsToolPanelOpen(true);
+    }
+  };
+
+  const toggleToolsOpen = () => {
+    setIsToolsOpen((current) => {
+      const next = !current;
+      if (next) {
+        playOpenTone();
+      } else {
+        playCloseTone();
+      }
+      return next;
+    });
+  };
+
+  const handleCalculatorEvaluate = () => {
+    const result = calculateExpression(calculatorExpression);
+    setCalculatorResult(result);
+    setCalculatorHistory((current) => [`${calculatorExpression} = ${result}`, ...current].slice(0, 6));
+    setIsToolPanelOpen(true);
+    playCloseTone();
+    setIsToolsOpen(false);
+  };
+
+  const appendCalculatorExpression = (value: string) => {
+    setCalculatorExpression((current) => current + value);
+  };
+
+  const clearCalculator = () => {
+    setCalculatorExpression("");
+    setCalculatorResult("0");
+  };
+
+  const backspaceCalculator = () => {
+    setCalculatorExpression((current) => current.slice(0, -1));
+  };
+
+  const addReminder = () => {
+    const trimmed = reminderInput.trim();
+    if (!trimmed) return;
+    setReminders((current) => [trimmed, ...current]);
+    setReminderInput("");
+    setActiveTool("reminders");
+    setIsToolPanelOpen(true);
+    setIsToolsOpen(false);
+  };
+
+  const parseTimerInput = (value: string) => {
+    const parts = value.split(":").map((part) => Number(part.trim()));
+    if (parts.length === 2 && Number.isFinite(parts[0]) && Number.isFinite(parts[1])) {
+      return parts[0] * 60 + parts[1];
+    }
+    if (parts.length === 1 && Number.isFinite(parts[0])) {
+      return parts[0];
+    }
+    return 0;
+  };
+
+  const formatTimer = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+  };
+
+  const startTimer = () => {
+    const seconds = parseTimerInput(timerInput);
+    if (seconds <= 0) return;
+    setTimerRemaining(seconds);
+    setTimerRunning(true);
+    if (timerIntervalRef.current) {
+      window.clearInterval(timerIntervalRef.current);
+    }
+    timerIntervalRef.current = window.setInterval(() => {
+      setTimerRemaining((current) => {
+        if (current <= 1) {
+          if (timerIntervalRef.current) {
+            window.clearInterval(timerIntervalRef.current);
+            timerIntervalRef.current = null;
+          }
+          setTimerRunning(false);
+          return 0;
+        }
+        return current - 1;
+      });
+    }, 1000);
+  };
+
+  const pauseTimer = () => {
+    if (timerIntervalRef.current) {
+      window.clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
+    }
+    setTimerRunning(false);
+  };
+
+  const resetTimer = () => {
+    pauseTimer();
+    setTimerRemaining(parseTimerInput(timerInput));
+  };
+
+  useEffect(() => {
+    return () => {
+      if (timerIntervalRef.current) {
+        window.clearInterval(timerIntervalRef.current);
+      }
+    };
+  }, []);
+
   const handleNotesMouseDown = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     setIsDraggingNotes(true);
     dragOffsetRef.current = {
       x: event.clientX - noteModalPosition.left,
       y: event.clientY - noteModalPosition.top,
+    };
+  };
+
+  const handleToolPanelMouseDown = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    if ((event.target as HTMLElement).closest("button")) return;
+    event.preventDefault();
+    setIsDraggingToolPanel(true);
+    toolPanelDragOffsetRef.current = {
+      x: event.clientX - toolPanelPosition.x,
+      y: event.clientY - toolPanelPosition.y,
+    };
+  };
+
+  const handleAudioPanelMouseDown = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    if ((event.target as HTMLElement).closest("button")) return;
+    event.preventDefault();
+    setIsDraggingAudioPanel(true);
+    audioPanelDragOffsetRef.current = {
+      x: event.clientX - audioPanelPosition.x,
+      y: event.clientY - audioPanelPosition.y,
     };
   };
 
@@ -199,9 +489,34 @@ export default function SharedLayout({
     setIsNotesOpen(true);
   };
 
+  const clampPanelToViewport = (position: { x: number; y: number }, panelWidth: number, panelHeight: number) => {
+    if (typeof window === "undefined") return position;
+    const minX = 16;
+    const minY = 16;
+    const maxX = Math.max(minX, window.innerWidth - panelWidth - 16);
+    const maxY = Math.max(minY, window.innerHeight - panelHeight - 16);
+    return {
+      x: Math.min(Math.max(position.x, minX), maxX),
+      y: Math.min(Math.max(position.y, minY), maxY),
+    };
+  };
+
   const closeNotesModal = () => {
     playCloseTone();
     setIsNotesOpen(false);
+  };
+
+  const toggleAudioPlayer = () => {
+    setAudioPanelPosition((current) => clampPanelToViewport(current, 440, 520));
+    setIsAudioPlayerOpen((current) => {
+      const next = !current;
+      if (next) {
+        playOpenTone();
+      } else {
+        playCloseTone();
+      }
+      return next;
+    });
   };
 
   const clearNotes = () => {
@@ -242,12 +557,38 @@ export default function SharedLayout({
     if (isAudioPlaying) {
       audioRef.current.pause();
       setIsAudioPlaying(false);
+      setIsAudioBuffering(false);
     } else {
+      setIsAudioBuffering(true);
       audioRef.current.play().catch(() => {
         setIsAudioPlaying(false);
+        setIsAudioBuffering(false);
       });
       setIsAudioPlaying(true);
     }
+  };
+
+  const stopAudioPlayback = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    setIsAudioPlaying(false);
+    setIsAudioBuffering(false);
+    setAudioProgress(0);
+  };
+
+  const seekAudioBySeconds = (seconds: number) => {
+    if (!audioRef.current) return;
+    const nextTime = Math.max(0, Math.min(audioRef.current.duration || 0, audioRef.current.currentTime + seconds));
+    audioRef.current.currentTime = nextTime;
+    setAudioProgress(nextTime / (audioRef.current.duration || 1));
+  };
+
+  const toggleThemeMode = () => {
+    const nextTheme = themeMode === "dark" ? "light" : "dark";
+    setThemeMode(nextTheme);
+    window.localStorage.setItem("schoolbase-theme", nextTheme);
   };
 
   const handleAudioTimeUpdate = () => {
@@ -274,11 +615,22 @@ export default function SharedLayout({
 
     const handleEnded = () => {
       setIsAudioPlaying(false);
+      setIsAudioBuffering(false);
     };
+    const handleWaiting = () => setIsAudioBuffering(true);
+    const handleCanPlay = () => setIsAudioBuffering(false);
+    const handlePlaying = () => setIsAudioBuffering(false);
 
     audioRef.current.addEventListener("ended", handleEnded);
+    audioRef.current.addEventListener("waiting", handleWaiting);
+    audioRef.current.addEventListener("canplay", handleCanPlay);
+    audioRef.current.addEventListener("playing", handlePlaying);
+
     return () => {
       audioRef.current?.removeEventListener("ended", handleEnded);
+      audioRef.current?.removeEventListener("waiting", handleWaiting);
+      audioRef.current?.removeEventListener("canplay", handleCanPlay);
+      audioRef.current?.removeEventListener("playing", handlePlaying);
     };
   }, [audioFileUrl]);
 
@@ -362,14 +714,247 @@ export default function SharedLayout({
 
         <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden p-6 md:p-8 print:overflow-visible print:p-0">{children}</main>
 
-        <button
-          type="button"
-          onClick={openNotesModal}
-          className="fixed right-6 top-1/2 z-50 inline-flex items-center gap-2 rounded-full bg-[#0A66C2] px-3 py-2 text-xs font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-[#0952a4] transform -translate-y-1/2"
+        <div
+          className="fixed z-50 flex flex-col items-end gap-2"
+          style={{ left: toolsPosition.x, top: toolsPosition.y }}
         >
-          <FileText className="h-3.5 w-3.5" />
-          Notes
-        </button>
+          <div className="relative" ref={toolPanelRef}>
+            <button
+              type="button"
+              data-tools-button
+              onMouseDown={(event) => {
+                event.preventDefault();
+                setIsDraggingTools(true);
+                toolsDragOffsetRef.current = {
+                  x: event.clientX - toolsPosition.x,
+                  y: event.clientY - toolsPosition.y,
+                };
+              }}
+              onClick={toggleToolsOpen}
+              className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#0A66C2] text-white shadow-lg shadow-slate-900/20 transition hover:bg-[#0952a4] hover:scale-105"
+              title="Open tools"
+              aria-label="Open tools"
+            >
+              <Sparkles className="h-5 w-5" />
+            </button>
+            {isToolsOpen ? (
+              <div className="absolute right-0 top-full mt-2 flex flex-col items-end gap-2 rounded-full bg-transparent p-1 shadow-none">
+                <button
+                  type="button"
+                  onClick={() => openTool("notes")}
+                  className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#0A66C2] text-white shadow-lg shadow-slate-900/10 transition hover:scale-105"
+                  title="Notes"
+                  aria-label="Open Notes tool"
+                >
+                  <FileText className="h-5 w-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openTool("calculator")}
+                  className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#0A66C2] text-white shadow-lg shadow-slate-900/10 transition hover:scale-105"
+                  title="Calculator"
+                  aria-label="Open Calculator tool"
+                >
+                  <Calculator className="h-5 w-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openTool("reminders")}
+                  className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#0A66C2] text-white shadow-lg shadow-slate-900/10 transition hover:scale-105"
+                  title="Reminders"
+                  aria-label="Open Reminders tool"
+                >
+                  <Bell className="h-5 w-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openTool("timer")}
+                  className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#0A66C2] text-white shadow-lg shadow-slate-900/10 transition hover:scale-105"
+                  title="Timer"
+                  aria-label="Open Timer tool"
+                >
+                  <Clock className="h-5 w-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    toggleAudioPlayer();
+                    setIsToolsOpen(false);
+                  }}
+                  className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#0A66C2] text-white shadow-lg shadow-slate-900/10 transition hover:scale-105"
+                  title="Audio player"
+                  aria-label="Open Audio player"
+                >
+                  <Music className="h-5 w-5" />
+                </button>
+              </div>
+            ) : null}
+          </div>
+
+        </div>
+
+        <div className="fixed z-50 flex flex-col items-end gap-2" style={{ left: audioPanelPosition.x, top: audioPanelPosition.y }}>
+          {isAudioPlayerOpen ? (
+            <div
+              className={`w-[440px] max-w-[calc(100vw-32px)] rounded-[28px] border p-4 shadow-[0_20px_80px_rgba(0,0,0,0.12)] transition ${themeMode === "dark" ? "border-slate-700 bg-slate-900 text-slate-100" : "border-slate-200 bg-white text-slate-900"}`}
+            >
+              <div className={`flex cursor-grab items-start justify-between gap-3 rounded-t-3xl px-5 py-4 ${themeMode === "dark" ? "bg-slate-800" : "bg-gradient-to-r from-[#dbeafe] via-[#bfdbfe] to-[#f8fafc]"}`} onMouseDown={handleAudioPanelMouseDown}>
+                <div className="flex items-center gap-3">
+                  <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${themeMode === "dark" ? "bg-slate-800 text-slate-100" : "bg-slate-100 text-[#0A66C2]"}`}>
+                    {isAudioPlaying ? <Loader2 className="h-5 w-5 animate-spin" /> : <Music className="h-5 w-5" />}
+                  </div>
+                  <div>
+                    <p className={`text-sm font-semibold ${themeMode === "dark" ? "text-slate-100" : "text-slate-900"}`}>Music player</p>
+                    <p className={`text-xs ${themeMode === "dark" ? "text-slate-400" : "text-slate-500"}`}>{audioFileName || "SchoolBase jingle"}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={toggleThemeMode}
+                    className={`rounded-full border px-2.5 py-1.5 text-xs font-semibold transition ${themeMode === "dark" ? "border-slate-700 bg-slate-800 text-slate-100 hover:bg-slate-700" : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"}`}
+                    title={themeMode === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+                    aria-label={themeMode === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+                  >
+                    {themeMode === "dark" ? <SunMedium className="h-4 w-4" /> : <MoonStar className="h-4 w-4" />}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsAudioPlayerOpen(false)}
+                    className={`rounded-full border px-2.5 py-1.5 text-xs font-semibold transition ${themeMode === "dark" ? "border-slate-700 bg-slate-800 text-slate-100 hover:bg-slate-700" : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"}`}
+                  >
+                    Hide
+                  </button>
+                </div>
+              </div>
+
+              <div className={`mt-4 rounded-[24px] border p-4 ${themeMode === "dark" ? "border-slate-800 bg-slate-800/70" : "border-slate-200 bg-slate-50"}`}>
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className={`text-xs uppercase tracking-[0.25em] ${themeMode === "dark" ? "text-slate-400" : "text-slate-400"}`}>Now playing</p>
+                    <p className={`text-sm font-semibold ${themeMode === "dark" ? "text-slate-100" : "text-slate-900"}`}>{audioFileName || "SchoolBase jingle"}</p>
+                  </div>
+                  <div className={`flex h-12 w-12 items-center justify-center rounded-full border ${themeMode === "dark" ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
+                    {isAudioPlaying ? <Loader2 className="h-5 w-5 animate-spin text-[#0A66C2]" /> : <Music className="h-5 w-5 text-[#0A66C2]" />}
+                  </div>
+                </div>
+
+                <div className={`mt-4 flex items-center justify-center rounded-[20px] border p-6 ${themeMode === "dark" ? "border-slate-700 bg-slate-900/80" : "border-slate-200 bg-white"}`}>
+                  <div className={`relative flex h-24 w-24 items-center justify-center rounded-full border-4 ${themeMode === "dark" ? "border-slate-700" : "border-slate-200"}`}>
+                    <div className={`absolute inset-0 rounded-full border-4 border-t-[#0A66C2] ${isAudioPlaying ? "animate-spin" : ""}`} />
+                    <button
+                      type="button"
+                      onClick={toggleAudioPlayback}
+                      className="relative z-10 inline-flex h-14 w-14 items-center justify-center rounded-full bg-[#0A66C2] text-white shadow-lg shadow-slate-900/15 transition hover:bg-[#0952a4]"
+                      title={isAudioPlaying ? "Pause music" : "Play music"}
+                      aria-label={isAudioPlaying ? "Pause music" : "Play music"}
+                    >
+                      {isAudioPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className={`mt-4 rounded-[20px] border p-3 shadow-sm ${themeMode === "dark" ? "border-slate-700 bg-slate-800/80" : "border-slate-200 bg-white"}`}>
+                <div className={`flex items-center justify-between gap-2 text-[11px] uppercase tracking-[0.25em] ${themeMode === "dark" ? "text-slate-400" : "text-slate-400"}`}>
+                  <span>Progress</span>
+                  <span>{Math.round(audioProgress * 100)}%</span>
+                </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={1}
+                  step={0.01}
+                  value={audioProgress}
+                  onChange={(event) => {
+                    const nextProgress = Number(event.target.value);
+                    setAudioProgress(nextProgress);
+                    if (audioRef.current) {
+                      const nextTime = (audioRef.current.duration || 1) * nextProgress;
+                      audioRef.current.currentTime = nextTime;
+                    }
+                  }}
+                  className="mt-2 h-2 w-full cursor-pointer accent-[#0A66C2]"
+                />
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => seekAudioBySeconds(-10)}
+                    className={`rounded-full border px-3 py-2 text-xs font-semibold transition ${themeMode === "dark" ? "border-slate-700 bg-slate-900 text-slate-100 hover:bg-slate-700" : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"}`}
+                  >
+                    -10s
+                  </button>
+                  <button
+                    type="button"
+                    onClick={stopAudioPlayback}
+                    className={`rounded-full border px-3 py-2 text-xs font-semibold transition ${themeMode === "dark" ? "border-slate-700 bg-slate-900 text-slate-100 hover:bg-slate-700" : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"}`}
+                  >
+                    Stop
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => seekAudioBySeconds(10)}
+                    className={`rounded-full border px-3 py-2 text-xs font-semibold transition ${themeMode === "dark" ? "border-slate-700 bg-slate-900 text-slate-100 hover:bg-slate-700" : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"}`}
+                  >
+                    +10s
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                {DEFAULT_JINGLES.map((jingle, index) => (
+                  <button
+                    key={jingle.name}
+                    type="button"
+                    onClick={() => playDefaultJingle(index)}
+                    className={`rounded-full border px-3 py-2 text-[11px] font-semibold transition ${themeMode === "dark" ? "border-slate-700 bg-slate-800 text-slate-100 hover:border-[#0A66C2] hover:text-[#0A66C2]" : "border-slate-200 bg-slate-50 text-slate-700 hover:border-[#0A66C2] hover:text-[#0A66C2]"}`}
+                    title={`Play ${jingle.name}`}
+                    aria-label={`Play ${jingle.name}`}
+                  >
+                    {jingle.name}
+                  </button>
+                ))}
+              </div>
+
+              <div className="mt-4 flex items-center gap-2">
+                <button
+                  type="button"
+                  ref={volumeButtonRef}
+                  onClick={() => setIsVolumePopoverOpen((open) => !open)}
+                  className={`relative inline-flex h-10 w-10 items-center justify-center rounded-full border transition ${themeMode === "dark" ? "border-slate-700 bg-slate-800 text-slate-100 hover:border-[#0A66C2] hover:text-[#0A66C2]" : "border-slate-200 bg-slate-50 text-slate-700 hover:border-[#0A66C2] hover:text-[#0A66C2]"}`}
+                  title="Volume"
+                  aria-label="Volume"
+                >
+                  <Volume2 className="h-4 w-4" />
+                </button>
+                {isVolumePopoverOpen ? (
+                  <div
+                    ref={volumePopoverRef}
+                    className={`absolute bottom-24 right-4 z-50 w-52 rounded-2xl border p-4 shadow-lg ${themeMode === "dark" ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}
+                  >
+                    <div className={`flex items-center justify-between gap-3 text-sm font-semibold ${themeMode === "dark" ? "text-slate-100" : "text-slate-900"}`}>
+                      <span>Volume</span>
+                      <span>{Math.round(playerVolume * 100)}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={1}
+                      step={0.01}
+                      value={playerVolume}
+                      onChange={handleAudioVolumeChange}
+                      className="mt-3 h-2 w-full cursor-pointer accent-[#0A66C2]"
+                    />
+                  </div>
+                ) : null}
+                <label className={`flex flex-1 cursor-pointer items-center justify-center rounded-full border px-3 py-2 text-sm font-medium transition ${themeMode === "dark" ? "border-slate-700 bg-slate-800 text-slate-100 hover:border-[#0A66C2] hover:text-[#0A66C2]" : "border-slate-200 bg-slate-50 text-slate-700 hover:border-[#0A66C2] hover:text-[#0A66C2]"}`}>
+                  <span>Choose track</span>
+                  <input type="file" accept="audio/*" className="hidden" onChange={handleAudioFileChange} />
+                </label>
+              </div>
+            </div>
+          ) : null}
+        </div>
 
         {isNotesOpen ? (
           <div className="fixed inset-0 z-50 pointer-events-none">
@@ -399,87 +984,7 @@ export default function SharedLayout({
               
                   <p className="mt-1 text-sm text-slate-600">Keep notes and reminders visible while you work.</p>
                 </div>
-                <div className="flex flex-wrap items-center gap-2 text-xs text-slate-800">
-                  <span className="text-xs font-semibold text-slate-800">
-                    {audioFileName || "Choose music"}
-                  </span>
-                  {DEFAULT_JINGLES.map((jingle, index) => (
-                    <button
-                      key={jingle.name}
-                      type="button"
-                      onClick={() => playDefaultJingle(index)}
-                      className="flex h-10 items-center justify-center rounded-full border border-white/50 bg-white/90 px-3 text-[11px] font-semibold text-slate-700 shadow-sm transition hover:bg-white"
-                      title={`Play ${jingle.name}`}
-                      aria-label={`Play ${jingle.name}`}
-                    >
-                      J{index + 1}
-                    </button>
-                  ))}
-                  <button
-                    type="button"
-                    ref={volumeButtonRef}
-                    onClick={() => setIsVolumePopoverOpen((open) => !open)}
-                    className="relative flex h-10 w-10 items-center justify-center rounded-full border border-white/40 bg-white/90 text-slate-700 shadow-sm transition hover:bg-white"
-                    title="Volume"
-                    aria-label="Volume"
-                  >
-                    <Volume2 className="h-4 w-4 text-brand" />
-                  </button>
-                  {isVolumePopoverOpen ? (
-                    <div
-                      ref={volumePopoverRef}
-                      className="absolute right-6 top-20 z-50 w-52 rounded-2xl border border-slate-200 bg-white p-4 shadow-lg"
-                    >
-                      <div className="flex items-center justify-between gap-3 text-sm font-semibold text-slate-900">
-                        <span>Volume</span>
-                        <span>{Math.round(playerVolume * 100)}%</span>
-                      </div>
-                      <input
-                        type="range"
-                        min={0}
-                        max={1}
-                        step={0.01}
-                        value={playerVolume}
-                        onChange={handleAudioVolumeChange}
-                        className="mt-3 h-2 w-full cursor-pointer accent-brand"
-                      />
-                    </div>
-                  ) : null}
-                  <label
-                    className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-white/40 bg-white/90 text-slate-700 shadow-sm transition hover:bg-white"
-                    title="Select audio track"
-                    aria-label="Select audio track"
-                  >
-                    <Music className="h-4 w-4 text-brand" />
-                    <input
-                      type="file"
-                      accept="audio/*"
-                      className="hidden"
-                      onChange={handleAudioFileChange}
-                    />
-                  </label>
-                  <button
-                    type="button"
-                    onClick={toggleAudioPlayback}
-                    className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/50 bg-white/90 text-brand shadow-sm transition hover:bg-white"
-                    title={isAudioPlaying ? "Pause music" : "Play music"}
-                    aria-label={isAudioPlaying ? "Pause music" : "Play music"}
-                  >
-                    {isAudioPlaying ? (
-                      <span
-                        className="absolute inset-0 rounded-full"
-                        style={{
-                          backgroundImage:
-                            "conic-gradient(from 0deg, rgba(10,102,194,0.75), rgba(245,193,37,0.75), rgba(56,189,248,0.75), rgba(245,193,37,0.55))",
-                          boxShadow: "0 0 0 2px rgba(10,102,194,0.25), 0 0 18px rgba(245,193,37,0.18)",
-                          animation: "spin 1.4s linear infinite",
-                        }}
-                      />
-                    ) : null}
-                    <span className="relative z-10">
-                      {isAudioPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                    </span>
-                  </button>
+                <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={closeNotesModal}
@@ -489,12 +994,6 @@ export default function SharedLayout({
                   >
                     ✕
                   </button>
-                </div>
-                <div className="pointer-events-none absolute inset-x-4 bottom-0 h-1 rounded-full bg-slate-200">
-                  <div
-                    className="h-full rounded-full bg-brand transition-all duration-200"
-                    style={{ width: `${audioProgress * 100}%` }}
-                  />
                 </div>
               </div>
               <div className="relative flex-1 flex flex-col space-y-4 px-5 py-5 overflow-auto">
@@ -587,6 +1086,235 @@ export default function SharedLayout({
           </div>
         ) : null}
       </div>
+
+      {isToolPanelOpen && activeTool !== "notes" ? (
+        <div className={`fixed z-50 ${activeTool === "reminders" ? "w-[560px]" : "w-[320px]"} max-w-[calc(100vw-32px)] rounded-3xl border shadow-[0_20px_80px_rgba(0,0,0,0.12)] ${themeMode === "dark" ? "border-slate-700 bg-slate-900 text-slate-100" : "border-slate-200 bg-white text-slate-900"}`} style={{ left: toolPanelPosition.x, top: toolPanelPosition.y }}>
+          <div
+            className={`flex cursor-grab items-center justify-between gap-3 rounded-t-3xl px-5 py-4 ${themeMode === "dark" ? "bg-slate-800" : "bg-gradient-to-r from-[#dbeafe] via-[#bfdbfe] to-[#f8fafc]"}`}
+            onMouseDown={handleToolPanelMouseDown}
+          >
+            <div>
+              <p className={`text-sm font-semibold ${themeMode === "dark" ? "text-slate-100" : "text-slate-900"}`}>
+                {activeTool === "calculator"
+                  ? "Calculator"
+                  : activeTool === "reminders"
+                  ? "Reminders"
+                  : "Timer"}
+              </p>
+              <p className={`text-xs ${themeMode === "dark" ? "text-slate-400" : "text-slate-600"}`}>
+                {activeTool === "calculator"
+                  ? "Quick sums in a pocket tool."
+                  : activeTool === "reminders"
+                  ? "Jot short reminders for follow-up tasks."
+                  : "Countdown focus sessions for priority work."}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsToolPanelOpen(false)}
+              className={`rounded-lg border px-3 py-2 text-xs font-semibold transition ${themeMode === "dark" ? "border-slate-700 bg-slate-800 text-slate-100 hover:bg-slate-700" : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"}`}
+            >
+              Close
+            </button>
+          </div>
+          <div className="space-y-4 p-5">
+            {activeTool === "calculator" ? (
+              <>
+                <div className={themeMode === "dark" ? "rounded-3xl border border-slate-700 bg-slate-950/90 p-4 shadow-sm transition" : "rounded-3xl border border-slate-200 bg-white p-4 shadow-sm transition"}>
+                  <div className="mb-4">
+                    <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+                      Expression
+                    </label>
+                    <input
+                      type="text"
+                      value={calculatorExpression}
+                      onChange={(event) => setCalculatorExpression(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          handleCalculatorEvaluate();
+                        }
+                      }}
+                      className={themeMode === "dark" ? "w-full rounded-3xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm font-medium text-slate-100 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-500/20" : "w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-900 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10"}
+                      placeholder="e.g. 12 + 24 / 3"
+                    />
+                  </div>
+
+                  <div className="mb-4 grid gap-2 sm:grid-cols-4">
+                    {[
+                      { label: "7", value: "7" },
+                      { label: "8", value: "8" },
+                      { label: "9", value: "9" },
+                      { label: "/", value: "/" },
+                      { label: "4", value: "4" },
+                      { label: "5", value: "5" },
+                      { label: "6", value: "6" },
+                      { label: "*", value: "*" },
+                      { label: "1", value: "1" },
+                      { label: "2", value: "2" },
+                      { label: "3", value: "3" },
+                      { label: "-", value: "-" },
+                      { label: "0", value: "0" },
+                      { label: ".", value: "." },
+                      { label: "%", value: "%" },
+                      { label: "+", value: "+" },
+                    ].map((button) => (
+                      <button
+                        key={button.label}
+                        type="button"
+                        onClick={() => appendCalculatorExpression(button.value)}
+                        className={themeMode === "dark" ? "rounded-3xl border border-slate-700 bg-slate-900 px-3 py-3 text-sm font-semibold text-slate-100 transition hover:border-slate-500 hover:bg-slate-800" : "rounded-3xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-semibold text-slate-900 transition hover:border-slate-300 hover:bg-slate-100"}
+                      >
+                        {button.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className={themeMode === "dark" ? "mb-4 rounded-3xl border border-slate-700 bg-slate-950 p-4" : "mb-4 rounded-3xl border border-slate-200 bg-slate-50 p-4"}>
+                    <div className="text-xs uppercase tracking-[0.24em] text-slate-400">Result</div>
+                    <div className={themeMode === "dark" ? "mt-2 text-3xl font-semibold text-white" : "mt-2 text-3xl font-semibold text-slate-900"}>{calculatorResult}</div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleCalculatorEvaluate}
+                      title="Evaluate expression"
+                      aria-label="Evaluate expression"
+                      className={themeMode === "dark" ? "inline-flex h-9 w-9 items-center justify-center text-white transition hover:text-white hover:bg-brand/90" : "inline-flex h-9 w-9 items-center justify-center text-brand transition hover:text-white hover:bg-brand/90"}
+                    >
+                      <Equal className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={backspaceCalculator}
+                      title="Backspace"
+                      aria-label="Backspace"
+                      className={themeMode === "dark" ? "inline-flex h-9 w-9 items-center justify-center text-slate-100 transition hover:text-white hover:bg-slate-800/80" : "inline-flex h-9 w-9 items-center justify-center text-slate-900 transition hover:text-white hover:bg-slate-200"}
+                    >
+                      <Delete className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={clearCalculator}
+                      title="Clear expression"
+                      aria-label="Clear expression"
+                      className={themeMode === "dark" ? "inline-flex h-9 w-9 items-center justify-center text-slate-100 transition hover:text-white hover:bg-slate-800/80" : "inline-flex h-9 w-9 items-center justify-center text-slate-900 transition hover:text-white hover:bg-slate-200"}
+                    >
+                      <RefreshCcw className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {calculatorHistory.length > 0 ? (
+                  <div className={themeMode === "dark" ? "rounded-3xl border border-slate-700 bg-slate-950/90 p-4 shadow-sm transition" : "rounded-3xl border border-slate-200 bg-white p-4 shadow-sm transition"}>
+                    <div className="mb-3 text-xs uppercase tracking-[0.24em] text-slate-400">Recent calculations</div>
+                    <div className={themeMode === "dark" ? "space-y-2 text-sm text-slate-200" : "space-y-2 text-sm text-slate-800"}>
+                      {calculatorHistory.map((entry, index) => (
+                        <div key={`${entry}-${index}`} className={themeMode === "dark" ? "rounded-2xl border border-slate-800 bg-slate-900 px-3 py-2" : "rounded-2xl border border-slate-100 bg-slate-50 px-3 py-2"}>
+                          {entry}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </>
+            ) : activeTool === "reminders" ? (
+              <>
+                <div className={`rounded-[28px] border p-4 shadow-[0_24px_80px_rgba(15,23,42,0.08)] transition ${themeMode === "dark" ? "border-slate-700 bg-slate-950/95 text-slate-100 shadow-[0_24px_80px_rgba(0,0,0,0.35)]" : "border-slate-200 bg-white text-slate-900"}`}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Reminders</p>
+                      <p className="mt-1 text-sm font-semibold">Keep follow-up tasks in view.</p>
+                    </div>
+                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${themeMode === "dark" ? "bg-slate-800 text-slate-300" : "bg-slate-100 text-slate-700"}`}>
+                      {reminders.length} {reminders.length === 1 ? "item" : "items"}
+                    </span>
+                  </div>
+
+                  <div className={`mt-4 rounded-[24px] border p-4 shadow-sm transition ${themeMode === "dark" ? "border-slate-800 bg-slate-900/80" : "border-slate-200 bg-slate-50"}`}>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                      <input
+                        type="text"
+                        value={reminderInput}
+                        onChange={(event) => setReminderInput(event.target.value)}
+                        className={`w-full min-w-0 rounded-3xl border px-4 py-3 text-sm outline-none transition ${themeMode === "dark" ? "border-slate-700 bg-slate-950 text-slate-100 focus:border-brand focus:ring-2 focus:ring-brand/20" : "border-slate-200 bg-white text-slate-900 focus:border-brand focus:ring-2 focus:ring-brand/10"}`}
+                        placeholder="Follow up with admissions team"
+                      />
+                      <button
+                        type="button"
+                        onClick={addReminder}
+                        className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition ${themeMode === "dark" ? "bg-brand text-white hover:bg-[#0952a4]" : "bg-[#0A66C2] text-white hover:bg-[#0952a4]"}`}
+                        title="Add reminder"
+                        aria-label="Add reminder"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 space-y-3 max-h-64 overflow-auto">
+                    {reminders.length > 0 ? (
+                      reminders.map((reminder, index) => (
+                        <div key={`${reminder}-${index}`} className={`rounded-3xl border p-4 text-sm transition ${themeMode === "dark" ? "border-slate-800 bg-slate-900 text-slate-100 shadow-[0_10px_30px_rgba(0,0,0,0.14)]" : "border-slate-200 bg-white text-slate-900 shadow-sm"}`}>
+                          {reminder}
+                        </div>
+                      ))
+                    ) : (
+                      <div className={`rounded-3xl border p-4 text-sm ${themeMode === "dark" ? "border-slate-800 bg-slate-900 text-slate-400" : "border-slate-200 bg-slate-50 text-slate-500"}`}>
+                        No reminders yet. Add one to keep it handy.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                  Countdown
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={timerInput}
+                    onChange={(event) => setTimerInput(event.target.value)}
+                    className="flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10"
+                    placeholder="MM:SS"
+                  />
+                  <button
+                    type="button"
+                    onClick={resetTimer}
+                    className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                  >
+                    Reset
+                  </button>
+                </div>
+                <div className="flex items-center justify-between rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900">
+                  <span>Time left</span>
+                  <span>{formatTimer(timerRemaining)}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={timerRunning ? pauseTimer : startTimer}
+                    className="inline-flex flex-1 items-center justify-center rounded-full bg-brand px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+                  >
+                    {timerRunning ? "Pause" : "Start"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={resetTimer}
+                    className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      ) : null}
+
       <audio
         ref={audioRef}
         src={audioFileUrl ?? undefined}

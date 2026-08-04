@@ -378,7 +378,7 @@ export default function SchoolsViewSwitcher({
         ].map((card) => {
           const Icon = card.icon;
           return (
-            <Link key={card.label} href={card.href} className="group rounded-lg border border-border bg-surface p-5 shadow-sm transition hover:border-brand/50 hover:shadow-md">
+            <Link key={card.label} href={card.href} className="cursor-pointer group rounded-lg border border-border bg-surface p-5 shadow-sm transition hover:border-brand/50 hover:shadow-md">
               <div className="flex items-start gap-3">
                 <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${card.iconClass}`}>
                   <Icon className="h-5 w-5" />
@@ -408,7 +408,7 @@ export default function SchoolsViewSwitcher({
                   key={school.id}
                   className="relative group overflow-hidden rounded-3xl border border-border bg-surface p-6 shadow-sm transition hover:border-brand hover:shadow-lg"
                 >
-                  <Link href={`/schoolbase-admin/schools/${school.id}`} className="absolute inset-0 z-0" aria-hidden="true">
+                  <Link href={`/schoolbase-admin/schools/${school.id}`} className="cursor-pointer absolute inset-0 z-0" aria-hidden="true">
                     <span className="sr-only">View {school.name}</span>
                   </Link>
 

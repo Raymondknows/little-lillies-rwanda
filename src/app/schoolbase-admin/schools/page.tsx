@@ -15,11 +15,11 @@ export default function SchoolsPage() {
       subtitle="View and manage all schools on the platform"
       actions={
         <div className="flex flex-wrap items-center gap-2">
-          <Link href="/schoolbase-admin/setup-reminders" className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0A66C2] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0952a4]">
+          <Link href="/schoolbase-admin/setup-reminders" className="cursor-pointer inline-flex items-center justify-center gap-2 rounded-xl bg-[#0A66C2] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0952a4]">
             <BellRing className="h-4 w-4" />
             Setup reminders
           </Link>
-          <Link href="/schoolbase-admin/schools?status=TRIAL" className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground shadow-sm transition hover:bg-surface">
+          <Link href="/schoolbase-admin/schools?status=TRIAL" className="cursor-pointer inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground shadow-sm transition hover:bg-surface">
             <GraduationCap className="h-4 w-4" />
             Trial schools
           </Link>
@@ -27,7 +27,7 @@ export default function SchoolsPage() {
             <button
               type="button"
               onClick={() => setViewMode("list")}
-              className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
+              className={`cursor-pointer rounded-full px-3 py-1.5 text-sm font-medium transition ${
                 viewMode === "list" ? "bg-white text-brand shadow-sm" : "bg-transparent text-foreground"
               }`}
             >
@@ -36,7 +36,7 @@ export default function SchoolsPage() {
             <button
               type="button"
               onClick={() => setViewMode("grid")}
-              className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
+              className={`cursor-pointer rounded-full px-3 py-1.5 text-sm font-medium transition ${
                 viewMode === "grid" ? "bg-white text-brand shadow-sm" : "bg-transparent text-foreground"
               }`}
             >

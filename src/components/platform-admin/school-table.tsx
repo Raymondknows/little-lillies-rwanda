@@ -80,7 +80,7 @@ export function ActionMenu({
       <button
         ref={btnRef}
         type="button"
-        className="inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold bg-white text-brand border border-brand"
+        className="cursor-pointer inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold bg-white text-brand border border-brand"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
       >
@@ -96,42 +96,42 @@ export function ActionMenu({
             >
               <div className="py-1">
                 <button
-                  className="flex w-full items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-surface"
+                  className="cursor-pointer flex w-full items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-surface"
                   onClick={() => { setOpen(false); performAction(school.id, school.status === "SUSPENDED" ? "activate" : "suspend"); }}
                   disabled={busy}
                 >
                   {school.status === "SUSPENDED" ? "Activate" : "Suspend"}
                 </button>
                 <button
-                  className="flex w-full items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-surface"
+                  className="cursor-pointer flex w-full items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-surface"
                   onClick={() => { setOpen(false); performAction(school.id, "upgrade"); }}
                   disabled={busy || school.plan === "ENTERPRISE"}
                 >
                   Upgrade to {getNextPlan(school.plan)}
                 </button>
                 <button
-                  className="flex w-full items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-surface"
+                  className="cursor-pointer flex w-full items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-surface"
                   onClick={() => { setOpen(false); performAction(school.id, "extendTrial", { days: 30 }); }}
                   disabled={busy}
                 >
                   +30d trial
                 </button>
                 <button
-                  className="flex w-full items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-surface"
+                  className="cursor-pointer flex w-full items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-surface"
                   onClick={() => { setOpen(false); performAction(school.id, "cancel"); }}
                   disabled={busy}
                 >
                   Cancel
                 </button>
                 <button
-                  className="flex w-full items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-surface"
+                  className="cursor-pointer flex w-full items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-surface"
                   onClick={() => { setOpen(false); sendReminder(school.id); }}
                   disabled={busy}
                 >
                   Send reminder
                 </button>
                 <button
-                  className="flex w-full items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-surface"
+                  className="cursor-pointer flex w-full items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-surface"
                   onClick={() => { setOpen(false); impersonate(school.id); }}
                   disabled={busy}
                 >
@@ -496,7 +496,7 @@ export function SchoolTable({ schools, filterControls }: { schools: SchoolRow[];
             type="button"
             title={selectedCount > 0 ? `Export ${selectedCount} selected schools` : "Export all schools"}
             aria-label={selectedCount > 0 ? `Export ${selectedCount} selected schools` : "Export all schools"}
-            className="inline-flex h-9 min-w-[36px] items-center justify-center rounded-xl border border-[#0A66C2] bg-[#0A66C2] px-2 text-white shadow-sm transition hover:bg-[#0952a4] hover:border-[#0952a4] sm:h-11 sm:min-w-[44px] sm:px-3"
+            className="cursor-pointer inline-flex h-9 min-w-[36px] items-center justify-center rounded-xl border border-[#0A66C2] bg-[#0A66C2] px-2 text-white shadow-sm transition hover:bg-[#0952a4] hover:border-[#0952a4] sm:h-11 sm:min-w-[44px] sm:px-3"
             onClick={exportSelectedCsv}
           >
             <Download className="h-5 w-5" />
@@ -505,7 +505,7 @@ export function SchoolTable({ schools, filterControls }: { schools: SchoolRow[];
             type="button"
             title="Select all filtered schools"
             aria-label="Select all filtered schools"
-            className="inline-flex h-9 min-w-[36px] items-center justify-center rounded-xl border border-[#0A66C2] bg-[#0A66C2] px-2 text-white shadow-sm transition hover:bg-[#0952a4] hover:border-[#0952a4] sm:h-11 sm:min-w-[44px] sm:px-3"
+            className="cursor-pointer inline-flex h-9 min-w-[36px] items-center justify-center rounded-xl border border-[#0A66C2] bg-[#0A66C2] px-2 text-white shadow-sm transition hover:bg-[#0952a4] hover:border-[#0952a4] sm:h-11 sm:min-w-[44px] sm:px-3"
             onClick={selectAllFiltered}
           >
             <CheckSquare className="h-5 w-5" />
@@ -514,7 +514,7 @@ export function SchoolTable({ schools, filterControls }: { schools: SchoolRow[];
             type="button"
             title="Clear selection"
             aria-label="Clear selection"
-            className="inline-flex h-9 min-w-[36px] items-center justify-center rounded-xl border border-[#0A66C2] bg-[#0A66C2] px-2 text-white shadow-sm transition hover:bg-[#0952a4] hover:border-[#0952a4] disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:min-w-[44px] sm:px-3"
+            className="cursor-pointer inline-flex h-9 min-w-[36px] items-center justify-center rounded-xl border border-[#0A66C2] bg-[#0A66C2] px-2 text-white shadow-sm transition hover:bg-[#0952a4] hover:border-[#0952a4] disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:min-w-[44px] sm:px-3"
             onClick={clearSelection}
             disabled={selectedCount === 0}
           >
@@ -524,7 +524,7 @@ export function SchoolTable({ schools, filterControls }: { schools: SchoolRow[];
             type="button"
             title="Send reminder to selected schools"
             aria-label="Send reminder to selected schools"
-            className="inline-flex h-9 min-w-[36px] items-center justify-center rounded-xl border border-[#0A66C2] bg-[#0A66C2] px-2 text-white shadow-sm transition hover:bg-[#0952a4] hover:border-[#0952a4] disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:min-w-[44px] sm:px-3"
+            className="cursor-pointer inline-flex h-9 min-w-[36px] items-center justify-center rounded-xl border border-[#0A66C2] bg-[#0A66C2] px-2 text-white shadow-sm transition hover:bg-[#0952a4] hover:border-[#0952a4] disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:min-w-[44px] sm:px-3"
             onClick={sendBulkReminders}
             disabled={selectedCount === 0 || busy}
           >
@@ -534,7 +534,7 @@ export function SchoolTable({ schools, filterControls }: { schools: SchoolRow[];
             type="button"
             title="Send reminders to all incomplete schools"
             aria-label="Send reminders to all incomplete schools"
-            className="inline-flex h-9 min-w-[36px] items-center justify-center rounded-xl border border-[#0A66C2] bg-[#0A66C2] px-2 text-white shadow-sm transition hover:bg-[#0952a4] hover:border-[#0952a4] disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:min-w-[44px] sm:px-3"
+            className="cursor-pointer inline-flex h-9 min-w-[36px] items-center justify-center rounded-xl border border-[#0A66C2] bg-[#0A66C2] px-2 text-white shadow-sm transition hover:bg-[#0952a4] hover:border-[#0952a4] disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:min-w-[44px] sm:px-3"
             onClick={sendReminderToIncompleteSchools}
             disabled={busy}
           >
@@ -544,7 +544,7 @@ export function SchoolTable({ schools, filterControls }: { schools: SchoolRow[];
             type="button"
             title="Suspend selected schools"
             aria-label="Suspend selected schools"
-            className="inline-flex h-9 min-w-[36px] items-center justify-center rounded-xl border border-[#0A66C2] bg-[#0A66C2] px-2 text-white shadow-sm transition hover:bg-[#0952a4] hover:border-[#0952a4] disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:min-w-[44px] sm:px-3"
+            className="cursor-pointer inline-flex h-9 min-w-[36px] items-center justify-center rounded-xl border border-[#0A66C2] bg-[#0A66C2] px-2 text-white shadow-sm transition hover:bg-[#0952a4] hover:border-[#0952a4] disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:min-w-[44px] sm:px-3"
             onClick={() => performBulkAction("suspend")}
             disabled={selectedCount === 0 || busy}
           >
@@ -554,7 +554,7 @@ export function SchoolTable({ schools, filterControls }: { schools: SchoolRow[];
             type="button"
             title="Activate selected schools"
             aria-label="Activate selected schools"
-            className="inline-flex h-9 min-w-[36px] items-center justify-center rounded-xl border border-[#0A66C2] bg-[#0A66C2] px-2 text-white shadow-sm transition hover:bg-[#0952a4] hover:border-[#0952a4] disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:min-w-[44px] sm:px-3"
+            className="cursor-pointer cursor-pointer inline-flex h-9 min-w-[36px] items-center justify-center rounded-xl border border-[#0A66C2] bg-[#0A66C2] px-2 text-white shadow-sm transition hover:bg-[#0952a4] hover:border-[#0952a4] disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:min-w-[44px] sm:px-3"
             onClick={() => performBulkAction("activate")}
             disabled={selectedCount === 0 || busy}
           >
@@ -564,7 +564,7 @@ export function SchoolTable({ schools, filterControls }: { schools: SchoolRow[];
             type="button"
             title="Extend trial by 30 days for selected schools"
             aria-label="Extend trial by 30 days for selected schools"
-            className="inline-flex h-9 min-w-[36px] items-center justify-center rounded-xl border border-[#0A66C2] bg-[#0A66C2] px-2 text-white shadow-sm transition hover:bg-[#0952a4] hover:border-[#0952a4] disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:min-w-[44px] sm:px-3"
+            className="cursor-pointer inline-flex h-9 min-w-[36px] items-center justify-center rounded-xl border border-[#0A66C2] bg-[#0A66C2] px-2 text-white shadow-sm transition hover:bg-[#0952a4] hover:border-[#0952a4] disabled:cursor-not-allowed disabled:opacity-50 sm:h-11 sm:min-w-[44px] sm:px-3"
             onClick={() => performBulkAction("extendTrial", { days: 30 })}
             disabled={selectedCount === 0 || busy}
           >
@@ -675,7 +675,7 @@ export function SchoolTable({ schools, filterControls }: { schools: SchoolRow[];
                     <button
                       type="button"
                       onClick={() => openExpiryModal(school)}
-                      className="rounded bg-brand px-2 py-1 text-xs font-semibold text-white hover:bg-brand/90 transition-colors"
+                      className="cursor-pointer rounded bg-brand px-2 py-1 text-xs font-semibold text-white hover:bg-brand/90 transition-colors"
                     >
                       Edit
                     </button>
@@ -715,7 +715,7 @@ export function SchoolTable({ schools, filterControls }: { schools: SchoolRow[];
                 <button
                   type="button"
                   onClick={closeExpiryModal}
-                  className="flex h-10 w-10 items-center justify-center rounded-lg border border-border hover:bg-background transition-colors"
+                  className="cursor-pointer flex h-10 w-10 items-center justify-center rounded-lg border border-border hover:bg-background transition-colors"
                   aria-label="Close expiry modal"
                 >
                   <X className="h-4 w-4" />

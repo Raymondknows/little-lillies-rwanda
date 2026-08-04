@@ -1140,7 +1140,7 @@ export default function SharedLayout({
                     />
                   </div>
 
-                  <div className="mb-4 grid gap-2 sm:grid-cols-4">
+                  <div className="mb-4 grid grid-cols-4 gap-2">
                     {[
                       { label: "7", value: "7" },
                       { label: "8", value: "8" },

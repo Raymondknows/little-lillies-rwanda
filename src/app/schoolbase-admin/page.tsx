@@ -313,7 +313,7 @@ export default function PlatformOverviewPage() {
           <button
             type="button"
             onClick={() => setIsPanelOpen(true)}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0A66C2] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0952a4]"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0A66C2] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0952a4] cursor-pointer"
           >
             <ShieldCheck className="h-4 w-4" />
             Open admin panel
@@ -338,7 +338,7 @@ export default function PlatformOverviewPage() {
                 <button
                   type="button"
                   onClick={dismissNewSupportAlert}
-                  className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
+                  className="cursor-pointer rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
                 >
                   Dismiss
                 </button>
@@ -432,19 +432,19 @@ export default function PlatformOverviewPage() {
       {/* Quick Actions */}
       <div className="mb-10 grid grid-cols-1 md:grid-cols-4 gap-3">
         <Link href="/schoolbase-admin/schools">
-          <button className="w-full inline-flex items-center justify-center px-4 py-3 bg-brand text-white rounded-lg hover:bg-brand/90 transition-colors font-medium shadow-sm hover:shadow-md">
+          <button className="cursor-pointer w-full inline-flex items-center justify-center px-4 py-3 bg-brand text-white rounded-lg hover:bg-brand/90 transition-colors font-medium shadow-sm hover:shadow-md">
             <Building2 className="h-4 w-4 mr-2" />
             View Schools
           </button>
         </Link>
         <Link href="/schoolbase-admin/email-center">
-          <button className="w-full inline-flex items-center justify-center px-4 py-3 bg-brand text-white rounded-lg hover:bg-brand/90 transition-colors font-medium shadow-sm hover:shadow-md">
+          <button className="cursor-pointer w-full inline-flex items-center justify-center px-4 py-3 bg-brand text-white rounded-lg hover:bg-brand/90 transition-colors font-medium shadow-sm hover:shadow-md">
             <Mail className="h-4 w-4 mr-2" />
             Send Email
           </button>
         </Link>
         <Link href="/schoolbase-admin/support">
-          <button className="w-full inline-flex items-center justify-center px-4 py-3 bg-brand text-white rounded-lg hover:bg-brand/90 transition-colors font-medium shadow-sm hover:shadow-md">
+          <button className="cursor-pointer w-full inline-flex items-center justify-center px-4 py-3 bg-brand text-white rounded-lg hover:bg-brand/90 transition-colors font-medium shadow-sm hover:shadow-md">
             <MessageCircle className="h-4 w-4 mr-2" />
             View Support
           </button>
@@ -453,7 +453,7 @@ export default function PlatformOverviewPage() {
           type="button"
           onClick={sendSetupReminders}
           disabled={reminding}
-          className="w-full inline-flex items-center justify-center px-4 py-3 bg-[#0A66C2] text-white rounded-lg hover:bg-[#0952a4] transition-colors font-medium shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+          className="cursor-pointer w-full inline-flex items-center justify-center px-4 py-3 bg-[#0A66C2] text-white rounded-lg hover:bg-[#0952a4] transition-colors font-medium shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Bell className="h-4 w-4 mr-2" />
           Send setup reminders
@@ -464,7 +464,7 @@ export default function PlatformOverviewPage() {
       {isPanelOpen ? (
         <div className="fixed inset-0 z-50 flex">
           <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-300"
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-300 cursor-pointer"
             onClick={() => setIsPanelOpen(false)}
           />
           <div className={`relative ml-auto flex h-full w-full max-w-4xl flex-col overflow-hidden bg-surface shadow-2xl transition-transform duration-300 ease-out ${
@@ -478,7 +478,7 @@ export default function PlatformOverviewPage() {
               <button
                 type="button"
                 onClick={() => setIsPanelOpen(false)}
-                className="rounded-full p-2 text-muted transition hover:bg-border hover:text-foreground"
+                className="rounded-full p-2 text-muted transition hover:bg-border hover:text-foreground cursor-pointer"
               >
                 ✕
               </button>
@@ -489,7 +489,7 @@ export default function PlatformOverviewPage() {
                   <button
                     type="button"
                     onClick={() => setExpandedSections((current) => ({ ...current, activity: !current.activity }))}
-                    className="flex w-full items-center justify-between gap-2 rounded-xl px-2 py-1.5 text-left"
+                    className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-xl px-2 py-1.5 text-left"
                   >
                     <div className="flex items-center gap-2">
                       <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
@@ -539,7 +539,7 @@ export default function PlatformOverviewPage() {
                   <button
                     type="button"
                     onClick={() => setExpandedSections((current) => ({ ...current, emails: !current.emails }))}
-                    className="flex w-full items-center justify-between gap-2 rounded-xl px-2 py-1.5 text-left"
+                    className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-xl px-2 py-1.5 text-left"
                   >
                     <div className="flex items-center gap-2">
                       <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-100 text-violet-600">
@@ -587,7 +587,7 @@ export default function PlatformOverviewPage() {
                   <button
                     type="button"
                     onClick={() => setExpandedSections((current) => ({ ...current, trials: !current.trials }))}
-                    className="flex w-full items-center justify-between gap-2 rounded-xl px-2 py-1.5 text-left"
+                    className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-xl px-2 py-1.5 text-left"
                   >
                     <div className="flex items-center gap-2">
                       <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-100 text-amber-600">
@@ -637,7 +637,7 @@ export default function PlatformOverviewPage() {
                   <button
                     type="button"
                     onClick={() => setExpandedSections((current) => ({ ...current, support: !current.support }))}
-                    className="flex w-full items-center justify-between gap-2 rounded-xl px-2 py-1.5 text-left"
+                    className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-xl px-2 py-1.5 text-left"
                   >
                     <div className="flex items-center gap-2">
                       <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-rose-100 text-rose-600">

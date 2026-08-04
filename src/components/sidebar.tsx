@@ -147,7 +147,7 @@ export default function Sidebar({
               <Link
                 href={href}
                 onClick={handleNavClick}
-                className={`flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors ${
+                className={`flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors ${
                   isActive
                     ? "bg-brand/10 text-brand"
                     : "text-muted hover:bg-brand-light hover:text-brand"

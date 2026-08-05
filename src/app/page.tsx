@@ -44,7 +44,7 @@ const features = [
   },
   {
     icon: Sparkles,
-    title: "Live in 48 hours",
+    title: "Live in in a few minutes",
     text: "We help you set up fast. No six-month IT project.",
   },
 ];

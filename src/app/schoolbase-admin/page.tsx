@@ -276,10 +276,10 @@ export default function PlatformOverviewPage() {
       iconColor: "text-blue-600",
     },
     {
-      label: "Total Users",
-      value: String(stats?.totalUsers || 0),
+      label: "Total Schools",
+      value: String(stats?.totalSchools || 0),
       sub: "Across all schools",
-      href: "#",
+      href: "/schoolbase-admin/schools",
       icon: Users,
       color: "bg-purple-100",
       iconColor: "text-purple-600",

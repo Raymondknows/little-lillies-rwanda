@@ -77,6 +77,8 @@ export default function SharedLayout({
   const toolPanelDragOffsetRef = useRef({ x: 0, y: 0 });
   const audioPanelDragOffsetRef = useRef({ x: 0, y: 0 });
   const toolsDragOffsetRef = useRef({ x: 0, y: 0 });
+  const toolsTouchMovedRef = useRef(false);
+  const audioTouchMovedRef = useRef(false);
 
   const DEFAULT_JINGLES = [
     { name: "SchoolBase Jingle 1", src: "/audio-jingles/SchoolBase%20_%20Simple%20On%20Your%20Screen.mp3" },
@@ -265,6 +267,25 @@ export default function SharedLayout({
       }
     };
 
+    const handleTouchMovePanel = (event: TouchEvent) => {
+      if (event.touches.length !== 1) return;
+      const touch = event.touches[0];
+      if (isDraggingToolPanel) {
+        setToolPanelPosition({
+          x: Math.max(12, Math.min(window.innerWidth - 340, touch.clientX - toolPanelDragOffsetRef.current.x)),
+          y: Math.max(12, Math.min(window.innerHeight - 240, touch.clientY - toolPanelDragOffsetRef.current.y)),
+        });
+      }
+      if (isDraggingAudioPanel) {
+        audioTouchMovedRef.current = true;
+        setAudioPanelPosition({
+          x: Math.max(12, Math.min(window.innerWidth - 460, touch.clientX - audioPanelDragOffsetRef.current.x)),
+          y: Math.max(12, Math.min(window.innerHeight - 320, touch.clientY - audioPanelDragOffsetRef.current.y)),
+        });
+      }
+      event.preventDefault();
+    };
+
     const handleMouseUp = () => {
       setIsDraggingToolPanel(false);
       setIsDraggingAudioPanel(false);
@@ -272,10 +293,16 @@ export default function SharedLayout({
 
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("mouseup", handleMouseUp);
+    window.addEventListener("touchmove", handleTouchMovePanel, { passive: false });
+    window.addEventListener("touchend", handleMouseUp);
+    window.addEventListener("touchcancel", handleMouseUp);
 
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
+      window.removeEventListener("touchmove", handleTouchMovePanel);
+      window.removeEventListener("touchend", handleMouseUp);
+      window.removeEventListener("touchcancel", handleMouseUp);
     };
   }, [isDraggingToolPanel, isDraggingAudioPanel]);
 
@@ -288,14 +315,31 @@ export default function SharedLayout({
       setToolsPosition({ x: nextX, y: nextY });
     };
 
+    const handleTouchMove = (event: TouchEvent) => {
+      if (event.touches.length !== 1) return;
+      toolsTouchMovedRef.current = true;
+      const touch = event.touches[0];
+      const nextX = Math.max(12, Math.min(window.innerWidth - 60, touch.clientX - toolsDragOffsetRef.current.x));
+      const nextY = Math.max(12, Math.min(window.innerHeight - 60, touch.clientY - toolsDragOffsetRef.current.y));
+      setToolsPosition({ x: nextX, y: nextY });
+      event.preventDefault();
+    };
+
     const handleMouseUp = () => setIsDraggingTools(false);
+    const handleTouchEnd = () => setIsDraggingTools(false);
 
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("mouseup", handleMouseUp);
+    window.addEventListener("touchmove", handleTouchMove, { passive: false });
+    window.addEventListener("touchend", handleTouchEnd);
+    window.addEventListener("touchcancel", handleTouchEnd);
 
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleTouchEnd);
+      window.removeEventListener("touchcancel", handleTouchEnd);
     };
   }, [isDraggingTools]);
 
@@ -462,6 +506,38 @@ export default function SharedLayout({
     toolPanelDragOffsetRef.current = {
       x: event.clientX - toolPanelPosition.x,
       y: event.clientY - toolPanelPosition.y,
+    };
+  };
+
+  const handleToolsMouseDown = (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+    event.preventDefault();
+    toolsTouchMovedRef.current = false;
+    setIsDraggingTools(true);
+    toolsDragOffsetRef.current = {
+      x: event.clientX - toolsPosition.x,
+      y: event.clientY - toolsPosition.y,
+    };
+  };
+
+  const handleToolsTouchStart = (event: React.TouchEvent<HTMLButtonElement>) => {
+    if (event.touches.length !== 1) return;
+    const touch = event.touches[0];
+    toolsTouchMovedRef.current = false;
+    setIsDraggingTools(true);
+    toolsDragOffsetRef.current = {
+      x: touch.clientX - toolsPosition.x,
+      y: touch.clientY - toolsPosition.y,
+    };
+  };
+
+  const handleAudioPanelTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (event.touches.length !== 1) return;
+    const touch = event.touches[0];
+    audioTouchMovedRef.current = false;
+    setIsDraggingAudioPanel(true);
+    audioPanelDragOffsetRef.current = {
+      x: touch.clientX - audioPanelPosition.x,
+      y: touch.clientY - audioPanelPosition.y,
     };
   };
 
@@ -722,16 +798,16 @@ export default function SharedLayout({
             <button
               type="button"
               data-tools-button
-              onMouseDown={(event) => {
-                event.preventDefault();
-                setIsDraggingTools(true);
-                toolsDragOffsetRef.current = {
-                  x: event.clientX - toolsPosition.x,
-                  y: event.clientY - toolsPosition.y,
-                };
+              onMouseDown={handleToolsMouseDown}
+              onTouchStart={handleToolsTouchStart}
+              onClick={(event) => {
+                if (toolsTouchMovedRef.current) {
+                  event.preventDefault();
+                  return;
+                }
+                toggleToolsOpen();
               }}
-              onClick={toggleToolsOpen}
-              className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#0A66C2] text-white shadow-lg shadow-slate-900/20 transition hover:bg-[#0952a4] hover:scale-105"
+              className="inline-flex touch-none select-none h-12 w-12 items-center justify-center rounded-full bg-[#0A66C2] text-white shadow-lg shadow-slate-900/20 transition hover:bg-[#0952a4] hover:scale-105"
               title="Open tools"
               aria-label="Open tools"
             >
@@ -798,7 +874,7 @@ export default function SharedLayout({
             <div
               className={`w-[440px] max-w-[calc(100vw-32px)] rounded-[28px] border p-4 shadow-[0_20px_80px_rgba(0,0,0,0.12)] transition ${themeMode === "dark" ? "border-slate-700 bg-slate-900 text-slate-100" : "border-slate-200 bg-white text-slate-900"}`}
             >
-              <div className={`flex cursor-grab items-start justify-between gap-3 rounded-t-3xl px-5 py-4 ${themeMode === "dark" ? "bg-slate-800" : "bg-gradient-to-r from-[#dbeafe] via-[#bfdbfe] to-[#f8fafc]"}`} onMouseDown={handleAudioPanelMouseDown}>
+                <div className={`flex cursor-grab items-start justify-between gap-3 rounded-t-3xl px-5 py-4 ${themeMode === "dark" ? "bg-slate-800" : "bg-gradient-to-r from-[#dbeafe] via-[#bfdbfe] to-[#f8fafc]"}`} onMouseDown={handleAudioPanelMouseDown} onTouchStart={handleAudioPanelTouchStart}>
                 <div className="flex items-center gap-3">
                   <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${themeMode === "dark" ? "bg-slate-800 text-slate-100" : "bg-slate-100 text-[#0A66C2]"}`}>
                     {isAudioPlaying ? <Loader2 className="h-5 w-5 animate-spin" /> : <Music className="h-5 w-5" />}

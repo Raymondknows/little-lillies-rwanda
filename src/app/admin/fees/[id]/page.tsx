@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getBackendUrl } from "@/lib/backend-url";
 import { formatMoney, pupilName as formatPupilName, invoiceStatusLabel } from "@/lib/format";
-import { Download, Printer, ChevronLeft, Check, AlertCircle } from "lucide-react";
+import { playOpenTone, playCloseTone } from "@/lib/sounds";
+import { Download, Printer, ChevronLeft, Check, AlertCircle, Edit2 } from "lucide-react";
 
 const BRAND_BLUE = "#0A66C2";
 const LIGHT_BLUE = "#E7F1F8";
@@ -19,6 +20,10 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
   const [school, setSchool] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editingPayment, setEditingPayment] = useState<any | null>(null);
+  const [editPaymentAmount, setEditPaymentAmount] = useState("");
+  const [editPaymentReference, setEditPaymentReference] = useState("");
+  const [isUpdatingPayment, setIsUpdatingPayment] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -70,6 +75,92 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
     } catch (err) {
       alert("Failed to download invoice");
       console.error(err);
+    }
+  };
+
+  const fetchInvoice = async (id: string) => {
+    try {
+      setLoading(true);
+      const backendUrl = getBackendUrl();
+      const response = await fetch(`${backendUrl}/api/admin/invoices/${id}`, {
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.error || "Failed to fetch invoice");
+      }
+
+      const data = await response.json();
+      setInvoice(data.invoice);
+      setSchool(data.school);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load invoice");
+      setInvoice(null);
+      setSchool(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    (async () => {
+      const p = await params;
+      setInvoiceId(p.id);
+      await fetchInvoice(p.id);
+    })();
+  }, [params]);
+
+  const openEditPaymentModal = (payment: any) => {
+    setEditingPayment(payment);
+    setEditPaymentAmount((payment.amount / 100).toFixed(2));
+    setEditPaymentReference(payment.reference || "");
+    playOpenTone();
+  };
+
+  const closeEditPaymentModal = () => {
+    setEditingPayment(null);
+    setEditPaymentAmount("");
+    setEditPaymentReference("");
+    playCloseTone();
+  };
+
+  const handleUpdatePayment = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!editingPayment || isUpdatingPayment) return;
+
+    const amountValue = parseFloat(editPaymentAmount);
+    if (!amountValue || amountValue <= 0) {
+      alert("Please enter a valid payment amount.");
+      return;
+    }
+
+    setIsUpdatingPayment(true);
+    try {
+      const backendUrl = getBackendUrl();
+      const res = await fetch(`${backendUrl}/api/admin/fees/payments/${editingPayment.id}`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: amountValue,
+          reference: editPaymentReference || null,
+        }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => null);
+        throw new Error(errorData?.error || "Failed to update payment");
+      }
+
+      await fetchInvoice(invoiceId);
+      closeEditPaymentModal();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to update payment");
+      console.error(err);
+    } finally {
+      setIsUpdatingPayment(false);
     }
   };
 
@@ -255,7 +346,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
               </div>
             </div>
 
-            {invoice.payments && invoice.payments.length > 0 && (
+                  {invoice.payments && invoice.payments.length > 0 && (
               <div className="mt-8 pt-8">
                 <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-gray-500">Payment History</h3>
                 <div className="mt-4 space-y-3">
@@ -266,7 +357,17 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                         <p className="text-xs text-gray-500">{new Date(payment.paidAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
                         {payment.reference && <p className="text-xs text-gray-500">Ref: {payment.reference}</p>}
                       </div>
-                      <p className="font-semibold text-gray-900">{formatMoney(payment.amount, currency)}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-gray-900">{formatMoney(payment.amount, currency)}</p>
+                        <button
+                          type="button"
+                          onClick={() => openEditPaymentModal(payment)}
+                          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-100"
+                        >
+                          <Edit2 className="h-3.5 w-3.5" />
+                          Edit
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -291,6 +392,78 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
           </div>
         </div>
       </div>
+
+      {editingPayment && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4">
+          <style>{`
+            @keyframes payment_edit_enter { from { transform: translateX(36px) scale(.98); opacity: 0 } to { transform: translateX(0) scale(1); opacity: 1 } }
+          `}</style>
+
+          <div
+            className="w-full max-w-lg overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_50px_rgba(10,102,194,0.16)]"
+            style={{ animation: `payment_edit_enter 320ms cubic-bezier(.2,.9,.2,1)` }}
+          >
+            <div className="border-b border-slate-100 px-6 py-5" style={{ background: "linear-gradient(90deg, rgba(10,102,194,0.12), rgba(10,102,194,0.04))" }}>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-foreground">Edit payment</h2>
+                  <p className="mt-1 text-sm text-muted">Adjust the recorded payment amount or reference.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={closeEditPaymentModal}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-border hover:bg-background transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <form onSubmit={handleUpdatePayment} className="space-y-5 px-6 py-6">
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">Payment amount ({currency})</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={editPaymentAmount}
+                  onChange={(event) => setEditPaymentAmount(event.target.value)}
+                  className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">Reference</label>
+                <input
+                  type="text"
+                  value={editPaymentReference}
+                  onChange={(event) => setEditPaymentReference(event.target.value)}
+                  placeholder="Update receipt or transfer reference"
+                  className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand"
+                />
+              </div>
+
+              <div className="flex justify-between gap-3 pt-4 border-t border-border">
+                <button
+                  type="button"
+                  onClick={closeEditPaymentModal}
+                  disabled={isUpdatingPayment}
+                  className="flex-1 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isUpdatingPayment}
+                  className="flex-1 rounded-lg bg-brand px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-brand/90 disabled:opacity-50"
+                >
+                  {isUpdatingPayment ? "Saving..." : "Save changes"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Print Styles */}
       <style jsx global>{`

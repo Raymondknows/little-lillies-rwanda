@@ -183,24 +183,22 @@ export default function FeesPageClient({
       setModalType('success');
       setModalTitle('Invoices issued');
       setModalMessage(`${created ?? 0} invoice${(created ?? 0) !== 1 ? 's' : ''} were created.`);
-      setModalDetails(undefined);
     } else if (reminders) {
       setModalType('success');
       setModalTitle('Reminders sent');
       setModalMessage(`${remindersSent ?? 0} reminders were queued for sending.`);
-      setModalDetails(undefined);
     } else if (paymentRecorded) {
       setModalType('success');
       setModalTitle('Payment recorded');
       setModalMessage('The invoice has been updated and the dashboard is refreshed.');
-      setModalDetails(undefined);
     } else if (error) {
       setModalType('error');
       setModalTitle('Could not complete action');
       setModalMessage(errorMessage || 'An error occurred while processing your request.');
-      setModalDetails(undefined);
     }
 
+    const details = searchParams.get('details');
+    setModalDetails(details ? decodeURIComponent(details) : undefined);
     setModalOpen(true);
     playOpenTone();
   }, [searchParams]);

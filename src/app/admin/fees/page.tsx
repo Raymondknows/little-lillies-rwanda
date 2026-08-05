@@ -155,7 +155,24 @@ export default function FeesPage() {
 
       const result = await response.json();
       console.log("Reminders sent:", result);
-      router.push(`/admin/fees?reminders=1&sent=${result.sent}`);
+
+      const reminderDetails: string[] = [];
+      if (Array.isArray(result.errors) && result.errors.length) {
+        reminderDetails.push(...result.errors);
+      }
+      if (Array.isArray(result.invoiceResults)) {
+        result.invoiceResults.forEach((invoice: any) => {
+          if (Array.isArray(invoice.errors) && invoice.errors.length) {
+            reminderDetails.push(`${invoice.invoiceNo}: ${invoice.errors.join(', ')}`);
+          }
+          if (invoice.noRecipientGuardians > 0) {
+            reminderDetails.push(`${invoice.invoiceNo}: ${invoice.noRecipientGuardians} guardian(s) had no recipients`);
+          }
+        });
+      }
+
+      const detailsQuery = reminderDetails.length ? `&details=${encodeURIComponent(reminderDetails.join(' | '))}` : '';
+      router.push(`/admin/fees?reminders=1&sent=${result.sent}${detailsQuery}`);
     } catch (err) {
       console.error("Error sending reminders:", err);
       router.push(`/admin/fees?error=1&errorMessage=${encodeURIComponent(err instanceof Error ? err.message : 'Failed to send reminders')}`);

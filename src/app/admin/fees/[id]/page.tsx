@@ -131,8 +131,8 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
     if (!editingPayment || isUpdatingPayment) return;
 
     const amountValue = parseFloat(editPaymentAmount);
-    if (!amountValue || amountValue <= 0) {
-      alert("Please enter a valid payment amount.");
+    if (!Number.isFinite(amountValue) || amountValue < 0) {
+      alert("Please enter a valid payment amount. Use 0 to zero out a mistaken entry.");
       return;
     }
 
@@ -158,6 +158,35 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
       closeEditPaymentModal();
     } catch (err) {
       alert(err instanceof Error ? err.message : "Failed to update payment");
+      console.error(err);
+    } finally {
+      setIsUpdatingPayment(false);
+    }
+  };
+
+  const handleDeletePayment = async () => {
+    if (!editingPayment || isUpdatingPayment) return;
+
+    const confirmed = window.confirm("Delete this payment history item? This will remove it from the invoice total.");
+    if (!confirmed) return;
+
+    setIsUpdatingPayment(true);
+    try {
+      const backendUrl = getBackendUrl();
+      const res = await fetch(`${backendUrl}/api/admin/fees/payments/${editingPayment.id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => null);
+        throw new Error(errorData?.error || "Failed to delete payment");
+      }
+
+      await fetchInvoice(invoiceId);
+      closeEditPaymentModal();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to delete payment");
       console.error(err);
     } finally {
       setIsUpdatingPayment(false);
@@ -425,11 +454,13 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                 <input
                   type="number"
                   step="0.01"
+                  min="0"
                   value={editPaymentAmount}
                   onChange={(event) => setEditPaymentAmount(event.target.value)}
                   className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand"
                   required
                 />
+                <p className="mt-2 text-xs text-slate-500">Use 0 to zero out a mistaken payment entry, or delete it completely below.</p>
               </div>
 
               <div>
@@ -451,6 +482,14 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                   className="flex-1 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 disabled:opacity-50"
                 >
                   Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDeletePayment}
+                  disabled={isUpdatingPayment}
+                  className="flex-1 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700 transition-colors hover:bg-red-100 disabled:opacity-50"
+                >
+                  {isUpdatingPayment ? "Working..." : "Delete"}
                 </button>
                 <button
                   type="submit"

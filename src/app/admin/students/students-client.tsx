@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Search, UserPlus, X } from "lucide-react";
+import { Search, UserPlus, X, Upload, Download } from "lucide-react";
+import { playCloseTone, playOpenTone } from "@/lib/sounds";
 import { WhatsAppIcon } from "@/components/ui/icons";
 import { Pagination } from "@/components/ui/pagination";
 import { UserGuide, type PageHelpGuide } from "@/components/ui/user-guide";
@@ -106,13 +107,26 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
   const [profileStudent, setProfileStudent] = useState<any | null>(null);
   const [whatsAppConnected, setWhatsAppConnected] = useState<boolean | null>(null);
   const [whatsAppStatusMessage, setWhatsAppStatusMessage] = useState<string | null>(null);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importPreviewRows, setImportPreviewRows] = useState<any[]>([]);
+  const [importErrors, setImportErrors] = useState<string[]>([]);
+  const [importSummary, setImportSummary] = useState<string | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const importFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isSearchOpen) {
       searchInputRef.current?.focus();
     }
   }, [isSearchOpen]);
+
+  useEffect(() => {
+    if (isImportModalOpen) {
+      playOpenTone();
+    }
+  }, [isImportModalOpen]);
 
   useEffect(() => {
     async function fetchWhatsAppStatus() {
@@ -331,6 +345,150 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
     return pupils.filter((p) => p.class?.phase === phase).length;
   };
 
+  const resetImportState = () => {
+    setImportFile(null);
+    setImportPreviewRows([]);
+    setImportErrors([]);
+    setImportSummary(null);
+    if (importFileInputRef.current) {
+      importFileInputRef.current.value = "";
+    }
+  };
+
+  const handleDownloadImportTemplate = () => {
+    const template = [
+      'firstName,lastName,middleName,className,guardianFirst,guardianLast,guardianPhone,guardianEmail,dateOfBirth,gender,address,status',
+      'Ada,Okafor,,Primary 1,Ade,Okafor,08012345678,ade@example.com,2005-01-10,Female,12 Main Street,ACTIVE',
+    ].join('\n');
+
+    const blob = new Blob([template], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'student-import-template.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handlePreviewImport = async (event?: FormEvent) => {
+    event?.preventDefault();
+
+    if (!importFile) {
+      setImportErrors(['Choose a CSV file before previewing the import.']);
+      return;
+    }
+
+    setIsImporting(true);
+    setImportErrors([]);
+    setImportSummary(null);
+
+    const formData = new FormData();
+    formData.append('file', importFile);
+
+    try {
+      const res = await fetch('/api/admin/students/import?preview=true', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+
+      let data: any = {};
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        data = await res.json().catch(() => ({}));
+      } else {
+        const text = await res.text().catch(() => '');
+        if (text) {
+          try {
+            data = JSON.parse(text);
+          } catch {
+            data = { error: text };
+          }
+        }
+      }
+
+      if (!res.ok) {
+        const fallbackMessage = typeof data?.error === 'string' && data.error.trim()
+          ? data.error
+          : 'The import preview could not be completed.';
+        const detailMessage = typeof data?.details === 'string' && data.details.trim()
+          ? data.details
+          : null;
+        setImportErrors([detailMessage ? `${fallbackMessage}: ${detailMessage}` : fallbackMessage]);
+        return;
+      }
+
+      setImportPreviewRows(data.previewRows || []);
+      setImportSummary(`${data.validRows || 0} valid records ready to import.`);
+      if (Array.isArray(data.errors) && data.errors.length > 0) {
+        setImportErrors(data.errors);
+      } else {
+        setImportErrors([]);
+      }
+    } catch (error) {
+      console.error('Error previewing student import:', error);
+      setImportErrors(['The import preview failed. Please try again.']);
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  const handleConfirmImport = async () => {
+    if (!importFile) {
+      setImportErrors(['Choose a CSV file before importing students.']);
+      return;
+    }
+
+    setIsImporting(true);
+    setImportErrors([]);
+    setImportSummary(null);
+
+    const formData = new FormData();
+    formData.append('file', importFile);
+
+    try {
+      const res = await fetch('/api/admin/students/import', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+
+      let data: any = {};
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        data = await res.json().catch(() => ({}));
+      } else {
+        const text = await res.text().catch(() => '');
+        if (text) {
+          try {
+            data = JSON.parse(text);
+          } catch {
+            data = { error: text };
+          }
+        }
+      }
+
+      if (!res.ok) {
+        setImportErrors([data?.error || 'The student import could not be completed.']);
+        return;
+      }
+
+      setImportSummary(`${data.importedCount || 0} students were imported successfully.`);
+      if (Array.isArray(data.errors) && data.errors.length > 0) {
+        setImportErrors(data.errors);
+      }
+      resetImportState();
+      router.refresh();
+    } catch (error) {
+      console.error('Error importing students:', error);
+      setImportErrors(['The import failed. Please try again.']);
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
   return (
     <>
       <div>
@@ -379,6 +537,14 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
             >
               <Search className="h-4 w-4" />
               {isSearchOpen ? "Close Search" : "Search Student"}
+            </Button>
+            <Button
+              type="button"
+              onClick={() => setIsImportModalOpen(true)}
+              className="h-9 w-full rounded-md border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8] sm:w-auto"
+            >
+              <Upload className="h-4 w-4" />
+              Import CSV
             </Button>
             <Button
               type="button"
@@ -719,6 +885,144 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
         </div>
       )}
     </div>
+
+      {isImportModalOpen ? (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4">
+          <style>{`
+            @keyframes students_import_modal_enter { from { transform: translateX(36px) scale(.98); opacity: 0 } to { transform: translateX(0) scale(1); opacity: 1 } }
+          `}</style>
+
+          <div
+            className="w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_50px_rgba(10,102,194,0.16)]"
+            style={{ animation: `students_import_modal_enter 320ms cubic-bezier(.2,.9,.2,1)` }}
+          >
+            <div className="border-b border-slate-100 px-6 py-5" style={{ background: "linear-gradient(90deg, rgba(10,102,194,0.12), rgba(10,102,194,0.04))" }}>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-foreground">Import students from CSV</h2>
+                  <p className="mt-1 text-sm text-muted">Upload a CSV file to add students without changing the existing manual registration flow.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    playCloseTone();
+                    setIsImportModalOpen(false);
+                    resetImportState();
+                  }}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-border hover:bg-background transition-colors"
+                  aria-label="Close import dialog"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-5 px-6 py-6">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="font-semibold text-foreground">Use the template below to prepare your file.</p>
+                    <p className="mt-1">Required columns: firstName, lastName, and className. Admission numbers are assigned automatically by the system.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleDownloadImportTemplate}
+                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#0A66C2] bg-white px-3 py-2 text-sm font-semibold text-[#0A66C2] transition hover:bg-slate-50"
+                  >
+                    <Download className="h-4 w-4" />
+                    Download template
+                  </button>
+                </div>
+              </div>
+
+              <form className="space-y-4" onSubmit={handlePreviewImport}>
+                <label className="block">
+                  <span className="mb-2 block text-sm font-semibold text-foreground">Choose CSV file</span>
+                  <input
+                    ref={importFileInputRef}
+                    type="file"
+                    accept=".csv,text/csv"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0] ?? null;
+                      setImportFile(file);
+                      setImportErrors([]);
+                      setImportSummary(null);
+                      setImportPreviewRows([]);
+                    }}
+                    className="block w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+                  />
+                </label>
+
+                <div className="flex flex-wrap justify-end gap-3 border-t border-border pt-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      playCloseTone();
+                      setIsImportModalOpen(false);
+                      resetImportState();
+                    }}
+                    className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:bg-background"
+                  >
+                    Cancel
+                  </button>
+                  <Button type="submit" className="inline-flex items-center gap-2" disabled={isImporting}>
+                    <Upload className="h-4 w-4" />
+                    {isImporting ? 'Checking file...' : 'Preview import'}
+                  </Button>
+                </div>
+              </form>
+
+              {importSummary ? (
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
+                  {importSummary}
+                </div>
+              ) : null}
+
+              {importErrors.length > 0 ? (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
+                  <p className="font-semibold">We found issues in the file.</p>
+                  <ul className="mt-2 list-disc space-y-1 pl-5">
+                    {importErrors.map((error) => (
+                      <li key={error}>{error}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+
+              {importPreviewRows.length > 0 ? (
+                <div>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <h4 className="text-sm font-semibold text-foreground">Preview</h4>
+                    <Button type="button" onClick={handleConfirmImport} disabled={isImporting}>
+                      {isImporting ? 'Importing...' : 'Import students'}
+                    </Button>
+                  </div>
+                  <div className="mt-3 overflow-hidden rounded-xl border border-border">
+                    <table className="min-w-full text-left text-sm">
+                      <thead className="bg-slate-50 text-muted">
+                        <tr>
+                          <th className="px-3 py-2">Name</th>
+                          <th className="px-3 py-2">Admission No.</th>
+                          <th className="px-3 py-2">Class</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {importPreviewRows.map((row) => (
+                          <tr key={`${row.firstName}-${row.lastName}-${row.admissionNo}`} className="border-t border-border">
+                            <td className="px-3 py-2">{row.firstName} {row.lastName}</td>
+                            <td className="px-3 py-2">{row.admissionNo || '—'}</td>
+                            <td className="px-3 py-2">{row.className || 'Unassigned'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {isProfileOpen && profileStudent ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">

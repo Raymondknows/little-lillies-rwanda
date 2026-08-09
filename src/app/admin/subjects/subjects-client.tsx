@@ -513,7 +513,7 @@ export default function SubjectsPageClient({
                 </div>
               )}
 
-              <div className="grid gap-4 lg:grid-cols-2">
+              <div className="grid gap-4 lg:grid-cols-[minmax(220px,0.7fr)_minmax(0,1.3fr)]">
                 <div className="space-y-4">
                   <label className="text-sm font-medium block">
                     Subject name

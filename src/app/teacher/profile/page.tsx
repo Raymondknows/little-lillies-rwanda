@@ -1,8 +1,20 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { AlertCircle, Mail, Shield, Calendar, Building2, LogOut, Loader2 } from 'lucide-react';
+import {
+  AlertCircle,
+  Mail,
+  Shield,
+  Calendar,
+  Building2,
+  Loader2,
+  User,
+  KeyRound,
+  ChevronRight,
+  CheckCircle2,
+} from 'lucide-react';
 import { getBackendUrl } from '@/lib/backend-url';
+import { playCloseTone, playOpenTone } from '@/lib/sounds';
 
 interface TeacherProfile {
   id: string;
@@ -20,28 +32,35 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<TeacherProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
   });
+
   const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
 
   useEffect(() => {
     async function loadProfile() {
       try {
         const backendUrl = getBackendUrl();
+
         const res = await fetch(`${backendUrl}/api/teacher/profile`, {
           credentials: 'include',
         });
-        if (!res.ok) throw new Error('Failed to load profile');
+
+        if (!res.ok) {
+          throw new Error('Failed to load profile');
+        }
+
         const data = await res.json();
         setProfile(data);
       } catch (err: any) {
-        setError(err.message);
+        setError(err.message || 'Failed to load profile');
       } finally {
         setLoading(false);
       }
@@ -52,21 +71,26 @@ export default function ProfilePage() {
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
+
     setPasswordError(null);
-    setPasswordSuccess(null);
+    setPasswordSuccess(false);
 
-    if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
-      setPasswordError('All fields are required');
-      return;
-    }
-
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      setPasswordError('New passwords do not match');
+    if (
+      !passwordForm.currentPassword ||
+      !passwordForm.newPassword ||
+      !passwordForm.confirmPassword
+    ) {
+      setPasswordError('All fields are required.');
       return;
     }
 
     if (passwordForm.newPassword.length < 8) {
-      setPasswordError('New password must be at least 8 characters');
+      setPasswordError('New password must be at least 8 characters.');
+      return;
+    }
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordError('New passwords do not match.');
       return;
     }
 
@@ -74,10 +98,13 @@ export default function ProfilePage() {
 
     try {
       const backendUrl = getBackendUrl();
+
       const res = await fetch(`${backendUrl}/api/teacher/change-password`, {
         method: 'POST',
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
           currentPassword: passwordForm.currentPassword,
           newPassword: passwordForm.newPassword,
@@ -85,30 +112,62 @@ export default function ProfilePage() {
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Failed to change password');
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error || 'Failed to change password');
       }
 
-      setPasswordSuccess('Password changed successfully!');
+      setPasswordSuccess(true);
+
       setPasswordForm({
         currentPassword: '',
         newPassword: '',
         confirmPassword: '',
       });
-      setTimeout(() => setShowPasswordModal(false), 1500);
+
+      setTimeout(() => {
+        playCloseTone();
+        setShowPasswordModal(false);
+        setPasswordSuccess(false);
+      }, 1600);
     } catch (err: any) {
-      setPasswordError(err.message);
+      setPasswordError(err.message || 'Failed to change password');
     } finally {
       setChangingPassword(false);
     }
   };
 
+  const openPasswordModal = () => {
+    setPasswordError(null);
+    setPasswordSuccess(false);
+    setShowPasswordModal(true);
+    playOpenTone();
+  };
+
+  const closePasswordModal = () => {
+    if (changingPassword) return;
+
+    playCloseTone();
+    setShowPasswordModal(false);
+    setPasswordError(null);
+    setPasswordSuccess(false);
+
+    setPasswordForm({
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+    });
+  };
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand mx-auto"></div>
-          <p className="mt-4 text-muted">Loading profile...</p>
+      <div className="px-3 py-4 sm:px-4 lg:px-6 lg:py-6">
+        <div className="mx-auto max-w-6xl space-y-4 sm:space-y-5">
+          <div className="flex min-h-[60vh] items-center justify-center">
+            <div className="flex items-center gap-3 text-sm text-muted">
+              <Loader2 className="h-5 w-5 animate-spin text-brand" />
+              Loading your profile...
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -116,11 +175,16 @@ export default function ProfilePage() {
 
   if (error) {
     return (
-      <div className="p-6">
-        <div className="rounded-lg bg-red-50 border border-red-200 p-4">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
-            <p className="text-red-800">{error}</p>
+      <div className="px-3 py-4 sm:px-4 lg:px-6 lg:py-6">
+        <div className="mx-auto max-w-6xl space-y-4 sm:space-y-5">
+          <div className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4">
+            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
+            <div>
+              <p className="font-medium text-red-900">
+                Unable to load profile
+              </p>
+              <p className="mt-1 text-sm text-red-800">{error}</p>
+            </div>
           </div>
         </div>
       </div>
@@ -129,250 +193,378 @@ export default function ProfilePage() {
 
   if (!profile) {
     return (
-      <div className="p-6 text-center">
-        <p className="text-muted">No profile data available</p>
+      <div className="px-3 py-4 sm:px-4 lg:px-6 lg:py-6">
+        <div className="mx-auto max-w-6xl space-y-4 sm:space-y-5 py-20 text-center">
+          <User className="mx-auto h-10 w-10 text-muted/40" />
+          <p className="mt-3 text-sm text-muted">
+            No profile information available.
+          </p>
+        </div>
       </div>
     );
   }
 
+  const initials = profile.name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join('');
+
+  const joinedDate = new Date(profile.createdAt).toLocaleDateString(
+    'en-US',
+    {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    },
+  );
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-2">
-        <p className="text-sm font-medium uppercase tracking-[0.2em] text-brand">
-          Teacher account
-        </p>
-        <h1 className="text-3xl font-bold text-foreground">{profile.name}</h1>
-        <p className="text-muted mt-1">Manage your profile and account settings</p>
-      </div>
+<div className="px-3 py-4 sm:px-4 lg:px-6 lg:py-6">
+      <div className="mx-auto max-w-6xl space-y-4 sm:space-y-5">
 
-      {/* Main Profile Card */}
-      <div className="rounded-xl border border-border bg-surface overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-        {/* Header with gradient background */}
-        <div className="h-24 sm:h-32 bg-brand/10"></div>
+        {/* Page heading */}
+        <div className="mb-8">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand">
+            Account
+          </p>
 
-        {/* Profile Info */}
-        <div className="px-6 sm:px-8 pb-8">
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between -mt-12 sm:-mt-16 relative z-10">
-            <div className="flex items-end gap-4 mb-6 sm:mb-0">
-              <div
-                className="h-20 w-20 sm:h-28 sm:w-28 rounded-full border-4 border-white shadow-lg flex items-center justify-center bg-brand/10"
-              >
-                <span className="text-2xl sm:text-4xl font-bold text-brand">
-                  {profile.name.charAt(0).toUpperCase()}
-                </span>
+          <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+            Profile
+          </h1>
+
+          <p className="mt-1 text-sm text-muted">
+            Manage your teacher account and security.
+          </p>
+        </div>
+
+        {/* Main profile header */}
+        <section className="overflow-hidden rounded-[28px] border border-border/70 bg-surface shadow-sm">
+
+          {/* Brand header */}
+          <div className="relative h-28 bg-gradient-to-r from-brand/15 via-brand/5 to-transparent sm:h-32">
+            <div className="absolute inset-y-0 right-0 w-1/2 bg-gradient-to-l from-brand/5 to-transparent" />
+          </div>
+
+          {/* Profile identity */}
+          <div className="relative px-5 pb-6 sm:px-8 sm:pb-8">
+            <div className="-mt-12 flex flex-col gap-5 sm:-mt-14 sm:flex-row sm:items-end sm:justify-between">
+
+              <div className="flex items-end gap-4">
+                <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-[26px] border-4 border-surface bg-brand/10 text-brand shadow-md sm:h-28 sm:w-28">
+                  <span className="text-3xl font-bold sm:text-4xl">
+                    {initials || 'T'}
+                  </span>
+                </div>
+
+                <div className="pb-1">
+                  <h2 className="text-xl font-bold text-foreground sm:text-2xl">
+                    {profile.name}
+                  </h2>
+
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <span className="rounded-full bg-brand/10 px-2.5 py-1 text-xs font-semibold text-brand">
+                      {profile.role}
+                    </span>
+
+                    <span className="text-xs text-muted">
+                      Teacher account
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div className="pb-2">
-                <h2 className="text-xl sm:text-2xl font-bold text-foreground">{profile.name}</h2>
-                <p className="text-sm text-muted">{profile.role}</p>
-              </div>
-            </div>
 
-            {/* School Badge */}
-            <div className="text-right">
-              <p className="text-xs text-muted mb-1">School</p>
-              <p className="text-sm font-semibold text-foreground">{profile.school.name}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Information Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Email Card */}
-        <div className="rounded-xl border border-border bg-surface p-6 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg flex-shrink-0 bg-brand/10">
-              <Mail className="h-6 w-6 text-brand" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs text-muted font-medium mb-1">Email Address</p>
-              <p className="text-sm font-semibold text-foreground break-all">{profile.email}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Role Card */}
-        <div className="rounded-xl border border-border bg-surface p-6 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg flex-shrink-0 bg-brand/10">
-              <Shield className="h-6 w-6 text-brand" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs text-muted font-medium mb-1">Role</p>
-              <p className="text-sm font-semibold text-foreground">{profile.role}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Joined Date Card */}
-        <div className="rounded-xl border border-border bg-surface p-6 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg flex-shrink-0 bg-brand/10">
-              <Calendar className="h-6 w-6 text-brand" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs text-muted font-medium mb-1">Joined</p>
-              <p className="text-sm font-semibold text-foreground">
-                {new Date(profile.createdAt).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                })}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* School Card */}
-        <div className="rounded-xl border border-border bg-surface p-6 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg flex-shrink-0 bg-brand/10">
-              <Building2 className="h-6 w-6 text-brand" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs text-muted font-medium mb-1">Institution</p>
-              <p className="text-sm font-semibold text-foreground">{profile.school.name}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Account Management */}
-      <div className="rounded-xl border border-border bg-surface p-6 sm:p-8 shadow-sm">
-        <h3 className="text-lg font-semibold text-foreground mb-6">Account Management</h3>
-        <div className="space-y-3">
-          <button
-            onClick={() => setShowPasswordModal(true)}
-            className="w-full px-6 py-3 rounded-lg font-medium transition-all border border-border text-foreground hover:border-border/80 hover:shadow-sm text-left"
-          >
-            <div className="flex items-center gap-3">
-              <Shield className="h-5 w-5 text-muted" />
-              <div className="flex-1">
-                <p className="font-medium text-foreground">Change Password</p>
-                <p className="text-xs text-muted mt-1">Update your account password</p>
+              <div className="flex items-center gap-2 text-sm text-muted">
+                <Building2 className="h-4 w-4" />
+                <span>{profile.school.name}</span>
               </div>
             </div>
-          </button>
+          </div>
+        </section>
 
-          <button
-            className="w-full px-6 py-3 rounded-lg font-medium transition-all text-left border border-destructive text-destructive bg-destructive/5 hover:bg-destructive/10"
-          >
-            <div className="flex items-center gap-3">
-              <LogOut className="h-5 w-5" />
-              <div className="flex-1">
-                <p className="font-medium">Sign Out</p>
-                <p className="text-xs mt-1">Log out from your teacher account</p>
+        {/* Account details */}
+        <section className="mt-10">
+          <div className="mb-5">
+            <h2 className="text-lg font-semibold text-foreground">
+              Account details
+            </h2>
+
+            <p className="mt-1 text-sm text-muted">
+              Information associated with your SchoolBase account.
+            </p>
+          </div>
+
+          <div className="divide-y divide-border rounded-[24px] border border-border/70 bg-surface shadow-sm">
+
+            {/* Email */}
+            <div className="flex flex-col gap-2 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+              <div className="flex items-center gap-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-background text-muted">
+                  <Mail className="h-5 w-5" />
+                </div>
+
+                <div>
+                  <p className="text-sm font-medium text-foreground">
+                    Email address
+                  </p>
+                  <p className="mt-0.5 text-sm text-muted break-all">
+                    {profile.email}
+                  </p>
+                </div>
+              </div>
+
+              <span className="ml-14 inline-flex w-fit items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 sm:ml-0">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Active
+              </span>
+            </div>
+
+            {/* School */}
+            <div className="flex items-center gap-4 px-5 py-5 sm:px-6">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-background text-muted">
+                <Building2 className="h-5 w-5" />
+              </div>
+
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-foreground">
+                  School
+                </p>
+
+                <p className="mt-0.5 truncate text-sm text-muted">
+                  {profile.school.name}
+                </p>
               </div>
             </div>
-          </button>
-        </div>
+
+            {/* Role */}
+            <div className="flex items-center gap-4 px-5 py-5 sm:px-6">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-background text-muted">
+                <Shield className="h-5 w-5" />
+              </div>
+
+              <div>
+                <p className="text-sm font-medium text-foreground">
+                  Role
+                </p>
+
+                <p className="mt-0.5 text-sm capitalize text-muted">
+                  {profile.role}
+                </p>
+              </div>
+            </div>
+
+            {/* Joined */}
+            <div className="flex items-center gap-4 px-5 py-5 sm:px-6">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-background text-muted">
+                <Calendar className="h-5 w-5" />
+              </div>
+
+              <div>
+                <p className="text-sm font-medium text-foreground">
+                  Account created
+                </p>
+
+                <p className="mt-0.5 text-sm text-muted">
+                  {joinedDate}
+                </p>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        {/* Security */}
+        <section className="mt-10">
+          <div className="mb-5">
+            <h2 className="text-lg font-semibold text-foreground">
+              Security
+            </h2>
+
+            <p className="mt-1 text-sm text-muted">
+              Protect your account and manage your sign-in credentials.
+            </p>
+          </div>
+
+          <div className="overflow-hidden rounded-[24px] border border-border/70 bg-surface shadow-sm">
+
+            <button
+              type="button"
+              onClick={openPasswordModal}
+              className="group flex w-full items-center gap-4 px-5 py-5 text-left transition hover:bg-background sm:px-6"
+            >
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand">
+                <KeyRound className="h-5 w-5" />
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <p className="font-medium text-foreground">
+                  Change password
+                </p>
+
+                <p className="mt-1 text-sm text-muted">
+                  Update your password whenever you need to.
+                </p>
+              </div>
+
+              <ChevronRight className="h-5 w-5 shrink-0 text-muted transition-transform group-hover:translate-x-1" />
+            </button>
+
+          </div>
+        </section>
       </div>
 
       {/* Change Password Modal */}
       {showPasswordModal && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 px-4 py-8">
-          <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-6 shadow-lg">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-semibold text-gray-900">
-                Change Password
-              </h2>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowPasswordModal(false);
-                  setPasswordError(null);
-                  setPasswordSuccess(null);
-                }}
-                className="text-gray-600 hover:text-gray-900 transition text-xl leading-none"
-              >
-                ×
-              </button>
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) {
+              closePasswordModal();
+            }
+          }}
+        >
+          <style>{`
+            @keyframes profile_password_modal_enter { from { transform: translateX(36px) scale(.98); opacity: 0 } to { transform: translateX(0) scale(1); opacity: 1 } }
+            @keyframes profile_password_modal_exit  { from { transform: translateX(0) scale(1); opacity: 1 } to { transform: translateX(36px) scale(.98); opacity: 0 } }
+          `}</style>
+
+          <div
+            className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_50px_rgba(10,102,194,0.16)]"
+            role="dialog"
+            aria-modal="true"
+            style={{ animation: `profile_password_modal_enter 320ms cubic-bezier(.2,.9,.2,1)` }}
+          >
+            <div className="border-b border-slate-100 px-6 py-5" style={{ background: 'linear-gradient(90deg, rgba(10,102,194,0.12), rgba(10,102,194,0.04))' }}>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-foreground">
+                    Change password
+                  </h2>
+                  <p className="mt-1 text-sm text-muted">
+                    Enter your current password and choose a new one.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={closePasswordModal}
+                  disabled={changingPassword}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-border hover:bg-background transition-colors text-muted"
+                  aria-label="Close"
+                >
+                  ×
+                </button>
+              </div>
             </div>
 
-            {passwordError && (
-              <div className="mb-4 rounded-lg bg-red-50 border border-red-200 p-3">
-                <p className="text-sm text-red-800">{passwordError}</p>
-              </div>
-            )}
+            <form
+              onSubmit={handleChangePassword}
+              className="space-y-4 px-6 py-6"
+            >
+              {passwordError && (
+                <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-3">
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
+                  <p className="text-sm text-red-800">
+                    {passwordError}
+                  </p>
+                </div>
+              )}
 
-            {passwordSuccess && (
-              <div className="mb-4 rounded-lg bg-green-50 border border-green-200 p-3">
-                <p className="text-sm text-green-800">{passwordSuccess}</p>
-              </div>
-            )}
+              {passwordSuccess && (
+                <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                  <p className="text-sm text-emerald-800">
+                    Password changed successfully.
+                  </p>
+                </div>
+              )}
 
-            <form onSubmit={handleChangePassword} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">
-                  Current Password
+                <label className="mb-1.5 block text-sm font-medium text-foreground">
+                  Current password
                 </label>
+
                 <input
                   type="password"
                   value={passwordForm.currentPassword}
-                  onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
-                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  onChange={(e) =>
+                    setPasswordForm({
+                      ...passwordForm,
+                      currentPassword: e.target.value,
+                    })
+                  }
+                  autoComplete="current-password"
                   required
+                  className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">
-                  New Password
+                <label className="mb-1.5 block text-sm font-medium text-foreground">
+                  New password
                 </label>
+
                 <input
                   type="password"
                   value={passwordForm.newPassword}
-                  onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  onChange={(e) =>
+                    setPasswordForm({
+                      ...passwordForm,
+                      newPassword: e.target.value,
+                    })
+                  }
+                  autoComplete="new-password"
                   required
+                  className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10"
                 />
-                <p className="text-xs text-gray-600 mt-1">At least 8 characters</p>
+
+                <p className="mt-1.5 text-xs text-muted">
+                  Minimum 8 characters.
+                </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">
-                  Confirm New Password
+                <label className="mb-1.5 block text-sm font-medium text-foreground">
+                  Confirm new password
                 </label>
+
                 <input
                   type="password"
                   value={passwordForm.confirmPassword}
-                  onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  onChange={(e) =>
+                    setPasswordForm({
+                      ...passwordForm,
+                      confirmPassword: e.target.value,
+                    })
+                  }
+                  autoComplete="new-password"
                   required
+                  className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10"
                 />
               </div>
 
-              <div className="pt-2 flex gap-3">
+              <div className="flex gap-3 border-t border-border pt-4">
                 <button
                   type="button"
-                  onClick={() => {
-                    setShowPasswordModal(false);
-                    setPasswordError(null);
-                    setPasswordSuccess(null);
-                    setPasswordForm({
-                      currentPassword: '',
-                      newPassword: '',
-                      confirmPassword: '',
-                    });
-                  }}
-                  className="flex-1 rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-900 transition hover:bg-gray-50"
+                  onClick={closePasswordModal}
+                  disabled={changingPassword}
+                  className="flex-1 rounded-xl border border-border bg-background px-4 py-2.5 text-sm font-medium text-foreground transition hover:bg-surface disabled:opacity-50"
                 >
                   Cancel
                 </button>
+
                 <button
                   type="submit"
                   disabled={changingPassword}
-                  className="flex-1 rounded-lg px-4 py-2 text-sm font-medium text-white transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  style={{ backgroundColor: '#0A66C2' }}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-medium text-white transition hover:bg-brand/90 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {changingPassword ? (
                     <>
-                      <Loader2 className="animate-spin h-4 w-4" />
-                      Changing...
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Updating...
                     </>
                   ) : (
-                    'Change Password'
+                    'Update password'
                   )}
                 </button>
               </div>

@@ -7,12 +7,17 @@ import {
   ClipboardList,
   Bell,
   AlertCircle,
-  ArrowUpRight,
   BookOpen,
   Gauge,
-  Clipboard,
+  Sparkles,
+  ArrowRight,
 } from 'lucide-react';
-import { getTeacherDashboard, type TeacherDashboardData, detectSchoolPhase } from '@/lib/teacher-utils';
+import {
+  getTeacherDashboard,
+  getTeacherDashboardMetrics,
+  type TeacherDashboardData,
+  detectSchoolPhase,
+} from '@/lib/teacher-utils';
 import { SubscriptionBlockedError } from '@/lib/subscription-utils';
 import SubscriptionModal from '@/components/subscription-modal';
 
@@ -26,7 +31,13 @@ export default function TeacherDashboardPage() {
     async function loadData() {
       try {
         const dashboardData = await getTeacherDashboard();
-        setData(dashboardData);
+        const metrics = await getTeacherDashboardMetrics(dashboardData.classes).catch(() => ({
+          pendingResultAssessments: 0,
+          pendingAttendanceRegisters: 0,
+          publishedAnnouncements: 0,
+        }));
+
+        setData({ ...dashboardData, metrics });
       } catch (err: any) {
         console.error('Error loading teacher dashboard:', err);
         
@@ -46,10 +57,10 @@ export default function TeacherDashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex min-h-screen items-center justify-center px-4">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand mx-auto"></div>
-          <p className="mt-4 text-muted">Loading your dashboard...</p>
+          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-brand"></div>
+          <p className="mt-4 text-sm text-muted">Loading your dashboard...</p>
         </div>
       </div>
     );
@@ -61,13 +72,13 @@ export default function TeacherDashboardPage() {
 
   if (error) {
     return (
-      <div className="p-6">
-        <div className="rounded-lg bg-red-50 border border-red-200 p-4">
-          <div className="flex items-start">
-            <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 mr-3" />
+      <div className="p-4 sm:p-6">
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-4">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
             <div>
               <h3 className="font-semibold text-red-900">Error</h3>
-              <p className="text-red-800">{error}</p>
+              <p className="text-sm text-red-800">{error}</p>
             </div>
           </div>
         </div>
@@ -77,196 +88,156 @@ export default function TeacherDashboardPage() {
 
   if (!data) {
     return (
-      <div className="p-6">
-        <div className="text-center">
-          <p className="text-muted">No data available</p>
+      <div className="p-4 sm:p-6">
+        <div className="rounded-2xl border border-border bg-surface p-6 text-center text-sm text-muted">
+          No data available
         </div>
       </div>
     );
   }
 
   const schoolPhase = detectSchoolPhase(data.school);
-  const pendingAssessmentCount = 0; // Can be enhanced with assessment status
-  const pendingAttendanceCount = data.classes.length;
-  const announcementCount = 0; // Can be fetched from backend
+  const metrics = data.metrics ?? {
+    pendingResultAssessments: 0,
+    pendingAttendanceRegisters: 0,
+    publishedAnnouncements: 0,
+  };
+  const pendingAssessmentCount = metrics.pendingResultAssessments;
+  const pendingAttendanceCount = metrics.pendingAttendanceRegisters;
+  const announcementCount = metrics.publishedAnnouncements;
 
   const statCards = [
     {
-      label: "Pending result entries",
+      label: 'Open result assessments',
       value: String(pendingAssessmentCount),
-      sub: "Awaiting submission",
+      sub: pendingAssessmentCount === 1 ? 'Assessment needs attention' : 'Assessments needing entry',
       icon: FileText,
-      color: "bg-blue-100",
-      iconColor: "text-blue-600",
+      color: 'bg-blue-50',
+      iconColor: 'text-blue-600',
+      accent: 'from-blue-500/10 to-blue-600/5',
     },
     {
-      label: "Attendance registers today",
+      label: 'Attendance not submitted',
       value: String(pendingAttendanceCount),
-      sub: "Classes to mark",
+      sub: pendingAttendanceCount === 1 ? 'Class still needs today’s mark' : 'Classes still need today’s mark',
       icon: ClipboardList,
-      color: "bg-purple-100",
-      iconColor: "text-purple-600",
+      color: 'bg-violet-50',
+      iconColor: 'text-violet-600',
+      accent: 'from-violet-500/10 to-violet-600/5',
     },
     {
-      label: "Current announcements",
+      label: 'Published announcements',
       value: String(announcementCount),
-      sub: "New messages",
+      sub: announcementCount === 1 ? 'Recent school update' : 'Published school updates',
       icon: Bell,
-      color: "bg-yellow-100",
-      iconColor: "text-yellow-600",
+      color: 'bg-amber-50',
+      iconColor: 'text-amber-600',
+      accent: 'from-amber-500/10 to-amber-600/5',
     },
   ];
 
-  return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-foreground">Welcome, {data.teacher.name}</h1>
-        <p className="mt-1 text-muted">Your teaching workspace for {data.school?.name}</p>
-      </div>
+  const quickActions = [
+    { href: '/teacher/attendance', label: 'Attendance', icon: ClipboardList },
+    { href: '/teacher/results', label: 'Results', icon: FileText },
+    { href: '/teacher/subjects', label: 'Subjects', icon: BookOpen },
+    { href: '/teacher/class', label: 'Classes', icon: Gauge },
+  ];
 
-      {/* Stats Cards - Desktop */}
-      <div className="mb-10 hidden sm:block">
-        <div className="grid grid-cols-3 gap-4">
+  return (
+    <div className="px-3 py-4 sm:px-4 lg:px-6 lg:py-6">
+      <div className="mx-auto max-w-6xl space-y-4 sm:space-y-5">
+        <section className="px-1 py-1 sm:px-0">
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+            Welcome back, {data.teacher.name}
+          </h1>
+          <p className="mt-2 text-sm leading-6 text-muted sm:text-base">
+            {data.school?.name} • {schoolPhase}
+          </p>
+        </section>
+
+        <section className="grid gap-3 md:grid-cols-3">
           {statCards.map((stat, idx) => {
             const IconComponent = stat.icon;
             return (
-              <div key={idx} className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50 flex flex-col">
+              <article
+                key={idx}
+                className={`rounded-[20px] border border-border/70 bg-gradient-to-br ${stat.accent} p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md`}
+              >
                 <div className="flex items-start gap-3">
-                  <div className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg ${stat.color} shadow-sm`}>
-                    <IconComponent className={`h-4 w-4 ${stat.iconColor}`} />
+                  <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${stat.color}`}>
+                    <IconComponent className={`h-5 w-5 ${stat.iconColor}`} />
                   </div>
-                  <div className="flex-1">
-                    <p className="text-xs text-muted">{stat.label}</p>
-                    <p className="mt-1 text-lg font-bold text-foreground">{stat.value}</p>
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted">{stat.label}</p>
+                    <p className="mt-1 text-2xl font-semibold text-foreground">{stat.value}</p>
                   </div>
-                  <ArrowUpRight className="h-3 w-3 text-muted opacity-0 transition-opacity group-hover:opacity-100 flex-shrink-0" />
                 </div>
-                <p className="mt-2 text-[11px] text-muted">{stat.sub}</p>
-              </div>
+                <p className="mt-3 text-sm text-muted">{stat.sub}</p>
+              </article>
             );
           })}
-        </div>
-      </div>
+        </section>
 
-      {/* Stats Cards - Mobile */}
-      <div className="sm:hidden mb-10">
-        {statCards.map((stat, idx) => {
-          const IconComponent = stat.icon;
-          return (
-            <div key={idx} className="block mb-3">
-              <div className="group rounded-lg border border-border bg-surface p-5 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50 flex items-start gap-4">
-                <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg ${stat.color} shadow-sm`}>
-                  <IconComponent className={`h-5 w-5 ${stat.iconColor}`} />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm text-muted font-medium">{stat.label}</p>
-                  <p className="mt-1.5 text-xl font-bold text-foreground">{stat.value}</p>
-                  <p className="mt-1 text-xs text-muted">{stat.sub}</p>
-                </div>
-                <ArrowUpRight className="h-4 w-4 text-muted opacity-0 transition-opacity group-hover:opacity-100 flex-shrink-0 mt-1" />
-              </div>
+        <div className="mb-10">
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-foreground">Quick Actions</h3>
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {quickActions.map((action) => {
+              const IconComponent = action.icon;
+              return (
+                <Link
+                  key={action.label}
+                  href={action.href}
+                  className="inline-flex w-full cursor-pointer items-center justify-center rounded-lg bg-brand px-4 py-3 font-medium text-white shadow-sm transition-colors hover:bg-brand/90"
+                >
+                  <IconComponent className="mr-2 h-4 w-4" />
+                  {action.label}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+
+        <section className="rounded-[24px] border border-border/70 bg-surface/80 p-4 shadow-sm sm:p-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">Your classes</h2>
+              <p className="mt-1 text-sm text-muted">Manage the classes assigned to you.</p>
             </div>
-          );
-        })}
-      </div>
+          </div>
 
-      {/* Quick Actions */}
-      <div className="mb-10">
-        <h3 className="text-sm font-semibold text-foreground mb-3">Quick Actions</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          <Link href="/teacher/attendance">
-            <button className="w-full inline-flex items-center justify-center px-4 py-3 bg-brand text-white rounded-lg hover:bg-brand/90 transition-colors font-medium shadow-sm hover:shadow-md">
-              <ClipboardList className="h-4 w-4 mr-2" />
-              Attendance
-            </button>
-          </Link>
-          <Link href="/teacher/results">
-            <button className="w-full inline-flex items-center justify-center px-4 py-3 bg-brand text-white rounded-lg hover:bg-brand/90 transition-colors font-medium shadow-sm hover:shadow-md">
-              <FileText className="h-4 w-4 mr-2" />
-              Results
-            </button>
-          </Link>
-          <Link href="/teacher/subjects">
-            <button className="w-full inline-flex items-center justify-center px-4 py-3 bg-brand text-white rounded-lg hover:bg-brand/90 transition-colors font-medium shadow-sm hover:shadow-md">
-              <BookOpen className="h-4 w-4 mr-2" />
-              Subjects
-            </button>
-          </Link>
-          <Link href="/teacher/class">
-            <button className="w-full inline-flex items-center justify-center px-4 py-3 bg-brand text-white rounded-lg hover:bg-brand/90 transition-colors font-medium shadow-sm hover:shadow-md">
-              <Gauge className="h-4 w-4 mr-2" />
-              Classes
-            </button>
-          </Link>
-        </div>
-      </div>
-
-      {/* Your Classes Section */}
-      <div className="space-y-4">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">Your Classes</h2>
-          <p className="mt-1 text-muted">Manage and view your assigned classes.</p>
-        </div>
-
-        <div className="overflow-hidden rounded-lg border border-border bg-surface shadow-sm">
-          {/* Desktop Table */}
-          <table className="hidden sm:table w-full text-left text-sm">
-            <thead className="border-b border-border bg-background text-foreground">
-              <tr>
-                <th className="px-6 py-3 font-semibold">Class</th>
-                <th className="px-6 py-3 font-semibold">Phase</th>
-                <th className="px-6 py-3 font-semibold">Students</th>
-                <th className="px-6 py-3 font-semibold">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.classes.map((cls) => (
-                <tr key={cls.id} className="border-t border-border hover:bg-background transition-colors">
-                  <td className="px-6 py-4 font-medium text-foreground">{cls.name}</td>
-                  <td className="px-6 py-4 text-muted">{cls.phase}</td>
-                  <td className="px-6 py-4 text-muted">{cls.studentCount}</td>
-                  <td className="px-6 py-4">
-                    <Link
-                      href={`/teacher/class?id=${cls.id}`}
-                      className="inline-flex items-center px-3 py-1 text-xs font-medium rounded transition-colors bg-brand text-white hover:bg-brand/90"
-                    >
-                      View
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          {/* Mobile Card */}
-          <div className="sm:hidden divide-y divide-border">
+          <div className="mt-4 grid gap-3 lg:grid-cols-2">
             {data.classes.map((cls) => (
               <Link
                 key={cls.id}
                 href={`/teacher/class?id=${cls.id}`}
-                className="block p-4 hover:bg-background transition-colors"
+                className="group flex items-center justify-between rounded-2xl border border-border bg-background p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-brand/30 hover:bg-brand/5"
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm text-foreground">{cls.name}</p>
-                    <p className="text-xs text-muted mt-1">
-                      {cls.phase} • {cls.studentCount} students
-                    </p>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand/10 text-brand">
+                    <BookOpen className="h-5 w-5" />
                   </div>
-                  <div className="flex-shrink-0 text-right ml-2">
-                    <p className="text-xs font-medium text-brand">View</p>
+                  <div>
+                    <p className="font-semibold text-foreground">{cls.name}</p>
+                    <p className="mt-1 text-sm text-muted">{cls.phase}</p>
                   </div>
+                </div>
+
+                <div className="text-right">
+                  <p className="text-sm font-semibold text-foreground">{cls.studentCount}</p>
+                  <p className="text-xs uppercase tracking-[0.18em] text-muted">Students</p>
                 </div>
               </Link>
             ))}
           </div>
 
           {data.classes.length === 0 && (
-            <div className="px-6 py-8 text-center">
-              <p className="text-muted">No classes assigned yet</p>
+            <div className="mt-4 rounded-2xl border border-dashed border-border bg-background/70 px-6 py-8 text-center text-sm text-muted">
+              No classes assigned yet.
             </div>
           )}
-        </div>
+        </section>
       </div>
     </div>
   );

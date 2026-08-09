@@ -19,6 +19,12 @@ export interface TeacherProfile {
   createdAt: string;
 }
 
+export interface TeacherDashboardMetrics {
+  pendingResultAssessments: number;
+  pendingAttendanceRegisters: number;
+  publishedAnnouncements: number;
+}
+
 export interface TeacherDashboardData {
   teacher: {
     id: string;
@@ -46,6 +52,7 @@ export interface TeacherDashboardData {
   }>;
   totalStudents: number;
   classCount: number;
+  metrics?: TeacherDashboardMetrics;
 }
 
 /**
@@ -72,6 +79,83 @@ export async function getTeacherDashboard(): Promise<TeacherDashboardData> {
   }
 
   return response.json();
+}
+
+export async function getTeacherDashboardMetrics(classes: Array<{ id: string }>): Promise<TeacherDashboardMetrics> {
+  const backendUrl = getBackendUrl();
+  const today = new Date().toISOString().split('T')[0];
+
+  const [assessmentsResult, announcementsResult] = await Promise.allSettled([
+    fetch(`${backendUrl}/api/teacher/assessments`, {
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }),
+    fetch(`${backendUrl}/api/teacher/announcements`, {
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }),
+  ]);
+
+  let pendingResultAssessments = 0;
+  if (assessmentsResult.status === 'fulfilled' && assessmentsResult.value.ok) {
+    const payload = await assessmentsResult.value.json();
+    const assessments = Array.isArray(payload?.assessments) ? payload.assessments : [];
+
+    pendingResultAssessments = assessments.filter((assessment: any) => {
+      const studentCount = Number(assessment.studentCount ?? 0);
+      const entryCount = Number(assessment.entryCount ?? 0);
+      const isLocked = Boolean(assessment.isLocked);
+      const canEdit = Boolean(assessment.canEdit);
+
+      return !isLocked && canEdit && entryCount < Math.max(studentCount, 1);
+    }).length;
+  }
+
+  let publishedAnnouncements = 0;
+  if (announcementsResult.status === 'fulfilled' && announcementsResult.value.ok) {
+    const payload = await announcementsResult.value.json();
+    publishedAnnouncements = Number(payload?.total ?? payload?.announcements?.length ?? 0);
+  }
+
+  let pendingAttendanceRegisters = 0;
+  if (classes.length > 0) {
+    const attendancePromises = classes.map((cls) =>
+      fetch(`${backendUrl}/api/teacher/attendance/check?classId=${encodeURIComponent(cls.id)}&date=${encodeURIComponent(today)}`, {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+    );
+
+    const attendanceResults = await Promise.allSettled(attendancePromises);
+    const attendanceFlags = await Promise.all(
+      attendanceResults.map(async (result) => {
+        if (result.status !== 'fulfilled' || !result.value.ok) {
+          return false;
+        }
+
+        try {
+          const payload = await result.value.json();
+          return !Boolean(payload?.exists);
+        } catch {
+          return false;
+        }
+      })
+    );
+
+    pendingAttendanceRegisters = attendanceFlags.filter(Boolean).length;
+  }
+
+  return {
+    pendingResultAssessments,
+    pendingAttendanceRegisters,
+    publishedAnnouncements,
+  };
 }
 
 /**

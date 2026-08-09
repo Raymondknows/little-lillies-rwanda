@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { X } from "lucide-react";
+import { Users, X } from "lucide-react";
 import { pupilName } from "@/lib/format";
 import { resolveFileUrl } from "@/lib/api-client";
 
@@ -54,6 +54,13 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
   };
 
   const profileGuardian = profileStudent ? getGuardian(profileStudent) : null;
+
+  const getStudentInitials = (student: any) =>
+    [student.firstName, student.lastName]
+      .filter(Boolean)
+      .map((part: string) => part[0]?.toUpperCase())
+      .slice(0, 2)
+      .join("") || "NA";
 
   // Filter by phase and search
   const filteredPupils = useMemo(() => {
@@ -111,77 +118,140 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
   };
 
   return (
-    <>
-      <div>
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Students</h1>
-            <p className="mt-2 text-sm text-muted">
-              {pupils.length} student{pupils.length !== 1 ? "s" : ""} across your assigned classes
-            </p>
+    <div className="px-3 py-4 sm:px-4 lg:px-6 lg:py-6">
+      <div className="mx-auto max-w-6xl space-y-4 sm:space-y-5">
+        <header>
+          <div className="flex items-start gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand/10 text-brand">
+              <Users className="h-5 w-5" />
+            </div>
+
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+                Students
+              </h1>
+
+              <p className="mt-1 text-sm text-muted">
+                {pupils.length} student{pupils.length !== 1 ? "s" : ""} across your assigned classes.
+              </p>
+            </div>
           </div>
-        </div>
+        </header>
 
-        {/* Search Bar */}
-        <div className="mb-6">
-          <input
-            type="text"
-            placeholder="Search by name or admission number..."
-            value={searchQuery}
-            onChange={handleSearchChange}
-            className="w-full rounded-lg border border-border bg-surface px-4 py-2 text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-        </div>
+        <section className="grid gap-3 sm:grid-cols-3">
+          <article className="rounded-[20px] border border-border/70 bg-gradient-to-br from-blue-500/10 to-blue-600/5 p-4 shadow-sm">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-50">
+                <Users className="h-5 w-5 text-blue-600" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted">
+                  Total Students
+                </p>
+                <p className="mt-1 text-2xl font-semibold text-foreground">
+                  {getPhaseStats("ALL")}
+                </p>
+              </div>
+            </div>
+            <p className="mt-3 text-sm text-muted">Students across all assigned classes.</p>
+          </article>
 
-        {/* Tabs */}
-        <div className="mb-6 flex flex-wrap gap-1 border-b border-border sm:gap-2">
-          {PHASE_ORDER.map((phase) => {
-            const count = getPhaseStats(phase);
-            const config = PHASE_CONFIG[phase as keyof typeof PHASE_CONFIG];
-            const isActive = activePhase === phase;
+          <article className="rounded-[20px] border border-border/70 bg-gradient-to-br from-violet-500/10 to-violet-600/5 p-4 shadow-sm">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-violet-50">
+                <span className="text-sm font-semibold text-violet-600">P</span>
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted">
+                  Primary
+                </p>
+                <p className="mt-1 text-2xl font-semibold text-foreground">
+                  {getPhaseStats("PRIMARY")}
+                </p>
+              </div>
+            </div>
+            <p className="mt-3 text-sm text-muted">Primary phase students.</p>
+          </article>
 
-            return (
-              <button
-                key={phase}
-                onClick={() => handlePhaseChange(phase)}
-                className={`px-2 py-2 font-medium text-xs sm:px-4 sm:text-sm transition-colors border-b-2 ${
-                  isActive
-                    ? "border-primary text-primary"
-                    : "border-transparent text-muted hover:text-foreground"
-                }`}
+          <article className="rounded-[20px] border border-border/70 bg-gradient-to-br from-amber-500/10 to-amber-600/5 p-4 shadow-sm">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-amber-50">
+                <span className="text-sm font-semibold text-amber-600">S</span>
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted">
+                  Secondary
+                </p>
+                <p className="mt-1 text-2xl font-semibold text-foreground">
+                  {getPhaseStats("SECONDARY")}
+                </p>
+              </div>
+            </div>
+            <p className="mt-3 text-sm text-muted">Secondary phase students.</p>
+          </article>
+        </section>
+
+        <section className="rounded-[24px] border border-border/70 bg-surface/80 p-4 shadow-sm sm:p-5">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="space-y-2">
+              <p className="text-xs uppercase tracking-[0.18em] text-muted">Search & filters</p>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <input
+                  type="text"
+                  placeholder="Search by name or admission number..."
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  className="w-full rounded-xl border border-border bg-background py-2.5 px-4 text-sm text-foreground outline-none transition placeholder:text-muted focus:border-brand focus:ring-2 focus:ring-brand/10"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {PHASE_ORDER.map((phase) => {
+                const config = PHASE_CONFIG[phase as keyof typeof PHASE_CONFIG];
+                const isActive = activePhase === phase;
+                return (
+                  <button
+                    key={phase}
+                    onClick={() => handlePhaseChange(phase)}
+                    className={`rounded-full px-4 py-2 text-xs font-semibold transition ${
+                      isActive
+                        ? "bg-brand text-white"
+                        : "border border-border bg-background text-foreground hover:border-brand"
+                    }`}
+                  >
+                    {config.label}
+                    <span className="ml-2 inline-flex rounded-full bg-surface px-2 py-0.5 text-[11px] font-semibold text-muted">
+                      {getPhaseStats(phase)}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="mt-4 flex flex-col gap-1 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
+            <p>
+              Showing {paginatedPupils.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0}–
+              {Math.min(currentPage * itemsPerPage, filteredPupils.length)} of {filteredPupils.length} student{filteredPupils.length !== 1 ? "s" : ""}
+              {searchQuery ? ` matching "${searchQuery}"` : ""}
+            </p>
+            <label className="flex items-center gap-2 text-xs text-muted">
+              Rows per page
+              <select
+                value={itemsPerPage}
+                onChange={handlePageSizeChange}
+                className="rounded-lg border border-border bg-background px-2 py-1.5 text-xs font-medium text-foreground outline-none focus:border-brand focus:ring-1 focus:ring-brand/10"
               >
-                {config.label}
-                <span className="ml-1 inline-block rounded px-1.5 py-0.5 text-xs font-semibold bg-background text-foreground sm:ml-2 sm:px-2">
-                  {count}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Results Info */}
-        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-muted">
-            Showing {paginatedPupils.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0}–
-            {Math.min(currentPage * itemsPerPage, filteredPupils.length)} of {filteredPupils.length}{" "}
-            student{filteredPupils.length !== 1 ? "s" : ""}
-            {searchQuery && ` matching "${searchQuery}"`}
-          </p>
-          <label className="text-sm text-muted">
-            Rows per page
-            <select
-              value={itemsPerPage}
-              onChange={handlePageSizeChange}
-              className="ml-2 rounded-lg border border-border bg-background px-2 py-1 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-            >
-              {PAGE_SIZE_OPTIONS.map((size) => (
-                <option key={size} value={size}>
-                  {size}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
+                {PAGE_SIZE_OPTIONS.map((size) => (
+                  <option key={size} value={size}>
+                    {size}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </section>
 
         {/* Table */}
         {paginatedPupils.length > 0 ? (
@@ -477,6 +547,6 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
           </div>
         </div>
       ) : null}
-    </>
+    </div>
   );
 }

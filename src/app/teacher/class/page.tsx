@@ -1,9 +1,21 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { AlertCircle, Users, BookOpen, TrendingUp, CheckCircle, Grid3X3, List } from 'lucide-react';
+import {
+  AlertCircle,
+  BookOpen,
+  CheckCircle,
+  ChevronLeft,
+  ChevronRight,
+  Grid3X3,
+  List,
+  Search,
+  Users,
+  X,
+} from 'lucide-react';
 import { getBackendUrl } from '@/lib/backend-url';
+import { resolveFileUrl } from '@/lib/api-client';
 
 interface Class {
   id: string;
@@ -19,6 +31,7 @@ interface Student {
   admissionNo: string;
   email: string;
   status?: string;
+  photoUrl?: string | null;
 }
 
 type ViewMode = 'grid' | 'list';
@@ -28,13 +41,15 @@ const DEFAULT_ITEMS_PER_PAGE = 20;
 
 export default function ClassPage() {
   const searchParams = useSearchParams();
+
   const [classes, setClasses] = useState<Class[]>([]);
   const [selectedClass, setSelectedClass] = useState<Class | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
+
   const [loading, setLoading] = useState(true);
+  const [studentsLoading, setStudentsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  // Pagination and filtering state
+
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(DEFAULT_ITEMS_PER_PAGE);
@@ -43,25 +58,52 @@ export default function ClassPage() {
   useEffect(() => {
     async function loadClasses() {
       try {
+        setLoading(true);
+        setError(null);
+
         const backendUrl = getBackendUrl();
+
         const res = await fetch(`${backendUrl}/api/teacher/classes`, {
           credentials: 'include',
         });
-        if (!res.ok) throw new Error('Failed to load classes');
-        const data = await res.json();
-        setClasses(data.classes);
 
-        // Auto-select first class or from URL param
-        const classId = searchParams.get('id');
-        if (classId) {
-          const cls = data.classes.find((c: Class) => c.id === classId);
-          if (cls) setSelectedClass(cls);
-        } else if (data.classes.length > 0) {
-          setSelectedClass(data.classes[0]);
+        if (!res.ok) {
+          throw new Error('Failed to load classes');
         }
-        setError(null);
-      } catch (err: any) {
-        setError(err.message);
+
+        const data = await res.json();
+        const loadedClasses: Class[] = Array.isArray(data.classes)
+          ? data.classes
+          : [];
+
+        setClasses(loadedClasses);
+
+        const classId = searchParams.get('id');
+
+        if (classId) {
+          const matchingClass = loadedClasses.find(
+            (cls) => cls.id === classId,
+          );
+
+          if (matchingClass) {
+            setSelectedClass(matchingClass);
+          } else if (loadedClasses.length > 0) {
+            setSelectedClass(loadedClasses[0]);
+          } else {
+            setSelectedClass(null);
+          }
+        } else if (loadedClasses.length > 0) {
+          setSelectedClass(loadedClasses[0]);
+        } else {
+          setSelectedClass(null);
+        }
+      } catch (err: unknown) {
+        const message =
+          err instanceof Error ? err.message : 'Failed to load classes';
+
+        setError(message);
+        setClasses([]);
+        setSelectedClass(null);
       } finally {
         setLoading(false);
       }
@@ -70,405 +112,809 @@ export default function ClassPage() {
     loadClasses();
   }, [searchParams]);
 
-  // Load students when class changes
   useEffect(() => {
-    if (!selectedClass || !selectedClass.id) {
+    if (!selectedClass?.id) {
       setStudents([]);
+      setStudentsLoading(false);
       return;
     }
 
     async function loadStudents() {
       try {
+        setStudentsLoading(true);
+        setError(null);
+
         const backendUrl = getBackendUrl();
-        const res = await fetch(`${backendUrl}/api/teacher/classes/${selectedClass!.id}/students`, {
-          credentials: 'include',
-        });
-        if (!res.ok) throw new Error('Failed to load students');
+
+        const res = await fetch(
+          `${backendUrl}/api/teacher/classes/${selectedClass!.id}/students`,
+          {
+            credentials: 'include',
+          },
+        );
+
+        if (!res.ok) {
+          throw new Error('Failed to load students');
+        }
+
         const data = await res.json();
-        setStudents(
-          (data.students || []).map((student: any) => ({
+
+        const normalizedStudents: Student[] = (data.students || []).map(
+          (student: any) => ({
             ...student,
             name:
               student.name ||
-              [student.firstName, student.lastName].filter(Boolean).join(' ') ||
+              [student.firstName, student.lastName]
+                .filter(Boolean)
+                .join(' ') ||
               'Unknown student',
-          })),
+            admissionNo: student.admissionNo || '',
+            email: student.email || '',
+            photoUrl: student.photoUrl || null,
+          }),
         );
+
+        setStudents(normalizedStudents);
         setCurrentPage(1);
-        setError(null);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        const message =
+          err instanceof Error ? err.message : 'Failed to load students';
+
+        setError(message);
         setStudents([]);
+      } finally {
+        setStudentsLoading(false);
       }
     }
 
     loadStudents();
   }, [selectedClass]);
 
-  // Filter students based on search
   const filteredStudents = useMemo(() => {
-    if (!searchQuery.trim()) return students;
-    
-    const query = searchQuery.toLowerCase();
+    const query = searchQuery.trim().toLowerCase();
+
+    if (!query) {
+      return students;
+    }
+
     return students.filter((student) => {
-      const fullName = student.name.toLowerCase();
-      const admNo = (student.admissionNo || '').toLowerCase();
-      const emailStr = (student.email || '').toLowerCase();
-      
-      return fullName.includes(query) || admNo.includes(query) || emailStr.includes(query);
+      const name = student.name.toLowerCase();
+      const admissionNo = (student.admissionNo || '').toLowerCase();
+      const email = (student.email || '').toLowerCase();
+
+      return (
+        name.includes(query) ||
+        admissionNo.includes(query) ||
+        email.includes(query)
+      );
     });
   }, [students, searchQuery]);
 
-  // Calculate stats
   const stats = useMemo(() => {
+    const total = students.length;
+
+    const active = students.filter(
+      (student) => student.status !== 'INACTIVE',
+    ).length;
+
+    const inactive = students.filter(
+      (student) => student.status === 'INACTIVE',
+    ).length;
+
     return {
-      total: students.length,
-      active: students.filter(s => s.status === 'ACTIVE' || !s.status).length,
-      inactive: students.filter(s => s.status === 'INACTIVE').length,
+      total,
+      active,
+      inactive,
     };
   }, [students]);
 
-  // Pagination
-  const totalPages = Math.max(1, Math.ceil(filteredStudents.length / itemsPerPage));
-  const paginatedStudents = filteredStudents.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredStudents.length / itemsPerPage),
   );
 
-  const handlePageSizeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setItemsPerPage(Number(e.target.value));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+
+  const paginatedStudents = filteredStudents.slice(
+    (safeCurrentPage - 1) * itemsPerPage,
+    safeCurrentPage * itemsPerPage,
+  );
+
+  const startItem =
+    filteredStudents.length === 0
+      ? 0
+      : (safeCurrentPage - 1) * itemsPerPage + 1;
+
+  const endItem = Math.min(
+    safeCurrentPage * itemsPerPage,
+    filteredStudents.length,
+  );
+
+  const clearSearch = () => {
+    setSearchQuery('');
     setCurrentPage(1);
   };
 
+  const handlePageSizeChange = (
+    event: React.ChangeEvent<HTMLSelectElement>,
+  ) => {
+    setItemsPerPage(Number(event.target.value));
+    setCurrentPage(1);
+  };
+
+  const getStudentStatus = (student: Student) =>
+    student.status === 'INACTIVE' ? 'Inactive' : 'Active';
+
+  const getStudentInitials = (name: string) =>
+    name
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join('') || 'NA';
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand mx-auto"></div>
-          <p className="mt-4 text-muted">Loading classes...</p>
+      <div className="px-3 py-4 sm:px-4 lg:px-6 lg:py-6">
+        <div className="mx-auto max-w-6xl space-y-4 sm:space-y-5">
+          <div className="space-y-2">
+            <div className="h-7 w-32 animate-pulse rounded-lg bg-surface" />
+            <div className="h-4 w-72 animate-pulse rounded bg-surface" />
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-3">
+            {[1, 2, 3].map((item) => (
+              <div
+                key={item}
+                className="h-24 animate-pulse rounded-[20px] border border-border/70 bg-surface"
+              />
+            ))}
+          </div>
+
+          <div className="h-96 animate-pulse rounded-[24px] border border-border/70 bg-surface" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="px-3 py-4 sm:px-4 lg:px-6 lg:py-6">
+      <div className="mx-auto max-w-6xl space-y-4 sm:space-y-5">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">My Class</h1>
-        <p className="mt-1 text-muted">View class overview and manage students</p>
-      </div>
-
-      {error && (
-        <div className="rounded-lg bg-red-50 border border-red-200 p-4 flex items-start gap-3">
-          <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
-          <p className="text-red-800 text-sm">{error}</p>
-        </div>
-      )}
-
-      {/* Class Selection & Info */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        {classes.length > 1 && (
-          <div className="flex-1 max-w-xs">
-            <label className="block text-xs font-medium text-muted mb-2">Select Class</label>
-            <select
-              value={selectedClass?.id || ''}
-              onChange={(e) => {
-                const cls = classes.find((c) => c.id === e.target.value);
-                setSelectedClass(cls || null);
-              }}
-              className="w-full px-3 py-2 border border-border rounded-lg text-sm text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
-            >
-              {classes.map((cls) => (
-                <option key={cls.id} value={cls.id}>
-                  {cls.name}
-                  {cls.arm ? ` - ${cls.arm}` : ''}
-                  {cls.studentCount ? ` (${cls.studentCount})` : ''}
-                </option>
-              ))}
-            </select>
+      <header>
+        <div className="flex items-start gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand/10 text-brand">
+            <BookOpen className="h-5 w-5" />
           </div>
-        )}
-        
-        {selectedClass && (
+
           <div>
-            <h2 className="text-lg font-bold text-foreground">{selectedClass.name}</h2>
-            {selectedClass.arm && <p className="text-xs text-muted">{selectedClass.arm}{selectedClass.phase && ` • ${selectedClass.phase}`}</p>}
-          </div>
-        )}
-      </div>
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+              My Class
+            </h1>
 
-      {/* Summary Stats - Compact Row */}
-      {selectedClass && (
-        <div className="hidden sm:grid grid-cols-3 gap-2">
-          <div className="rounded-lg border border-border bg-surface p-3 shadow-sm">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded bg-brand/10 ring-1 ring-brand/20">
-                <Users className="h-3.5 w-3.5 text-brand" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs text-muted">Total</p>
-                <p className="text-sm font-bold text-foreground">{stats.total}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-lg border border-border bg-surface p-3 shadow-sm">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded bg-brand/10 ring-1 ring-brand/20">
-                <CheckCircle className="h-3.5 w-3.5 text-brand" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs text-muted">Active</p>
-                <p className="text-sm font-bold text-foreground">{stats.active}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-lg border border-border bg-surface p-3 shadow-sm">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded bg-brand/10 ring-1 ring-brand/20">
-                <TrendingUp className="h-3.5 w-3.5 text-brand" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs text-muted">Inactive</p>
-                <p className="text-sm font-bold text-foreground">{stats.inactive}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Search and Controls */}
-      {selectedClass && students.length > 0 && (
-        <>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-2">
-            <input
-              type="text"
-              placeholder="Search by name, admission number, or email..."
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-brand"
-            />
-
-            <div className="flex gap-1.5">
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-xs font-medium transition ${
-                  viewMode === 'grid'
-                    ? 'bg-brand text-white'
-                    : 'bg-background text-muted hover:bg-surface border border-border'
-                }`}
-              >
-                <Grid3X3 className="h-3.5 w-3.5" />
-                Grid
-              </button>
-              <button
-                onClick={() => setViewMode('list')}
-                className={`flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-xs font-medium transition ${
-                  viewMode === 'list'
-                    ? 'bg-brand text-white'
-                    : 'bg-background text-muted hover:bg-surface border border-border'
-                }`}
-              >
-                <List className="h-3.5 w-3.5" />
-                List
-              </button>
-            </div>
-
-            <label className="text-muted whitespace-nowrap text-xs">
-              <span className="hidden sm:inline">Show</span>
-              <select
-                value={itemsPerPage}
-                onChange={handlePageSizeChange}
-                className="ml-1.5 rounded-lg border border-border bg-background px-2 py-1.5 text-xs text-foreground focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/20"
-              >
-                {PAGE_SIZE_OPTIONS.map((size) => (
-                  <option key={size} value={size}>
-                    {size}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-
-          {/* Results Info */}
-          <div className="flex items-center justify-between text-xs text-muted">
-            <p>
-              Showing {paginatedStudents.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0}–
-              {Math.min(currentPage * itemsPerPage, filteredStudents.length)} of {filteredStudents.length}
-              {searchQuery && ` matching "${searchQuery}"`}
+            <p className="mt-1 text-sm text-muted">
+              View your students and manage your class roster.
             </p>
           </div>
+        </div>
+      </header>
 
-          {/* Grid View */}
-          {viewMode === 'grid' && (
-            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-              {paginatedStudents.map((student) => (
-                <div
-                  key={student.id}
-                  className="rounded-lg border border-border bg-surface p-6 hover:shadow-md hover:border-brand/50 transition-all"
-                >
-                  <div className="flex items-start gap-3 mb-4">
-                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-brand/10 ring-1 ring-brand/20">
-                      <Users className="h-5 w-5 text-brand" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-foreground text-sm truncate">{student.name}</h3>
-                      <p className="text-xs text-muted mt-1 truncate">Admission: {student.admissionNo || '—'}</p>
-                    </div>
-                  </div>
-                  <div className="space-y-2 mb-4 text-xs text-muted">
-                    <p className="truncate">Email: {student.email || '—'}</p>
-                  </div>
-                  <span className={`inline-flex px-3 py-1 text-xs font-medium rounded-full w-full justify-center ${
-                    student.status === 'INACTIVE'
-                      ? 'bg-red-50 text-red-700'
-                      : 'bg-green-50 text-green-700'
-                  }`}>
-                    {student.status === 'INACTIVE' ? 'Inactive' : 'Active'}
+      {/* Error */}
+      {error && (
+        <div className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4">
+          <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
+
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-red-800">
+              Unable to load class information
+            </p>
+
+            <p className="mt-1 text-sm text-red-700">{error}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Class selector / class identity */}
+      <div className="space-y-4 sm:space-y-0 sm:flex sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">
+            Selected Class
+          </p>
+
+          {selectedClass ? (
+            <>
+              <h2 className="mt-1 text-xl font-semibold text-foreground">
+                {selectedClass.name}
+              </h2>
+
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                {selectedClass.arm && (
+                  <span className="rounded-full border border-brand/30 bg-brand/10 px-3 py-1 text-sm font-medium text-brand">
+                    {selectedClass.arm}
                   </span>
+                )}
+                {selectedClass.phase && (
+                  <span className="rounded-full border border-brand/30 bg-brand/10 px-3 py-1 text-sm font-medium text-brand">
+                    {selectedClass.phase}
+                  </span>
+                )}
+                <span className="rounded-full border border-brand/30 bg-brand/10 px-3 py-1 text-sm font-medium text-brand">
+                  {selectedClass.studentCount} students
+                </span>
+              </div>
+            </>
+          ) : (
+            <h2 className="mt-1 text-lg font-semibold text-foreground">
+              No class selected
+            </h2>
+          )}
+        </div>
+
+        {classes.length > 1 && (
+            <div className="w-full sm:w-64">
+              <label
+                htmlFor="class-selector"
+                className="mb-1.5 block text-xs font-medium text-muted"
+              >
+                Class
+              </label>
+
+              <div className="relative">
+                <select
+                  id="class-selector"
+                  value={selectedClass?.id || ''}
+                  onChange={(event) => {
+                    const cls = classes.find(
+                      (item) => item.id === event.target.value,
+                    );
+
+                    setSelectedClass(cls || null);
+                    setSearchQuery('');
+                    setCurrentPage(1);
+                  }}
+                  className="w-full appearance-none rounded-[20px] border border-border bg-background px-4 py-3 pr-10 text-sm font-medium text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10"
+                >
+                  {classes.map((cls) => (
+                    <option key={cls.id} value={cls.id}>
+                      {cls.name}
+                      {cls.arm ? ` - ${cls.arm}` : ''}
+                    </option>
+                  ))}
+                </select>
+
+                <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-muted">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                    <path d="M6 9l6 6 6-6" />
+                  </svg>
                 </div>
+              </div>
+            </div>
+          )}
+      </div>
+
+      {/* Stats */}
+      {selectedClass && (
+        <section className="grid gap-3 sm:grid-cols-3">
+          <article className="rounded-[20px] border border-border/70 bg-gradient-to-br from-blue-500/10 to-blue-600/5 p-4 shadow-sm">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-50">
+                <Users className="h-5 w-5 text-blue-600" />
+              </div>
+
+              <div className="min-w-0">
+                <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted">
+                  Total Students
+                </p>
+
+                <p className="mt-1 text-2xl font-semibold text-foreground">
+                  {stats.total}
+                </p>
+              </div>
+            </div>
+
+            <p className="mt-3 text-sm text-muted">
+              Students assigned to this class
+            </p>
+          </article>
+
+          <article className="rounded-[20px] border border-border/70 bg-gradient-to-br from-violet-500/10 to-violet-600/5 p-4 shadow-sm">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-violet-50">
+                <CheckCircle className="h-5 w-5 text-violet-600" />
+              </div>
+
+              <div className="min-w-0">
+                <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted">
+                  Active Students
+                </p>
+
+                <p className="mt-1 text-2xl font-semibold text-foreground">
+                  {stats.active}
+                </p>
+              </div>
+            </div>
+
+            <p className="mt-3 text-sm text-muted">
+              Currently active in the class
+            </p>
+          </article>
+
+          <article className="rounded-[20px] border border-border/70 bg-gradient-to-br from-amber-500/10 to-amber-600/5 p-4 shadow-sm">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-amber-50">
+                <Users className="h-5 w-5 text-amber-600" />
+              </div>
+
+              <div className="min-w-0">
+                <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted">
+                  Inactive Students
+                </p>
+
+                <p className="mt-1 text-2xl font-semibold text-foreground">
+                  {stats.inactive}
+                </p>
+              </div>
+            </div>
+
+            <p className="mt-3 text-sm text-muted">
+              Currently marked inactive
+            </p>
+          </article>
+        </section>
+      )}
+
+      {/* Students */}
+      {selectedClass && (
+        <section className="rounded-[24px] border border-border/70 bg-surface/80 p-4 shadow-sm sm:p-5">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">
+                Students
+              </h2>
+
+              <p className="mt-1 text-sm text-muted">
+                View and search students in this class.
+              </p>
+            </div>
+
+            <div className="text-sm text-muted">
+              <span className="font-semibold text-foreground">
+                {students.length}
+              </span>{' '}
+              {students.length === 1 ? 'student' : 'students'}
+            </div>
+          </div>
+
+          {studentsLoading ? (
+            <div className="mt-5 space-y-3">
+              {[1, 2, 3, 4].map((item) => (
+                <div
+                  key={item}
+                  className="h-16 animate-pulse rounded-2xl bg-background"
+                />
               ))}
             </div>
-          )}
+          ) : students.length > 0 ? (
+            <>
+              {/* Controls */}
+              <div className="mt-5 flex flex-col gap-3 lg:flex-row lg:items-center">
+                <div className="relative flex-1">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
 
-          {/* List View - Desktop Table */}
-          {viewMode === 'list' && (
-            <div className="hidden sm:block overflow-x-auto rounded-lg border border-border bg-surface">
-            <table className="w-full text-left text-sm">
-              <thead className="border-b border-border bg-background text-muted">
-                <tr>
-                  <th className="px-4 py-3 font-medium">Name</th>
-                  <th className="px-4 py-3 font-medium">Admission No.</th>
-                  <th className="px-4 py-3 font-medium">Email</th>
-                  <th className="px-4 py-3 font-medium">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedStudents.map((student) => (
-                  <tr key={student.id} className="border-t border-border hover:bg-background/50 transition-colors">
-                    <td className="px-4 py-3 font-medium text-foreground">{student.name}</td>
-                    <td className="px-4 py-3 text-muted text-sm">{student.admissionNo || '—'}</td>
-                    <td className="px-4 py-3 text-muted text-sm">{student.email || '—'}</td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                        student.status === 'INACTIVE'
-                          ? 'bg-red-50 text-red-700'
-                          : 'bg-green-50 text-green-700'
-                      }`}>
-                        {student.status === 'INACTIVE' ? 'Inactive' : 'Active'}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            </div>
-          )}
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(event) => {
+                      setSearchQuery(event.target.value);
+                      setCurrentPage(1);
+                    }}
+                    placeholder="Search students by name, admission number, or email..."
+                    className="w-full rounded-xl border border-border bg-background py-2.5 pl-9 pr-10 text-sm text-foreground outline-none transition placeholder:text-muted focus:border-brand focus:ring-2 focus:ring-brand/10"
+                  />
 
-          {/* List View - Mobile Cards */}
-          {viewMode === 'list' && (
-            <div className="sm:hidden space-y-2">
-            {paginatedStudents.map((student) => (
-              <div
-                key={student.id}
-                className="rounded-lg border border-border bg-surface px-3 py-3 hover:bg-background/50 transition-colors"
-              >
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <p className="font-medium text-sm text-foreground truncate">{student.name}</p>
-                  <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full flex-shrink-0 ${
-                    student.status === 'INACTIVE'
-                      ? 'bg-red-50 text-red-700'
-                      : 'bg-green-50 text-green-700'
-                  }`}>
-                    {student.status === 'INACTIVE' ? 'Inactive' : 'Active'}
-                  </span>
-                </div>
-                <div className="space-y-1 text-xs text-muted">
-                  <p>Admission: {student.admissionNo || '—'}</p>
-                  <p>Email: {student.email || '—'}</p>
-                </div>
-              </div>
-            ))}
-            </div>
-          )}
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 mt-6">
-              <button
-                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                disabled={currentPage === 1}
-                className="px-3 py-1.5 border border-border rounded-lg text-sm font-medium text-foreground disabled:opacity-50 disabled:cursor-not-allowed hover:bg-background"
-              >
-                Previous
-              </button>
-              
-              <div className="flex items-center gap-1">
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  let pageNum;
-                  if (totalPages <= 5) {
-                    pageNum = i + 1;
-                  } else if (currentPage <= 3) {
-                    pageNum = i + 1;
-                  } else if (currentPage >= totalPages - 2) {
-                    pageNum = totalPages - 4 + i;
-                  } else {
-                    pageNum = currentPage - 2 + i;
-                  }
-                  
-                  return (
+                  {searchQuery && (
                     <button
-                      key={pageNum}
-                      onClick={() => setCurrentPage(pageNum)}
-                      className={`px-2.5 py-1.5 text-sm font-medium rounded-lg transition ${
-                        currentPage === pageNum
-                          ? 'bg-brand text-white'
-                          : 'border border-border text-foreground hover:bg-background'
+                      type="button"
+                      onClick={clearSearch}
+                      aria-label="Clear search"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted transition hover:bg-surface hover:text-foreground"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className="flex rounded-xl border border-border bg-background p-1">
+                    <button
+                      type="button"
+                      onClick={() => setViewMode('list')}
+                      aria-label="List view"
+                      className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+                        viewMode === 'list'
+                          ? 'bg-brand text-white shadow-sm'
+                          : 'text-muted hover:text-foreground'
                       }`}
                     >
-                      {pageNum}
+                      <List className="h-3.5 w-3.5" />
+                      <span>List</span>
                     </button>
-                  );
-                })}
+
+                    <button
+                      type="button"
+                      onClick={() => setViewMode('grid')}
+                      aria-label="Grid view"
+                      className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+                        viewMode === 'grid'
+                          ? 'bg-brand text-white shadow-sm'
+                          : 'text-muted hover:text-foreground'
+                      }`}
+                    >
+                      <Grid3X3 className="h-3.5 w-3.5" />
+                      <span>Grid</span>
+                    </button>
+                  </div>
+
+                  <label className="flex items-center gap-1.5 whitespace-nowrap text-xs text-muted">
+                    <span>Show</span>
+
+                    <select
+                      value={itemsPerPage}
+                      onChange={handlePageSizeChange}
+                      className="rounded-lg border border-border bg-background px-2 py-1.5 text-xs font-medium text-foreground outline-none focus:border-brand focus:ring-1 focus:ring-brand/10"
+                    >
+                      {PAGE_SIZE_OPTIONS.map((size) => (
+                        <option key={size} value={size}>
+                          {size}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
               </div>
 
-              <button
-                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                disabled={currentPage === totalPages}
-                className="px-3 py-1.5 border border-border rounded-lg text-sm font-medium text-foreground disabled:opacity-50 disabled:cursor-not-allowed hover:bg-background"
-              >
-                Next
-              </button>
+              {/* Result count */}
+              <div className="mt-4 flex flex-col gap-1 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
+                <p>
+                  Showing {startItem}–{endItem} of {filteredStudents.length}{' '}
+                  {filteredStudents.length === 1 ? 'student' : 'students'}
+                  {searchQuery ? ` matching "${searchQuery}"` : ''}
+                </p>
+              </div>
+
+              {filteredStudents.length > 0 ? (
+                <>
+                  {/* Desktop List */}
+                  {viewMode === 'list' && (
+                    <div className="mt-4 hidden overflow-hidden rounded-2xl border border-border sm:block">
+                      <div className="overflow-x-auto">
+                        <table className="w-full min-w-[650px] text-left text-sm">
+                          <thead className="border-b border-border bg-background">
+                            <tr>
+                              <th className="px-4 py-3 font-medium text-muted">
+                                Student
+                              </th>
+
+                              <th className="px-4 py-3 font-medium text-muted">
+                                Admission No.
+                              </th>
+
+                              <th className="px-4 py-3 font-medium text-muted">
+                                Email
+                              </th>
+
+                              <th className="px-4 py-3 font-medium text-muted">
+                                Status
+                              </th>
+                            </tr>
+                          </thead>
+
+                          <tbody className="divide-y divide-border">
+                            {paginatedStudents.map((student) => (
+                              <tr
+                                key={student.id}
+                                className="bg-surface transition-colors hover:bg-background/60"
+                              >
+                                <td className="px-4 py-3.5">
+                                  <div className="flex items-center gap-3">
+                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand/10 text-brand">
+                                      {student.photoUrl ? (
+                                        <img
+                                          src={resolveFileUrl(student.photoUrl, student.id) ?? undefined}
+                                          alt={student.name}
+                                          className="h-full w-full object-cover"
+                                        />
+                                      ) : (
+                                        <div className="flex h-full w-full items-center justify-center bg-brand/10 text-brand">
+                                          <span className="text-xs font-semibold">
+                                            {getStudentInitials(student.name)}
+                                          </span>
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    <span className="font-medium text-foreground">
+                                      {student.name}
+                                    </span>
+                                  </div>
+                                </td>
+
+                                <td className="px-4 py-3.5 text-muted">
+                                  {student.admissionNo || '—'}
+                                </td>
+
+                                <td className="max-w-[280px] truncate px-4 py-3.5 text-muted">
+                                  {student.email || '—'}
+                                </td>
+
+                                <td className="px-4 py-3.5">
+                                  <span
+                                    className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
+                                      student.status === 'INACTIVE'
+                                        ? 'bg-red-50 text-red-700'
+                                        : 'bg-green-50 text-green-700'
+                                    }`}
+                                  >
+                                    {getStudentStatus(student)}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Mobile List */}
+                  {viewMode === 'list' && (
+                    <div className="mt-4 space-y-2 sm:hidden">
+                      {paginatedStudents.map((student) => (
+                        <div
+                          key={student.id}
+                          className="rounded-2xl border border-border bg-background p-3.5 transition-colors hover:border-brand/30"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex min-w-0 items-center gap-3">
+                              <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand/10 text-brand">
+                                {student.photoUrl ? (
+                                  <img
+                                    src={resolveFileUrl(student.photoUrl, student.id) ?? undefined}
+                                    alt={student.name}
+                                    className="h-full w-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="flex h-full w-full items-center justify-center bg-brand/10 text-brand">
+                                    <span className="text-xs font-semibold">
+                                      {getStudentInitials(student.name)}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-semibold text-foreground">
+                                  {student.name}
+                                </p>
+
+                                <p className="mt-0.5 text-xs text-muted">
+                                  {student.admissionNo || 'No admission number'}
+                                </p>
+                              </div>
+                            </div>
+
+                            <span
+                              className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${
+                                student.status === 'INACTIVE'
+                                  ? 'bg-red-50 text-red-700'
+                                  : 'bg-green-50 text-green-700'
+                              }`}
+                            >
+                              {getStudentStatus(student)}
+                            </span>
+                          </div>
+
+                          {student.email && (
+                            <p className="mt-3 truncate border-t border-border pt-3 text-xs text-muted">
+                              {student.email}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Grid */}
+                  {viewMode === 'grid' && (
+                    <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                      {paginatedStudents.map((student) => (
+                        <div
+                          key={student.id}
+                          className="rounded-2xl border border-border bg-background p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-brand/30 hover:bg-brand/5 hover:shadow-sm"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex min-w-0 items-center gap-3">
+                              <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand/10 text-brand">
+                                {student.photoUrl ? (
+                                  <img
+                                    src={resolveFileUrl(student.photoUrl, student.id) ?? undefined}
+                                    alt={student.name}
+                                    className="h-full w-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="flex h-full w-full items-center justify-center bg-brand/10 text-brand">
+                                    <span className="text-xs font-semibold">
+                                      {getStudentInitials(student.name)}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-semibold text-foreground">
+                                  {student.name}
+                                </p>
+
+                                <p className="mt-1 truncate text-xs text-muted">
+                                  {student.admissionNo || 'No admission number'}
+                                </p>
+                              </div>
+                            </div>
+
+                            <span
+                              className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${
+                                student.status === 'INACTIVE'
+                                  ? 'bg-red-50 text-red-700'
+                                  : 'bg-green-50 text-green-700'
+                              }`}
+                            >
+                              {getStudentStatus(student)}
+                            </span>
+                          </div>
+
+                          <div className="mt-4 border-t border-border pt-3">
+                            <p className="truncate text-xs text-muted">
+                              {student.email || 'No email available'}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="mt-6 flex flex-col gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
+                      <p className="text-xs text-muted">
+                        Page {safeCurrentPage} of {totalPages}
+                      </p>
+
+                      <div className="flex items-center justify-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setCurrentPage((page) => Math.max(1, page - 1))
+                          }
+                          disabled={safeCurrentPage === 1}
+                          className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground transition hover:bg-background disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          <ChevronLeft className="h-3.5 w-3.5" />
+                          Previous
+                        </button>
+
+                        <div className="hidden items-center gap-1 sm:flex">
+                          {Array.from(
+                            { length: Math.min(5, totalPages) },
+                            (_, index) => {
+                              let pageNumber: number;
+
+                              if (totalPages <= 5) {
+                                pageNumber = index + 1;
+                              } else if (safeCurrentPage <= 3) {
+                                pageNumber = index + 1;
+                              } else if (
+                                safeCurrentPage >=
+                                totalPages - 2
+                              ) {
+                                pageNumber = totalPages - 4 + index;
+                              } else {
+                                pageNumber = safeCurrentPage - 2 + index;
+                              }
+
+                              return (
+                                <button
+                                  key={pageNumber}
+                                  type="button"
+                                  onClick={() => setCurrentPage(pageNumber)}
+                                  className={`h-9 min-w-9 rounded-lg px-2.5 text-xs font-medium transition ${
+                                    safeCurrentPage === pageNumber
+                                      ? 'bg-brand text-white shadow-sm'
+                                      : 'border border-border text-foreground hover:bg-background'
+                                  }`}
+                                >
+                                  {pageNumber}
+                                </button>
+                              );
+                            },
+                          )}
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setCurrentPage((page) =>
+                              Math.min(totalPages, page + 1),
+                            )
+                          }
+                          disabled={safeCurrentPage === totalPages}
+                          className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground transition hover:bg-background disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          Next
+                          <ChevronRight className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="mt-5 rounded-2xl border border-dashed border-border bg-background/70 px-6 py-12 text-center">
+                  <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl bg-brand/10 text-brand">
+                    <Search className="h-5 w-5" />
+                  </div>
+
+                  <p className="mt-3 text-sm font-semibold text-foreground">
+                    No students found
+                  </p>
+
+                  <p className="mt-1 text-sm text-muted">
+                    No students match "{searchQuery}".
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={clearSearch}
+                    className="mt-4 rounded-lg bg-brand px-4 py-2 text-xs font-medium text-white transition hover:bg-brand/90"
+                  >
+                    Clear search
+                  </button>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="mt-5 rounded-2xl border border-dashed border-border bg-background/70 px-6 py-12 text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-brand/10 text-brand">
+                <Users className="h-6 w-6" />
+              </div>
+
+              <p className="mt-3 text-sm font-semibold text-foreground">
+                No students in this class
+              </p>
+
+              <p className="mt-1 text-sm text-muted">
+                There are currently no students assigned to this class.
+              </p>
             </div>
           )}
-        </>
+        </section>
       )}
 
-      {/* Empty States */}
-      {selectedClass && students.length === 0 && (
-        <div className="rounded-lg border border-border bg-surface px-4 py-12 text-center sm:px-6">
-          <Users className="h-12 w-12 text-muted/40 mx-auto mb-3" />
-          <p className="text-muted">No students in this class</p>
-        </div>
-      )}
+      {/* No class */}
+      {!selectedClass && !error && (
+        <section className="rounded-[24px] border border-dashed border-border bg-surface/80 px-6 py-14 text-center shadow-sm">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-brand/10 text-brand">
+            <BookOpen className="h-6 w-6" />
+          </div>
 
-      {!selectedClass && (
-        <div className="rounded-lg border border-border bg-surface px-4 py-12 text-center sm:px-6">
-          <Users className="h-12 w-12 text-muted/40 mx-auto mb-3" />
-          <p className="text-muted">Select a class to view student roster</p>
-        </div>
-      )}
+          <p className="mt-3 text-sm font-semibold text-foreground">
+            No classes assigned
+          </p>
 
-      {selectedClass && filteredStudents.length === 0 && searchQuery && (
-        <div className="rounded-lg border border-border bg-surface px-4 py-12 text-center sm:px-6">
-          <p className="text-muted">No students found matching "{searchQuery}"</p>
-        </div>
+          <p className="mt-1 text-sm text-muted">
+            Your assigned classes will appear here.
+          </p>
+        </section>
       )}
     </div>
+  </div>
   );
 }

@@ -1,8 +1,20 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState, useMemo } from 'react';
-import { AlertCircle, BookOpen, TrendingUp, CheckCircle, Grid3X3, List } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  AlertCircle,
+  BookOpen,
+  CheckCircle,
+  ChevronLeft,
+  ChevronRight,
+  Grid3X3,
+  List,
+  Search,
+  TrendingUp,
+  Users,
+  X,
+} from 'lucide-react';
 import { getBackendUrl } from '@/lib/backend-url';
 
 interface Subject {
@@ -16,6 +28,9 @@ type ViewMode = 'grid' | 'list';
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100] as const;
 const DEFAULT_ITEMS_PER_PAGE = 20;
 
+const getSubjectMetaLabel = (subject: Subject) =>
+  subject.code ? `Code ${subject.code}` : '';
+
 export default function SubjectsPage() {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,21 +38,28 @@ export default function SubjectsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(DEFAULT_ITEMS_PER_PAGE);
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
 
   useEffect(() => {
     async function loadSubjects() {
       try {
+        setLoading(true);
+        setError(null);
+
         const backendUrl = getBackendUrl();
-        const res = await fetch(`${backendUrl}/api/teacher/subjects`, {
+        const response = await fetch(`${backendUrl}/api/teacher/subjects`, {
           credentials: 'include',
         });
-        if (!res.ok) throw new Error('Failed to load subjects');
-        const data = await res.json();
-        setSubjects(data.subjects || []);
-        setError(null);
-      } catch (err: any) {
-        setError(err.message);
+
+        if (!response.ok) {
+          throw new Error('Failed to load subjects');
+        }
+
+        const data = await response.json();
+        setSubjects(Array.isArray(data.subjects) ? data.subjects : []);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Failed to load subjects');
+        setSubjects([]);
       } finally {
         setLoading(false);
       }
@@ -46,355 +68,397 @@ export default function SubjectsPage() {
     loadSubjects();
   }, []);
 
-  // Filter subjects based on search
   const filteredSubjects = useMemo(() => {
-    if (!searchQuery.trim()) return subjects;
-    
-    const query = searchQuery.toLowerCase();
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return subjects;
+
     return subjects.filter((subject) => {
-      const fullName = subject.name.toLowerCase();
+      const name = subject.name.toLowerCase();
       const code = (subject.code || '').toLowerCase();
-      
-      return fullName.includes(query) || code.includes(query);
+      return name.includes(query) || code.includes(query);
     });
   }, [subjects, searchQuery]);
 
-  // Calculate stats
-  const stats = useMemo(() => {
-    return {
+  const stats = useMemo(
+    () => ({
       total: subjects.length,
-    };
-  }, [subjects]);
-
-  // Pagination
-  const totalPages = Math.max(1, Math.ceil(filteredSubjects.length / itemsPerPage));
-  const paginatedSubjects = filteredSubjects.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
+    }),
+    [subjects.length],
   );
 
-  const handlePageSizeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setItemsPerPage(Number(e.target.value));
+  const totalPages = Math.max(1, Math.ceil(filteredSubjects.length / itemsPerPage));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const paginatedSubjects = filteredSubjects.slice(
+    (safeCurrentPage - 1) * itemsPerPage,
+    safeCurrentPage * itemsPerPage,
+  );
+
+  const startItem =
+    filteredSubjects.length === 0 ? 0 : (safeCurrentPage - 1) * itemsPerPage + 1;
+
+  const endItem = Math.min(safeCurrentPage * itemsPerPage, filteredSubjects.length);
+
+  const clearSearch = () => {
+    setSearchQuery('');
     setCurrentPage(1);
   };
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
+  const handlePageSizeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setItemsPerPage(Number(event.target.value));
     setCurrentPage(1);
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand mx-auto"></div>
-          <p className="mt-4 text-muted">Loading your subjects...</p>
+      <div className="px-3 py-4 sm:px-4 lg:px-6 lg:py-6">
+        <div className="mx-auto max-w-6xl space-y-4 sm:space-y-5">
+          <div className="space-y-2">
+            <div className="h-7 w-32 animate-pulse rounded-lg bg-surface" />
+            <div className="h-4 w-72 animate-pulse rounded bg-surface" />
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-3">
+            {[1, 2, 3].map((item) => (
+              <div
+                key={item}
+                className="h-24 animate-pulse rounded-[20px] border border-border/70 bg-surface"
+              />
+            ))}
+          </div>
+
+          <div className="h-96 animate-pulse rounded-[24px] border border-border/70 bg-surface" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Your Subjects</h1>
-        <p className="mt-1 text-muted">View and manage the subjects you teach</p>
-      </div>
-
-      {error && (
-        <div className="rounded-lg bg-red-50 border border-red-200 p-4 flex items-start gap-3">
-          <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
-          <p className="text-red-800 text-sm">{error}</p>
-        </div>
-      )}
-
-      {/* Summary Stats */}
-      {!error && subjects.length > 0 && (
-        <>
-          <div className="hidden sm:grid grid-cols-3 gap-3">
-            <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md h-full cursor-pointer hover:border-brand/50 flex flex-col">
-              <div className="flex items-start gap-3">
-                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
-                  <BookOpen className="h-4 w-4 text-brand" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-xs text-muted">Total Subjects</p>
-                  <p className="mt-1 text-lg font-bold text-foreground">{stats.total}</p>
-                </div>
-              </div>
+    <div className="px-3 py-4 sm:px-4 lg:px-6 lg:py-6">
+      <div className="mx-auto max-w-6xl space-y-4 sm:space-y-5">
+        <header>
+          <div className="flex items-start gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand/10 text-brand">
+              <BookOpen className="h-5 w-5" />
             </div>
 
-            <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md h-full cursor-pointer hover:border-brand/50 flex flex-col">
-              <div className="flex items-start gap-3">
-                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
-                  <CheckCircle className="h-4 w-4 text-brand" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-xs text-muted">Active</p>
-                  <p className="mt-1 text-lg font-bold text-foreground">{stats.total}</p>
-                </div>
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+                Your Subjects
+              </h1>
+
+              <p className="mt-1 text-sm text-muted">
+                View and manage the subjects assigned to you.
+              </p>
+            </div>
+          </div>
+        </header>
+
+        {error && (
+          <div className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4">
+            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-red-800">Unable to load subjects</p>
+              <p className="mt-1 text-sm text-red-700">{error}</p>
+            </div>
+          </div>
+        )}
+
+        <section className="grid gap-3 sm:grid-cols-3">
+          <article className="rounded-[20px] border border-border/70 bg-gradient-to-br from-blue-500/10 to-blue-600/5 p-4 shadow-sm">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-50">
+                <BookOpen className="h-5 w-5 text-blue-600" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted">Total Subjects</p>
+                <p className="mt-1 text-2xl font-semibold text-foreground">{stats.total}</p>
               </div>
             </div>
+            <p className="mt-3 text-sm text-muted">Subjects currently assigned to you.</p>
+          </article>
 
-            <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md h-full cursor-pointer hover:border-brand/50 flex flex-col">
-              <div className="flex items-start gap-3">
-                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
-                  <TrendingUp className="h-4 w-4 text-brand" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-xs text-muted">Results Available</p>
-                  <p className="mt-1 text-lg font-bold text-foreground">—</p>
-                </div>
+          <article className="rounded-[20px] border border-border/70 bg-gradient-to-br from-blue-500/10 to-blue-600/5 p-4 shadow-sm">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-50">
+                <BookOpen className="h-5 w-5 text-blue-600" />
               </div>
+              <div className="min-w-0">
+                <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted">Total Subjects</p>
+                <p className="mt-1 text-2xl font-semibold text-foreground">{stats.total}</p>
+              </div>
+            </div>
+            <p className="mt-3 text-sm text-muted">Subjects currently assigned to you.</p>
+          </article>
+        </section>
+
+        <section className="rounded-[24px] border border-border/70 bg-surface/80 p-4 shadow-sm sm:p-5">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">Subjects</h2>
+              <p className="mt-1 text-sm text-muted">View and search subjects assigned to you.</p>
+            </div>
+
+            <div className="text-sm text-muted">
+              <span className="font-semibold text-foreground">{subjects.length}</span>{' '}
+              {subjects.length === 1 ? 'subject' : 'subjects'}
             </div>
           </div>
 
-          {/* Mobile Summary Cards */}
-          <div className="sm:hidden space-y-3">
-            <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50">
-              <div className="flex items-start gap-3">
-                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
-                  <BookOpen className="h-4 w-4 text-brand" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-xs text-muted">Total Subjects</p>
-                  <p className="mt-1 text-lg font-bold text-foreground">{stats.total}</p>
-                </div>
+          <div className="mt-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="space-y-2">
+              <p className="text-xs uppercase tracking-[0.18em] text-muted">Search & filters</p>
+              <div className="relative w-full sm:w-[420px]">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(event) => {
+                    setSearchQuery(event.target.value);
+                    setCurrentPage(1);
+                  }}
+                  placeholder="Search by subject name or code..."
+                  className="w-full rounded-xl border border-border bg-background py-2.5 pl-10 pr-10 text-sm text-foreground outline-none transition placeholder:text-muted focus:border-brand focus:ring-2 focus:ring-brand/10"
+                />
+
+                {searchQuery ? (
+                  <button
+                    type="button"
+                    onClick={clearSearch}
+                    aria-label="Clear search"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-muted transition hover:bg-surface hover:text-foreground"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                ) : null}
               </div>
             </div>
 
-            <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50">
-              <div className="flex items-start gap-3">
-                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
-                  <CheckCircle className="h-4 w-4 text-brand" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-xs text-muted">Active</p>
-                  <p className="mt-1 text-lg font-bold text-foreground">{stats.total}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50">
-              <div className="flex items-start gap-3">
-                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-border">
-                  <TrendingUp className="h-4 w-4 text-brand" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-xs text-muted">Results Available</p>
-                  <p className="mt-1 text-lg font-bold text-foreground">—</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* Search, View Toggle, and Pagination Controls */}
-      {!error && subjects.length > 0 && (
-        <>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <input
-              type="text"
-              placeholder="Search subjects by name or code..."
-              value={searchQuery}
-              onChange={handleSearchChange}
-              className="flex-1 rounded-lg border border-border bg-surface px-4 py-2 text-sm text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-brand"
-            />
-
-            <div className="flex gap-2">
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition ${
-                  viewMode === 'grid'
-                    ? 'bg-brand text-white'
-                    : 'bg-background text-muted hover:bg-surface border border-border'
-                }`}
-              >
-                <Grid3X3 className="h-4 w-4" />
-                Grid
-              </button>
-              <button
-                onClick={() => setViewMode('list')}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition ${
-                  viewMode === 'list'
-                    ? 'bg-brand text-white'
-                    : 'bg-background text-muted hover:bg-surface border border-border'
-                }`}
-              >
-                <List className="h-4 w-4" />
-                List
-              </button>
-            </div>
-          </div>
-
-          {/* Results Info and Page Size */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-sm">
-            <p className="text-muted">
-              Showing {paginatedSubjects.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0}–
-              {Math.min(currentPage * itemsPerPage, filteredSubjects.length)} of {filteredSubjects.length} subject{filteredSubjects.length !== 1 ? 's' : ''}
-              {searchQuery && ` matching "${searchQuery}"`}
-            </p>
-            <label className="text-muted whitespace-nowrap">
-              Items per page
-              <select
-                value={itemsPerPage}
-                onChange={handlePageSizeChange}
-                className="ml-2 rounded-lg border border-border bg-background px-2 py-1 text-sm text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
-              >
-                {PAGE_SIZE_OPTIONS.map((size) => (
-                  <option key={size} value={size}>
-                    {size}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-        </>
-      )}
-
-      {/* Grid View */}
-      {!error && paginatedSubjects.length > 0 && viewMode === 'grid' && (
-        <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-          {paginatedSubjects.map((subject) => (
-            <div
-              key={subject.id}
-              className="rounded-lg border border-border bg-surface p-6 hover:shadow-md hover:border-brand/50 transition-all"
-            >
-              <div className="flex items-start gap-3 mb-4">
-                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-brand/10 ring-1 ring-brand/20">
-                  <BookOpen className="h-5 w-5 text-brand" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-foreground text-sm">{subject.name}</h3>
-                  {subject.code && <p className="text-xs text-muted mt-1">Code: {subject.code}</p>}
-                </div>
-              </div>
-              <Link
-                href="/teacher/results"
-                className="inline-flex items-center justify-center rounded-lg bg-brand px-4 py-2 text-xs font-medium text-white hover:bg-brand/90 transition-colors w-full"
-              >
-                View Results
-              </Link>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* List View - Desktop Table */}
-      {!error && paginatedSubjects.length > 0 && viewMode === 'list' && (
-        <div className="hidden sm:block overflow-x-auto rounded-lg border border-border bg-surface">
-          <table className="w-full text-left text-sm">
-            <thead className="border-b border-border bg-background text-muted">
-              <tr>
-                <th className="px-4 py-3 font-medium">Subject</th>
-                <th className="px-4 py-3 font-medium">Code</th>
-                <th className="px-4 py-3 font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginatedSubjects.map((subject) => (
-                <tr key={subject.id} className="border-t border-border hover:bg-background/50 transition-colors">
-                  <td className="px-4 py-3 font-medium text-foreground">{subject.name}</td>
-                  <td className="px-4 py-3 text-muted text-sm">{subject.code || '—'}</td>
-                  <td className="px-4 py-3">
-                    <Link
-                      href="/teacher/results"
-                      className="inline-flex items-center justify-center rounded-full border border-border bg-white px-3 py-1 text-xs font-semibold text-brand transition hover:bg-brand/5"
-                    >
-                      Results
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* List View - Mobile Cards */}
-      {!error && paginatedSubjects.length > 0 && viewMode === 'list' && (
-        <div className="sm:hidden space-y-2">
-          {paginatedSubjects.map((subject) => (
-            <div
-              key={subject.id}
-              className="rounded-lg border border-border bg-surface px-3 py-3 hover:bg-background/50 transition-colors"
-            >
-              <div className="flex items-start justify-between gap-3 mb-2">
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium text-sm text-foreground">{subject.name}</p>
-                  {subject.code && <p className="text-xs text-muted mt-1">Code: {subject.code}</p>}
-                </div>
-              </div>
-              <Link
-                href="/teacher/results"
-                className="inline-flex items-center justify-center rounded-full border border-border bg-white px-2.5 py-1 text-xs font-semibold text-brand transition hover:bg-brand/5"
-              >
-                Results
-              </Link>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Pagination */}
-      {!error && subjects.length > 0 && totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 mt-6">
-          <button
-            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-            disabled={currentPage === 1}
-            className="px-3 py-1.5 border border-border rounded-lg text-sm font-medium text-foreground disabled:opacity-50 disabled:cursor-not-allowed hover:bg-background"
-          >
-            Previous
-          </button>
-          
-          <div className="flex items-center gap-1">
-            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-              let pageNum;
-              if (totalPages <= 5) {
-                pageNum = i + 1;
-              } else if (currentPage <= 3) {
-                pageNum = i + 1;
-              } else if (currentPage >= totalPages - 2) {
-                pageNum = totalPages - 4 + i;
-              } else {
-                pageNum = currentPage - 2 + i;
-              }
-              
-              return (
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex rounded-full border border-border bg-background p-1">
                 <button
-                  key={pageNum}
-                  onClick={() => setCurrentPage(pageNum)}
-                  className={`px-2.5 py-1.5 text-sm font-medium rounded-lg transition ${
-                    currentPage === pageNum
-                      ? 'bg-brand text-white'
-                      : 'border border-border text-foreground hover:bg-background'
+                  type="button"
+                  onClick={() => setViewMode('list')}
+                  aria-label="List view"
+                  className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                    viewMode === 'list'
+                      ? 'bg-brand text-white shadow-sm'
+                      : 'text-muted hover:text-foreground'
                   }`}
                 >
-                  {pageNum}
+                  <List className="h-3.5 w-3.5" />
+                  List
                 </button>
-              );
-            })}
+                <button
+                  type="button"
+                  onClick={() => setViewMode('grid')}
+                  aria-label="Grid view"
+                  className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                    viewMode === 'grid'
+                      ? 'bg-brand text-white shadow-sm'
+                      : 'text-muted hover:text-foreground'
+                  }`}
+                >
+                  <Grid3X3 className="h-3.5 w-3.5" />
+                  Grid
+                </button>
+              </div>
+
+              <label className="flex items-center gap-2 text-xs text-muted">
+                Show
+                <select
+                  value={itemsPerPage}
+                  onChange={handlePageSizeChange}
+                  className="rounded-lg border border-border bg-background px-2 py-1.5 text-xs font-medium text-foreground outline-none focus:border-brand focus:ring-1 focus:ring-brand/10"
+                >
+                  {PAGE_SIZE_OPTIONS.map((size) => (
+                    <option key={size} value={size}>
+                      {size}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
           </div>
 
-          <button
-            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-            disabled={currentPage === totalPages}
-            className="px-3 py-1.5 border border-border rounded-lg text-sm font-medium text-foreground disabled:opacity-50 disabled:cursor-not-allowed hover:bg-background"
-          >
-            Next
-          </button>
-        </div>
-      )}
+          <div className="mt-4 flex flex-col gap-1 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
+            <p>
+              Showing {startItem}–{endItem} of {filteredSubjects.length} subject{filteredSubjects.length !== 1 ? 's' : ''}
+              {searchQuery ? ` matching "${searchQuery}"` : ''}
+            </p>
+          </div>
+        </section>
 
-      {/* Empty State */}
-      {!error && subjects.length === 0 && (
-        <div className="rounded-lg border border-border bg-surface px-4 py-12 text-center sm:px-6">
-          <BookOpen className="h-12 w-12 text-muted/40 mx-auto mb-3" />
-          <p className="text-muted">No subjects assigned to you</p>
-        </div>
-      )}
+        {paginatedSubjects.length > 0 && viewMode === 'grid' && (
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+            {paginatedSubjects.map((subject) => (
+              <div
+                key={subject.id}
+                className="rounded-2xl border border-border bg-surface p-6 transition hover:shadow-md hover:border-brand/50"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand/10 text-brand">
+                    <BookOpen className="h-5 w-5" />
+                  </div>
+
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-foreground truncate">{subject.name}</p>
+                    {getSubjectMetaLabel(subject) ? (
+                      <p className="mt-1 text-xs text-muted">{getSubjectMetaLabel(subject)}</p>
+                    ) : null}
+                  </div>
+                </div>
+
+                <div className="mt-5 flex flex-wrap gap-2">
+                  <Link
+                    href={`/teacher/results?subject=${encodeURIComponent(subject.name)}`}
+                    className="inline-flex items-center justify-center rounded-full border border-border bg-white px-3 py-1.5 text-xs font-semibold text-brand transition hover:bg-brand/5"
+                  >
+                    View results
+                  </Link>
+                  <button
+                    type="button"
+                    className="inline-flex items-center justify-center rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-surface"
+                  >
+                    Manage
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {paginatedSubjects.length > 0 && viewMode === 'list' && (
+          <>
+            <div className="hidden sm:block overflow-hidden rounded-2xl border border-border bg-surface">
+              <table className="w-full text-left text-sm">
+                <thead className="border-b border-border bg-background text-muted">
+                  <tr>
+                    <th className="px-4 py-3 font-medium">Subject</th>
+                    <th className="px-4 py-3 font-medium">Actions</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {paginatedSubjects.map((subject) => (
+                    <tr key={subject.id} className="border-t border-border hover:bg-background/50 transition-colors">
+                      <td className="px-4 py-3">
+                        <div className="min-w-0">
+                          <p className="font-semibold text-foreground">{subject.name}</p>
+                          {getSubjectMetaLabel(subject) ? (
+                            <p className="mt-1 text-xs text-muted">{getSubjectMetaLabel(subject)}</p>
+                          ) : null}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-wrap gap-2">
+                          <Link
+                            href={`/teacher/results?subject=${encodeURIComponent(subject.name)}`}
+                            className="rounded-full border border-border bg-white px-3 py-1 text-xs font-semibold text-brand transition hover:bg-brand/5"
+                          >
+                            View results
+                          </Link>
+                          <button
+                            type="button"
+                            className="rounded-full border border-border bg-background px-3 py-1 text-xs font-semibold text-foreground transition hover:bg-surface"
+                          >
+                            Manage
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="sm:hidden space-y-2">
+              {paginatedSubjects.map((subject) => (
+                <div key={subject.id} className="rounded-2xl border border-border bg-background p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-foreground">{subject.name}</p>
+                      <p className="mt-1 text-xs text-muted">{getSubjectMetaLabel(subject)}</p>
+                    </div>
+                    {/* Removed status badge for teacher subjects list */}
+                  </div>
+
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <Link
+                      href={`/teacher/results?subject=${encodeURIComponent(subject.name)}`}
+                      className="rounded-full border border-border bg-white px-3 py-1 text-xs font-semibold text-brand transition hover:bg-brand/5"
+                    >
+                      View results
+                    </Link>
+                    <button
+                      type="button"
+                      className="rounded-full border border-border bg-background px-3 py-1 text-xs font-semibold text-foreground transition hover:bg-surface"
+                    >
+                      Manage
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {paginatedSubjects.length === 0 && !error && (
+          <div className="rounded-2xl border border-dashed border-border bg-background/70 px-6 py-12 text-center">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-brand/10 text-brand">
+              <Users className="h-6 w-6" />
+            </div>
+            <p className="mt-3 text-sm font-semibold text-foreground">No subjects found</p>
+            <p className="mt-1 text-sm text-muted">
+              {searchQuery ? `No subjects matching "${searchQuery}".` : 'No subjects are currently assigned.'}
+            </p>
+          </div>
+        )}
+
+        {paginatedSubjects.length > 0 && (
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-muted">
+              Page {safeCurrentPage} of {totalPages}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                disabled={safeCurrentPage === 1}
+                className="inline-flex items-center gap-2 rounded px-3 py-1.5 border border-border text-sm font-medium text-foreground hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" />
+                Previous
+              </button>
+
+              {Array.from({ length: totalPages }, (_, index) => index + 1)
+                .filter((page) => page === 1 || page === totalPages || (page >= safeCurrentPage - 1 && page <= safeCurrentPage + 1))
+                .map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`rounded px-2.5 py-1.5 text-sm font-medium ${
+                      page === safeCurrentPage
+                        ? 'bg-brand text-white'
+                        : 'border border-border text-foreground hover:bg-background'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+
+              <button
+                type="button"
+                onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                disabled={safeCurrentPage === totalPages}
+                className="inline-flex items-center gap-2 rounded px-3 py-1.5 border border-border text-sm font-medium text-foreground hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+                <ChevronRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -19,6 +19,7 @@ interface SchoolSettingsProps {
     name: string;
     initials?: string | null;
     slug: string;
+    tagline?: string | null;
     address?: string | null;
     city?: string | null;
     country?: string | null;
@@ -66,6 +67,7 @@ export default function SettingsPageClient({
   const [name, setName] = useState(school.name);
   const [initials, setInitials] = useState(school.initials ?? "");
   const [slug, setSlug] = useState(school.slug);
+  const [tagline, setTagline] = useState(school.tagline ?? "");
   const [country, setCountry] = useState(school.country ?? countriesData.default ?? "NG");
   const [currency, setCurrency] = useState(
     school.currency ?? countriesData.countries[(school.country ?? countriesData.default ?? "NG") as keyof typeof countriesData.countries]?.currency ?? "NGN",
@@ -214,6 +216,7 @@ export default function SettingsPageClient({
           name: name.trim(),
           initials: initials.trim().toUpperCase(),
           slug: slug.trim() || null,
+          tagline: tagline.trim() || null,
           country: country.trim() || null,
           currency: currency.trim() || null,
           address: address.trim() || null,
@@ -448,15 +451,29 @@ export default function SettingsPageClient({
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">Address</label>
-              <textarea
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder="123 Education Street, Lagos"
-                rows={2}
-                className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-brand/50"
-              />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">Tagline / Motto</label>
+                <input
+                  type="text"
+                  value={tagline}
+                  onChange={(e) => setTagline(e.target.value)}
+                  placeholder="Excellence from early years to secondary"
+                  maxLength={160}
+                  className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-brand/50"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">Address</label>
+                <textarea
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  placeholder="123 Education Street, Lagos"
+                  rows={2}
+                  className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-brand/50"
+                />
+              </div>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">

@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { UserGuide } from "@/components/ui/user-guide";
 import { getBackendUrl } from "@/lib/backend-url";
-import { Search, BookPlus, Trash2, X, Check, AlertCircle, Edit2 } from "lucide-react";
+import { Search, Trash2, X, Check, AlertCircle, Edit2 } from "lucide-react";
 
 const SUBJECTS_GUIDE = {
   title: "Subjects Management",
@@ -100,6 +100,21 @@ export default function SubjectsPageClient({
 
   const activeSubjectCount = subjects.length;
   const activeClassCount = initialClasses.length;
+
+  const classColumns = useMemo(() => {
+    const columns: any[][] = [];
+    const itemsPerColumn = 10;
+
+    initialClasses.forEach((classItem, index) => {
+      const columnIndex = Math.floor(index / itemsPerColumn);
+      if (!columns[columnIndex]) {
+        columns[columnIndex] = [];
+      }
+      columns[columnIndex].push(classItem);
+    });
+
+    return columns;
+  }, [initialClasses]);
 
   const filteredSubjects = useMemo(() => {
     if (!searchQuery.trim()) return subjects;
@@ -348,14 +363,13 @@ export default function SubjectsPageClient({
             <Search className="h-4 w-4" />
             {isSearchOpen ? "Close Search" : "Search Subject"}
           </Button>
-          <Button
+          <button
             type="button"
             onClick={() => openSubjectModal()}
             className="h-9 rounded-md border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8]"
           >
-            <BookPlus className="h-4 w-4" />
             Add subject
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -451,7 +465,7 @@ export default function SubjectsPageClient({
 
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_50px_rgba(10,102,194,0.16)]">
+          <div className="w-full max-w-3xl max-h-[90vh] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_50px_rgba(10,102,194,0.16)]">
             <div className="border-b border-slate-100 px-6 py-5" style={{ background: "linear-gradient(90deg, rgba(10,102,194,0.12), rgba(10,102,194,0.04))" }}>
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -492,14 +506,14 @@ export default function SubjectsPageClient({
               </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5 px-6 py-6">
+            <form onSubmit={handleSubmit} className="max-h-[calc(90vh-160px)] overflow-y-auto space-y-5 px-6 py-6">
               {error && (
                 <div className="rounded-lg border border-red-200 bg-red-50 p-4">
                   <p className="text-sm text-red-700">{error}</p>
                 </div>
               )}
 
-              <div className="grid gap-4 lg:grid-cols-3">
+              <div className="grid gap-4 lg:grid-cols-2">
                 <div className="space-y-4">
                   <label className="text-sm font-medium block">
                     Subject name
@@ -517,59 +531,45 @@ export default function SubjectsPageClient({
                 <div className="space-y-4">
                   <div className="text-sm font-medium">
                     <span>Assign classes</span>
-                    <div className="mt-1 grid gap-2 rounded-lg border border-border bg-background p-3">
+                    <div className="mt-1 rounded-lg border border-border bg-background p-3">
                       {initialClasses.length === 0 ? (
                         <p className="text-sm text-muted">No classes available</p>
                       ) : (
-                        initialClasses.map((classItem) => {
-                          const isSelected = selectedClassIds.includes(classItem.id);
-                          return (
-                            <label
-                              key={classItem.id}
-                              className="flex cursor-pointer items-center gap-3 rounded-lg border border-border bg-surface px-3 py-2 transition hover:bg-background"
-                            >
-                              <input
-                                type="checkbox"
-                                name="classIds"
-                                value={classItem.id}
-                                checked={isSelected}
-                                onChange={() => handleClassToggle(classItem.id)}
-                                className="h-4 w-4"
-                              />
-                              <span className="text-sm">
-                                {classItem.name}
-                                {classItem.arm ? ` ${classItem.arm}` : ""}
-                              </span>
-                            </label>
-                          );
-                        })
+                        <div className="max-h-[320px] space-y-3 overflow-y-auto pr-1">
+                          <div className="grid gap-3 md:grid-cols-2">
+                            {classColumns.map((columnClasses, columnIndex) => (
+                              <div key={`class-column-${columnIndex}`} className="space-y-2">
+                                {columnClasses.map((classItem) => {
+                                  const isSelected = selectedClassIds.includes(classItem.id);
+                                  return (
+                                    <label
+                                      key={classItem.id}
+                                      className="flex cursor-pointer items-center gap-3 rounded-lg border border-border bg-surface px-3 py-2 transition hover:bg-background"
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        name="classIds"
+                                        value={classItem.id}
+                                        checked={isSelected}
+                                        onChange={() => handleClassToggle(classItem.id)}
+                                        className="h-4 w-4"
+                                      />
+                                      <span className="text-sm">
+                                        {classItem.name}
+                                        {classItem.arm ? ` ${classItem.arm}` : ""}
+                                      </span>
+                                    </label>
+                                  );
+                                })}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       )}
                     </div>
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  <div className="rounded-3xl border border-border bg-background p-4">
-                    <p className="text-sm font-semibold text-foreground">Teachers assigned to this subject</p>
-                    {selectedSubject ? (
-                      teacherSubjects.filter((ts) => ts.subjectId === selectedSubject.id).length > 0 ? (
-                        <ul className="mt-3 space-y-2 text-sm text-foreground">
-                          {teacherSubjects
-                            .filter((ts) => ts.subjectId === selectedSubject.id)
-                            .map((ts) => (
-                              <li key={ts.id} className="rounded-2xl bg-surface p-3">
-                                {ts.teacher?.name ?? "Unnamed teacher"}
-                              </li>
-                            ))}
-                        </ul>
-                      ) : (
-                        <p className="mt-3 text-sm text-muted">No teachers currently assigned.</p>
-                      )
-                    ) : (
-                      <p className="mt-3 text-sm text-muted">Teachers assigned to this subject will appear after it is saved.</p>
-                    )}
-                  </div>
-                </div>
               </div>
 
               <div className="flex items-end justify-end pt-4 border-t border-border">
@@ -578,13 +578,9 @@ export default function SubjectsPageClient({
                   disabled={loading}
                   title={selectedSubject ? "Save changes" : "Add subject"}
                   aria-label={selectedSubject ? "Save changes" : "Add subject"}
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-[#0A66C2] text-white transition hover:bg-[#0858a8] disabled:opacity-50"
+                  className="rounded-lg bg-[#0A66C2] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#0858a8] disabled:opacity-50"
                 >
-                  {loading ? (
-                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  ) : (
-                    <Check className="h-4 w-4" />
-                  )}
+                  {loading ? "Saving..." : selectedSubject ? "Save changes" : "Add subject"}
                 </button>
               </div>
             </form>

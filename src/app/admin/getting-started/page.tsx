@@ -358,7 +358,6 @@ export default function GettingStartedPage() {
       <div className="overflow-hidden rounded-[32px] border border-border/80 bg-surface shadow-[0_24px_70px_-40px_rgba(15,23,42,0.35)]">
         <div className="grid gap-0 xl:grid-cols-[1.05fr_0.95fr]">
           <div className="border-b border-border/70 bg-gradient-to-br from-brand/20 via-background to-brand/5 p-6 sm:p-8 xl:border-b-0 xl:border-r">
-            <div className="rounded-[28px] border border-brand/20 bg-background/80 p-5 shadow-[0_20px_50px_-30px_rgba(15,23,42,0.4)] sm:p-6">
               <div className="flex items-start justify-between gap-4">
                 <div className="space-y-4">
                   <div className="inline-flex items-center gap-2 rounded-full border border-brand/20 bg-brand/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-brand">
@@ -407,7 +406,6 @@ export default function GettingStartedPage() {
                   <span>{remainingCount} remaining</span>
                 </div>
               </div>
-            </div>
           </div>
 
           <div className="p-6 sm:p-8">

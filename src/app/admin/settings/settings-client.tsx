@@ -6,12 +6,13 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ErrorModal } from "@/components/ui/error-modal";
-import { Building2, MapPin, DollarSign, FileText, Upload, Save, AlertCircle, Zap, X, KeyRound, CalendarDays, ShieldCheck, Copy } from "lucide-react";
+import { Building2, MapPin, DollarSign, FileText, Upload, Save, AlertCircle, Zap, X, KeyRound, CalendarDays, ShieldCheck, Copy, CheckCircle2, ChevronRight, Loader2 } from "lucide-react";
 import { UserGuide, type PageHelpGuide } from "@/components/ui/user-guide";
 import { WhatsAppIcon } from "@/components/ui/icons";
 import countriesData from "../../../../config/countries.json";
 import { resolveSchoolAssetUrl } from "@/lib/asset-urls";
 import { getBackendUrl } from "@/lib/backend-url";
+import { playCloseTone, playOpenTone } from "@/lib/sounds";
 
 interface SchoolSettingsProps {
   school: {
@@ -127,7 +128,20 @@ export default function SettingsPageClient({
 
   const [uploading, setUploading] = useState<{ [key: string]: boolean }>({});
   const [isSaving, setIsSaving] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [openPanels, setOpenPanels] = useState({
+    profile: true,
+    principal: false,
+    admissions: false,
+    resultAccess: false,
+    security: false,
+    payment: false,
+  });
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successModalTitle, setSuccessModalTitle] = useState<string | undefined>("Success");
   const [successModalMessage, setSuccessModalMessage] = useState<string>("Your settings were saved successfully.");
@@ -148,6 +162,10 @@ export default function SettingsPageClient({
   const [admissionsIntroText, setAdmissionsIntroText] = useState(school.admissionsIntroText ?? "");
   const [admissionsRequirements, setAdmissionsRequirements] = useState(school.admissionsRequirements ?? "");
   const [admissionsContactInfo, setAdmissionsContactInfo] = useState(school.admissionsContactInfo ?? "");
+
+  const togglePanel = (panel: keyof typeof openPanels) => {
+    setOpenPanels((current) => ({ ...current, [panel]: !current[panel] }));
+  };
 
   useEffect(() => {
     fetchStatus();
@@ -259,6 +277,78 @@ export default function SettingsPageClient({
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    setPasswordError(null);
+    setPasswordSuccess(false);
+
+    if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
+      setPasswordError("All fields are required.");
+      return;
+    }
+
+    if (passwordForm.newPassword.length < 8) {
+      setPasswordError("New password must be at least 8 characters.");
+      return;
+    }
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordError("New passwords do not match.");
+      return;
+    }
+
+    setChangingPassword(true);
+
+    try {
+      const backendUrl = getBackendUrl();
+      const response = await fetch(`${backendUrl}/api/admin/change-password`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          currentPassword: passwordForm.currentPassword,
+          newPassword: passwordForm.newPassword,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.error || "Failed to change password");
+      }
+
+      setPasswordSuccess(true);
+      setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+
+      setTimeout(() => {
+        playCloseTone();
+        setShowPasswordModal(false);
+        setPasswordSuccess(false);
+      }, 1400);
+    } catch (err) {
+      setPasswordError(err instanceof Error ? err.message : "Failed to change password");
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
+  const openPasswordModal = () => {
+    setPasswordError(null);
+    setPasswordSuccess(false);
+    setShowPasswordModal(true);
+    playOpenTone();
+  };
+
+  const closePasswordModal = () => {
+    if (changingPassword) return;
+
+    playCloseTone();
+    setShowPasswordModal(false);
+    setPasswordError(null);
+    setPasswordSuccess(false);
+    setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
   };
 
   const previewPrefix = initials.trim() || "ABC";
@@ -403,15 +493,27 @@ export default function SettingsPageClient({
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* School Profile Section */}
         <div className="rounded-lg border border-border bg-surface overflow-hidden">
-          <div className="border-b border-border bg-background px-6 py-4 flex items-center gap-3">
-            <Building2 className="h-5 w-5 text-brand" />
-            <div>
-              <h2 className="font-semibold text-foreground">School Profile</h2>
-              <p className="text-xs text-muted">Name, location, and identification</p>
-            </div>
+          <div className="border-b border-border bg-background px-6 py-4">
+            <button
+              type="button"
+              onClick={() => togglePanel('profile')}
+              className="flex w-full items-center justify-between gap-3 text-left"
+              aria-expanded={openPanels.profile}
+              aria-controls="school-profile-panel"
+            >
+              <div className="flex items-center gap-3">
+                <Building2 className="h-5 w-5 text-brand" />
+                <div>
+                  <h2 className="font-semibold text-foreground">School Profile</h2>
+                  <p className="text-xs text-muted">Name, location, and identification</p>
+                </div>
+              </div>
+              <ChevronRight className={`h-4 w-4 text-muted transition-transform duration-200 ${openPanels.profile ? 'rotate-90 text-foreground' : 'rotate-0'}`} />
+            </button>
           </div>
-          
-          <div className="p-6 space-y-5">
+
+          {openPanels.profile && (
+            <div id="school-profile-panel" className="p-6 space-y-5">
             <div className="grid gap-4 sm:grid-cols-3">
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">School Name *</label>
@@ -543,30 +645,43 @@ export default function SettingsPageClient({
               </div>
             </div>
           </div>
+          )}
         </div>
 
         {/* Principal Section */}
         <div className="rounded-lg border border-border bg-surface overflow-hidden">
-          <div className="border-b border-border bg-background px-6 py-4 flex items-center gap-3">
-            <FileText className="h-5 w-5 text-brand" />
-            <div>
-              <h2 className="font-semibold text-foreground">Principal Information</h2>
-              <p className="text-xs text-muted">Details for documents and result sheets</p>
-            </div>
+          <div className="border-b border-border bg-background px-6 py-4">
+            <button
+              type="button"
+              onClick={() => togglePanel('principal')}
+              className="flex w-full items-center justify-between gap-3 text-left"
+              aria-expanded={openPanels.principal}
+              aria-controls="principal-information-panel"
+            >
+              <div className="flex items-center gap-3">
+                <FileText className="h-5 w-5 text-brand" />
+                <div>
+                  <h2 className="font-semibold text-foreground">Principal Information</h2>
+                  <p className="text-xs text-muted">Details for documents and result sheets</p>
+                </div>
+              </div>
+              <ChevronRight className={`h-4 w-4 text-muted transition-transform duration-200 ${openPanels.principal ? 'rotate-90 text-foreground' : 'rotate-0'}`} />
+            </button>
           </div>
-          
-          <div className="p-6 space-y-5">
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">Principal Name</label>
-              <input
-                type="text"
-                value={principalName}
-                onChange={(e) => setPrincipalName(e.target.value)}
-                placeholder="e.g. Mr. John Okafor"
-                className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-brand/50"
-              />
-              <p className="text-xs text-muted mt-1">Appears on student result sheets</p>
-            </div>
+
+          {openPanels.principal && (
+            <div id="principal-information-panel" className="p-6 space-y-5">
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">Principal Name</label>
+                <input
+                  type="text"
+                  value={principalName}
+                  onChange={(e) => setPrincipalName(e.target.value)}
+                  placeholder="e.g. Mr. John Okafor"
+                  className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-brand/50"
+                />
+                <p className="text-xs text-muted mt-1">Appears on student result sheets</p>
+              </div>
 
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">Principal's Comment</label>
@@ -673,19 +788,32 @@ export default function SettingsPageClient({
               </div>
             </div>
           </div>
+          )}
         </div>
 
         {/* Admissions Settings Section */}
         <div className="rounded-lg border border-border bg-surface overflow-hidden">
-          <div className="border-b border-border bg-background px-6 py-4 flex items-center gap-3">
-            <FileText className="h-5 w-5 text-brand" />
-            <div>
-              <h2 className="font-semibold text-foreground">Online Admissions</h2>
-              <p className="text-xs text-muted">Enable and configure the public admissions portal, application dates, guidance text, requirements, and contact details for families.</p>
-            </div>
+          <div className="border-b border-border bg-background px-6 py-4">
+            <button
+              type="button"
+              onClick={() => togglePanel('admissions')}
+              className="flex w-full items-center justify-between gap-3 text-left"
+              aria-expanded={openPanels.admissions}
+              aria-controls="online-admissions-panel"
+            >
+              <div className="flex items-center gap-3">
+                <FileText className="h-5 w-5 text-brand" />
+                <div>
+                  <h2 className="font-semibold text-foreground">Online Admissions</h2>
+                  <p className="text-xs text-muted">Enable and configure the public admissions portal, application dates, guidance text, requirements, and contact details for families.</p>
+                </div>
+              </div>
+              <ChevronRight className={`h-4 w-4 text-muted transition-transform duration-200 ${openPanels.admissions ? 'rotate-90 text-foreground' : 'rotate-0'}`} />
+            </button>
           </div>
 
-          <div className="p-6 space-y-5">
+          {openPanels.admissions && (
+            <div id="online-admissions-panel" className="p-6 space-y-5">
             <div className="flex flex-col gap-4 rounded-lg border border-border bg-background p-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-3">
                 <input
@@ -773,19 +901,32 @@ export default function SettingsPageClient({
               />
             </div>
           </div>
+          )}
         </div>
 
         {/* Result Access PIN Section */}
         <div className="rounded-lg border border-border bg-surface overflow-hidden">
-          <div className="border-b border-border bg-background px-6 py-4 flex items-center gap-3">
-            <KeyRound className="h-5 w-5 text-brand" />
-            <div>
-              <h2 className="font-semibold text-foreground">Result Access PINs</h2>
-              <p className="text-xs text-muted">Optional school-managed result access control for parents and public checker pages</p>
-            </div>
+          <div className="border-b border-border bg-background px-6 py-4">
+            <button
+              type="button"
+              onClick={() => togglePanel('resultAccess')}
+              className="flex w-full items-center justify-between gap-3 text-left"
+              aria-expanded={openPanels.resultAccess}
+              aria-controls="result-access-panel"
+            >
+              <div className="flex items-center gap-3">
+                <KeyRound className="h-5 w-5 text-brand" />
+                <div>
+                  <h2 className="font-semibold text-foreground">Result Access PINs</h2>
+                  <p className="text-xs text-muted">Optional school-managed result access control for parents and public checker pages</p>
+                </div>
+              </div>
+              <ChevronRight className={`h-4 w-4 text-muted transition-transform duration-200 ${openPanels.resultAccess ? 'rotate-90 text-foreground' : 'rotate-0'}`} />
+            </button>
           </div>
 
-          <div className="p-6 space-y-5">
+          {openPanels.resultAccess && (
+            <div id="result-access-panel" className="p-6 space-y-5">
             <div className="flex items-center gap-3 rounded-lg border border-border bg-background p-4">
               <input
                 id="result-access-enabled"
@@ -858,19 +999,76 @@ export default function SettingsPageClient({
               This setting is disabled by default. When left off, the current result experience remains unchanged for parents and staff.
             </p>
           </div>
+          )}
+        </div>
+
+        {/* Security Section */}
+        <div className="rounded-lg border border-border bg-surface overflow-hidden">
+          <div className="border-b border-border bg-background px-6 py-4">
+            <button
+              type="button"
+              onClick={() => togglePanel('security')}
+              className="flex w-full items-center justify-between gap-3 text-left"
+              aria-expanded={openPanels.security}
+              aria-controls="security-panel"
+            >
+              <div className="flex items-center gap-3">
+                <ShieldCheck className="h-5 w-5 text-brand" />
+                <div>
+                  <h2 className="font-semibold text-foreground">Security</h2>
+                  <p className="text-xs text-muted">Change your administrator password securely without leaving this settings page.</p>
+                </div>
+              </div>
+              <ChevronRight className={`h-4 w-4 text-muted transition-transform duration-200 ${openPanels.security ? 'rotate-90 text-foreground' : 'rotate-0'}`} />
+            </button>
+          </div>
+
+          {openPanels.security && (
+            <div id="security-panel" className="p-6">
+            <div className="rounded-3xl border border-border bg-background p-5 sm:flex sm:items-center sm:justify-between">
+              <div className="mb-4 sm:mb-0">
+                <p className="font-medium text-foreground">Change password</p>
+                <p className="mt-1 text-sm text-muted">
+                  Update your administrator password at any time to keep your account secure.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={openPasswordModal}
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-border bg-white px-4 py-2 text-sm font-semibold text-foreground shadow-sm transition hover:bg-surface"
+              >
+                <KeyRound className="h-4 w-4" />
+                Change password
+              </button>
+            </div>
+          </div>
+          )}
         </div>
 
         {/* Payment Section */}
         <div className="rounded-lg border border-border bg-surface overflow-hidden">
-          <div className="border-b border-border bg-background px-6 py-4 flex items-center gap-3">
-            <DollarSign className="h-5 w-5 text-brand" />
-            <div>
-              <h2 className="font-semibold text-foreground">Payment Information</h2>
-              <p className="text-xs text-muted">Manual payment details for invoices</p>
-            </div>
+          <div className="border-b border-border bg-background px-6 py-4">
+            <button
+              type="button"
+              onClick={() => togglePanel('payment')}
+              className="flex w-full items-center justify-between gap-3 text-left"
+              aria-expanded={openPanels.payment}
+              aria-controls="payment-information-panel"
+            >
+              <div className="flex items-center gap-3">
+                <DollarSign className="h-5 w-5 text-brand" />
+                <div>
+                  <h2 className="font-semibold text-foreground">Payment Information</h2>
+                  <p className="text-xs text-muted">Manual payment details for invoices</p>
+                </div>
+              </div>
+              <ChevronRight className={`h-4 w-4 text-muted transition-transform duration-200 ${openPanels.payment ? 'rotate-90 text-foreground' : 'rotate-0'}`} />
+            </button>
           </div>
-          
-          <div className="p-6 space-y-5">
+
+          {openPanels.payment && (
+            <div id="payment-information-panel" className="p-6 space-y-5">
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">Bank Name</label>
@@ -904,6 +1102,7 @@ export default function SettingsPageClient({
               />
             </div>
           </div>
+          )}
         </div>
 
         {/* Save Button */}
@@ -918,6 +1117,127 @@ export default function SettingsPageClient({
           </Button>
         </div>
       </form>
+
+      {/* Change Password Modal */}
+      {showPasswordModal && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) {
+              closePasswordModal();
+            }
+          }}
+        >
+          <style>{`
+            @keyframes admin_settings_password_modal_enter { from { transform: translateY(24px) scale(.98); opacity: 0 } to { transform: translateY(0) scale(1); opacity: 1 } }
+            @keyframes admin_settings_password_modal_exit  { from { transform: translateY(0) scale(1); opacity: 1 } to { transform: translateY(24px) scale(.98); opacity: 0 } }
+          `}</style>
+
+          <div
+            className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_50px_rgba(10,102,194,0.16)]"
+            role="dialog"
+            aria-modal="true"
+            style={{ animation: `admin_settings_password_modal_enter 320ms cubic-bezier(.2,.9,.2,1)` }}
+          >
+            <div className="border-b border-slate-100 px-6 py-5" style={{ background: 'linear-gradient(90deg, rgba(10,102,194,0.12), rgba(10,102,194,0.04))' }}>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-foreground">Change password</h2>
+                  <p className="mt-1 text-sm text-muted">Enter your current password and choose a new, stronger password.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={closePasswordModal}
+                  disabled={changingPassword}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-border hover:bg-background transition-colors text-muted"
+                  aria-label="Close"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+
+            <form onSubmit={handleChangePassword} className="space-y-4 px-6 py-6">
+              {passwordError && (
+                <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-3">
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
+                  <p className="text-sm text-red-800">{passwordError}</p>
+                </div>
+              )}
+
+              {passwordSuccess && (
+                <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                  <p className="text-sm text-emerald-800">Password changed successfully.</p>
+                </div>
+              )}
+
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-foreground">Current password</label>
+                <input
+                  type="password"
+                  value={passwordForm.currentPassword}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                  autoComplete="current-password"
+                  required
+                  className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-foreground">New password</label>
+                <input
+                  type="password"
+                  value={passwordForm.newPassword}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                  autoComplete="new-password"
+                  required
+                  className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10"
+                />
+                <p className="mt-1.5 text-xs text-muted">Minimum 8 characters.</p>
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-foreground">Confirm new password</label>
+                <input
+                  type="password"
+                  value={passwordForm.confirmPassword}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                  autoComplete="new-password"
+                  required
+                  className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10"
+                />
+              </div>
+
+              <div className="flex gap-3 border-t border-border pt-4">
+                <button
+                  type="button"
+                  onClick={closePasswordModal}
+                  disabled={changingPassword}
+                  className="flex-1 rounded-xl border border-border bg-background px-4 py-2.5 text-sm font-medium text-foreground transition hover:bg-surface disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={changingPassword}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-medium text-white transition hover:bg-brand/90 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {changingPassword ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Updating...
+                    </>
+                  ) : (
+                    'Update password'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Help & Guide */}
       <UserGuide guide={HELP_GUIDE} />

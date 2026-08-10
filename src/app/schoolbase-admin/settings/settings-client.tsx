@@ -11,6 +11,7 @@ import {
   BarChart3,
   Activity,
   Mail,
+  CreditCard,
   CheckCircle2,
   AlertTriangle,
 } from "lucide-react";
@@ -49,6 +50,13 @@ interface PlatformSettingsState {
   allowTrial: boolean;
   autoApproveSchools: boolean;
   supportEmail: string;
+  signupNotificationRecipients: string[];
+  supportNotificationRecipients: string[];
+  paymentPlans: {
+    STARTER: { label: string; priceLabel: string; amountMinor: number; studentLimit: number | null };
+    GROWTH: { label: string; priceLabel: string; amountMinor: number; studentLimit: number | null };
+    ENTERPRISE: { label: string; priceLabel: string; amountMinor: number; studentLimit: number | null };
+  };
 }
 
 const defaultSettings: PlatformSettingsState = {
@@ -57,6 +65,13 @@ const defaultSettings: PlatformSettingsState = {
   allowTrial: true,
   autoApproveSchools: false,
   supportEmail: "support@schoolbase.live",
+  signupNotificationRecipients: [],
+  supportNotificationRecipients: [],
+  paymentPlans: {
+    STARTER: { label: "", priceLabel: "", amountMinor: 0, studentLimit: null },
+    GROWTH: { label: "", priceLabel: "", amountMinor: 0, studentLimit: null },
+    ENTERPRISE: { label: "", priceLabel: "", amountMinor: 0, studentLimit: null },
+  },
 };
 
 export default function SettingsClient() {
@@ -73,6 +88,7 @@ export default function SettingsClient() {
   const [stats, setStats] = useState<PlatformStats | null>(null);
   const [activity, setActivity] = useState<AuditLog[]>([]);
   const [settings, setSettings] = useState<PlatformSettingsState>(defaultSettings);
+  const [recipientDrafts, setRecipientDrafts] = useState({ signup: "", support: "" });
   const [formData, setFormData] = useState({ name: "", email: "" });
 
   useEffect(() => {
@@ -108,12 +124,25 @@ export default function SettingsClient() {
 
       if (settingsRes.ok) {
         const settingsData = await settingsRes.json();
-        setSettings({
+        const loadedPlans = settingsData?.settings?.paymentPlans ?? {};
+        const nextSettings: PlatformSettingsState = {
           maintenanceMode: Boolean(settingsData?.settings?.maintenanceMode ?? settingsData?.defaults?.maintenanceMode ?? false),
           allowSignup: Boolean(settingsData?.settings?.allowSignup ?? settingsData?.defaults?.allowSignup ?? true),
           allowTrial: Boolean(settingsData?.settings?.allowTrial ?? settingsData?.defaults?.allowTrial ?? true),
           autoApproveSchools: Boolean(settingsData?.settings?.autoApproveSchools ?? settingsData?.defaults?.autoApproveSchools ?? false),
           supportEmail: String(settingsData?.settings?.supportEmail ?? settingsData?.defaults?.supportEmail ?? defaultSettings.supportEmail),
+          signupNotificationRecipients: Array.isArray(settingsData?.settings?.signupNotificationRecipients) ? settingsData.settings.signupNotificationRecipients : defaultSettings.signupNotificationRecipients,
+          supportNotificationRecipients: Array.isArray(settingsData?.settings?.supportNotificationRecipients) ? settingsData.settings.supportNotificationRecipients : defaultSettings.supportNotificationRecipients,
+          paymentPlans: {
+            STARTER: { ...defaultSettings.paymentPlans.STARTER, ...(loadedPlans.STARTER ?? {}) },
+            GROWTH: { ...defaultSettings.paymentPlans.GROWTH, ...(loadedPlans.GROWTH ?? {}) },
+            ENTERPRISE: { ...defaultSettings.paymentPlans.ENTERPRISE, ...(loadedPlans.ENTERPRISE ?? {}) },
+          },
+        };
+        setSettings(nextSettings);
+        setRecipientDrafts({
+          signup: nextSettings.signupNotificationRecipients.join(", "),
+          support: nextSettings.supportNotificationRecipients.join(", "),
         });
       }
 
@@ -141,6 +170,32 @@ export default function SettingsClient() {
   function handleSettingInputChange(e: ChangeEvent<HTMLInputElement>) {
     const { name, value } = e.target;
     setSettings((prev) => ({ ...prev, [name as keyof PlatformSettingsState]: value }));
+  }
+
+  function handleRecipientChange(key: "signupNotificationRecipients" | "supportNotificationRecipients", value: string) {
+    setRecipientDrafts((prev) => ({
+      ...prev,
+      [key === "signupNotificationRecipients" ? "signup" : "support"]: value,
+    }));
+  }
+
+  function handlePlanChange(plan: keyof PlatformSettingsState["paymentPlans"], field: "label" | "priceLabel" | "amountMinor" | "studentLimit", value: string) {
+    setSettings((prev) => ({
+      ...prev,
+      paymentPlans: {
+        ...prev.paymentPlans,
+        [plan]: {
+          ...prev.paymentPlans[plan],
+          [field]: field === "label" || field === "priceLabel"
+            ? value
+            : value === ""
+            ? null
+            : field === "amountMinor"
+            ? Math.round(Number(value) * 100)
+            : Number(value),
+        },
+      },
+    }));
   }
 
   async function handleSave() {
@@ -177,17 +232,29 @@ export default function SettingsClient() {
     try {
       setSavingSettings(true);
 
+      const settingsToSave = {
+        ...settings,
+        signupNotificationRecipients: recipientDrafts.signup.split(",").map((item) => item.trim()).filter(Boolean),
+        supportNotificationRecipients: recipientDrafts.support.split(",").map((item) => item.trim()).filter(Boolean),
+      };
+
       const res = await fetch("/schoolbase-admin/api/settings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ settings }),
+        body: JSON.stringify({ settings: settingsToSave }),
       });
 
       const data = await res.json().catch(() => null);
       if (!res.ok) {
         throw new Error(data?.message || "Failed to save settings.");
       }
+
+      setSettings((prev) => ({
+        ...prev,
+        signupNotificationRecipients: settingsToSave.signupNotificationRecipients,
+        supportNotificationRecipients: settingsToSave.supportNotificationRecipients,
+      }));
 
       setStatusModal({ open: true, type: "success", title: "Preferences Saved", message: "Platform preferences were saved successfully." });
     } catch (error) {
@@ -400,6 +467,66 @@ export default function SettingsClient() {
                   onChange={handleSettingInputChange}
                   className="w-full bg-transparent text-sm text-foreground outline-none"
                 />
+              </div>
+            </div>
+
+            <div className="border-t border-border pt-5">
+              <div className="flex items-center gap-2">
+                <Mail className="h-4 w-4 text-brand" />
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground">Notification recipients</h3>
+                  <p className="text-xs text-muted">Use comma-separated email addresses. Changes apply to future notifications.</p>
+                </div>
+              </div>
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <label className="block text-xs font-medium text-muted">
+                  New school signups
+                  <textarea
+                    value={recipientDrafts.signup}
+                    onChange={(event) => handleRecipientChange("signupNotificationRecipients", event.target.value)}
+                    rows={4}
+                    className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-1 focus:ring-brand"
+                    placeholder="onboarding@example.com, team@example.com"
+                  />
+                </label>
+                <label className="block text-xs font-medium text-muted">
+                  Support tickets
+                  <textarea
+                    value={recipientDrafts.support}
+                    onChange={(event) => handleRecipientChange("supportNotificationRecipients", event.target.value)}
+                    rows={4}
+                    className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:ring-1 focus:ring-brand"
+                    placeholder="support@example.com, team@example.com"
+                  />
+                </label>
+              </div>
+            </div>
+
+            <div className="border-t border-border pt-5">
+              <div className="flex items-center gap-2">
+                <CreditCard className="h-4 w-4 text-brand" />
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground">Payment plans</h3>
+                  <p className="text-xs text-muted">Enter prices in naira. The system converts them to kobo automatically for secure payment processing.</p>
+                </div>
+              </div>
+              <div className="mt-4 overflow-x-auto rounded-lg border border-border">
+                <table className="w-full min-w-[620px] text-left text-sm">
+                  <thead className="border-b border-border bg-background text-xs text-muted">
+                    <tr><th className="px-3 py-2">Plan</th><th className="px-3 py-2">Display name</th><th className="px-3 py-2">Public price label</th><th className="px-3 py-2">Price</th><th className="px-3 py-2">Student limit</th></tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {(Object.keys(settings.paymentPlans) as Array<keyof PlatformSettingsState["paymentPlans"]>).map((plan) => (
+                      <tr key={plan}>
+                        <td className="px-3 py-3 font-semibold text-foreground">{plan}</td>
+                        <td className="px-3 py-3"><input value={settings.paymentPlans[plan].label ?? ""} onChange={(event) => handlePlanChange(plan, "label", event.target.value)} className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-sm" /></td>
+                        <td className="px-3 py-3"><input value={settings.paymentPlans[plan].priceLabel ?? ""} onChange={(event) => handlePlanChange(plan, "priceLabel", event.target.value)} placeholder="Custom pricing" className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-sm" /></td>
+                        <td className="px-3 py-3"><div className="flex items-center rounded-lg border border-border bg-background"><span className="pl-2 text-sm text-muted">₦</span><input type="number" min="0" step="100" value={settings.paymentPlans[plan].amountMinor == null ? "" : settings.paymentPlans[plan].amountMinor / 100} onChange={(event) => handlePlanChange(plan, "amountMinor", event.target.value)} className="w-full rounded-lg bg-transparent px-2 py-1.5 text-sm outline-none" /></div></td>
+                        <td className="px-3 py-3"><input type="number" min="0" value={settings.paymentPlans[plan].studentLimit ?? ""} onChange={(event) => handlePlanChange(plan, "studentLimit", event.target.value)} placeholder="Unlimited" className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-sm" /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
 

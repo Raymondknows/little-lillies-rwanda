@@ -27,8 +27,8 @@ const defaultPlans: Plan[] = [
     id: "starter",
     name: "Starter",
     description: "For schools that want a dependable digital foundation",
-    amountMinor: 6000000,
-    priceLabel: "₦60,000",
+    amountMinor: 0,
+    priceLabel: "Pricing unavailable",
     features: [
       "Up to 150 students",
       "Basic fee collection",
@@ -36,13 +36,14 @@ const defaultPlans: Plan[] = [
       "Parent portal access",
       "Email support",
     ],
+    disabled: true,
   },
   {
     id: "standard",
     name: "Standard",
     description: "For growing institutions that need full automation and parent engagement",
-    amountMinor: 8500000,
-    priceLabel: "₦85,000",
+    amountMinor: 0,
+    priceLabel: "Pricing unavailable",
     features: [
       "Up to 600 students",
       "Advanced fee collection",
@@ -51,13 +52,14 @@ const defaultPlans: Plan[] = [
       "Attendance tracking",
       "Priority support",
     ],
+    disabled: true,
   },
   {
     id: "enterprise",
     name: "Enterprise",
     description: "Custom solution",
     amountMinor: 0,
-    priceLabel: "Custom from ₦150,000",
+    priceLabel: "Pricing unavailable",
     features: [
       "Unlimited students",
       "Custom integrations",
@@ -170,9 +172,10 @@ export default function SubscribePage() {
 
     Promise.all([
       fetch("/api/country/config").then((r) => r.json()).catch(() => ({})),
+      fetch("/api/pricing", { cache: "no-store" }).then((r) => r.json()).catch(() => ({})),
       fetch("/api/admin/verify", { method: "POST" }).then((r) => r.json()).catch(() => ({})),
     ])
-      .then(([countryData, adminData]) => {
+      .then(([countryData, pricingData, adminData]) => {
         if (!mounted) return;
 
         const configData = countryData?.data;
@@ -185,11 +188,19 @@ export default function SubscribePage() {
         setCountryName(resolvedCountryName);
         setCurrency(resolvedCurrency);
 
-        if (configData?.plans) {
+        const configuredPlans = pricingData?.plans;
+        if (configuredPlans) {
           const updatedPlans = defaultPlans.map((p) => ({
             ...p,
-            amountMinor: configData.plans[p.id]?.amountMinor ?? p.amountMinor,
-            priceLabel: configData.plans[p.id]?.priceLabel ?? p.priceLabel,
+            amountMinor: configuredPlans[p.id === "enterprise" ? "group" : p.id]?.amountMinor ?? p.amountMinor,
+            priceLabel: configuredPlans[p.id === "enterprise" ? "group" : p.id]?.priceLabel ?? p.priceLabel,
+            disabled: p.id === "enterprise",
+            features: p.features.map((feature) => {
+              const limit = configuredPlans[p.id === "enterprise" ? "group" : p.id]?.studentLimit;
+              if (feature.startsWith("Up to ") && limit) return `Up to ${limit.toLocaleString()} students`;
+              if (feature === "Unlimited students" && limit) return `Up to ${limit.toLocaleString()} students`;
+              return feature;
+            }),
           }));
 
           setPlans(updatedPlans);
@@ -237,6 +248,14 @@ export default function SubscribePage() {
   }, []);
 
   const paymentProvider = countryCode === "NG" ? "Paystack" : "Flutterwave";
+  const currentSchoolPlan = String(schoolData?.plan || "").toUpperCase();
+  const currentPlanCardId = currentSchoolPlan === "STARTER"
+    ? "starter"
+    : currentSchoolPlan === "GROWTH"
+    ? "standard"
+    : currentSchoolPlan === "ENTERPRISE"
+    ? "enterprise"
+    : null;
 
   if (loading) {
     return (
@@ -311,6 +330,13 @@ export default function SubscribePage() {
               ${plan.disabled ? "opacity-50 cursor-not-allowed" : ""}
             `}
           >
+            {currentPlanCardId === plan.id && (
+              <div className="mb-3 flex justify-end">
+                <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+                  Current plan
+                </span>
+              </div>
+            )}
             {/* Title */}
             <div className="mb-4">
               <h2 className="text-lg font-semibold">{plan.name}</h2>

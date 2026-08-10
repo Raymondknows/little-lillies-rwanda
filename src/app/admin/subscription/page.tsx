@@ -23,17 +23,17 @@ interface SubscriptionStatus {
 const planDetails: Record<string, { description: string; price: string; accent: string }> = {
   STARTER: {
     description: "For schools up to 150 pupils",
-    price: "₦60,000 / term",
+    price: "Pricing unavailable",
     accent: "from-blue-500 to-blue-600",
   },
   GROWTH: {
     description: "For schools up to 600 pupils",
-    price: "₦85,000 / term",
+    price: "Pricing unavailable",
     accent: "from-green-500 to-green-600",
   },
   ENTERPRISE: {
     description: "600+ students and multi-campus schools",
-    price: "Custom from ₦150,000 / term",
+    price: "Contact sales",
     accent: "from-purple-500 to-purple-600",
   },
   FREE: {
@@ -151,9 +151,9 @@ export default function SubscriptionPage() {
   const [countryName, setCountryName] = useState("Nigeria");
   const [currency, setCurrency] = useState("NGN");
   const [countryPlans, setCountryPlans] = useState<Record<string, { amountMinor: number; priceLabel: string }>>({
-    starter: { amountMinor: 6000000, priceLabel: "₦60,000 / term" },
-    standard: { amountMinor: 8500000, priceLabel: "₦85,000 / term" },
-    group: { amountMinor: 0, priceLabel: "Custom from ₦150,000 / term" },
+    starter: { amountMinor: 0, priceLabel: "Pricing unavailable" },
+    standard: { amountMinor: 0, priceLabel: "Pricing unavailable" },
+    group: { amountMinor: 0, priceLabel: "Contact sales" },
   });
 
   const getCountryPlanKey = (plan: string) => {
@@ -173,8 +173,9 @@ export default function SubscriptionPage() {
     async function loadSubscription() {
       try {
         console.log('[Subscription] Loading subscription status...');
-        const [countryResponse, response] = await Promise.all([
+        const [countryResponse, pricingResponse, response] = await Promise.all([
           fetch("/api/country/config", { credentials: 'include', headers: { 'Content-Type': 'application/json' } }),
+          fetch("/api/pricing", { credentials: 'include', headers: { 'Content-Type': 'application/json' }, cache: "no-store" }),
           fetch("/api/admin/subscription/status", {
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
@@ -191,11 +192,12 @@ export default function SubscriptionPage() {
         setCountryName(resolvedCountryName);
         setCurrency(resolvedCurrency);
 
-        if (configData?.plans) {
+        const pricingData = await pricingResponse.json().catch(() => null);
+        if (pricingData?.plans) {
           setCountryPlans((prevPlans) => ({
-            starter: configData.plans.starter || prevPlans.starter,
-            standard: configData.plans.standard || prevPlans.standard,
-            group: configData.plans.group || prevPlans.group,
+            starter: pricingData.plans.starter || prevPlans.starter,
+            standard: pricingData.plans.standard || prevPlans.standard,
+            group: pricingData.plans.group || prevPlans.group,
           }));
         }
 

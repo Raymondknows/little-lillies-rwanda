@@ -19,9 +19,9 @@ const PLAN_CONFIG = {
   ENTERPRISE: { label: "Enterprise", color: "bg-yellow-100 text-yellow-800" },
 };
 
-const PLAN_OPTIONS = [
-  { value: "STARTER", label: "Starter - ₦60,000/term" },
-  { value: "GROWTH", label: "Growth - ₦85,000/term" },
+const DEFAULT_PLAN_OPTIONS = [
+  { value: "STARTER", label: "Starter" },
+  { value: "GROWTH", label: "Growth" },
 ];
 
 const STATUS_CONFIG = {
@@ -82,8 +82,26 @@ export default function SubscriptionsPageClient({
   const [editingExpiryId, setEditingExpiryId] = useState<string | null>(null);
   const [editingExpiryValue, setEditingExpiryValue] = useState<string>("");
   const [savingExpiry, setSavingExpiry] = useState(false);
+  const [planOptions, setPlanOptions] = useState(DEFAULT_PLAN_OPTIONS);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
+
+  useEffect(() => {
+    let mounted = true;
+    fetch("/api/pricing", { credentials: "include", cache: "no-store" })
+      .then((response) => response.json())
+      .then((data) => {
+        if (!mounted || !data?.plans) return;
+        setPlanOptions([
+          { value: "STARTER", label: `${data.plans.starter?.label || "Starter"} - ${data.plans.starter?.priceLabel || "Configured price"}` },
+          { value: "GROWTH", label: `${data.plans.standard?.label || "Growth"} - ${data.plans.standard?.priceLabel || "Configured price"}` },
+        ]);
+      })
+      .catch(() => undefined);
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const handleSetExpiry = async (schoolId: string, expiresAt: string) => {
     try {
@@ -499,7 +517,7 @@ export default function SubscriptionsPageClient({
                     }
                     className="rounded-lg border border-border bg-surface px-3 py-2 text-xs font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                   >
-                    {PLAN_OPTIONS.map((plan) => (
+                    {planOptions.map((plan) => (
                       <option key={plan.value} value={plan.value}>
                         {plan.label}
                       </option>

@@ -15,6 +15,7 @@ import { OfferPopup } from "@/components/offer-popup";
 import countriesJson from "../../config/countries.json";
 import { getCountryFromHeaders } from "@/lib/country";
 import { getParentSession, getStaffSession } from "@/lib/auth";
+import { getBackendUrl } from "@/lib/backend-url";
 
 const features = [
   {
@@ -72,6 +73,16 @@ async function getCountryConfig() {
   return { country: countryKey, config };
 }
 
+async function getPublicPricing() {
+  try {
+    const response = await fetch(`${getBackendUrl()}/api/pricing`, { cache: "no-store" });
+    if (!response.ok) return null;
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
 export default async function HomePage() {
   const staffSession = await getStaffSession();
   if (staffSession) {
@@ -88,14 +99,18 @@ export default async function HomePage() {
   if (parentSession) {
     redirect("/parent");
   }
-  const { country, config } = await getCountryConfig();
+  const [{ country, config }, pricingData] = await Promise.all([getCountryConfig(), getPublicPricing()]);
+  const configuredPlans = pricingData?.plans;
+  const starterPlan = configuredPlans?.starter || config.plans.starter;
+  const standardPlan = configuredPlans?.standard || config.plans.standard;
+  const groupPlan = configuredPlans?.group || config.plans.group;
   const plans = [
-    { name: "Starter", pupils: "Up to 150 pupils", price: config.plans.starter.priceLabel },
-    { name: "Standard", pupils: "Up to 600 pupils", price: config.plans.standard.priceLabel },
-    { name: "Group", pupils: "Multiple campuses", price: config.plans.group.priceLabel },
+    { name: starterPlan.label || "Starter", pupils: starterPlan.studentLimit ? `Up to ${starterPlan.studentLimit.toLocaleString()} pupils` : "Unlimited pupils", price: starterPlan.priceLabel },
+    { name: standardPlan.label || "Standard", pupils: standardPlan.studentLimit ? `Up to ${standardPlan.studentLimit.toLocaleString()} pupils` : "Unlimited pupils", price: standardPlan.priceLabel },
+    { name: groupPlan.label || "Group", pupils: groupPlan.studentLimit ? `Up to ${groupPlan.studentLimit.toLocaleString()} pupils` : "Multiple campuses", price: groupPlan.priceLabel },
   ];
-  const starterPriceLabel = config.plans.starter.priceLabel;
-  const standardPriceLabel = config.plans.standard.priceLabel;
+  const starterPriceLabel = starterPlan.priceLabel;
+  const standardPriceLabel = standardPlan.priceLabel;
   const countryLabel = config.name || country;
 
   return (

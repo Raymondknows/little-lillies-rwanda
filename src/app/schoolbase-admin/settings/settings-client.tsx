@@ -14,6 +14,7 @@ import {
   CreditCard,
   CheckCircle2,
   AlertTriangle,
+  ChevronRight,
 } from "lucide-react";
 import { ErrorModal } from "@/components/ui/error-modal";
 import AdminSkeleton from "@/components/ui/skeleton";
@@ -90,6 +91,28 @@ export default function SettingsClient() {
   const [settings, setSettings] = useState<PlatformSettingsState>(defaultSettings);
   const [recipientDrafts, setRecipientDrafts] = useState({ signup: "", support: "" });
   const [formData, setFormData] = useState({ name: "", email: "" });
+  const [openPanels, setOpenPanels] = useState({
+    overview: true,
+    admin: true,
+    system: true,
+    preferences: true,
+    activity: true,
+    security: true,
+  });
+  const [openPreferencePanels, setOpenPreferencePanels] = useState({
+    controls: true,
+    supportEmail: true,
+    notifications: true,
+    paymentPlans: true,
+  });
+
+  function togglePanel(panel: keyof typeof openPanels) {
+    setOpenPanels((current) => ({ ...current, [panel]: !current[panel] }));
+  }
+
+  function togglePreferencePanel(panel: keyof typeof openPreferencePanels) {
+    setOpenPreferencePanels((current) => ({ ...current, [panel]: !current[panel] }));
+  }
 
   useEffect(() => {
     loadData();
@@ -293,12 +316,12 @@ export default function SettingsClient() {
       />
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
         <div className="rounded-xl border border-border bg-surface p-4 shadow-sm sm:p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <BarChart3 className="h-4 w-4 text-brand" />
-            <h2 className="font-semibold text-foreground">Platform Overview</h2>
-          </div>
+          <button type="button" onClick={() => togglePanel("overview")} className="flex w-full items-center justify-between gap-3 text-left" aria-expanded={openPanels.overview} aria-controls="platform-overview-panel">
+            <span className="flex items-center gap-2"><BarChart3 className="h-4 w-4 text-brand" /><span className="font-semibold text-foreground">Platform Overview</span></span>
+            <ChevronRight className={`h-4 w-4 text-muted transition-transform duration-200 ${openPanels.overview ? "rotate-90 text-foreground" : ""}`} />
+          </button>
 
-          <div className="grid grid-cols-2 gap-2 text-sm">
+          {openPanels.overview && <div id="platform-overview-panel" className="mt-4 grid grid-cols-2 gap-2 text-sm">
             <div className="rounded-lg border border-border bg-background p-3">
               <p className="text-xs text-muted">Total schools</p>
               <p className="mt-1 text-lg font-semibold text-foreground">{stats?.totalSchools ?? 0}</p>
@@ -315,16 +338,16 @@ export default function SettingsClient() {
               <p className="text-xs text-muted">Support requests</p>
               <p className="mt-1 text-lg font-semibold text-foreground">{stats?.supportRequests ?? 0}</p>
             </div>
-          </div>
+          </div>}
         </div>
 
         <div className="rounded-xl border border-border bg-surface p-4 shadow-sm sm:p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <User className="h-4 w-4 text-brand" />
-            <h2 className="font-semibold text-foreground">Platform Admin</h2>
-          </div>
+          <button type="button" onClick={() => togglePanel("admin")} className="flex w-full items-center justify-between gap-3 text-left" aria-expanded={openPanels.admin} aria-controls="platform-admin-panel">
+            <span className="flex items-center gap-2"><User className="h-4 w-4 text-brand" /><span className="font-semibold text-foreground">Platform Admin</span></span>
+            <ChevronRight className={`h-4 w-4 text-muted transition-transform duration-200 ${openPanels.admin ? "rotate-90 text-foreground" : ""}`} />
+          </button>
 
-          <div className="space-y-3">
+          {openPanels.admin && <div id="platform-admin-panel" className="mt-4 space-y-3">
             <div>
               <p className="text-xs text-muted">Name</p>
               <input
@@ -353,16 +376,16 @@ export default function SettingsClient() {
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
               Save Changes
             </button>
-          </div>
+          </div>}
         </div>
 
         <div className="rounded-xl border border-border bg-surface p-4 shadow-sm sm:p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <Server className="h-4 w-4 text-brand" />
-            <h2 className="font-semibold text-foreground">System Info</h2>
-          </div>
+          <button type="button" onClick={() => togglePanel("system")} className="flex w-full items-center justify-between gap-3 text-left" aria-expanded={openPanels.system} aria-controls="system-info-panel">
+            <span className="flex items-center gap-2"><Server className="h-4 w-4 text-brand" /><span className="font-semibold text-foreground">System Info</span></span>
+            <ChevronRight className={`h-4 w-4 text-muted transition-transform duration-200 ${openPanels.system ? "rotate-90 text-foreground" : ""}`} />
+          </button>
 
-          <div className="space-y-3 text-sm">
+          {openPanels.system && <div id="system-info-panel" className="mt-4 space-y-3 text-sm">
             <div>
               <p className="text-xs text-muted">Admin ID</p>
               <p className="font-mono text-xs text-foreground">{admin.id}</p>
@@ -387,19 +410,24 @@ export default function SettingsClient() {
               <p className="text-xs text-muted">Service</p>
               <p className="text-foreground text-xs">Platform admin tools</p>
             </div>
-          </div>
+          </div>}
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-3 xl:grid-cols-[1.2fr_0.8fr]">
         <div className="rounded-xl border border-border bg-surface p-4 shadow-sm sm:p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <Shield className="h-4 w-4 text-brand" />
-            <h2 className="font-semibold text-foreground">Platform Preferences</h2>
-          </div>
+          <button type="button" onClick={() => togglePanel("preferences")} className="flex w-full items-center justify-between gap-3 text-left" aria-expanded={openPanels.preferences} aria-controls="platform-preferences-panel">
+            <span className="flex items-center gap-2"><Shield className="h-4 w-4 text-brand" /><span className="font-semibold text-foreground">Platform Preferences</span></span>
+            <ChevronRight className={`h-4 w-4 text-muted transition-transform duration-200 ${openPanels.preferences ? "rotate-90 text-foreground" : ""}`} />
+          </button>
 
-          <div className="space-y-4">
+          {openPanels.preferences && <div id="platform-preferences-panel" className="mt-4 space-y-4">
             <div className="space-y-3 rounded-lg border border-border bg-background p-3">
+              <button type="button" onClick={() => togglePreferencePanel("controls")} className="flex w-full items-center justify-between gap-3 text-left" aria-expanded={openPreferencePanels.controls} aria-controls="platform-controls-panel">
+                <span className="font-medium text-foreground">Platform controls</span>
+                <ChevronRight className={`h-4 w-4 text-muted transition-transform duration-200 ${openPreferencePanels.controls ? "rotate-90 text-foreground" : ""}`} />
+              </button>
+              {openPreferencePanels.controls && <div id="platform-controls-panel" className="space-y-3 border-t border-border pt-3">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium text-foreground">Maintenance mode</p>
@@ -455,30 +483,31 @@ export default function SettingsClient() {
                   {settings.autoApproveSchools ? "On" : "Off"}
                 </button>
               </div>
+              </div>}
             </div>
 
-            <div>
-              <label className="mb-1 block text-xs text-muted">Support email</label>
-              <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2">
-                <Mail className="h-4 w-4 text-muted" />
-                <input
-                  name="supportEmail"
-                  value={settings.supportEmail}
-                  onChange={handleSettingInputChange}
-                  className="w-full bg-transparent text-sm text-foreground outline-none"
-                />
+            <div className="border-t border-border pt-4">
+              <button type="button" onClick={() => togglePreferencePanel("supportEmail")} className="flex w-full items-center justify-between gap-3 text-left" aria-expanded={openPreferencePanels.supportEmail} aria-controls="support-email-panel">
+                <span className="flex items-center gap-2"><Mail className="h-4 w-4 text-brand" /><span className="text-sm font-semibold text-foreground">Support email</span></span>
+                <ChevronRight className={`h-4 w-4 text-muted transition-transform duration-200 ${openPreferencePanels.supportEmail ? "rotate-90 text-foreground" : ""}`} />
+              </button>
+              {openPreferencePanels.supportEmail && <div id="support-email-panel" className="mt-3">
+                <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2">
+                  <Mail className="h-4 w-4 text-muted" />
+                  <input name="supportEmail" value={settings.supportEmail} onChange={handleSettingInputChange} className="w-full bg-transparent text-sm text-foreground outline-none" />
+                </div>
               </div>
+              }
             </div>
 
             <div className="border-t border-border pt-5">
-              <div className="flex items-center gap-2">
-                <Mail className="h-4 w-4 text-brand" />
-                <div>
-                  <h3 className="text-sm font-semibold text-foreground">Notification recipients</h3>
-                  <p className="text-xs text-muted">Use comma-separated email addresses. Changes apply to future notifications.</p>
-                </div>
-              </div>
-              <div className="mt-4 grid gap-4 md:grid-cols-2">
+              <button type="button" onClick={() => togglePreferencePanel("notifications")} className="flex w-full items-center justify-between gap-3 text-left" aria-expanded={openPreferencePanels.notifications} aria-controls="notification-recipients-panel">
+                <span className="flex items-center gap-2"><Mail className="h-4 w-4 text-brand" /><span><span className="block text-sm font-semibold text-foreground">Notification recipients</span><span className="block text-xs text-muted">Signup and support notification addresses</span></span></span>
+                <ChevronRight className={`h-4 w-4 text-muted transition-transform duration-200 ${openPreferencePanels.notifications ? "rotate-90 text-foreground" : ""}`} />
+              </button>
+              {openPreferencePanels.notifications && <div id="notification-recipients-panel" className="mt-4">
+              <p className="mb-3 text-xs text-muted">Use comma-separated email addresses. Changes apply to future notifications.</p>
+              <div className="grid gap-4 md:grid-cols-2">
                 <label className="block text-xs font-medium text-muted">
                   New school signups
                   <textarea
@@ -500,17 +529,17 @@ export default function SettingsClient() {
                   />
                 </label>
               </div>
+              </div>}
             </div>
 
             <div className="border-t border-border pt-5">
-              <div className="flex items-center gap-2">
-                <CreditCard className="h-4 w-4 text-brand" />
-                <div>
-                  <h3 className="text-sm font-semibold text-foreground">Payment plans</h3>
-                  <p className="text-xs text-muted">Enter prices in naira. The system converts them to kobo automatically for secure payment processing.</p>
-                </div>
-              </div>
-              <div className="mt-4 overflow-x-auto rounded-lg border border-border">
+              <button type="button" onClick={() => togglePreferencePanel("paymentPlans")} className="flex w-full items-center justify-between gap-3 text-left" aria-expanded={openPreferencePanels.paymentPlans} aria-controls="payment-plans-panel">
+                <span className="flex items-center gap-2"><CreditCard className="h-4 w-4 text-brand" /><span><span className="block text-sm font-semibold text-foreground">Payment plans</span><span className="block text-xs text-muted">Prices, labels, and student limits</span></span></span>
+                <ChevronRight className={`h-4 w-4 text-muted transition-transform duration-200 ${openPreferencePanels.paymentPlans ? "rotate-90 text-foreground" : ""}`} />
+              </button>
+              {openPreferencePanels.paymentPlans && <div id="payment-plans-panel" className="mt-4">
+              <p className="mb-3 text-xs text-muted">Enter prices in naira. The system converts them to kobo automatically for secure payment processing.</p>
+              <div className="overflow-x-auto rounded-lg border border-border">
                 <table className="w-full min-w-[620px] text-left text-sm">
                   <thead className="border-b border-border bg-background text-xs text-muted">
                     <tr><th className="px-3 py-2">Plan</th><th className="px-3 py-2">Display name</th><th className="px-3 py-2">Public price label</th><th className="px-3 py-2">Price</th><th className="px-3 py-2">Student limit</th></tr>
@@ -528,6 +557,7 @@ export default function SettingsClient() {
                   </tbody>
                 </table>
               </div>
+              </div>}
             </div>
 
             <button
@@ -539,16 +569,16 @@ export default function SettingsClient() {
               {savingSettings ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
               Save Preferences
             </button>
-          </div>
+          </div>}
         </div>
 
         <div className="rounded-xl border border-border bg-surface p-4 shadow-sm sm:p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <Activity className="h-4 w-4 text-brand" />
-            <h2 className="font-semibold text-foreground">Recent Activity</h2>
-          </div>
+          <button type="button" onClick={() => togglePanel("activity")} className="flex w-full items-center justify-between gap-3 text-left" aria-expanded={openPanels.activity} aria-controls="recent-activity-panel">
+            <span className="flex items-center gap-2"><Activity className="h-4 w-4 text-brand" /><span className="font-semibold text-foreground">Recent Activity</span></span>
+            <ChevronRight className={`h-4 w-4 text-muted transition-transform duration-200 ${openPanels.activity ? "rotate-90 text-foreground" : ""}`} />
+          </button>
 
-          <div className="space-y-2">
+          {openPanels.activity && <div id="recent-activity-panel" className="mt-4 space-y-2">
             {activity.length === 0 ? (
               <div className="rounded-lg border border-dashed border-border bg-background p-4 text-sm text-muted">
                 No recent platform activity yet.
@@ -573,17 +603,17 @@ export default function SettingsClient() {
                 </div>
               ))
             )}
-          </div>
+          </div>}
         </div>
       </div>
 
       <div className="rounded-xl border border-border bg-surface p-4 shadow-sm sm:p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <Shield className="h-4 w-4 text-brand" />
-          <h2 className="font-semibold text-foreground">Security & Operational Notes</h2>
-        </div>
+        <button type="button" onClick={() => togglePanel("security")} className="flex w-full items-center justify-between gap-3 text-left" aria-expanded={openPanels.security} aria-controls="security-notes-panel">
+          <span className="flex items-center gap-2"><Shield className="h-4 w-4 text-brand" /><span className="font-semibold text-foreground">Security &amp; Operational Notes</span></span>
+          <ChevronRight className={`h-4 w-4 text-muted transition-transform duration-200 ${openPanels.security ? "rotate-90 text-foreground" : ""}`} />
+        </button>
 
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        {openPanels.security && <div id="security-notes-panel" className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
           <div className="rounded-lg border border-border bg-background p-3">
             <div className="flex items-center gap-2">
               <KeyRound className="h-4 w-4 text-muted" />
@@ -605,7 +635,7 @@ export default function SettingsClient() {
             </div>
             <p className="mt-2 text-xs text-muted">Monitor support and trial counts above to spot platform health issues.</p>
           </div>
-        </div>
+        </div>}
       </div>
     </div>
   );

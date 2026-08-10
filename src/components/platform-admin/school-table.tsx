@@ -4,7 +4,6 @@ import { useMemo, useState, useRef, useEffect, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { resolveSchoolAssetUrl } from "@/lib/asset-urls";
-import { getPlanStudentLimit } from "@/lib/pricing";
 import { playCloseTone, playOpenTone } from "@/lib/sounds";
 import { Bell, CalendarPlus, CheckSquare, Download, MoreVertical, Pause, Play, X } from "lucide-react";
 
@@ -665,38 +664,6 @@ export function SchoolTable({
                   <div className="text-xs text-muted">
                     {school.userCount ?? 0} admins · {school.pupilCount ?? 0} students
                   </div>
-                  {(() => {
-                    const planLimit = school.planLimit ?? getPlanStudentLimit(school.plan);
-                    const studentCount = school.pupilCount ?? 0;
-                    if (planLimit) {
-                      const ratio = Math.min(studentCount / planLimit, 1);
-                      const progressColor = ratio >= 1
-                        ? 'bg-rose-500'
-                        : ratio >= 0.7
-                        ? 'bg-amber-500'
-                        : 'bg-emerald-500';
-
-                      return (
-                        <div className="mt-3 space-y-2">
-                          <div className="flex items-center justify-between gap-2 text-[11px] uppercase tracking-[0.12em] text-muted">
-                            <span>{studentCount} / {planLimit} students</span>
-                            {studentCount >= planLimit ? (
-                              <span className="rounded-full bg-rose-100 px-2 py-1 text-rose-700">Limit reached</span>
-                            ) : studentCount >= planLimit * 0.7 ? (
-                              <span className="rounded-full bg-amber-100 px-2 py-1 text-amber-700">Approaching limit</span>
-                            ) : null}
-                          </div>
-                          <div className="h-2 overflow-hidden rounded-full bg-slate-200">
-                            <div className={`${progressColor} h-full rounded-full`} style={{ width: `${ratio * 100}%` }} />
-                          </div>
-                        </div>
-                      );
-                    }
-
-                    return (
-                      <div className="mt-3 text-[11px] text-muted">Unlimited student capacity</div>
-                    );
-                  })()}
                 </td>
                 <td className="px-4 py-4">
                   <span className={`inline-flex rounded-full px-3 py-1 text-[11px] font-semibold ${

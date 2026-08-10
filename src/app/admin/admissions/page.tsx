@@ -20,15 +20,15 @@ import AdminSkeleton from "@/components/ui/skeleton";
 import { playCloseTone, playOpenTone } from "@/lib/sounds";
 
 const statusStyles: Record<string, string> = {
-  SUBMITTED: "bg-slate-100 text-slate-700",
-  UNDER_REVIEW: "bg-blue-100 text-blue-700",
-  APPROVED: "bg-emerald-100 text-emerald-700",
-  REJECTED: "bg-rose-100 text-rose-700",
+  SUBMITTED: "border-border bg-surface text-foreground",
+  UNDER_REVIEW: "border-border bg-surface text-foreground",
+  APPROVED: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  REJECTED: "border-rose-200 bg-rose-50 text-rose-700",
 };
 
 const statusBadgeStyles: Record<string, string> = {
-  SUBMITTED: "border-slate-200 bg-slate-50 text-slate-700",
-  UNDER_REVIEW: "border-blue-200 bg-blue-50 text-blue-700",
+  SUBMITTED: "border-border bg-surface text-foreground",
+  UNDER_REVIEW: "border-border bg-surface text-foreground",
   APPROVED: "border-emerald-200 bg-emerald-50 text-emerald-700",
   REJECTED: "border-rose-200 bg-rose-50 text-rose-700",
 };
@@ -292,7 +292,7 @@ export default function AdminAdmissionsPage() {
   }
 
   return (
-    <main className="min-h-screen text-slate-900">
+    <main className="min-h-screen text-foreground">
       <div className="space-y-8 w-full">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div>
@@ -315,8 +315,8 @@ export default function AdminAdmissionsPage() {
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
           <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50">
             <div className="flex items-start gap-3">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-blue-100 shadow-sm">
-                <Sparkles className="h-4 w-4 text-blue-600" />
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-brand/10 shadow-sm">
+                <Sparkles className="h-4 w-4 text-brand" />
               </div>
               <div className="flex-1">
                 <p className="text-xs text-muted">Total requests</p>
@@ -327,8 +327,8 @@ export default function AdminAdmissionsPage() {
           </div>
           <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50">
             <div className="flex items-start gap-3">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-slate-100 shadow-sm">
-                <Clock3 className="h-4 w-4 text-slate-600" />
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-surface shadow-sm">
+                <Clock3 className="h-4 w-4 text-muted" />
               </div>
               <div className="flex-1">
                 <p className="text-xs text-muted">Under review</p>
@@ -339,8 +339,8 @@ export default function AdminAdmissionsPage() {
           </div>
           <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50">
             <div className="flex items-start gap-3">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-100 shadow-sm">
-                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-surface shadow-sm">
+                <CheckCircle2 className="h-4 w-4 text-foreground" />
               </div>
               <div className="flex-1">
                 <p className="text-xs text-muted">Approved</p>
@@ -351,8 +351,8 @@ export default function AdminAdmissionsPage() {
           </div>
           <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50">
             <div className="flex items-start gap-3">
-              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-rose-100 shadow-sm">
-                <Clock3 className="h-4 w-4 text-rose-600" />
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-surface shadow-sm">
+                <Clock3 className="h-4 w-4 text-foreground" />
               </div>
               <div className="flex-1">
                 <p className="text-xs text-muted">Rejected</p>
@@ -370,15 +370,15 @@ export default function AdminAdmissionsPage() {
 
         <UserGuide guide={HELP_GUIDE} />
 
-        <section className="rounded-3xl border border-slate-200 bg-white shadow-sm">
-          <div className="flex flex-col gap-4 border-b border-slate-200 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+        <section className="rounded-3xl border border-border bg-surface shadow-sm">
+          <div className="flex flex-col gap-4 border-b border-border px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-slate-900">Incoming admission requests</h2>
-              <p className="mt-1 text-sm text-slate-600">Filter and update request statuses directly from the admin panel.</p>
+              <h2 className="text-lg font-semibold text-foreground">Incoming admission requests</h2>
+              <p className="mt-1 text-sm text-muted">Filter and update request statuses directly from the admin panel.</p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <div className="flex items-center gap-2 rounded-full border border-border bg-background px-3 py-2 text-sm text-foreground shadow-sm">
-                <span className="font-medium text-slate-600">Status filter</span>
+                <span className="font-medium text-muted">Status filter</span>
                 <select
                   value={statusFilter}
                   onChange={(event) => setStatusFilter(event.target.value)}
@@ -395,18 +395,18 @@ export default function AdminAdmissionsPage() {
           </div>
 
           {loading ? (
-            <div className="flex items-center justify-center gap-3 px-6 py-16 text-sm text-slate-600">
+            <div className="flex items-center justify-center gap-3 px-6 py-16 text-sm text-muted">
               <Loader2 className="h-5 w-5 animate-spin" />
               Loading admissions...
             </div>
           ) : filteredApplications.length === 0 ? (
-            <div className="rounded-b-3xl px-6 py-16 text-center text-sm text-slate-600">
+            <div className="rounded-b-3xl px-6 py-16 text-center text-sm text-muted">
               No applications match this filter.
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-200 text-sm">
-                <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <table className="min-w-full divide-y divide-border text-sm">
+                <thead className="bg-background text-left text-xs font-semibold uppercase tracking-wide text-muted">
                   <tr>
                     <th className="px-5 py-3">Applicant</th>
                     <th className="px-5 py-3">Child</th>
@@ -416,20 +416,20 @@ export default function AdminAdmissionsPage() {
                   <th className="px-5 py-3 text-right">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200 bg-white">
+                <tbody className="divide-y divide-border bg-surface">
                   {filteredApplications.map((application) => (
-                    <tr key={application.id} className="align-top hover:bg-slate-50">
+                    <tr key={application.id} className="align-top hover:bg-surface">
                       <td className="px-5 py-4">
-                        <div className="font-medium text-slate-900">{application.applicantName || `${application.firstName || ""} ${application.lastName || ""}`.trim() || "Unnamed applicant"}</div>
-                        <div className="mt-1 text-xs text-slate-500">{application.intendedClass || "No intended class"}</div>
+                        <div className="font-medium text-foreground">{application.applicantName || `${application.firstName || ""} ${application.lastName || ""}`.trim() || "Unnamed applicant"}</div>
+                        <div className="mt-1 text-xs text-muted">{application.intendedClass || "No intended class"}</div>
                       </td>
                       <td className="px-5 py-4">
-                        <div className="font-medium text-slate-900">{application.childName || "—"}</div>
-                        <div className="mt-1 text-xs text-slate-500">{application.parentName || "—"}</div>
+                        <div className="font-medium text-foreground">{application.childName || "—"}</div>
+                        <div className="mt-1 text-xs text-muted">{application.parentName || "—"}</div>
                       </td>
                       <td className="px-5 py-4">
-                        <div className="text-slate-700">{application.email || "—"}</div>
-                        <div className="mt-1 text-xs text-slate-500">{application.phone || "—"}</div>
+                        <div className="text-foreground">{application.email || "—"}</div>
+                        <div className="mt-1 text-xs text-muted">{application.phone || "—"}</div>
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex flex-wrap items-center gap-2">
@@ -440,7 +440,7 @@ export default function AdminAdmissionsPage() {
                             value={application.status}
                             onChange={(event) => void updateStatus(application.id, event.target.value)}
                             disabled={updatingApplicationId === application.id}
-                            className="rounded-2xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-slate-400"
+                            className="rounded-2xl border border-border bg-background px-3 py-2 text-xs text-foreground outline-none focus:border-brand"
                           >
                             <option value="SUBMITTED">Submitted</option>
                             <option value="UNDER_REVIEW">Under Review</option>
@@ -449,7 +449,7 @@ export default function AdminAdmissionsPage() {
                           </select>
                         </div>
                       </td>
-                      <td className="px-5 py-4 text-slate-600">
+                      <td className="px-5 py-4 text-muted">
                         <div className="flex items-center gap-2 text-xs">
                           <Clock3 className="h-3.5 w-3.5" />
                           {new Date(application.updatedAt || application.createdAt).toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric" })}
@@ -459,7 +459,7 @@ export default function AdminAdmissionsPage() {
                         <button
                           type="button"
                           onClick={() => openApplicationDetail(application)}
-                          className="rounded-full bg-[#0A66C2] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#0858a8]"
+                          className="rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition hover:bg-surface"
                         >
                           View
                         </button>
@@ -475,8 +475,8 @@ export default function AdminAdmissionsPage() {
 
       {successModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-[460px] overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_20px_70px_rgba(15,23,42,0.18)]">
-            <div className="flex items-start justify-between border-b border-slate-100 px-5 py-4">
+          <div className="w-full max-w-[460px] overflow-hidden rounded-[28px] border border-border bg-surface shadow-[0_20px_70px_rgba(15,23,42,0.18)]">
+            <div className="flex items-start justify-between border-b border-border px-5 py-4">
               <div className="flex items-center gap-3">
                 <div
                   className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border"
@@ -504,8 +504,8 @@ export default function AdminAdmissionsPage() {
                   )}
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold text-slate-900">{modalTitle}</h2>
-                  <p className="mt-1 text-sm text-slate-600">
+                  <h2 className="text-lg font-semibold text-foreground">{modalTitle}</h2>
+                  <p className="mt-1 text-sm text-muted">
                     {modalType === "success"
                       ? "The request has been updated successfully."
                       : modalType === "rejected"
@@ -521,22 +521,22 @@ export default function AdminAdmissionsPage() {
                   playCloseTone();
                   setSuccessModalOpen(false);
                 }}
-                className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+                className="rounded-full border border-border bg-background p-2 text-muted transition hover:bg-surface hover:text-foreground"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
             <div className="px-5 py-5">
-              <p className="text-sm leading-6 text-slate-700">{modalMessage}</p>
+              <p className="text-sm leading-6 text-foreground">{modalMessage}</p>
             </div>
-            <div className="border-t border-slate-100 bg-slate-50 px-5 py-4">
+            <div className="border-t border-border bg-background px-5 py-4">
               <button
                 type="button"
                 onClick={() => {
                   playCloseTone();
                   setSuccessModalOpen(false);
                 }}
-                className="w-full rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+                className="w-full rounded-2xl border border-border bg-background px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-surface"
               >
                 Close
               </button>
@@ -547,9 +547,9 @@ export default function AdminAdmissionsPage() {
 
       {detailModalVisible && selectedApplication && (
         <div className={`fixed inset-0 z-50 flex items-end justify-center bg-black/40 px-3 py-4 sm:px-4 transition-opacity duration-300 ease-out ${detailModalOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
-          <div className={`w-full max-w-[1120px] max-h-[calc(100vh-1.5rem)] overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_24px_90px_rgba(15,23,42,0.18)] transition-all duration-500 ease-out ${detailModalOpen ? "translate-y-0 opacity-100" : "translate-y-16 opacity-0"}`}>
+          <div className={`w-full max-w-[1120px] max-h-[calc(100vh-1.5rem)] overflow-hidden rounded-[28px] border border-border bg-surface shadow-[0_24px_90px_rgba(15,23,42,0.18)] transition-all duration-500 ease-out ${detailModalOpen ? "translate-y-0 opacity-100" : "translate-y-16 opacity-0"}`}>
             <div
-              className="flex flex-col gap-4 border-b border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6"
+              className="flex flex-col gap-4 border-b border-border px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6"
               style={{ background: "linear-gradient(90deg, rgba(10,102,194,0.12), rgba(10,102,194,0.04))" }}
             >
               <div className="flex items-start gap-3">
@@ -562,9 +562,9 @@ export default function AdminAdmissionsPage() {
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: "#0A66C2" }}>Admissions workspace</p>
                   <div className="mt-2 flex flex-wrap items-center gap-3">
-                    <h2 className="text-2xl font-semibold text-slate-900">Application Review</h2>
+                    <h2 className="text-2xl font-semibold text-foreground">Application Review</h2>
                     {selectedApplication.applicationNumber ? (
-                      <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold tracking-[0.2em] text-slate-600">
+                      <span className="rounded-full bg-background px-2.5 py-1 text-[11px] font-semibold tracking-[0.2em] text-muted">
                         {selectedApplication.applicationNumber}
                       </span>
                     ) : null}
@@ -580,7 +580,7 @@ export default function AdminAdmissionsPage() {
                   type="button"
                   aria-label="Close application review"
                   onClick={closeApplicationDetail}
-                  className="rounded-full bg-white p-2 text-slate-500 shadow-sm transition hover:bg-slate-100 hover:text-slate-700"
+                  className="rounded-full border border-border bg-background p-2 text-muted shadow-sm transition hover:bg-surface hover:text-foreground"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -590,150 +590,150 @@ export default function AdminAdmissionsPage() {
             <div className="grid max-h-[calc(100vh-14rem)] gap-0 overflow-y-auto lg:grid-cols-[1.7fr_0.9fr]">
               <div className="min-w-0 px-5 py-4 sm:px-6">
                 <div className="space-y-3">
-                  <section className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+                  <section className="rounded-[24px] border border-border bg-surface p-4 shadow-sm">
                     <div className="mb-3 flex items-center justify-between">
                       <p className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: "#0A66C2" }}>Applicant Information</p>
                     </div>
                     <dl className="grid gap-3 sm:grid-cols-2">
-                      <div className="rounded-2xl bg-slate-50 p-3">
+                      <div className="rounded-2xl bg-background p-3">
                         <dt className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">First Name</dt>
                         <dd className="mt-1.5 text-sm font-medium text-foreground">{selectedApplication.firstName || "—"}</dd>
                       </div>
-                      <div className="rounded-2xl bg-slate-50 p-3">
+                      <div className="rounded-2xl bg-background p-3">
                         <dt className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">Last Name</dt>
                         <dd className="mt-1.5 text-sm font-medium text-foreground">{selectedApplication.lastName || "—"}</dd>
                       </div>
-                      <div className="rounded-2xl bg-slate-50 p-3">
+                      <div className="rounded-2xl bg-background p-3">
                         <dt className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">Email</dt>
                         <dd className="mt-1.5 text-sm font-medium text-foreground">{selectedApplication.email || "—"}</dd>
                       </div>
-                      <div className="rounded-2xl bg-slate-50 p-3">
+                      <div className="rounded-2xl bg-background p-3">
                         <dt className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">Phone Number</dt>
                         <dd className="mt-1.5 text-sm font-medium text-foreground">{selectedApplication.phone || "—"}</dd>
                       </div>
                     </dl>
                   </section>
 
-                  <section className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+                  <section className="rounded-[24px] border border-border bg-surface p-4 shadow-sm">
                     <div className="mb-3 flex items-center justify-between">
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: "#0A66C2" }}>Child Information</p>
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand">Child Information</p>
                     </div>
                     <dl className="grid gap-3 sm:grid-cols-2">
-                      <div className="rounded-2xl bg-slate-50 p-3">
+                      <div className="rounded-2xl bg-background p-3">
                         <dt className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">Child Name</dt>
                         <dd className="mt-1.5 text-sm font-medium text-foreground">{`${selectedApplication.studentFirstName || selectedApplication.childName || ""} ${selectedApplication.studentMiddleName || ""} ${selectedApplication.studentLastName || ""}`.replace(/\s+/g, " ").trim() || "—"}</dd>
                       </div>
-                      <div className="rounded-2xl bg-slate-50 p-3">
+                      <div className="rounded-2xl bg-background p-3">
                         <dt className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">Date of Birth</dt>
                         <dd className="mt-1.5 text-sm font-medium text-foreground">{selectedApplication.dateOfBirth ? new Date(selectedApplication.dateOfBirth).toLocaleDateString("en-NG") : "—"}</dd>
                       </div>
-                      <div className="rounded-2xl bg-slate-50 p-3">
+                      <div className="rounded-2xl bg-background p-3">
                         <dt className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">Intended Class</dt>
                         <dd className="mt-1.5 text-sm font-medium text-foreground">{selectedApplication.intendedClass || "—"}</dd>
                       </div>
-                      <div className="rounded-2xl bg-slate-50 p-3">
+                      <div className="rounded-2xl bg-background p-3">
                         <dt className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">Parent / Guardian Name</dt>
                         <dd className="mt-1.5 text-sm font-medium text-foreground">{`${selectedApplication.guardianFirst || ""} ${selectedApplication.guardianLast || ""}`.trim() || "—"}</dd>
                       </div>
-                      <div className="rounded-2xl bg-slate-50 p-3">
+                      <div className="rounded-2xl bg-background p-3">
                         <dt className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">Student Email</dt>
                         <dd className="mt-1.5 text-sm font-medium text-foreground">{selectedApplication.studentEmail || "—"}</dd>
                       </div>
-                      <div className="rounded-2xl bg-slate-50 p-3">
+                      <div className="rounded-2xl bg-background p-3">
                         <dt className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">Student Phone</dt>
                         <dd className="mt-1.5 text-sm font-medium text-foreground">{selectedApplication.studentPhone || "—"}</dd>
                       </div>
-                      <div className="rounded-2xl bg-slate-50 p-3">
+                      <div className="rounded-2xl bg-background p-3">
                         <dt className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">Gender</dt>
                         <dd className="mt-1.5 text-sm font-medium text-foreground">{selectedApplication.gender || "—"}</dd>
                       </div>
-                      <div className="rounded-2xl bg-slate-50 p-3">
+                      <div className="rounded-2xl bg-background p-3">
                         <dt className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">Admission Date</dt>
                         <dd className="mt-1.5 text-sm font-medium text-foreground">{selectedApplication.admissionDate ? new Date(selectedApplication.admissionDate).toLocaleDateString("en-NG") : "—"}</dd>
                       </div>
-                      <div className="rounded-2xl bg-slate-50 p-3">
+                      <div className="rounded-2xl bg-background p-3">
                         <dt className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">Previous School</dt>
                         <dd className="mt-1.5 text-sm font-medium text-foreground">{selectedApplication.previousSchool || "—"}</dd>
                       </div>
-                      <div className="rounded-2xl bg-slate-50 p-3">
+                      <div className="rounded-2xl bg-background p-3">
                         <dt className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">Previous Class</dt>
                         <dd className="mt-1.5 text-sm font-medium text-foreground">{selectedApplication.previousClass || "—"}</dd>
                       </div>
-                      <div className="rounded-2xl bg-slate-50 p-3 sm:col-span-2">
+                      <div className="rounded-2xl bg-background p-3 sm:col-span-2">
                         <dt className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">Address</dt>
                         <dd className="mt-1.5 text-sm font-medium text-foreground">{selectedApplication.address || "—"}</dd>
                       </div>
                     </dl>
                   </section>
 
-                  <section className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+                  <section className="rounded-[24px] border border-border bg-surface p-4 shadow-sm">
                     <div className="mb-3 flex items-center justify-between">
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: "#0A66C2" }}>Guardian Information</p>
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand">Guardian Information</p>
                     </div>
                     <dl className="grid gap-3 sm:grid-cols-2">
-                      <div className="rounded-2xl bg-slate-50 p-3">
+                      <div className="rounded-2xl bg-background p-3">
                         <dt className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">Guardian Name</dt>
                         <dd className="mt-1.5 text-sm font-medium text-foreground">{`${selectedApplication.guardianFirst || ""} ${selectedApplication.guardianLast || ""}`.trim() || "—"}</dd>
                       </div>
-                      <div className="rounded-2xl bg-slate-50 p-3">
+                      <div className="rounded-2xl bg-background p-3">
                         <dt className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">Relationship</dt>
                         <dd className="mt-1.5 text-sm font-medium text-foreground">{selectedApplication.guardianRelationship || "—"}</dd>
                       </div>
-                      <div className="rounded-2xl bg-slate-50 p-3">
+                      <div className="rounded-2xl bg-background p-3">
                         <dt className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">Guardian Email</dt>
                         <dd className="mt-1.5 text-sm font-medium text-foreground">{selectedApplication.guardianEmail || "—"}</dd>
                       </div>
-                      <div className="rounded-2xl bg-slate-50 p-3">
+                      <div className="rounded-2xl bg-background p-3">
                         <dt className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">Guardian Phone</dt>
                         <dd className="mt-1.5 text-sm font-medium text-foreground">{selectedApplication.guardianPhone || "—"}</dd>
                       </div>
-                      <div className="rounded-2xl bg-slate-50 p-3">
+                      <div className="rounded-2xl bg-background p-3">
                         <dt className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">Alternate Phone</dt>
                         <dd className="mt-1.5 text-sm font-medium text-foreground">{selectedApplication.guardianAltPhone || "—"}</dd>
                       </div>
-                      <div className="rounded-2xl bg-slate-50 p-3">
+                      <div className="rounded-2xl bg-background p-3">
                         <dt className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">Occupation</dt>
                         <dd className="mt-1.5 text-sm font-medium text-foreground">{selectedApplication.guardianOccupation || "—"}</dd>
                       </div>
                     </dl>
                   </section>
 
-                  <section className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+                  <section className="rounded-[24px] border border-border bg-surface p-4 shadow-sm">
                     <div className="mb-3 flex items-center justify-between">
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: "#0A66C2" }}>Additional Information</p>
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand">Additional Information</p>
                     </div>
-                    <div className="rounded-2xl bg-slate-50 p-3">
+                    <div className="rounded-2xl bg-background p-3">
                       <p className="text-sm leading-6 text-foreground whitespace-pre-wrap">{selectedApplication.note || "No additional note was submitted for this application."}</p>
                     </div>
                   </section>
                 </div>
               </div>
 
-              <aside className="border-t border-slate-200 bg-slate-50 px-5 py-4 lg:border-l lg:border-t-0 lg:border-slate-200 lg:px-6">
+              <aside className="border-t border-border bg-background px-5 py-4 lg:border-l lg:border-t-0 lg:border-border lg:px-6">
                 <div className="space-y-3">
                   {selectedApplication.photoUrl ? (
-                    <section className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
+                    <section className="rounded-[24px] border border-border bg-surface p-4 shadow-sm">
                       <p className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: "#0A66C2" }}>Uploaded Photo</p>
                       <img src={selectedApplication.photoUrl} alt="Applicant photo" className="mt-4 h-72 w-full rounded-2xl object-cover" />
                     </section>
                   ) : null}
 
-                  <section className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: "#0A66C2" }}>Internal Review Notes</p>
-                    <div className="mt-4 rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-foreground whitespace-pre-wrap">
+                  <section className="rounded-[24px] border border-border bg-surface p-4 shadow-sm">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand">Internal Review Notes</p>
+                    <div className="mt-4 rounded-2xl bg-background p-4 text-sm leading-6 text-foreground whitespace-pre-wrap">
                       {selectedApplication.note || "No internal review notes are currently attached to this application."}
                     </div>
                   </section>
 
-                  <section className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: "#0A66C2" }}>Medical Notes</p>
-                    <div className="mt-4 rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-foreground whitespace-pre-wrap">
+                  <section className="rounded-[24px] border border-border bg-surface p-4 shadow-sm">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand">Medical Notes</p>
+                    <div className="mt-4 rounded-2xl bg-background p-4 text-sm leading-6 text-foreground whitespace-pre-wrap">
                       {selectedApplication.medicalNotes || "—"}
                     </div>
                   </section>
 
-                  <section className="rounded-[24px] border border-slate-200 bg-white p-4 shadow-sm">
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: "#0A66C2" }}>Meta</p>
+                  <section className="rounded-[24px] border border-border bg-surface p-4 shadow-sm">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand">Meta</p>
                     <dl className="mt-4 space-y-3 text-sm text-foreground">
                       <div>
                         <dt className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">Submitted</dt>
@@ -755,7 +755,7 @@ export default function AdminAdmissionsPage() {
               </aside>
             </div>
 
-            <div className="sticky bottom-0 border-t border-slate-200 bg-white/95 px-5 py-4 backdrop-blur sm:px-6">
+            <div className="sticky bottom-0 border-t border-border bg-background/95 px-5 py-4 backdrop-blur sm:px-6">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex flex-wrap gap-2">
                   {detailActionOptions.includes("APPROVED") ? (
@@ -771,7 +771,7 @@ export default function AdminAdmissionsPage() {
                     <button
                       type="button"
                       onClick={() => void updateStatus(selectedApplication.id, "UNDER_REVIEW")}
-                      className="rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2"
+                      className="rounded-2xl border border-border bg-background px-4 py-2.5 text-sm font-semibold text-foreground transition hover:border-border hover:bg-surface focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2"
                     >
                       Under Review
                     </button>
@@ -780,7 +780,7 @@ export default function AdminAdmissionsPage() {
                     <button
                       type="button"
                       onClick={() => void updateStatus(selectedApplication.id, "REJECTED")}
-                      className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 focus:outline-none focus:ring-2 focus:ring-rose-400 focus:ring-offset-2"
+                      className="rounded-2xl border border-border bg-background px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-surface focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2"
                     >
                       Reject
                     </button>
@@ -789,7 +789,7 @@ export default function AdminAdmissionsPage() {
                 <button
                   type="button"
                   onClick={closeApplicationDetail}
-                  className="rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2"
+                  className="rounded-2xl border border-border bg-background px-4 py-2.5 text-sm font-semibold text-foreground transition hover:border-border hover:bg-surface focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2"
                 >
                   Close
                 </button>

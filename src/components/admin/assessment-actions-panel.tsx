@@ -197,7 +197,7 @@ export function AssessmentActionsPanel({
   return (
     <div className="space-y-6">
       {/* Status Indicator */}
-      <div className="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
+      <div className="flex items-center gap-3 rounded-lg border border-border bg-surface p-4">
         <div>
           {status === 'DRAFT' && <Badge variant="outline">DRAFT - Editing Allowed</Badge>}
           {status === 'APPROVED' && <Badge variant="default">APPROVED - Ready to Publish</Badge>}
@@ -231,19 +231,19 @@ export function AssessmentActionsPanel({
         onConfirm={handleUnlockConfirm}
       >
         <div className="space-y-4">
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-muted">
             Teachers will be able to edit results again after unlock. This reason is stored with the audit entry.
           </p>
-          <label className="block text-sm font-medium text-slate-800">
+          <label className="block text-sm font-medium text-foreground">
             Reason
             <textarea
               value={unlockReason}
               onChange={(event) => setUnlockReason(event.target.value)}
-              className="mt-2 h-28 w-full rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-900 outline-none focus:border-brand focus:ring-2 focus:ring-brand/10"
+              className="mt-2 h-28 w-full rounded-2xl border border-border bg-background p-3 text-sm text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/10"
               placeholder="Enter a short audit reason"
             />
           </label>
-          {unlockError && <p className="text-sm text-red-600">{unlockError}</p>}
+          {unlockError && <p className="text-sm text-red-500">{unlockError}</p>}
         </div>
       </ErrorModal>
 
@@ -256,9 +256,9 @@ export function AssessmentActionsPanel({
               `/api/results/calculate-grades/${assessmentId}`
             )
           }
-            disabled={loading || !isConfigured}
+          disabled={loading || !isConfigured}
           className="h-10 whitespace-nowrap px-4"
-            title={!isConfigured ? 'Locked until assessment configuration is complete' : undefined}
+          title={!isConfigured ? 'Locked until assessment configuration is complete' : undefined}
         >
           <Calculator size={18} />
           Calculate Grades
@@ -271,9 +271,9 @@ export function AssessmentActionsPanel({
               `/api/results/calculate-positions/${assessmentId}`
             )
           }
-            disabled={loading || !isConfigured}
+          disabled={loading || !isConfigured}
           className="h-10 whitespace-nowrap px-4"
-            title={!isConfigured ? 'Locked until assessment configuration is complete' : undefined}
+          title={!isConfigured ? 'Locked until assessment configuration is complete' : undefined}
         >
           <RefreshCw size={18} />
           Calculate Positions

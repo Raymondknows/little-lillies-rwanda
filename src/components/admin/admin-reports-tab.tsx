@@ -165,7 +165,7 @@ export function AdminReportsTab({ assessmentId, pupils, status }: ReportsTabProp
 
         {/* Right: Student Details and Actions - Spans 2 columns */}
         {selectedPupilDetails && !loadingPupilDetails && (
-          <div className="lg:col-span-2 rounded-lg border border-border bg-gradient-to-r from-blue-50 to-indigo-50 p-6">
+          <div className="lg:col-span-2 rounded-lg border border-border bg-surface p-6">
             <div className="flex items-start gap-6">
               {/* Student Photo */}
               <div className="flex-shrink-0">
@@ -223,7 +223,7 @@ export function AdminReportsTab({ assessmentId, pupils, status }: ReportsTabProp
         )}
 
         {loadingPupilDetails && (
-          <div className="lg:col-span-2 rounded-lg border border-border bg-gradient-to-r from-blue-50 to-indigo-50 p-6 flex items-center justify-center">
+          <div className="lg:col-span-2 rounded-lg border border-border bg-surface p-6 flex items-center justify-center">
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-brand"></div>
             <span className="ml-2 text-sm text-muted">Loading student details...</span>
           </div>
@@ -249,9 +249,9 @@ export function AdminReportsTab({ assessmentId, pupils, status }: ReportsTabProp
       )}
 
       {/* Bulk Actions */}
-      <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 print:hidden">
-        <p className="text-sm text-amber-900">
-          💡 <strong>Bulk Export:</strong> Use the download button above to export individual report cards, or access the API directly for bulk operations.
+      <div className="rounded-lg border border-border bg-surface p-4 print:hidden">
+        <p className="text-sm text-muted">
+          💡 <strong className="text-foreground">Bulk Export:</strong> Use the download button above to export individual report cards, or access the API directly for bulk operations.
         </p>
       </div>
     </div>

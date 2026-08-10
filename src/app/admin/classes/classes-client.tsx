@@ -85,13 +85,13 @@ function getPhaseLabel(phase: string) {
 function getPhaseColor(phase: string): { bg: string; text: string; icon: string; row: string } {
   switch (phase) {
     case "EARLY_YEARS":
-      return { bg: "bg-purple-100", text: "text-purple-800", icon: "text-purple-600", row: "bg-purple-50/70" };
+      return { bg: "bg-purple-100", text: "text-purple-800", icon: "text-purple-600", row: "border-l-4 border-l-purple-400 bg-background/5" };
     case "PRIMARY":
-      return { bg: "bg-blue-100", text: "text-blue-800", icon: "text-blue-600", row: "bg-blue-50/70" };
+      return { bg: "bg-blue-100", text: "text-blue-800", icon: "text-blue-600", row: "border-l-4 border-l-blue-400 bg-background/5" };
     case "SECONDARY":
-      return { bg: "bg-green-100", text: "text-green-800", icon: "text-green-600", row: "bg-green-50/70" };
+      return { bg: "bg-green-100", text: "text-green-800", icon: "text-green-600", row: "border-l-4 border-l-green-500 bg-background/5" };
     default:
-      return { bg: "bg-gray-100", text: "text-gray-800", icon: "text-gray-600", row: "bg-slate-50/70" };
+      return { bg: "bg-gray-100", text: "text-gray-800", icon: "text-gray-600", row: "border-l-4 border-l-slate-400 bg-background/5" };
   }
 }
 
@@ -533,7 +533,7 @@ export default function ClassesPageClient({ classes: initialClasses }: { classes
           <div className="overflow-hidden rounded-lg border border-border bg-surface">
             {/* Desktop Table */}
             <table className="hidden sm:table w-full text-left text-sm">
-              <thead className="border-b border-border/70 bg-gradient-to-r from-[#0A66C2]/10 via-[#0A66C2]/5 to-white text-muted">
+              <thead className="border-b border-border/70 bg-surface text-muted">
                 <tr>
                   <th className="px-3 py-2 font-semibold">Class</th>
                   <th className="px-3 py-2 font-semibold">Phase</th>

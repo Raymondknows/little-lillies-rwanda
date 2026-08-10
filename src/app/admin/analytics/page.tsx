@@ -9,29 +9,29 @@ import AdminSkeleton from "@/components/ui/skeleton";
 // NOTE: using shared AdminSkeleton for page-level loading
 function CardSkeleton() {
   return (
-    <div className="rounded-lg border border-slate-200 p-6 bg-white animate-pulse">
+    <div className="rounded-lg border border-border p-6 bg-surface animate-pulse">
       <div className="flex items-center justify-between mb-3">
-        <div className="h-4 bg-slate-200 rounded w-24"></div>
-        <div className="h-5 w-5 bg-slate-200 rounded"></div>
+        <div className="h-4 bg-muted rounded w-24"></div>
+        <div className="h-5 w-5 bg-muted rounded"></div>
       </div>
-      <div className="h-10 bg-slate-200 rounded w-20 mb-2"></div>
-      <div className="h-3 bg-slate-200 rounded w-16"></div>
+      <div className="h-10 bg-muted rounded w-20 mb-2"></div>
+      <div className="h-3 bg-muted rounded w-16"></div>
     </div>
   );
 }
 
 function TableSkeleton() {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
-      <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 animate-pulse">
-        <div className="h-6 bg-slate-200 rounded w-32"></div>
+    <div className="rounded-lg border border-border bg-surface overflow-hidden">
+      <div className="bg-background px-6 py-4 border-b border-border animate-pulse">
+        <div className="h-6 bg-muted rounded w-32"></div>
       </div>
-      <div className="divide-y divide-slate-200">
+      <div className="divide-y divide-border">
         {[1, 2, 3].map((i) => (
           <div key={i} className="px-6 py-3 flex gap-4 animate-pulse">
-            <div className="h-4 bg-slate-200 rounded flex-1"></div>
-            <div className="h-4 bg-slate-200 rounded w-24"></div>
-            <div className="h-4 bg-slate-200 rounded w-20"></div>
+            <div className="h-4 bg-muted rounded flex-1"></div>
+            <div className="h-4 bg-muted rounded w-24"></div>
+            <div className="h-4 bg-muted rounded w-20"></div>
           </div>
         ))}
       </div>
@@ -41,19 +41,19 @@ function TableSkeleton() {
 
 function DistributionSkeleton() {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-6 animate-pulse">
+    <div className="rounded-lg border border-border bg-surface p-6 animate-pulse">
       <div className="flex items-center justify-between mb-6">
-        <div className="h-5 bg-slate-200 rounded w-32"></div>
-        <div className="h-4 bg-slate-200 rounded w-24"></div>
+        <div className="h-5 bg-muted rounded w-32"></div>
+        <div className="h-4 bg-muted rounded w-24"></div>
       </div>
       <div className="space-y-4">
         {[1, 2, 3, 4, 5, 6].map((i) => (
           <div key={i}>
             <div className="flex justify-between mb-2">
-              <div className="h-4 bg-slate-200 rounded w-16"></div>
-              <div className="h-4 bg-slate-200 rounded w-20"></div>
+              <div className="h-4 bg-muted rounded w-16"></div>
+              <div className="h-4 bg-muted rounded w-20"></div>
             </div>
-            <div className="h-3 bg-slate-200 rounded w-full"></div>
+            <div className="h-3 bg-muted rounded w-full"></div>
           </div>
         ))}
       </div>
@@ -90,10 +90,10 @@ interface AcademicYear {
 }
 
 const PHASE_CONFIG = {
-  EARLY_YEARS: { label: "Early Years", color: "bg-purple-100 text-purple-800" },
-  PRIMARY: { label: "Primary", color: "bg-blue-100 text-blue-800" },
-  SECONDARY: { label: "Secondary", color: "bg-green-100 text-green-800" },
-  ALL: { label: "All Phases", color: "bg-gray-100 text-gray-800" },
+  EARLY_YEARS: { label: "Early Years", color: "bg-brand/10 text-brand" },
+  PRIMARY: { label: "Primary", color: "bg-brand/10 text-brand" },
+  SECONDARY: { label: "Secondary", color: "bg-brand/10 text-brand" },
+  ALL: { label: "All Phases", color: "bg-brand/10 text-brand" },
 };
 
 const GRADE_COLOR_MAP: Record<string, string> = {
@@ -348,11 +348,11 @@ export default function AnalyticsPage() {
 
   if (academicYears.length === 0) {
     return (
-      <div className="rounded-lg border border-yellow-300 bg-yellow-50 p-6 flex gap-3">
+      <div className="rounded-lg border border-border bg-surface p-6 flex gap-3">
         <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
         <div>
-          <h3 className="font-semibold text-yellow-900">No Academic Years</h3>
-          <p className="text-sm text-yellow-700 mt-1">Please create an academic year first before viewing analytics.</p>
+          <h3 className="font-semibold text-foreground">No Academic Years</h3>
+          <p className="text-sm text-muted mt-1">Please create an academic year first before viewing analytics.</p>
         </div>
       </div>
     );
@@ -361,20 +361,20 @@ export default function AnalyticsPage() {
   if (!selectedTermId) {
     return (
       <div className="space-y-6 pb-8">
-        <div className="border-b border-slate-200 pb-6">
+        <div className="border-b border-border pb-6">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between mb-4">
             <div>
-              <h1 className="text-4xl font-bold text-slate-900">School Analytics</h1>
-              <p className="mt-1 text-sm text-slate-600">Real-time performance insights and academic metrics</p>
+              <h1 className="text-4xl font-bold text-foreground">School Analytics</h1>
+              <p className="mt-1 text-sm text-muted">Real-time performance insights and academic metrics</p>
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 w-full lg:w-auto lg:max-w-[720px]">
               <div>
-                <label className="block text-sm font-medium text-slate-900 mb-2">Academic Year</label>
+                <label className="block text-sm font-medium text-foreground mb-2">Academic Year</label>
                 <select
                   value={selectedAcademicYearId}
                   onChange={(e) => setSelectedAcademicYearId(e.target.value)}
                   disabled={analyticsLoading}
-                  className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 bg-white disabled:bg-slate-50 disabled:text-slate-500"
+                  className="w-full px-4 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 bg-background disabled:bg-background disabled:text-muted"
                   style={{ '--tw-ring-color': '#0A66C2' } as React.CSSProperties}
                 >
                   <option value="">Choose a year...</option>
@@ -387,12 +387,12 @@ export default function AnalyticsPage() {
               </div>
               {filteredTerms.length > 0 && (
                 <div>
-                  <label className="block text-sm font-medium text-slate-900 mb-2">Term</label>
+                  <label className="block text-sm font-medium text-foreground mb-2">Term</label>
                   <select
                     value={selectedTermId}
                     onChange={(e) => setSelectedTermId(e.target.value)}
                     disabled={analyticsLoading}
-                    className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 bg-white disabled:bg-slate-50 disabled:text-slate-500"
+                    className="w-full px-4 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 bg-background disabled:bg-background disabled:text-muted"
                     style={{ '--tw-ring-color': '#0A66C2' } as React.CSSProperties}
                   >
                     <option value="">Choose a term...</option>
@@ -406,12 +406,12 @@ export default function AnalyticsPage() {
               )}
               {allSections.length > 0 && (
                 <div>
-                  <label className="block text-sm font-medium text-slate-900 mb-2">Class</label>
+                  <label className="block text-sm font-medium text-foreground mb-2">Class</label>
                   <select
                     value={selectedSectionId}
                     onChange={(e) => handleSectionChange(e.target.value)}
                     disabled={analyticsLoading || !selectedTermId}
-                    className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 bg-white disabled:bg-slate-50 disabled:text-slate-500"
+                    className="w-full px-4 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 bg-background disabled:bg-background disabled:text-muted"
                     style={{ '--tw-ring-color': '#0A66C2' } as React.CSSProperties}
                   >
                     <option value="">All classes</option>
@@ -427,10 +427,10 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        <div className="rounded-lg border border-blue-200 bg-blue-50 p-8 text-center">
-          <BarChart3 className="h-12 w-12 text-blue-400 mx-auto mb-4" />
-          <h2 className="text-lg font-semibold text-blue-900 mb-2">Select a Term</h2>
-          <p className="text-sm text-blue-700">
+        <div className="rounded-lg border border-border bg-surface p-8 text-center">
+          <BarChart3 className="h-12 w-12 text-brand mx-auto mb-4" />
+          <h2 className="text-lg font-semibold text-foreground mb-2">Select a Term</h2>
+          <p className="text-sm text-muted">
             Please select an academic term from the dropdown above to view analytics.
           </p>
         </div>
@@ -458,8 +458,8 @@ export default function AnalyticsPage() {
 
   if (!analytics) {
     return (
-      <div className="rounded-lg border border-slate-200 bg-slate-50 p-12 text-center">
-        <p className="text-slate-600">No analytics data available</p>
+      <div className="rounded-lg border border-border bg-surface p-12 text-center">
+        <p className="text-muted">No analytics data available</p>
       </div>
     );
   }
@@ -473,20 +473,20 @@ export default function AnalyticsPage() {
     return (
       <div className="space-y-6 pb-8">
         {/* Header with Term Dropdown */}
-        <div className="border-b border-slate-200 pb-6">
+        <div className="border-b border-border pb-6">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between mb-4">
             <div>
-              <h1 className="text-4xl font-bold text-slate-900">School Analytics</h1>
-              <p className="mt-1 text-sm text-slate-600">Real-time performance insights and academic metrics</p>
+              <h1 className="text-4xl font-bold text-foreground">School Analytics</h1>
+              <p className="mt-1 text-sm text-muted">Real-time performance insights and academic metrics</p>
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 w-full lg:w-auto lg:max-w-[720px]">
               <div>
-                <label className="block text-sm font-medium text-slate-900 mb-2">Academic Year</label>
+                <label className="block text-sm font-medium text-foreground mb-2">Academic Year</label>
                 <select
                   value={selectedAcademicYearId}
                   onChange={(e) => setSelectedAcademicYearId(e.target.value)}
                   disabled={analyticsLoading}
-                  className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 bg-white disabled:bg-slate-50 disabled:text-slate-500"
+                  className="w-full px-4 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 bg-background disabled:bg-background disabled:text-muted"
                   style={{ '--tw-ring-color': '#0A66C2' } as React.CSSProperties}
                 >
                   <option value="">Choose a year...</option>
@@ -499,12 +499,12 @@ export default function AnalyticsPage() {
               </div>
               {filteredTerms.length > 0 && (
                 <div>
-                  <label className="block text-sm font-medium text-slate-900 mb-2">Term</label>
+                  <label className="block text-sm font-medium text-foreground mb-2">Term</label>
                   <select
                     value={selectedTermId}
                     onChange={(e) => setSelectedTermId(e.target.value)}
                     disabled={analyticsLoading}
-                    className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 bg-white disabled:bg-slate-50 disabled:text-slate-500"
+                    className="w-full px-4 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 bg-background disabled:bg-background disabled:text-muted"
                     style={{ '--tw-ring-color': '#0A66C2' } as React.CSSProperties}
                   >
                     <option value="">Choose a term...</option>
@@ -518,12 +518,12 @@ export default function AnalyticsPage() {
               )}
               {allSections.length > 0 && (
                 <div>
-                  <label className="block text-sm font-medium text-slate-900 mb-2">Class</label>
+                  <label className="block text-sm font-medium text-foreground mb-2">Class</label>
                   <select
                     value={selectedSectionId}
                     onChange={(e) => handleSectionChange(e.target.value)}
                     disabled={analyticsLoading || !selectedTermId}
-                    className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 bg-white disabled:bg-slate-50 disabled:text-slate-500"
+                    className="w-full px-4 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 bg-background disabled:bg-background disabled:text-muted"
                     style={{ '--tw-ring-color': '#0A66C2' } as React.CSSProperties}
                   >
                     <option value="">All classes</option>
@@ -540,13 +540,13 @@ export default function AnalyticsPage() {
         </div>
 
         {/* No Data Message */}
-        <div className="rounded-lg border border-blue-200 bg-blue-50 p-8 text-center">
-          <BarChart3 className="h-12 w-12 text-blue-400 mx-auto mb-4" />
-          <h2 className="text-lg font-semibold text-blue-900 mb-2">No Analytics Data</h2>
-          <p className="text-sm text-blue-700 mb-4">
-            There is no data to display for the selected term and phase. 
+        <div className="rounded-lg border border-border bg-surface p-8 text-center">
+          <BarChart3 className="h-12 w-12 text-brand mx-auto mb-4" />
+          <h2 className="text-lg font-semibold text-foreground mb-2">No Analytics Data</h2>
+          <p className="text-sm text-muted mb-4">
+            There is no data to display for the selected term and phase.
           </p>
-          <p className="text-sm text-blue-600">
+          <p className="text-sm text-muted">
             Analytics will appear once students have results published.
           </p>
         </div>
@@ -569,20 +569,20 @@ export default function AnalyticsPage() {
   return (
     <div className="space-y-6 pb-8">
       {/* Header with Academic Year, Term, and Class Dropdowns */}
-      <div className="border-b border-slate-200 pb-6">
+      <div className="border-b border-border pb-6">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between mb-4">
           <div>
-            <h1 className="text-4xl font-bold text-slate-900">School Analytics</h1>
-            <p className="mt-1 text-sm text-slate-600">Real-time performance insights and academic metrics</p>
+            <h1 className="text-4xl font-bold text-foreground">School Analytics</h1>
+            <p className="mt-1 text-sm text-muted">Real-time performance insights and academic metrics</p>
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 w-full lg:w-auto lg:max-w-[720px]">
             <div>
-              <label className="block text-sm font-medium text-slate-900 mb-2">Academic Year</label>
+              <label className="block text-sm font-medium text-foreground mb-2">Academic Year</label>
               <select
                 value={selectedAcademicYearId}
                 onChange={(e) => setSelectedAcademicYearId(e.target.value)}
                 disabled={analyticsLoading}
-                className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 bg-white disabled:bg-slate-50 disabled:text-slate-500"
+                className="w-full px-4 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 bg-background disabled:bg-background disabled:text-muted"
                 style={{ '--tw-ring-color': '#0A66C2' } as React.CSSProperties}
               >
                   <option value="">Choose a year...</option>
@@ -595,12 +595,12 @@ export default function AnalyticsPage() {
               </div>
               {filteredTerms.length > 0 && (
                 <div>
-                  <label className="block text-sm font-medium text-slate-900 mb-2">Term</label>
+                  <label className="block text-sm font-medium text-foreground mb-2">Term</label>
                   <select
                     value={selectedTermId}
                     onChange={(e) => setSelectedTermId(e.target.value)}
                     disabled={analyticsLoading}
-                    className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 bg-white disabled:bg-slate-50 disabled:text-slate-500"
+                    className="w-full px-4 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 bg-background disabled:bg-background disabled:text-muted"
                     style={{ '--tw-ring-color': '#0A66C2' } as React.CSSProperties}
                   >
                     <option value="">Choose a term...</option>
@@ -614,12 +614,12 @@ export default function AnalyticsPage() {
               )}
               {allSections.length > 0 && (
               <div>
-                <label className="block text-sm font-medium text-slate-900 mb-2">Class</label>
+                <label className="block text-sm font-medium text-foreground mb-2">Class</label>
                 <select
                   value={selectedSectionId}
                   onChange={(e) => handleSectionChange(e.target.value)}
                   disabled={analyticsLoading || !selectedTermId}
-                  className="w-full px-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 bg-white disabled:bg-slate-50 disabled:text-slate-500"
+                  className="w-full px-4 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 bg-background disabled:bg-background disabled:text-muted"
                   style={{ '--tw-ring-color': '#0A66C2' } as React.CSSProperties}
                 >
                   <option value="">All classes</option>
@@ -639,7 +639,7 @@ export default function AnalyticsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="group rounded-lg border border-border bg-surface p-5 shadow-sm transition hover:border-brand/50 hover:shadow-md">
           <div className="flex items-start gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-100 text-blue-800">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand/10 text-brand">
               <TrendingUp className="h-5 w-5" />
             </div>
             <div className="min-w-0">
@@ -652,7 +652,7 @@ export default function AnalyticsPage() {
 
         <div className="group rounded-lg border border-border bg-surface p-5 shadow-sm transition hover:border-brand/50 hover:shadow-md">
           <div className="flex items-start gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand/10 text-brand">
               <Activity className="h-5 w-5" />
             </div>
             <div className="min-w-0">
@@ -665,7 +665,7 @@ export default function AnalyticsPage() {
 
         <div className="group rounded-lg border border-border bg-surface p-5 shadow-sm transition hover:border-brand/50 hover:shadow-md">
           <div className="flex items-start gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-purple-100 text-purple-800">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand/10 text-brand">
               <BarChart3 className="h-5 w-5" />
             </div>
             <div className="min-w-0">
@@ -678,7 +678,7 @@ export default function AnalyticsPage() {
 
         <div className="group rounded-lg border border-border bg-surface p-5 shadow-sm transition hover:border-brand/50 hover:shadow-md">
           <div className="flex items-start gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-orange-100 text-orange-800">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand/10 text-brand">
               <BookOpen className="h-5 w-5" />
             </div>
             <div className="min-w-0">
@@ -691,7 +691,7 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Phase Tabs */}
-      <div className="border-b border-slate-200 bg-white rounded-t-lg overflow-hidden">
+      <div className="border-b border-border bg-surface rounded-t-lg overflow-hidden">
         <div className="flex overflow-x-auto">
           {PHASE_ORDER.map((phase) => {
             const phaseLabel = PHASE_CONFIG[phase as keyof typeof PHASE_CONFIG].label;
@@ -703,13 +703,13 @@ export default function AnalyticsPage() {
                 className={`px-6 py-4 font-medium text-sm whitespace-nowrap border-b-2 transition-colors flex items-center gap-2 ${
                   activePhase === phase
                     ? 'text-white'
-                    : 'border-transparent text-slate-600 hover:text-slate-900'
+                    : 'border-transparent text-muted hover:text-foreground'
                 }`}
                 style={activePhase === phase ? { backgroundColor: '#0A66C2', color: 'white', borderBottomColor: '#0A66C2' } : {}}
               >
                 {phaseLabel}
                 <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold ${
-                  activePhase === phase ? 'bg-blue-700 text-white' : 'bg-slate-200 text-slate-700'
+                  activePhase === phase ? 'bg-blue-700 text-white' : 'bg-muted text-foreground'
                 }`}>
                   {count}
                 </span>
@@ -720,14 +720,14 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Grade Distribution */}
-      <div className="rounded-lg border border-slate-200 bg-white p-6 hover:shadow-sm transition-shadow">
+      <div className="rounded-lg border border-border bg-surface p-6 hover:shadow-sm transition-shadow">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <BarChart3 className="h-5 w-5 text-slate-600" />
-            <h2 className="text-lg font-semibold text-slate-900">Grade Distribution</h2>
+            <BarChart3 className="h-5 w-5 text-muted" />
+            <h2 className="text-lg font-semibold text-foreground">Grade Distribution</h2>
           </div>
-          <div className="text-sm text-slate-600">
-            Total: <span className="font-bold text-slate-900">{schoolAnalytics.totalResults}</span>
+          <div className="text-sm text-muted">
+            Total: <span className="font-bold text-foreground">{schoolAnalytics.totalResults}</span>
           </div>
         </div>
 
@@ -739,13 +739,13 @@ export default function AnalyticsPage() {
             return (
               <div key={grade}>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-semibold text-slate-900">Grade {grade}</span>
+                  <span className="text-sm font-semibold text-foreground">Grade {grade}</span>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-slate-600">{count} students</span>
-                    <span className="text-xs text-slate-500">({totalPercentage.toFixed(1)}%)</span>
+                    <span className="text-sm text-muted">{count} students</span>
+                    <span className="text-xs text-muted">({totalPercentage.toFixed(1)}%)</span>
                   </div>
                 </div>
-                <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
+                <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all"
                     style={{ width: `${percentage}%`, backgroundColor: GRADE_COLOR_MAP[grade] || '#0A66C2' }}
@@ -763,9 +763,9 @@ export default function AnalyticsPage() {
           <div className="bg-surface px-6 py-4 border-b border-border">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Users className="h-5 w-5 text-slate-600" />
-                <h2 className="text-lg font-semibold text-slate-900">Classes</h2>
-                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-200 text-xs font-bold text-slate-700">
+                <Users className="h-5 w-5 text-muted" />
+                <h2 className="text-lg font-semibold text-foreground">Classes</h2>
+                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-muted text-xs font-bold text-foreground">
                   {filteredClasses.length}
                 </span>
               </div>
@@ -780,24 +780,24 @@ export default function AnalyticsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-200 bg-slate-50">
-                  <th className="px-6 py-3 text-left font-semibold text-slate-900">Class Name</th>
-                  <th className="px-6 py-3 text-left font-semibold text-slate-900">Phase</th>
-                  <th className="px-6 py-3 text-right font-semibold text-slate-900">Actions</th>
+                <tr className="border-b border-border bg-surface">
+                  <th className="px-6 py-3 text-left font-semibold text-foreground">Class Name</th>
+                  <th className="px-6 py-3 text-left font-semibold text-foreground">Phase</th>
+                  <th className="px-6 py-3 text-right font-semibold text-foreground">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {paginatedClasses.slice(0, 3).length > 0 ? (
                   paginatedClasses.slice(0, 3).map((cls, idx) => (
-                    <tr key={idx} className="border-b border-slate-200 hover:bg-slate-50 transition">
-                      <td className="px-6 py-3 font-medium text-slate-900">{cls.name}</td>
+                    <tr key={idx} className="border-b border-border hover:bg-surface transition">
+                      <td className="px-6 py-3 font-medium text-foreground">{cls.name}</td>
                       <td className="px-6 py-3">
                         <span className={`px-3 py-1 rounded-full text-xs font-semibold ${PHASE_CONFIG[cls.phase as keyof typeof PHASE_CONFIG]?.color || 'bg-gray-100 text-gray-800'}`}>
                           {PHASE_CONFIG[cls.phase as keyof typeof PHASE_CONFIG]?.label || cls.phase}
                         </span>
                       </td>
                       <td className="px-6 py-3 text-right">
-                        <button className="font-medium text-sm" style={{ color: '#0A66C2' }}>
+                        <button className="font-medium text-sm text-brand">
                           View Details →
                         </button>
                       </td>
@@ -805,7 +805,7 @@ export default function AnalyticsPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={3} className="px-6 py-8 text-center text-slate-600">
+                    <td colSpan={3} className="px-6 py-8 text-center text-muted">
                       No classes found
                     </td>
                   </tr>
@@ -816,11 +816,11 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Subjects Overview */}
-        <div className="rounded-lg border border-slate-200 bg-white overflow-hidden shadow-sm transition hover:shadow-md">
-          <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+        <div className="rounded-lg border border-border bg-surface overflow-hidden shadow-sm transition hover:shadow-md">
+          <div className="bg-background px-6 py-4 border-b border-border flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <BookOpen className="h-5 w-5 text-slate-600" />
-              <h2 className="text-lg font-semibold text-slate-900">Subjects ({subjects.length})</h2>
+              <BookOpen className="h-5 w-5 text-muted" />
+              <h2 className="text-lg font-semibold text-foreground">Subjects ({subjects.length})</h2>
             </div>
             <button onClick={() => router.push("/admin/analytics/subjects")} className="flex items-center gap-2 px-4 py-2 text-sm text-white rounded-lg transition font-medium" style={{ backgroundColor: '#0A66C2' }}>
               <span>View All</span>
@@ -830,13 +830,13 @@ export default function AnalyticsPage() {
           <div className="divide-y divide-slate-200">
             {subjects.length > 0 ? (
               subjects.slice(0, 3).map((subject) => (
-                <div key={subject.id} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50 transition">
-                  <p className="text-sm font-medium text-slate-900">{subject.name}</p>
-                  <ChevronDown className="w-4 h-4 text-slate-400" />
+                <div key={subject.id} className="px-6 py-4 flex items-center justify-between hover:bg-surface transition">
+                  <p className="text-sm font-medium text-foreground">{subject.name}</p>
+                  <ChevronDown className="w-4 h-4 text-muted" />
                 </div>
               ))
             ) : (
-              <div className="px-6 py-4 text-sm text-slate-600">No subjects available</div>
+              <div className="px-6 py-4 text-sm text-muted">No subjects available</div>
             )}
           </div>
         </div>
@@ -845,11 +845,11 @@ export default function AnalyticsPage() {
       {/* Top Performers & Struggling Students */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top Performers */}
-        <div className="rounded-lg border border-slate-200 bg-white p-6 hover:shadow-sm transition-shadow">
+        <div className="rounded-lg border border-border bg-background p-6 hover:shadow-sm transition-shadow">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <TrendingUp className="h-5 w-5 text-green-600" />
-              <h2 className="text-lg font-semibold text-slate-900">Top Performers</h2>
+              <h2 className="text-lg font-semibold text-foreground">Top Performers</h2>
             </div>
             <button onClick={() => router.push("/admin/analytics/top-performers")} className="flex items-center gap-1 px-3 py-1 text-xs text-white bg-green-600 hover:bg-green-700 rounded-lg transition font-medium">
               <span>View All</span>
@@ -859,28 +859,28 @@ export default function AnalyticsPage() {
           <div className="space-y-2">
             {schoolAnalytics.topPerformers && schoolAnalytics.topPerformers.length > 0 ? (
               schoolAnalytics.topPerformers.slice(0, 3).map((student, idx) => (
-                <div key={idx} className="flex items-center justify-between p-3 border border-green-100 rounded-lg bg-green-50 hover:bg-green-100 transition">
+                <div key={idx} className="flex items-center justify-between p-3 border border-border rounded-lg bg-surface hover:bg-background transition">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-green-200 flex items-center justify-center text-xs font-bold text-green-700">
                       #{idx + 1}
                     </div>
-                    <p className="text-sm font-medium text-slate-900">{student.name}</p>
+                    <p className="text-sm font-medium text-foreground">{student.name}</p>
                   </div>
                   <span className="text-sm font-bold text-green-600">{student.score?.toFixed(1) || '—'}</span>
                 </div>
               ))
             ) : (
-              <p className="text-sm text-slate-600">No top performers data available</p>
+              <p className="text-sm text-muted">No top performers data available</p>
             )}
           </div>
         </div>
 
         {/* Struggling Students */}
-        <div className="rounded-lg border border-slate-200 bg-white p-6 hover:shadow-sm transition-shadow">
+        <div className="rounded-lg border border-border bg-background p-6 hover:shadow-sm transition-shadow">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <AlertCircle className="h-5 w-5 text-orange-600" />
-              <h2 className="text-lg font-semibold text-slate-900">Struggling Students</h2>
+              <h2 className="text-lg font-semibold text-foreground">Struggling Students</h2>
             </div>
             <button onClick={() => router.push("/admin/analytics/struggling-students")} className="flex items-center gap-1 px-3 py-1 text-xs text-white bg-orange-600 hover:bg-orange-700 rounded-lg transition font-medium">
               <span>View All</span>
@@ -890,18 +890,18 @@ export default function AnalyticsPage() {
           <div className="space-y-2">
             {schoolAnalytics.strugglingStudents && schoolAnalytics.strugglingStudents.length > 0 ? (
               schoolAnalytics.strugglingStudents.slice(0, 3).map((student, idx) => (
-                <div key={idx} className="flex items-center justify-between p-3 border border-orange-100 rounded-lg bg-orange-50 hover:bg-orange-100 transition">
+                <div key={idx} className="flex items-center justify-between p-3 border border-border rounded-lg bg-surface hover:bg-background transition">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-orange-200 flex items-center justify-center text-xs font-bold text-orange-700">
+                    <div className="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center text-xs font-bold text-brand">
                       ⚠
                     </div>
-                    <p className="text-sm font-medium text-slate-900">{student.name}</p>
+                    <p className="text-sm font-medium text-foreground">{student.name}</p>
                   </div>
                   <span className="text-sm font-bold text-orange-600">{student.score?.toFixed(1) || '—'}</span>
                 </div>
               ))
             ) : (
-              <p className="text-sm text-slate-600">No struggling students data available</p>
+              <p className="text-sm text-muted">No struggling students data available</p>
             )}
           </div>
         </div>

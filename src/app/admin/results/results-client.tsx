@@ -605,7 +605,7 @@ export default function ResultsPageClient({ assessments, sessions = [] }: { asse
                   return (
                     <tr
                       key={a.id}
-                      className={`border-t border-border transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/80'} hover:bg-slate-100/70`}
+                      className={`border-t border-border transition-colors ${index % 2 === 0 ? 'bg-background' : 'bg-surface'} hover:bg-surface/80`}
                     >
                       <td className="px-3 py-1.5 sm:px-4">
                         <div className="min-w-0">
@@ -614,7 +614,7 @@ export default function ResultsPageClient({ assessments, sessions = [] }: { asse
                             {a.sessionName ? `${a.sessionName}` : "Session not set"}
                             {a.term?.name ? ` • ${a.term.name}` : ""}
                           </p>
-                          <span className={`mt-2 inline-flex rounded-full px-2 py-1 text-[10px] font-semibold ${PHASE_CONFIG[a.phase as keyof typeof PHASE_CONFIG]?.color || "bg-gray-100 text-gray-800"}`}>
+                          <span className={`mt-2 inline-flex rounded-full px-2 py-1 text-[10px] font-semibold ${PHASE_CONFIG[a.phase as keyof typeof PHASE_CONFIG]?.color || "bg-background text-foreground"}`}>
                             {PHASE_CONFIG[a.phase as keyof typeof PHASE_CONFIG]?.label || a.phase}
                           </span>
                         </div>
@@ -731,7 +731,7 @@ export default function ResultsPageClient({ assessments, sessions = [] }: { asse
                 <Link
                   key={a.id}
                   href={`/admin/results/${a.id}`}
-                  className={`block rounded-lg border border-border px-4 py-2 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/80'} hover:bg-slate-100/70`}
+                  className={`block rounded-lg border border-border px-4 py-2 transition-colors ${index % 2 === 0 ? 'bg-background' : 'bg-surface'} hover:bg-surface/80`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1 min-w-0">
@@ -741,7 +741,7 @@ export default function ResultsPageClient({ assessments, sessions = [] }: { asse
                           {a.sessionName ? `${a.sessionName}` : "Session not set"}
                           {a.term?.name ? ` • ${a.term.name}` : ""}
                         </p>
-                        <span className={`mt-2 inline-flex rounded-full px-2 py-1 text-[10px] font-semibold ${PHASE_CONFIG[a.phase as keyof typeof PHASE_CONFIG]?.color || "bg-gray-100 text-gray-800"}`}>
+                        <span className={`mt-2 inline-flex rounded-full px-2 py-1 text-[10px] font-semibold ${PHASE_CONFIG[a.phase as keyof typeof PHASE_CONFIG]?.color || "bg-background text-foreground"}`}>
                           {PHASE_CONFIG[a.phase as keyof typeof PHASE_CONFIG]?.label || a.phase}
                         </span>
                       </div>
@@ -841,14 +841,14 @@ export default function ResultsPageClient({ assessments, sessions = [] }: { asse
           `}</style>
 
           <div
-            className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_50px_rgba(220,38,38,0.16)]"
+            className="w-full max-w-md overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_16px_50px_rgba(220,38,38,0.16)]"
             style={{
               animation: `${deleteAnimateState === "enter" ? "sb_modal_enter" : "sb_modal_exit"} 320ms cubic-bezier(.2,.9,.2,1)`,
             }}
           >
             {/* Header */}
             <div
-              className="border-b border-slate-100 px-6 py-5"
+              className="border-b border-border px-6 py-5"
               style={{ background: "linear-gradient(90deg, rgba(220,38,38,0.12), rgba(220,38,38,0.04))" }}
             >
               <div className="flex items-start gap-3">
@@ -880,7 +880,7 @@ export default function ResultsPageClient({ assessments, sessions = [] }: { asse
             </div>
 
             {/* Footer */}
-            <div className="flex gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4">
+            <div className="flex gap-3 border-t border-border bg-surface px-6 py-4">
               <button
                 type="button"
                 onClick={() => {
@@ -892,7 +892,7 @@ export default function ResultsPageClient({ assessments, sessions = [] }: { asse
                   }, 320);
                 }}
                 disabled={isDeleting}
-                className="flex-1 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-slate-100 disabled:opacity-50 text-slate-700"
+                className="flex-1 rounded-lg border border-border px-4 py-2.5 text-sm font-medium transition-colors hover:bg-background disabled:opacity-50 text-foreground"
               >
                 Cancel
               </button>
@@ -931,14 +931,14 @@ export default function ResultsPageClient({ assessments, sessions = [] }: { asse
           `}</style>
 
           <div
-            className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_50px_rgba(10,102,194,0.16)]"
+            className="w-full max-w-md overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_16px_50px_rgba(10,102,194,0.16)]"
             style={{
               animation: `sb_modal_enter 320ms cubic-bezier(.2,.9,.2,1)`,
             }}
           >
             {/* Header */}
             <div
-              className="border-b border-slate-100 px-6 py-5"
+              className="border-b border-border px-6 py-5"
               style={{ background: "linear-gradient(90deg, rgba(10,102,194,0.12), rgba(10,102,194,0.04))" }}
             >
               <div className="flex items-start gap-3">
@@ -967,14 +967,14 @@ export default function ResultsPageClient({ assessments, sessions = [] }: { asse
             <div className="px-6 py-5">
               <p className="text-sm leading-6 text-slate-700">{modalMessage}</p>
               {modalDetails && (
-                <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
-                  <p className="text-xs text-slate-700">{modalDetails}</p>
+                <div className="mt-4 rounded-lg border border-border bg-surface p-3">
+                  <p className="text-xs text-foreground">{modalDetails}</p>
                 </div>
               )}
             </div>
 
             {/* Footer */}
-            <div className="border-t border-slate-100 bg-slate-50 px-6 py-4">
+            <div className="border-t border-border bg-surface px-6 py-4">
               <button
                 onClick={() => setModalOpen(false)}
                 className="w-full rounded-lg px-4 py-2.5 font-medium text-sm transition-colors text-white"

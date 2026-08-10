@@ -351,7 +351,7 @@ export default function PromotionsPageClient({
 
       {previewData ? (
         <div className="space-y-4">
-          <div className="rounded-2xl border border-border/70 bg-slate-50 p-4">
+          <div className="rounded-2xl border border-border/70 bg-surface p-4">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="text-sm font-semibold text-foreground">{previewData.class.name}</p>
@@ -367,7 +367,7 @@ export default function PromotionsPageClient({
               <label className="space-y-1 max-w-[220px]">
                 <span className="block text-xs font-medium uppercase tracking-wide text-muted">Current class</span>
                 <select
-                  className="w-full rounded-lg border border-border bg-white px-2 py-1.5 text-sm max-w-[220px]"
+                  className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-sm max-w-[220px]"
                   value={selectedClassId}
                   onChange={(event) => {
                     const newClassId = event.target.value;
@@ -384,7 +384,7 @@ export default function PromotionsPageClient({
               <label className="space-y-1 max-w-[220px]">
                 <span className="block text-xs font-medium uppercase tracking-wide text-muted">Target class</span>
                 <select
-                  className="w-full rounded-lg border border-border bg-white px-2 py-1.5 text-sm max-w-[220px]"
+                  className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-sm max-w-[220px]"
                   value={bulkTargetClassId}
                   onChange={(event) => setBulkTargetClassId(event.target.value)}
                 >
@@ -398,7 +398,7 @@ export default function PromotionsPageClient({
               <label className="space-y-1 max-w-[220px]">
                 <span className="block text-xs font-medium uppercase tracking-wide text-muted">Bulk action</span>
                 <select
-                  className="w-full rounded-lg border border-border bg-white px-2 py-1.5 text-sm max-w-[220px]"
+                  className="w-full rounded-lg border border-border bg-background px-2 py-1.5 text-sm max-w-[220px]"
                   value={bulkDecision}
                   onChange={(event) => setBulkDecision(event.target.value)}
                 >
@@ -423,7 +423,7 @@ export default function PromotionsPageClient({
 
             {isRationaleModalOpen && (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-                <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl">
+                <div className="w-full max-w-2xl rounded-2xl bg-surface p-6 shadow-xl">
                   <div className="mb-4 flex items-center justify-between gap-4">
                     <div>
                       <h2 className="text-lg font-semibold text-foreground">Rationale</h2>
@@ -443,14 +443,14 @@ export default function PromotionsPageClient({
                     value={bulkRationale}
                     onChange={(event) => setBulkRationale(event.target.value)}
                     placeholder="Type the rationale here..."
-                    className="w-full rounded-2xl border border-border bg-slate-50 px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:bg-white"
+                    className="w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:bg-background"
                   />
 
                   <div className="mt-4 flex justify-end gap-3">
                     <button
                       type="button"
                       onClick={() => setIsRationaleModalOpen(false)}
-                      className="inline-flex h-10 items-center justify-center rounded-full border border-border px-4 text-sm font-semibold text-foreground transition hover:bg-slate-100"
+                      className="inline-flex h-10 items-center justify-center rounded-full border border-border px-4 text-sm font-semibold text-foreground transition hover:bg-surface"
                     >
                       Cancel
                     </button>
@@ -467,7 +467,7 @@ export default function PromotionsPageClient({
             )}
           </div>
 
-          <div className="rounded-2xl border border-border/70 bg-white p-3">
+          <div className="rounded-2xl border border-border/70 bg-surface p-3">
             <div className="mb-3 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="font-semibold text-foreground">Select pupils</p>
@@ -493,7 +493,7 @@ export default function PromotionsPageClient({
               {previewData.pupils.map((pupil: PromotionPreviewPupil) => (
                 <label
                   key={pupil.id}
-                  className={`flex items-center justify-between rounded-xl border px-3 py-2 text-sm transition ${selectedPupilIds.includes(pupil.id) ? "border-[#0A66C2] bg-[#0A66C2]/5" : "border-border/70 bg-slate-50/70"}`}
+                  className={`flex items-center justify-between rounded-xl border px-3 py-2 text-sm transition ${selectedPupilIds.includes(pupil.id) ? "border-brand bg-brand/10" : "border-border/70 bg-background"}`}
                 >
                   <span>
                     <span className="block font-medium text-foreground">{pupil.firstName} {pupil.lastName}</span>
@@ -529,12 +529,12 @@ export default function PromotionsPageClient({
           </div>
         </div>
       ) : (
-        <div className="rounded-2xl border border-dashed border-border/70 bg-slate-50 p-5 text-sm text-muted">
+        <div className="rounded-2xl border border-dashed border-border/70 bg-surface p-5 text-sm text-muted">
           Load a class to begin reviewing promotion decisions.
         </div>
       )}
 
-      <div className="rounded-2xl border border-border/70 bg-white p-4 shadow-sm">
+      <div className="rounded-2xl border border-border/70 bg-surface p-4 shadow-sm">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             <div className="flex items-center gap-2">
@@ -562,7 +562,7 @@ export default function PromotionsPageClient({
         ) : history.length > 0 ? (
           <div className="mt-4 space-y-2">
             {history.map((record) => (
-              <div key={record.id} className="flex flex-col gap-2 rounded-lg border border-border/70 bg-slate-50/70 p-3 md:flex-row md:items-center md:justify-between">
+              <div key={record.id} className="flex flex-col gap-2 rounded-lg border border-border/70 bg-surface/70 p-3 md:flex-row md:items-center md:justify-between">
                 <div>
                   <p className="font-semibold text-foreground">{record.pupilName}</p>
                   <p className="text-sm text-muted">{new Date(record.decidedAt).toLocaleDateString()} · {record.fromClassName || "Unknown"} → {record.toClassName || "-"}</p>

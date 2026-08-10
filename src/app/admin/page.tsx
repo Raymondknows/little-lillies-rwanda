@@ -12,7 +12,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 const dashboardSectionThemes = [
   {
-    shell: "border-slate-200 bg-white",
+    shell: "border-border bg-surface",
     iconWrap: "bg-blue-50",
     iconColor: "text-blue-700",
     badge: "border-blue-100 bg-blue-50 text-blue-700",
@@ -20,7 +20,7 @@ const dashboardSectionThemes = [
     row: "border-l-4 border-l-blue-400 bg-blue-50/50",
   },
   {
-    shell: "border-slate-200 bg-white",
+    shell: "border-border bg-surface",
     iconWrap: "bg-blue-50",
     iconColor: "text-blue-700",
     badge: "border-blue-100 bg-blue-50 text-blue-700",
@@ -28,7 +28,7 @@ const dashboardSectionThemes = [
     row: "border-l-4 border-l-blue-400 bg-blue-50/50",
   },
   {
-    shell: "border-slate-200 bg-white",
+    shell: "border-border bg-surface",
     iconWrap: "bg-blue-100",
     iconColor: "text-blue-700",
     badge: "border-blue-200 bg-blue-100 text-blue-700",
@@ -36,7 +36,7 @@ const dashboardSectionThemes = [
     row: "border-l-4 border-l-blue-500 bg-blue-100/70",
   },
   {
-    shell: "border-slate-200 bg-white",
+    shell: "border-border bg-surface",
     iconWrap: "bg-blue-100",
     iconColor: "text-blue-700",
     badge: "border-blue-200 bg-blue-100 text-blue-700",

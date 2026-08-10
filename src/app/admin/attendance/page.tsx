@@ -472,18 +472,18 @@ export default function AttendanceOverviewPage() {
       </div>
 
 
-      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm transition-shadow">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
+      <div className="rounded-lg border border-border bg-surface p-6 shadow-sm transition-shadow">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand/10 text-brand">
               <BarChart3 className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Attendance Mix</p>
-              <h3 className="mt-1 text-lg font-semibold text-slate-900">Daily status breakdown</h3>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">Attendance Mix</p>
+              <h3 className="mt-1 text-lg font-semibold text-foreground">Daily status breakdown</h3>
             </div>
           </div>
-          <div className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-sm font-medium text-slate-600">
+          <div className="rounded-full border border-border bg-background px-3 py-1 text-sm font-medium text-muted">
             {stats.records > 0 ? "Live overview" : "No data yet"}
           </div>
         </div>
@@ -494,33 +494,33 @@ export default function AttendanceOverviewPage() {
                 <div className="mb-2 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className={`h-2.5 w-2.5 rounded-full ${item.color}`} />
-                    <span className="text-sm font-semibold text-slate-900">{item.label}</span>
+                    <span className="text-sm font-semibold text-foreground">{item.label}</span>
                   </div>
-                  <span className="text-sm font-semibold text-slate-700">{item.value}</span>
+                  <span className="text-sm font-semibold text-foreground">{item.value}</span>
                 </div>
-                <div className="h-3 overflow-hidden rounded-full bg-slate-100">
+                <div className="h-3 overflow-hidden rounded-full bg-muted">
                   <div className={`h-3 rounded-full ${item.color}`} style={{ width: item.width }} />
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
+          <div className="rounded-xl border border-border bg-surface p-5">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand/10 text-brand">
                 <Activity className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Attendance Health</p>
-                <h3 className="text-base font-semibold text-slate-900">Present rate snapshot</h3>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">Attendance Health</p>
+                <h3 className="text-base font-semibold text-foreground">Present rate snapshot</h3>
               </div>
             </div>
             <div className="mt-6 flex items-center justify-center">
-              <div className="relative flex h-32 w-32 items-center justify-center rounded-full" style={{ background: `conic-gradient(#0A66C2 ${stats.presentRate}%, #e2e8f0 0)` }}>
-                <div className="flex h-24 w-24 items-center justify-center rounded-full bg-white shadow-inner">
+              <div className="relative flex h-32 w-32 items-center justify-center rounded-full" style={{ background: `conic-gradient(#0A66C2 ${stats.presentRate}%, var(--background) 0)` }}>
+                <div className="flex h-24 w-24 items-center justify-center rounded-full bg-background shadow-inner">
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-slate-900">{stats.records === 0 ? 0 : stats.presentRate.toFixed(0)}%</div>
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">Present</div>
+                    <div className="text-3xl font-bold text-foreground">{stats.records === 0 ? 0 : stats.presentRate.toFixed(0)}%</div>
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">Present</div>
                   </div>
                 </div>
               </div>
@@ -537,33 +537,33 @@ export default function AttendanceOverviewPage() {
       ) : null}
 
       {recordsPanelOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-950/20 backdrop-blur-[2px]" onClick={() => setRecordsPanelOpen(false)}>
-          <div className="absolute inset-y-0 right-0 flex w-full max-w-[640px] flex-col border-l border-brand/15 bg-white/95 shadow-2xl backdrop-blur" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between border-b border-slate-200 bg-gradient-to-r from-brand/10 via-white to-slate-50 px-5 py-4">
+        <div className="fixed inset-0 z-50 bg-foreground/10 backdrop-blur-[2px]" onClick={() => setRecordsPanelOpen(false)}>
+          <div className="absolute inset-y-0 right-0 flex w-full max-w-[640px] flex-col border-l border-brand/15 bg-background/95 shadow-2xl backdrop-blur" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-border bg-gradient-to-r from-brand/10 via-background to-surface px-5 py-4">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-brand">Record Explorer</p>
-                <h3 className="text-lg font-semibold text-slate-900">Attendance records</h3>
+                <h3 className="text-lg font-semibold text-foreground">Attendance records</h3>
               </div>
-              <button onClick={() => setRecordsPanelOpen(false)} className="rounded-full border border-slate-200 bg-white p-2 text-slate-700 shadow-sm transition hover:bg-slate-100">
+              <button onClick={() => setRecordsPanelOpen(false)} className="rounded-full border border-border bg-background p-2 text-foreground shadow-sm transition hover:bg-surface">
                 ✕
               </button>
             </div>
 
-            <div className="border-b border-slate-200 bg-slate-50/70 px-5 py-4">
+            <div className="border-b border-border bg-surface/70 px-5 py-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                 <div className="relative flex-1">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
                   <input
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search student or class"
-                    className="w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 py-2 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                    className="w-full rounded-lg border border-border bg-background pl-9 pr-3 py-2 text-sm text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
                   />
                 </div>
                 <select
                   value={selectedClass}
                   onChange={(e) => setSelectedClass(e.target.value)}
-                  className="min-w-[140px] rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                  className="min-w-[140px] rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
                 >
                   <option value="ALL">All classes</option>
                   {filteredClasses.map((cls) => (
@@ -575,7 +575,7 @@ export default function AttendanceOverviewPage() {
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value as any)}
-                  className="min-w-[140px] rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                  className="min-w-[140px] rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
                 >
                   <option value="ALL">All statuses</option>
                   <option value="PRESENT">Present</option>
@@ -586,10 +586,10 @@ export default function AttendanceOverviewPage() {
             </div>
 
             <div className="flex-1 overflow-y-auto p-5">
-              <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+              <div className="overflow-hidden rounded-lg border border-border bg-background shadow-sm">
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-sm">
-                    <thead className="bg-slate-50 text-left text-xs uppercase tracking-wider text-slate-600">
+                    <thead className="bg-background text-left text-xs uppercase tracking-wider text-muted">
                       <tr>
                         <th className="px-4 py-3">Date</th>
                         <th className="px-4 py-3">Class</th>
@@ -597,7 +597,7 @@ export default function AttendanceOverviewPage() {
                         <th className="px-4 py-3">Status</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-200 bg-white">
+                    <tbody className="divide-y divide-border bg-background">
                       {filteredRecords.length > 0 ? (
                         filteredRecords.map((record, index) => {
                           const badgeColor =
@@ -607,10 +607,10 @@ export default function AttendanceOverviewPage() {
                               ? "bg-rose-50 text-rose-700 ring-1 ring-rose-100"
                               : "bg-amber-50 text-amber-700 ring-1 ring-amber-100";
                           return (
-                            <tr key={record.id} className={`transition-colors ${index % 2 === 0 ? "bg-white" : "bg-slate-50/70"}`}>
-                              <td className="px-4 py-3 text-slate-700">{new Date(record.date).toLocaleDateString()}</td>
-                              <td className="px-4 py-3 text-slate-700">{record.class.name}</td>
-                              <td className="px-4 py-3 font-medium text-slate-700">{record.pupil.firstName} {record.pupil.lastName}</td>
+                            <tr key={record.id} className={`transition-colors ${index % 2 === 0 ? "bg-background" : "bg-surface/70"}`}>
+                              <td className="px-4 py-3 text-foreground">{new Date(record.date).toLocaleDateString()}</td>
+                              <td className="px-4 py-3 text-foreground">{record.class.name}</td>
+                              <td className="px-4 py-3 font-medium text-foreground">{record.pupil.firstName} {record.pupil.lastName}</td>
                               <td className="px-4 py-3">
                                 <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${badgeColor}`}>{record.status}</span>
                               </td>

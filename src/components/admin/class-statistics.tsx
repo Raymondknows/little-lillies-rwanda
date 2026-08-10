@@ -68,12 +68,12 @@ export function ClassStatistics({ assessmentId, schoolId }: ClassStatisticsProps
   };
 
   if (loading) {
-    return <div className="text-center text-gray-500">Loading statistics...</div>;
+    return <div className="text-center text-muted">Loading statistics...</div>;
   }
 
   if (error) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+      <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
         {error}
       </div>
     );
@@ -86,11 +86,11 @@ export function ClassStatistics({ assessmentId, schoolId }: ClassStatisticsProps
   const { statistics } = stats;
 
   return (
-    <div className="space-y-5 rounded-xl border border-border bg-white p-6 shadow-sm">
+    <div className="space-y-5 rounded-xl border border-border bg-surface p-6 shadow-sm">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">Class Statistics</h3>
-          <p className="text-sm text-gray-600">Simple view of performance for this assessment.</p>
+          <h3 className="text-lg font-semibold text-foreground">Class Statistics</h3>
+          <p className="text-sm text-muted">Simple view of performance for this assessment.</p>
         </div>
         <Button
           onClick={() => {
@@ -117,52 +117,52 @@ export function ClassStatistics({ assessmentId, schoolId }: ClassStatisticsProps
       </div>
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">Average</p>
-          <p className="mt-2 text-2xl font-semibold text-gray-900">{statistics.averageScore.toFixed(1)}</p>
-          <p className="mt-1 text-xs text-gray-500">Class average</p>
+        <div className="rounded-lg border border-border bg-background p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Average</p>
+          <p className="mt-2 text-2xl font-semibold text-foreground">{statistics.averageScore.toFixed(1)}</p>
+          <p className="mt-1 text-xs text-muted">Class average</p>
         </div>
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">Pass Rate</p>
-          <p className="mt-2 text-2xl font-semibold text-gray-900">{statistics.passRate.toFixed(1)}%</p>
-          <p className="mt-1 text-xs text-gray-500">{statistics.passCount} passed</p>
+        <div className="rounded-lg border border-border bg-background p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Pass Rate</p>
+          <p className="mt-2 text-2xl font-semibold text-foreground">{statistics.passRate.toFixed(1)}%</p>
+          <p className="mt-1 text-xs text-muted">{statistics.passCount} passed</p>
         </div>
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">Students</p>
-          <p className="mt-2 text-2xl font-semibold text-gray-900">{stats.totalStudents}</p>
-          <p className="mt-1 text-xs text-gray-500">Distinct pupils</p>
+        <div className="rounded-lg border border-border bg-background p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Students</p>
+          <p className="mt-2 text-2xl font-semibold text-foreground">{stats.totalStudents}</p>
+          <p className="mt-1 text-xs text-muted">Distinct pupils</p>
         </div>
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">Median</p>
-          <p className="mt-2 text-2xl font-semibold text-gray-900">{statistics.medianScore.toFixed(1)}</p>
-          <p className="mt-1 text-xs text-gray-500">Middle score</p>
+        <div className="rounded-lg border border-border bg-background p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Median</p>
+          <p className="mt-2 text-2xl font-semibold text-foreground">{statistics.medianScore.toFixed(1)}</p>
+          <p className="mt-1 text-xs text-muted">Middle score</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(360px,1.1fr)]">
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-gray-500">Score Range</p>
-          <p className="mt-2 text-3xl font-semibold text-gray-900">{(statistics.highestScore - statistics.lowestScore).toFixed(1)}</p>
+        <div className="rounded-lg border border-border bg-background p-4">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-muted">Score Range</p>
+          <p className="mt-2 text-3xl font-semibold text-foreground">{(statistics.highestScore - statistics.lowestScore).toFixed(1)}</p>
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-lg border border-gray-200 bg-white p-3 text-center">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-500">High</p>
-              <p className="mt-2 text-lg font-semibold text-gray-900">{statistics.highestScore.toFixed(1)}</p>
+            <div className="rounded-lg border border-border bg-surface p-3 text-center">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">High</p>
+              <p className="mt-2 text-lg font-semibold text-foreground">{statistics.highestScore.toFixed(1)}</p>
             </div>
-            <div className="rounded-lg border border-gray-200 bg-white p-3 text-center">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-500">Low</p>
-              <p className="mt-2 text-lg font-semibold text-gray-900">{statistics.lowestScore.toFixed(1)}</p>
+            <div className="rounded-lg border border-border bg-surface p-3 text-center">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">Low</p>
+              <p className="mt-2 text-lg font-semibold text-foreground">{statistics.lowestScore.toFixed(1)}</p>
             </div>
-            <div className="rounded-lg border border-gray-200 bg-white p-3 text-center">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-500">Avg</p>
-              <p className="mt-2 text-lg font-semibold text-gray-900">{statistics.averageScore.toFixed(1)}</p>
+            <div className="rounded-lg border border-border bg-surface p-3 text-center">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted">Avg</p>
+              <p className="mt-2 text-lg font-semibold text-foreground">{statistics.averageScore.toFixed(1)}</p>
             </div>
           </div>
         </div>
 
-        <div className="rounded-lg border border-gray-200 bg-white p-4">
+        <div className="rounded-lg border border-border bg-background p-4">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-base font-semibold text-gray-900">Grade Distribution</h2>
-            <span className="text-sm text-gray-500">{stats.totalResults} entries</span>
+            <h2 className="text-base font-semibold text-foreground">Grade Distribution</h2>
+            <span className="text-sm text-muted">{stats.totalResults} entries</span>
           </div>
 
           <div className="space-y-3">

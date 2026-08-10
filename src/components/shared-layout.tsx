@@ -1,11 +1,13 @@
 "use client";
 
-import { ReactNode, useEffect, useRef, useState } from "react";
+import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import Sidebar from "@/components/sidebar";
 import { usePathname } from "next/navigation";
 import { Menu, X, FileText, Music, Play, Pause, ChevronDown, Volume2, Calculator, Bell, Clock, Sparkles, Loader2, MoonStar, SunMedium, Equal, Delete, RefreshCcw, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ThemeSwitcher } from "@/components/platform-admin/theme-switcher";
 import { playCloseTone, playOpenTone } from "@/lib/sounds";
+import { applyTheme, detectSystemTheme, resolveStoredTheme, ThemeMode } from "@/lib/theme";
 
 export type NavItem = {
   href: string;
@@ -49,7 +51,7 @@ export default function SharedLayout({
   const [isVolumePopoverOpen, setIsVolumePopoverOpen] = useState(false);
   const [isAudioPlayerOpen, setIsAudioPlayerOpen] = useState(false);
   const [isAudioBuffering, setIsAudioBuffering] = useState(false);
-  const [themeMode, setThemeMode] = useState<"light" | "dark">("light");
+  const [themeMode, setThemeMode] = useState<ThemeMode>("system");
   const [isToolsOpen, setIsToolsOpen] = useState(false);
   const [toolsPosition, setToolsPosition] = useState({ x: 24, y: 120 });
   const [isDraggingTools, setIsDraggingTools] = useState(false);
@@ -59,6 +61,11 @@ export default function SharedLayout({
   const [isDraggingAudioPanel, setIsDraggingAudioPanel] = useState(false);
   const [activeTool, setActiveTool] = useState<"notes" | "calculator" | "reminders" | "timer">("notes");
   const [isToolPanelOpen, setIsToolPanelOpen] = useState(false);
+  const [isThemeOpen, setIsThemeOpen] = useState(false);
+  const [themePanelPosition, setThemePanelPosition] = useState({ x: 680, y: 120 });
+  const [isDraggingThemePanel, setIsDraggingThemePanel] = useState(false);
+  const themePanelRef = useRef<HTMLDivElement | null>(null);
+  const themePanelDragOffsetRef = useRef({ x: 0, y: 0 });
   const [calculatorExpression, setCalculatorExpression] = useState("12+34");
   const [calculatorResult, setCalculatorResult] = useState("0");
   const [calculatorHistory, setCalculatorHistory] = useState<string[]>([]);
@@ -92,10 +99,33 @@ export default function SharedLayout({
     setAdminSessionNotes(window.sessionStorage.getItem("schoolbase-admin-session-notes") || "");
     setPlayerCollapsed(window.localStorage.getItem("admin-notes-player-collapsed") === "true");
 
-    const storedTheme = window.localStorage.getItem("schoolbase-theme");
-    const nextTheme = storedTheme === "dark" ? "dark" : "light";
-    setThemeMode(nextTheme);
+    const stored = resolveStoredTheme();
+    setThemeMode(stored);
+    applyTheme(stored);
   }, []);
+
+  useEffect(() => {
+    if (themeMode !== "system") return;
+
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleSystemChange = () => applyTheme("system");
+
+    media.addEventListener("change", handleSystemChange);
+    return () => media.removeEventListener("change", handleSystemChange);
+  }, [themeMode]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (themePanelRef.current?.contains(event.target as Node)) {
+        return;
+      }
+      setIsThemeOpen(false);
+    };
+
+    if (!isThemeOpen) return;
+    window.addEventListener("mousedown", handleClickOutside);
+    return () => window.removeEventListener("mousedown", handleClickOutside);
+  }, [isThemeOpen]);
 
   useEffect(() => {
     window.sessionStorage.setItem("schoolbase-admin-session-notes", adminSessionNotes);
@@ -127,6 +157,52 @@ export default function SharedLayout({
       window.removeEventListener("mouseup", handleMouseUp);
     };
   }, [isDraggingNotes]);
+
+  useEffect(() => {
+    if (!isDraggingThemePanel) return;
+
+    const handleMouseMove = (event: MouseEvent) => {
+      setThemePanelPosition((current) => clampToViewport(
+        {
+          x: event.clientX - themePanelDragOffsetRef.current.x,
+          y: event.clientY - themePanelDragOffsetRef.current.y,
+        },
+        320,
+        260
+      ));
+    };
+
+    const handleTouchMove = (event: TouchEvent) => {
+      if (event.touches.length !== 1) return;
+      const touch = event.touches[0];
+      setThemePanelPosition((current) => clampToViewport(
+        {
+          x: touch.clientX - themePanelDragOffsetRef.current.x,
+          y: touch.clientY - themePanelDragOffsetRef.current.y,
+        },
+        320,
+        260
+      ));
+      event.preventDefault();
+    };
+
+    const handleMouseUp = () => setIsDraggingThemePanel(false);
+    const handleTouchEnd = () => setIsDraggingThemePanel(false);
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    window.addEventListener("touchmove", handleTouchMove, { passive: false });
+    window.addEventListener("touchend", handleTouchEnd);
+    window.addEventListener("touchcancel", handleTouchEnd);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleTouchEnd);
+      window.removeEventListener("touchcancel", handleTouchEnd);
+    };
+  }, [isDraggingThemePanel]);
 
   useEffect(() => {
     if (!isResizingNotes) return;
@@ -386,6 +462,13 @@ export default function SharedLayout({
     }
   };
 
+  const openThemePanel = () => {
+    playOpenTone();
+    setIsToolsOpen(false);
+    setThemePanelPosition((current) => clampToViewport(current, 320, 260));
+    setIsThemeOpen(true);
+  };
+
   const toggleToolsOpen = () => {
     setIsToolsOpen((current) => {
       const next = !current;
@@ -506,6 +589,26 @@ export default function SharedLayout({
     toolPanelDragOffsetRef.current = {
       x: event.clientX - toolPanelPosition.x,
       y: event.clientY - toolPanelPosition.y,
+    };
+  };
+
+  const handleThemePanelMouseDown = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    if ((event.target as HTMLElement).closest("button")) return;
+    event.preventDefault();
+    setIsDraggingThemePanel(true);
+    themePanelDragOffsetRef.current = {
+      x: event.clientX - themePanelPosition.x,
+      y: event.clientY - themePanelPosition.y,
+    };
+  };
+
+  const handleThemePanelTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (event.touches.length !== 1) return;
+    const touch = event.touches[0];
+    setIsDraggingThemePanel(true);
+    themePanelDragOffsetRef.current = {
+      x: touch.clientX - themePanelPosition.x,
+      y: touch.clientY - themePanelPosition.y,
     };
   };
 
@@ -661,10 +764,22 @@ export default function SharedLayout({
     setAudioProgress(nextTime / (audioRef.current.duration || 1));
   };
 
-  const toggleThemeMode = () => {
-    const nextTheme = themeMode === "dark" ? "light" : "dark";
+  const actualTheme = themeMode === "system" ? (typeof window !== "undefined" ? detectSystemTheme() : "light") : themeMode;
+
+  const handleThemeChange = (nextTheme: ThemeMode) => {
     setThemeMode(nextTheme);
-    window.localStorage.setItem("schoolbase-theme", nextTheme);
+    applyTheme(nextTheme);
+  };
+
+  const themeStatusText = useMemo(() => {
+    if (themeMode === "system") return "Auto following your OS preference.";
+    if (themeMode === "dark") return "Dark mode stays active regardless of system setting.";
+    return "Light mode stays active regardless of system setting.";
+  }, [themeMode]);
+
+  const toggleThemeMode = () => {
+    const nextTheme = actualTheme === "dark" ? "light" : "dark";
+    handleThemeChange(nextTheme);
   };
 
   const handleAudioTimeUpdate = () => {
@@ -790,6 +905,7 @@ export default function SharedLayout({
 
         <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden p-6 md:p-8 print:overflow-visible print:p-0">{children}</main>
 
+
         <div
           className="fixed z-50 flex flex-col items-end gap-2"
           style={{ left: toolsPosition.x, top: toolsPosition.y }}
@@ -853,6 +969,15 @@ export default function SharedLayout({
                 </button>
                 <button
                   type="button"
+                  onClick={openThemePanel}
+                  className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#0A66C2] text-white shadow-lg shadow-slate-900/10 transition hover:scale-105"
+                  title="Theme"
+                  aria-label="Open Theme settings"
+                >
+                  <SunMedium className="h-5 w-5" />
+                </button>
+                <button
+                  type="button"
                   onClick={() => {
                     toggleAudioPlayer();
                     setIsToolsOpen(false);
@@ -865,6 +990,7 @@ export default function SharedLayout({
                 </button>
               </div>
             ) : null}
+
           </div>
 
         </div>
@@ -1031,6 +1157,35 @@ export default function SharedLayout({
             </div>
           ) : null}
         </div>
+
+        {isThemeOpen ? (
+          <div
+            ref={themePanelRef}
+            className={`fixed z-50 w-[320px] max-w-[calc(100vw-32px)] rounded-[28px] border p-4 shadow-[0_20px_80px_rgba(0,0,0,0.16)] transition ${themeMode === "dark" ? "border-slate-700 bg-slate-900 text-slate-100" : "border-slate-200 bg-white text-slate-900"}`}
+            style={{ left: themePanelPosition.x, top: themePanelPosition.y }}
+          >
+            <div
+              className={`flex cursor-grab items-center justify-between gap-3 rounded-t-3xl px-5 py-4 ${themeMode === "dark" ? "bg-slate-800" : "bg-gradient-to-r from-[#dbeafe] via-[#bfdbfe] to-[#f8fafc]"}`}
+              onMouseDown={handleThemePanelMouseDown}
+              onTouchStart={handleThemePanelTouchStart}
+            >
+              <div>
+                <p className={`text-sm font-semibold ${themeMode === "dark" ? "text-slate-100" : "text-slate-900"}`}>Theme settings</p>
+                <p className={`text-xs ${themeMode === "dark" ? "text-slate-400" : "text-slate-600"}`}>Drag to reposition</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsThemeOpen(false)}
+                className={`rounded-lg border px-3 py-2 text-xs font-semibold transition ${themeMode === "dark" ? "border-slate-700 bg-slate-800 text-slate-100 hover:bg-slate-700" : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"}`}
+              >
+                Close
+              </button>
+            </div>
+            <div className="mt-4">
+              <ThemeSwitcher theme={themeMode} onChange={handleThemeChange} />
+            </div>
+          </div>
+        ) : null}
 
         {isNotesOpen ? (
           <div className="fixed inset-0 z-50 pointer-events-none">

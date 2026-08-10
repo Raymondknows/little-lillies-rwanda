@@ -92,18 +92,18 @@ export default function SettingsClient() {
   const [recipientDrafts, setRecipientDrafts] = useState({ signup: "", support: "" });
   const [formData, setFormData] = useState({ name: "", email: "" });
   const [openPanels, setOpenPanels] = useState({
-    overview: true,
-    admin: true,
-    system: true,
-    preferences: true,
-    activity: true,
-    security: true,
+    overview: false,
+    admin: false,
+    system: false,
+    preferences: false,
+    activity: false,
+    security: false,
   });
   const [openPreferencePanels, setOpenPreferencePanels] = useState({
-    controls: true,
-    supportEmail: true,
-    notifications: true,
-    paymentPlans: true,
+    controls: false,
+    supportEmail: false,
+    notifications: false,
+    paymentPlans: false,
   });
 
   function togglePanel(panel: keyof typeof openPanels) {

@@ -372,8 +372,8 @@ export default function ClassesPageClient({ classes: initialClasses }: { classes
           </div>
 
           {error && (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-              <p className="text-sm text-red-700">Error: {error}</p>
+            <div className="rounded-lg border border-error/20 bg-error/10 p-4">
+              <p className="text-sm text-error">Error: {error}</p>
             </div>
           )}
 
@@ -568,8 +568,9 @@ export default function ClassesPageClient({ classes: initialClasses }: { classes
                               Edit
                             </button>
                             <button
+                              type="button"
                               onClick={() => openDeleteModal(classItem)}
-                              className="inline-flex px-3 py-1.5 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 text-sm font-medium transition-colors"
+                              className="inline-flex px-3 py-1.5 rounded-lg border border-error/20 bg-error/10 hover:bg-error/20 text-error text-sm font-medium transition-colors"
                             >
                               Delete
                             </button>
@@ -597,7 +598,7 @@ export default function ClassesPageClient({ classes: initialClasses }: { classes
                     <button
                       key={classItem.id}
                       onClick={() => openModal(classItem)}
-                      className="block w-full text-left rounded-lg border border-border bg-surface p-4 hover:border-blue-400 hover:shadow-sm transition-all"
+                      className="block w-full text-left rounded-lg border border-border bg-surface p-4 hover:border-border/80 hover:shadow-sm transition-all"
                     >
                       <div className="flex items-center justify-between gap-3">
                         <div className="flex-1 min-w-0">
@@ -636,40 +637,40 @@ export default function ClassesPageClient({ classes: initialClasses }: { classes
               `}</style>
 
               <div
-                className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_50px_rgba(220,38,38,0.16)]"
+                className="w-full max-w-md overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_16px_50px_rgba(220,38,38,0.16)]"
                 style={{
                   animation: `${deleteAnimateState === "enter" ? "classes_delete_enter" : "classes_delete_exit"} 320ms cubic-bezier(.2,.9,.2,1)`,
                 }}
               >
-                <div className="border-b border-slate-100 px-6 py-5" style={{ background: "linear-gradient(90deg, rgba(220,38,38,0.12), rgba(220,38,38,0.04))" }}>
+                <div className="border-b border-border/70 bg-error/10 px-6 py-5">
                   <div className="flex items-start gap-3">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/70 bg-red-100 shadow-sm">
-                      <AlertCircle className="h-6 w-6 text-red-600" />
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-error/20 bg-error/10 shadow-sm">
+                      <AlertCircle className="h-6 w-6 text-error" />
                     </div>
                     <div>
-                      <h2 className="text-lg font-semibold text-slate-900">Delete Class?</h2>
-                      <p className="mt-1 text-sm text-slate-600">This action cannot be undone.</p>
+                      <h2 className="text-lg font-semibold text-foreground">Delete Class?</h2>
+                      <p className="mt-1 text-sm text-muted">This action cannot be undone.</p>
                     </div>
                   </div>
                 </div>
 
                 <div className="px-6 py-5">
-                  <p className="text-sm leading-6 text-slate-700">
+                  <p className="text-sm leading-6 text-muted">
                     You are about to permanently delete <strong>“{deletingClassName}”</strong>.
                   </p>
-                  <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3">
-                    <p className="text-xs text-red-700">
+                  <div className="mt-4 rounded-lg border border-error/20 bg-error/10 p-3">
+                    <p className="text-xs text-error">
                       <strong>Warning:</strong> This will remove the class from the system and may affect related student assignments.
                     </p>
                   </div>
                 </div>
 
-                <div className="flex gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4">
+                <div className="flex gap-3 border-t border-border/70 bg-background px-6 py-4">
                   <button
                     type="button"
                     onClick={closeDeleteModal}
                     disabled={isDeleting}
-                    className="flex-1 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-slate-100 disabled:opacity-50 text-slate-700"
+                    className="flex-1 rounded-lg border border-border px-4 py-2.5 text-sm font-medium transition-colors hover:bg-surface disabled:opacity-50 text-foreground"
                   >
                     Cancel
                   </button>
@@ -677,10 +678,7 @@ export default function ClassesPageClient({ classes: initialClasses }: { classes
                     type="button"
                     onClick={confirmDeleteClass}
                     disabled={isDeleting}
-                    className="flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-colors disabled:opacity-50"
-                    style={{ background: "#DC2626" }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "#991B1B")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "#DC2626")}
+                    className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-error px-4 py-2.5 text-sm font-medium text-white hover:bg-error/90 transition-colors disabled:opacity-50"
                   >
                     {isDeleting ? (
                       <>
@@ -708,10 +706,10 @@ export default function ClassesPageClient({ classes: initialClasses }: { classes
               `}</style>
 
               <div
-                className="w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_50px_rgba(10,102,194,0.16)]"
+                className="w-full max-w-2xl overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_16px_50px_rgba(10,102,194,0.16)]"
                 style={{ animation: `classes_modal_enter 320ms cubic-bezier(.2,.9,.2,1)` }}
               >
-                <div className="border-b border-slate-100 px-6 py-5" style={{ background: "linear-gradient(90deg, rgba(10,102,194,0.12), rgba(10,102,194,0.04))" }}>
+                <div className="border-b border-border/70 bg-brand/10 px-6 py-5">
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <h2 className="text-2xl font-bold text-foreground">
@@ -795,7 +793,7 @@ export default function ClassesPageClient({ classes: initialClasses }: { classes
                         <button
                           type="button"
                           onClick={() => openDeleteModal(selectedClass)}
-                          className="px-4 py-2 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 text-sm font-medium transition-colors"
+                          className="px-4 py-2 rounded-lg border border-error/20 bg-error/10 hover:bg-error/20 text-error text-sm font-medium transition-colors"
                         >
                           Delete
                         </button>

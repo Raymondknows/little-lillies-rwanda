@@ -351,14 +351,14 @@ export default function SubjectsPageClient({
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
               placeholder="Search subjects, classes, or teachers..."
-              className="w-full rounded-lg border-2 border-[#0A66C2] bg-background px-4 py-2 text-sm text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
+              className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-brand"
             />
           </div>
           <Button
             type="button"
             variant="primary"
             onClick={() => setIsSearchOpen((open) => !open)}
-            className="h-9 rounded-md border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8]"
+            className="h-9 rounded-md border border-brand bg-brand px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-brand/90"
           >
             <Search className="h-4 w-4" />
             {isSearchOpen ? "Close Search" : "Search Subject"}
@@ -366,7 +366,7 @@ export default function SubjectsPageClient({
           <button
             type="button"
             onClick={() => openSubjectModal()}
-            className="h-9 rounded-md border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8]"
+            className="h-9 rounded-md border border-brand bg-brand px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-brand/90"
           >
             Add subject
           </button>
@@ -404,7 +404,7 @@ export default function SubjectsPageClient({
                           type="button"
                           onClick={() => openSubjectModal(subject)}
                           aria-label="Edit subject"
-                          className="flex h-10 w-10 items-center justify-center rounded-full border border-[#0A66C2]/20 bg-[#0A66C2]/10 text-[#0A66C2] transition hover:bg-[#0A66C2]/15 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]/30"
+                          className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background text-foreground transition-colors hover:bg-surface focus:outline-none focus:ring-2 focus:ring-brand/30"
                         >
                           <Edit2 className="h-4 w-4" />
                         </button>
@@ -412,7 +412,7 @@ export default function SubjectsPageClient({
                           type="button"
                           onClick={() => openDeleteModal(subject)}
                           aria-label="Delete subject"
-                          className="flex h-10 w-10 items-center justify-center rounded-full border border-red-200 bg-red-50 text-red-700 transition hover:bg-red-100"
+                          className="flex h-10 w-10 items-center justify-center rounded-full border border-error/20 bg-error/10 text-error transition-colors hover:bg-error/20"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -464,9 +464,9 @@ export default function SubjectsPageClient({
       </div>
 
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-3xl max-h-[90vh] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_50px_rgba(10,102,194,0.16)]">
-            <div className="border-b border-slate-100 px-6 py-5" style={{ background: "linear-gradient(90deg, rgba(10,102,194,0.12), rgba(10,102,194,0.04))" }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-3xl max-h-[90vh] overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_16px_50px_rgba(10,102,194,0.16)]">
+            <div className="border-b border-border/70 bg-brand/10 px-6 py-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h2 className="text-2xl font-bold text-foreground">
@@ -484,7 +484,7 @@ export default function SubjectsPageClient({
                       type="button"
                       onClick={handleDelete}
                       title="Delete subject"
-                      className="flex h-10 w-10 items-center justify-center rounded-full border border-[#0A66C2]/20 bg-[#0A66C2]/10 text-[#0A66C2] transition hover:bg-[#0A66C2]/15 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]/30"
+                      className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background text-foreground transition-colors hover:bg-surface focus:outline-none focus:ring-2 focus:ring-brand/30"
                       aria-label="Delete subject"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -497,7 +497,7 @@ export default function SubjectsPageClient({
                       setIsOpen(false);
                     }}
                     title="Close modal"
-                    className="flex h-10 w-10 items-center justify-center rounded-full border border-[#0A66C2]/20 bg-[#0A66C2]/10 text-[#0A66C2] transition hover:bg-[#0A66C2]/15 focus:outline-none focus:ring-2 focus:ring-[#0A66C2]/30"
+                    className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background text-foreground transition-colors hover:bg-surface focus:outline-none focus:ring-2 focus:ring-brand/30"
                     aria-label="Close modal"
                   >
                     <X className="h-4 w-4" />
@@ -508,8 +508,8 @@ export default function SubjectsPageClient({
 
             <form onSubmit={handleSubmit} className="max-h-[calc(90vh-160px)] overflow-y-auto space-y-5 px-6 py-6">
               {error && (
-                <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-                  <p className="text-sm text-red-700">{error}</p>
+                <div className="rounded-lg border border-error/20 bg-error/10 p-4">
+                  <p className="text-sm text-error">{error}</p>
                 </div>
               )}
 
@@ -578,7 +578,7 @@ export default function SubjectsPageClient({
                   disabled={loading}
                   title={selectedSubject ? "Save changes" : "Add subject"}
                   aria-label={selectedSubject ? "Save changes" : "Add subject"}
-                  className="rounded-lg bg-[#0A66C2] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#0858a8] disabled:opacity-50"
+                  className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand/90 disabled:opacity-50"
                 >
                   {loading ? "Saving..." : selectedSubject ? "Save changes" : "Add subject"}
                 </button>
@@ -595,40 +595,40 @@ export default function SubjectsPageClient({
           `}</style>
 
           <div
-            className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_50px_rgba(220,38,38,0.16)]"
+            className="w-full max-w-md overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_16px_50px_rgba(220,38,38,0.16)]"
             style={{
               animation: `${deleteAnimateState === "enter" ? "subjects_delete_enter" : "subjects_delete_exit"} 320ms cubic-bezier(.2,.9,.2,1)`,
             }}
           >
-            <div className="border-b border-slate-100 px-6 py-5" style={{ background: "linear-gradient(90deg, rgba(220,38,38,0.12), rgba(220,38,38,0.04))" }}>
+            <div className="border-b border-border/70 bg-error/10 px-6 py-5">
               <div className="flex items-start gap-3">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/70 bg-red-100 shadow-sm">
-                  <AlertCircle className="h-6 w-6 text-red-600" />
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-error/20 bg-error/10 shadow-sm">
+                  <AlertCircle className="h-6 w-6 text-error" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold text-slate-900">Delete Subject?</h2>
-                  <p className="mt-1 text-sm text-slate-600">This action cannot be undone.</p>
+                  <h2 className="text-lg font-semibold text-foreground">Delete Subject?</h2>
+                  <p className="mt-1 text-sm text-muted">This action cannot be undone.</p>
                 </div>
               </div>
             </div>
 
             <div className="px-6 py-5">
-              <p className="text-sm leading-6 text-slate-700">
+              <p className="text-sm leading-6 text-muted">
                 You are about to permanently delete <strong>“{deletingSubjectName}”</strong>.
               </p>
-              <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3">
-                <p className="text-xs text-red-700">
+              <div className="mt-4 rounded-lg border border-error/20 bg-error/10 p-3">
+                <p className="text-xs text-error">
                   <strong>Warning:</strong> This will remove the subject from the system and unassign it from all classes.
                 </p>
               </div>
             </div>
 
-            <div className="flex gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4">
+            <div className="flex gap-3 border-t border-border/70 bg-background px-6 py-4">
               <button
                 type="button"
                 onClick={closeDeleteModal}
                 disabled={loading}
-                className="flex-1 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-slate-100 disabled:opacity-50 text-slate-700"
+                className="flex-1 rounded-lg border border-border px-4 py-2.5 text-sm font-medium transition-colors hover:bg-surface disabled:opacity-50 text-foreground"
               >
                 Cancel
               </button>
@@ -636,10 +636,7 @@ export default function SubjectsPageClient({
                 type="button"
                 onClick={confirmDeleteSubject}
                 disabled={loading}
-                className="flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-colors disabled:opacity-50"
-                style={{ background: "#DC2626" }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = "#991B1B")}
-                onMouseLeave={(e) => (e.currentTarget.style.background = "#DC2626")}
+                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-error px-4 py-2.5 text-sm font-medium text-white hover:bg-error/90 transition-colors disabled:opacity-50"
               >
                 {loading ? (
                   <>

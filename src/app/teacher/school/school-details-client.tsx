@@ -60,11 +60,11 @@ export function TeacherSchoolDetailsContent({ school }: TeacherSchoolDetailsProp
         </Link>
       </div>
 
-      <div className="rounded-2xl border border-border bg-white">
+      <div className="rounded-2xl border border-border bg-surface">
         <div className="p-4 space-y-4 sm:p-5">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-slate-100 overflow-hidden">
+              <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-muted overflow-hidden">
                 {school.logoUrl ? (
                   <img
                     src={school.logoUrl}

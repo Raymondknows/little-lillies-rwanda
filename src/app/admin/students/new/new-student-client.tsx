@@ -8,7 +8,7 @@ import { getBackendUrl } from "@/lib/backend-url";
 import { useState, useEffect, type ChangeEvent, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Loader2, Upload, ChevronDown } from "lucide-react";
+import { AlertCircle, ChevronDown, Loader2, Upload, X } from "lucide-react";
 import { WhatsAppIcon } from "@/components/ui/icons";
 
 export default function NewStudentClient() {
@@ -21,6 +21,7 @@ export default function NewStudentClient() {
   const [photoPreview, setPhotoPreview] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string>("");
+  const [errorModalOpen, setErrorModalOpen] = useState(false);
 
   const [whatsAppConnected, setWhatsAppConnected] = useState<boolean | null>(null);
   const [whatsAppStatusMessage, setWhatsAppStatusMessage] = useState<string | null>(null);
@@ -124,6 +125,8 @@ export default function NewStudentClient() {
 
     if (!trimmedFirstName || !trimmedLastName) {
       setError('First name and last name are required');
+      setErrorModalOpen(true);
+      playOpenTone();
       setIsSubmitting(false);
       return;
     }
@@ -211,10 +214,18 @@ export default function NewStudentClient() {
 
       router.push("/admin/students?created=1");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      const message = err instanceof Error ? err.message : "An error occurred";
+      setError(message);
+      setErrorModalOpen(true);
+      playOpenTone();
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const closeErrorModal = () => {
+    playCloseTone();
+    setErrorModalOpen(false);
   };
 
   return (
@@ -264,7 +275,7 @@ export default function NewStudentClient() {
 
       <form id="new-student-form" onSubmit={handleSubmit} className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Error Alert */}
-        {error && (
+        {error && !errorModalOpen && (
           <div className="lg:col-span-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
             {error}
           </div>
@@ -519,6 +530,91 @@ export default function NewStudentClient() {
           </div>
         </div>
       </form>
+
+      {errorModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4" role="dialog" aria-modal="true" aria-labelledby="student-registration-error-title">
+          <style>{`
+            @keyframes student_error_modal_enter { from { transform: translateX(36px) scale(.98); opacity: 0 } to { transform: translateX(0) scale(1); opacity: 1 } }
+          `}</style>
+          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_50px_rgba(10,102,194,0.16)]" style={{ animation: "student_error_modal_enter 320ms cubic-bezier(.2,.9,.2,1)" }}>
+            <div className="border-b border-slate-100 px-6 py-5" style={{ background: "linear-gradient(90deg, rgba(10,102,194,0.12), rgba(10,102,194,0.04))" }}>
+              <div className="flex items-start gap-3">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/70 bg-[rgba(10,102,194,0.12)] shadow-sm">
+                  <AlertCircle className="h-6 w-6 text-[#0A66C2]" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h2 id="student-registration-error-title" className="text-lg font-semibold text-slate-900">Unable to register student</h2>
+                  <p className="mt-1 text-sm text-slate-600">Please review the details below.</p>
+                </div>
+                <button type="button" onClick={closeErrorModal} className="rounded-lg p-1 text-slate-500 transition-colors hover:bg-white/70 hover:text-slate-900" aria-label="Close error modal">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            <div className="px-6 py-5">
+              <p className="text-sm leading-6 text-slate-700">{error}</p>
+              {error.toLowerCase().includes("limit") && (
+                <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                  <p className="text-xs leading-5 text-slate-700">Your school has reached its student capacity. Upgrade your plan to register more students.</p>
+                </div>
+              )}
+            </div>
+
+            <div className="border-t border-slate-100 bg-slate-50 px-6 py-4">
+              <button type="button" onClick={closeErrorModal} className="w-full rounded-lg bg-[#0A66C2] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#084B8A]">
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
+}
+
+function playOpenTone() {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const now = ctx.currentTime;
+    const playTone = (freq: number, duration: number, gain: number, delay = 0) => {
+      const osc = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, now + delay);
+      gainNode.gain.setValueAtTime(0.0001, now + delay);
+      gainNode.gain.exponentialRampToValueAtTime(gain, now + delay + 0.01);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, now + delay + duration);
+      osc.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      osc.start(now + delay);
+      osc.stop(now + delay + duration);
+    };
+    playTone(880, 0.16, 0.05, 0);
+    playTone(1174, 0.16, 0.05, 0.08);
+    setTimeout(() => ctx.close(), 700);
+  } catch {
+    // Audio is optional and may be unavailable in some browsers.
+  }
+}
+
+function playCloseTone() {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+    const now = ctx.currentTime;
+    osc.type = "sine";
+    osc.frequency.value = 420;
+    gainNode.gain.value = 0.0001;
+    gainNode.gain.linearRampToValueAtTime(0.045, now + 0.01);
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+    osc.connect(gainNode);
+    gainNode.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.24);
+    setTimeout(() => ctx.close(), 500);
+  } catch {
+    // Audio is optional and may be unavailable in some browsers.
+  }
 }

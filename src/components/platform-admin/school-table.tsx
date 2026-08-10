@@ -4,8 +4,9 @@ import { useMemo, useState, useRef, useEffect, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { resolveSchoolAssetUrl } from "@/lib/asset-urls";
+import { getPlanStudentLimit } from "@/lib/pricing";
 import { playCloseTone, playOpenTone } from "@/lib/sounds";
-import { Bell, CalendarPlus, CheckSquare, Download, Pause, Play, X } from "lucide-react";
+import { Bell, CalendarPlus, CheckSquare, Download, MoreVertical, Pause, Play, X } from "lucide-react";
 
 export type SchoolRow = {
   id: string;
@@ -23,6 +24,7 @@ export type SchoolRow = {
   userCount?: number;
   pupilCount?: number;
   classCount?: number;
+  planLimit?: number | null;
 };
 
 // Helper function to get the next plan tier
@@ -42,12 +44,14 @@ export function ActionMenu({
   impersonate,
   sendReminder,
   busy,
+  compact,
 }: {
   school: SchoolRow;
   performAction: (schoolId: string, action: string, payload?: Record<string, unknown>) => Promise<void>;
   impersonate: (schoolId: string) => Promise<void>;
   sendReminder: (schoolId: string) => Promise<void>;
   busy: boolean;
+  compact?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const btnRef = useRef<HTMLButtonElement | null>(null);
@@ -80,11 +84,13 @@ export function ActionMenu({
       <button
         ref={btnRef}
         type="button"
-        className="cursor-pointer inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold bg-white text-brand border border-brand"
+        className={`cursor-pointer inline-flex items-center justify-center gap-2 rounded-lg border border-brand bg-white text-brand transition ${compact ? "px-2.5 py-2" : "px-3 py-2.5 text-xs font-semibold"}`}
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
+        aria-label="Open school actions"
       >
-        Actions
+        <MoreVertical className="h-4 w-4" />
+        <span className={`${compact ? "sr-only sm:not-sr-only" : ""}`}>Actions</span>
       </button>
 
       {open && pos
@@ -146,7 +152,15 @@ export function ActionMenu({
   );
 }
 
-export function SchoolTable({ schools, filterControls }: { schools: SchoolRow[]; filterControls?: ReactNode }) {
+export function SchoolTable({
+  schools,
+  filterControls,
+  onOpenDetails,
+}: {
+  schools: SchoolRow[];
+  filterControls?: ReactNode;
+  onOpenDetails?: (school: SchoolRow) => void;
+}) {
   const [displaySchools, setDisplaySchools] = useState<SchoolRow[]>(schools);
   const [editingExpiryId, setEditingExpiryId] = useState<string | null>(null);
   const [editingExpiryValue, setEditingExpiryValue] = useState<string | null>(null);
@@ -621,8 +635,13 @@ export function SchoolTable({ schools, filterControls }: { schools: SchoolRow[];
                   </label>
                 </td>
                 <td className="px-4 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-2xl bg-brand/10 text-sm font-semibold text-brand">
+                  <button
+                    type="button"
+                    onClick={() => onOpenDetails?.(school)}
+                    className="flex cursor-pointer items-center gap-3 text-left"
+                    disabled={!onOpenDetails}
+                  >
+                    <div className="flex h-10 w-10 cursor-pointer items-center justify-center overflow-hidden rounded-2xl bg-brand/10 text-sm font-semibold text-brand">
                       {school.logoUrl ? (
                         <img
                           src={resolveSchoolAssetUrl(school.logoUrl) || school.logoUrl}
@@ -637,7 +656,7 @@ export function SchoolTable({ schools, filterControls }: { schools: SchoolRow[];
                       <div className="font-semibold text-foreground">{school.name}</div>
                       <div className="text-xs text-muted">{school.email ?? "No email"}</div>
                     </div>
-                  </div>
+                  </button>
                 </td>
                 <td className="px-4 py-4 text-foreground">{school.country}</td>
                 <td className="px-4 py-4 text-muted">{school.phone || "—"}</td>
@@ -646,6 +665,38 @@ export function SchoolTable({ schools, filterControls }: { schools: SchoolRow[];
                   <div className="text-xs text-muted">
                     {school.userCount ?? 0} admins · {school.pupilCount ?? 0} students
                   </div>
+                  {(() => {
+                    const planLimit = school.planLimit ?? getPlanStudentLimit(school.plan);
+                    const studentCount = school.pupilCount ?? 0;
+                    if (planLimit) {
+                      const ratio = Math.min(studentCount / planLimit, 1);
+                      const progressColor = ratio >= 1
+                        ? 'bg-rose-500'
+                        : ratio >= 0.7
+                        ? 'bg-amber-500'
+                        : 'bg-emerald-500';
+
+                      return (
+                        <div className="mt-3 space-y-2">
+                          <div className="flex items-center justify-between gap-2 text-[11px] uppercase tracking-[0.12em] text-muted">
+                            <span>{studentCount} / {planLimit} students</span>
+                            {studentCount >= planLimit ? (
+                              <span className="rounded-full bg-rose-100 px-2 py-1 text-rose-700">Limit reached</span>
+                            ) : studentCount >= planLimit * 0.7 ? (
+                              <span className="rounded-full bg-amber-100 px-2 py-1 text-amber-700">Approaching limit</span>
+                            ) : null}
+                          </div>
+                          <div className="h-2 overflow-hidden rounded-full bg-slate-200">
+                            <div className={`${progressColor} h-full rounded-full`} style={{ width: `${ratio * 100}%` }} />
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div className="mt-3 text-[11px] text-muted">Unlimited student capacity</div>
+                    );
+                  })()}
                 </td>
                 <td className="px-4 py-4">
                   <span className={`inline-flex rounded-full px-3 py-1 text-[11px] font-semibold ${

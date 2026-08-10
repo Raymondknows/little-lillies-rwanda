@@ -14,6 +14,18 @@ export interface CountryPlans {
   group: PlanConfig;
 }
 
+export const PLAN_STUDENT_LIMITS: Record<string, number | null> = {
+  FREE: null,
+  TRIAL: null,
+  STARTER: 150,
+  GROWTH: 600,
+  ENTERPRISE: null,
+};
+
+export function getPlanStudentLimit(plan: string): number | null {
+  return PLAN_STUDENT_LIMITS[plan] ?? null;
+}
+
 export function getPricingByCurrency(currencyCode: string): CountryPlans {
   // Fixed NGN prices for everyone
   const starterNGN = 60000;

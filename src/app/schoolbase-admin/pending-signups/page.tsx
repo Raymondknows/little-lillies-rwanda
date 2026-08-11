@@ -99,7 +99,7 @@ export default function PendingSignupsPage() {
                 </thead>
                 <tbody>
                   {signups.map((s) => (
-                    <tr key={s.id} className={`border-t border-border ${s.isExpired ? 'bg-red-50/40' : 'hover:bg-background'}`}>
+                    <tr key={s.id} className={`border-t border-border ${s.isExpired ? 'bg-error/10' : 'hover:bg-background'}`}>
                       <td className="px-4 py-3 align-top">
                         <div className="font-semibold">{s.schoolName}</div>
                         <div className="text-xs text-muted">{s.slug}</div>
@@ -111,14 +111,14 @@ export default function PendingSignupsPage() {
                       <td className="px-4 py-3 align-top">
                         <div className="flex flex-col gap-1">
                           <span>{new Date(s.expiresAt).toLocaleString()}</span>
-                          {s.isExpired && <span className="text-xs font-semibold uppercase text-red-700">Expired</span>}
+                          {s.isExpired && <span className="text-xs font-semibold uppercase text-error">Expired</span>}
                         </div>
                       </td>
                       <td className="px-4 py-3 align-top">{s.attempts}</td>
                       <td className="px-4 py-3 align-top">
                         <div className="flex items-center gap-2">
                           <button
-                            className={`inline-flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold bg-white text-brand border border-brand ${busyId === s.id ? 'opacity-60 pointer-events-none' : ''}`}
+                            className={`inline-flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold bg-brand text-white border border-brand ${busyId === s.id ? 'opacity-60 pointer-events-none' : ''}`}
                             onClick={() => openApproveModal(s)}
                           >
                             Approve
@@ -135,14 +135,14 @@ export default function PendingSignupsPage() {
               {signups.map((s) => (
                 <div
                   key={s.id}
-                  className={`rounded-3xl border border-border bg-white p-5 shadow-sm transition hover:shadow-md ${s.isExpired ? 'ring-1 ring-red-200' : ''}`}
+                  className={`rounded-3xl border border-border bg-surface p-5 shadow-sm transition hover:shadow-md ${s.isExpired ? 'ring-1 ring-error/20' : ''}`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-foreground">{s.schoolName}</p>
                       <p className="mt-1 text-xs text-muted">{s.slug}</p>
                     </div>
-                    <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase ${s.isExpired ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700'}`}>
+                    <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase ${s.isExpired ? 'bg-error/10 text-error' : 'bg-muted/20 text-muted'}`}>
                       {s.isExpired ? 'Expired' : 'Pending'}
                     </span>
                   </div>
@@ -178,9 +178,9 @@ export default function PendingSignupsPage() {
                     </div>
                   </div>
 
-                  <div className="mt-4 flex items-center justify-end">
+                    <div className="mt-4 flex items-center justify-end">
                     <button
-                      className={`inline-flex cursor-pointer items-center justify-center rounded-xl border border-brand bg-white px-4 py-2 text-sm font-semibold text-brand transition ${busyId === s.id ? 'opacity-60 pointer-events-none' : 'hover:bg-brand/5'}`}
+                      className={`inline-flex cursor-pointer items-center justify-center rounded-xl border border-brand bg-brand px-4 py-2 text-sm font-semibold text-white transition ${busyId === s.id ? 'opacity-60 pointer-events-none' : 'hover:bg-brand/90'}`}
                       onClick={() => openApproveModal(s)}
                     >
                       Approve
@@ -217,14 +217,14 @@ export function PendingSignupApproveModal({ open, signup, onClose, onConfirm, bu
       `}</style>
 
       <div
-        className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_50px_rgba(10,102,194,0.12)]"
+        className="w-full max-w-md overflow-hidden rounded-2xl border border-border bg-surface shadow-sm"
         style={{ animation: `approve_modal_enter 320ms cubic-bezier(.2,.9,.2,1)` }}
       >
-        <div className="border-b border-slate-100 px-6 py-5" style={{ background: "linear-gradient(90deg, rgba(10,102,194,0.12), rgba(10,102,194,0.04))" }}>
+        <div className="border-b border-border px-6 py-5 bg-background/40">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-start gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/70 bg-blue-100 shadow-sm">
-                <CheckCircle className="h-6 w-6 text-blue-600" />
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-border bg-brand/10 shadow-sm">
+                <CheckCircle className="h-6 w-6 text-brand" />
               </div>
               <div>
                 <h2 className="text-2xl font-bold text-foreground">Approve signup</h2>
@@ -243,17 +243,17 @@ export function PendingSignupApproveModal({ open, signup, onClose, onConfirm, bu
         </div>
 
         <div className="px-6 py-5">
-          <p className="text-sm leading-6 text-slate-700">
+          <p className="text-sm leading-6 text-foreground">
             You are about to approve the signup for <strong>“{signup.schoolName}”</strong> with admin <strong>{signup.adminName}</strong> ({signup.email}).
           </p>
         </div>
 
-        <div className="flex gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4">
+        <div className="flex gap-3 border-t border-border bg-background px-6 py-4">
           <button
             type="button"
             onClick={onClose}
             disabled={busy}
-            className="flex-1 cursor-pointer rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-slate-100 disabled:opacity-50 text-slate-700"
+            className="flex-1 cursor-pointer rounded-lg border border-border px-4 py-2.5 text-sm font-medium transition-colors hover:bg-background disabled:opacity-50 text-foreground"
           >
             Cancel
           </button>
@@ -262,10 +262,7 @@ export function PendingSignupApproveModal({ open, signup, onClose, onConfirm, bu
             type="button"
             onClick={onConfirm}
             disabled={busy}
-            className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-colors disabled:opacity-50"
-            style={{ background: '#0A66C2' }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = '#0858a8')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = '#0A66C2')}
+            className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium bg-brand text-white hover:bg-brand/90 disabled:opacity-50"
           >
             {busy ? (
               <>

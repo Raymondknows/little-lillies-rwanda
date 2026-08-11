@@ -392,7 +392,7 @@ export default function VideosClient({
             {videos.map((video) => (
               <div
                 key={video.id}
-                className="rounded-2xl border border-border bg-white p-3 shadow-sm transition hover:shadow-md sm:p-4"
+                className="rounded-2xl border border-border bg-surface p-3 shadow-sm transition hover:shadow-md sm:p-4"
               >
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                   <div className="min-w-0 flex-1">
@@ -400,11 +400,11 @@ export default function VideosClient({
                       <h3 className="font-semibold text-foreground text-base sm:text-lg truncate">
                         {video.title}
                       </h3>
-                      <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                      <span className="rounded-full bg-muted/20 px-3 py-1 text-xs font-semibold text-muted">
                         {video.category}
                       </span>
                       {video.featured && (
-                        <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
+                        <span className="rounded-full bg-warning/10 px-3 py-1 text-xs font-semibold text-warning">
                           Featured
                         </span>
                       )}
@@ -419,12 +419,12 @@ export default function VideosClient({
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap items-center justify-start gap-2 sm:justify-end">
+                    <div className="flex flex-wrap items-center justify-start gap-2 sm:justify-end">
                     <button
                       type="button"
                       onClick={() => copyShareLink(video.id)}
                       aria-label="Copy link"
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100"
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border bg-background text-foreground transition hover:bg-surface"
                     >
                       <Copy className="h-4 w-4" />
                     </button>
@@ -432,7 +432,7 @@ export default function VideosClient({
                       type="button"
                       onClick={() => handleEdit(video)}
                       aria-label="Edit video"
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-brand/10 text-brand border border-brand/20 transition hover:bg-brand/20"
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-brand/10 text-brand border border-border transition hover:bg-brand/20"
                     >
                       <Edit2 className="h-4 w-4" />
                     </button>
@@ -452,8 +452,8 @@ export default function VideosClient({
         )}
       </div>
       {confirmDeleteVideoId && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/40 p-4">
-          <div className="w-full max-w-lg rounded-3xl border border-border bg-white p-6 shadow-xl shadow-slate-900/20">
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-lg rounded-3xl border border-border bg-surface p-6 shadow-sm">
             <div className="mb-4">
               <h3 className="text-lg font-semibold text-foreground">Delete video</h3>
               <p className="mt-2 text-sm text-muted">
@@ -468,14 +468,14 @@ export default function VideosClient({
               <button
                 type="button"
                 onClick={() => setConfirmDeleteVideoId(null)}
-                className="inline-flex w-full justify-center rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition hover:bg-slate-100 sm:w-auto"
+                className="inline-flex w-full justify-center rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition hover:bg-background sm:w-auto"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={confirmDelete}
-                className="inline-flex w-full justify-center rounded-lg bg-error px-4 py-2 text-sm font-medium text-white transition hover:bg-red-600 sm:w-auto"
+                className="inline-flex w-full justify-center rounded-lg bg-error px-4 py-2 text-sm font-medium text-white transition hover:bg-error/90 sm:w-auto"
               >
                 Delete
               </button>

@@ -836,10 +836,10 @@ export default function SubscriptionsPageClient({
             @keyframes subscriptions_expiry_modal_enter { from { transform: translateY(24px) scale(.98); opacity: 0 } to { transform: translateY(0) scale(1); opacity: 1 } }
           `}</style>
           <div
-            className="w-full max-w-lg overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_50px_rgba(10,102,194,0.16)]"
+            className="w-full max-w-lg overflow-hidden rounded-2xl border border-border bg-surface shadow-sm"
             style={{ animation: `subscriptions_expiry_modal_enter 260ms cubic-bezier(.2,.9,.2,1)` }}
           >
-            <div className="border-b border-slate-100 px-6 py-5" style={{ background: "linear-gradient(90deg, rgba(10,102,194,0.12), rgba(10,102,194,0.04))" }}>
+            <div className="border-b border-border px-6 py-5 bg-background/40">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h2 className="text-2xl font-bold text-foreground">Edit expiry date</h2>
@@ -866,12 +866,12 @@ export default function SubscriptionsPageClient({
               />
             </div>
 
-            <div className="flex flex-col gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4 sm:flex-row sm:justify-end">
+            <div className="flex flex-col gap-3 border-t border-border bg-background px-6 py-4 sm:flex-row sm:justify-end">
               <button
                 type="button"
                 onClick={closeExpiryModal}
                 disabled={savingExpiry}
-                className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium text-foreground hover:bg-slate-100 disabled:opacity-50"
+                className="rounded-lg border border-border px-4 py-2.5 text-sm font-medium text-foreground hover:bg-background disabled:opacity-50"
               >
                 Cancel
               </button>

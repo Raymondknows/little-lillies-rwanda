@@ -3,7 +3,7 @@
 import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import Sidebar from "@/components/sidebar";
 import { usePathname } from "next/navigation";
-import { Menu, X, FileText, Music, Play, Pause, ChevronDown, Volume2, Calculator, Bell, Clock, Sparkles, Loader2, MoonStar, SunMedium, Equal, Delete, RefreshCcw, Plus } from "lucide-react";
+import { Menu, X, FileText, Music, Play, Pause, ChevronDown, ChevronLeft, ChevronRight, Volume2, Calculator, Bell, Clock, Sparkles, Loader2, MoonStar, SunMedium, Equal, Delete, RefreshCcw, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeSwitcher } from "@/components/platform-admin/theme-switcher";
 import { playCloseTone, playOpenTone } from "@/lib/sounds";
@@ -43,6 +43,8 @@ export default function SharedLayout({
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const [pendingAutoPlay, setPendingAutoPlay] = useState(false);
   const [playerCollapsed, setPlayerCollapsed] = useState(false);
+  const [audioQueue, setAudioQueue] = useState<Array<{ name: string; src: string }>>([]);
+  const [currentAudioIndex, setCurrentAudioIndex] = useState<number | null>(null);
   const [audioProgress, setAudioProgress] = useState(0);
   const [playerVolume, setPlayerVolume] = useState(0.75);
   const [noteModalWidth, setNoteModalWidth] = useState(720);
@@ -703,26 +705,33 @@ export default function SharedLayout({
   };
 
   const handleAudioFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(event.target.files || []);
+    if (files.length === 0) return;
 
-    const url = URL.createObjectURL(file);
-    setAudioFileUrl(url);
-    setAudioFileName(file.name);
-    setIsAudioPlaying(false);
-    setPendingAutoPlay(false);
-    setAudioProgress(0);
+    const items = files.map((file) => ({ name: file.name, src: URL.createObjectURL(file) }));
+
+    setAudioQueue((q) => {
+      const next = [...q, ...items];
+      // If nothing is currently playing, start the first of the newly added items
+      if (currentAudioIndex === null && next.length > 0) {
+        const idx = q.length; // index of first newly added
+        setCurrentAudioIndex(idx);
+        setAudioFileUrl(next[idx].src);
+        setAudioFileName(next[idx].name);
+        setPendingAutoPlay(true);
+        setIsAudioPlaying(true);
+        setAudioProgress(0);
+      }
+      return next;
+    });
   };
 
   const playDefaultJingle = (index: number) => {
     const jingle = DEFAULT_JINGLES[index];
     if (!jingle) return;
-
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-    }
-
+    // replace queue with single jingle and play immediately
+    setAudioQueue([{ name: jingle.name, src: jingle.src }]);
+    setCurrentAudioIndex(0);
     setAudioFileUrl(jingle.src);
     setAudioFileName(jingle.name);
     setPendingAutoPlay(true);
@@ -755,6 +764,40 @@ export default function SharedLayout({
     setIsAudioPlaying(false);
     setIsAudioBuffering(false);
     setAudioProgress(0);
+  };
+
+  const playTrackAtIndex = (index: number) => {
+    if (index < 0 || index >= audioQueue.length) return;
+    const item = audioQueue[index];
+    if (!item) return;
+
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+
+    setCurrentAudioIndex(index);
+    setAudioFileUrl(item.src);
+    setAudioFileName(item.name);
+    setPendingAutoPlay(true);
+    setIsAudioPlaying(true);
+    setAudioProgress(0);
+  };
+
+  const playPreviousTrack = () => {
+    if (audioQueue.length === 0 || currentAudioIndex === null) return;
+    const prevIndex = currentAudioIndex - 1;
+    if (prevIndex >= 0) {
+      playTrackAtIndex(prevIndex);
+    }
+  };
+
+  const playNextTrack = () => {
+    if (audioQueue.length === 0 || currentAudioIndex === null) return;
+    const nextIndex = currentAudioIndex + 1;
+    if (nextIndex < audioQueue.length) {
+      playTrackAtIndex(nextIndex);
+    }
   };
 
   const seekAudioBySeconds = (seconds: number) => {
@@ -805,8 +848,21 @@ export default function SharedLayout({
     if (!audioRef.current) return;
 
     const handleEnded = () => {
+      // play next track in queue if available
+      if (audioQueue.length > 0 && currentAudioIndex != null && currentAudioIndex + 1 < audioQueue.length) {
+        const nextIndex = currentAudioIndex + 1;
+        const nextItem = audioQueue[nextIndex];
+        setCurrentAudioIndex(nextIndex);
+        setAudioFileUrl(nextItem.src);
+        setAudioFileName(nextItem.name);
+        setPendingAutoPlay(true);
+        setIsAudioPlaying(true);
+        setAudioProgress(0);
+        return;
+      }
       setIsAudioPlaying(false);
       setIsAudioBuffering(false);
+      setCurrentAudioIndex(null);
     };
     const handleWaiting = () => setIsAudioBuffering(true);
     const handleCanPlay = () => setIsAudioBuffering(false);
@@ -823,7 +879,7 @@ export default function SharedLayout({
       audioRef.current?.removeEventListener("canplay", handleCanPlay);
       audioRef.current?.removeEventListener("playing", handlePlaying);
     };
-  }, [audioFileUrl]);
+  }, [audioFileUrl, audioQueue, currentAudioIndex]);
 
   useEffect(() => {
     if (audioRef.current) {
@@ -998,16 +1054,16 @@ export default function SharedLayout({
         <div className="fixed z-50 flex flex-col items-end gap-2" style={{ left: audioPanelPosition.x, top: audioPanelPosition.y }}>
           {isAudioPlayerOpen ? (
             <div
-              className={`w-[440px] max-w-[calc(100vw-32px)] rounded-[28px] border p-4 shadow-[0_20px_80px_rgba(0,0,0,0.12)] transition ${themeMode === "dark" ? "border-slate-700 bg-slate-900 text-slate-100" : "border-slate-200 bg-white text-slate-900"}`}
-            >
-                <div className={`flex cursor-grab items-start justify-between gap-3 rounded-t-3xl px-5 py-4 ${themeMode === "dark" ? "bg-slate-800" : "bg-gradient-to-r from-[#dbeafe] via-[#bfdbfe] to-[#f8fafc]"}`} onMouseDown={handleAudioPanelMouseDown} onTouchStart={handleAudioPanelTouchStart}>
+                  className={`w-[340px] max-w-[calc(100vw-32px)] rounded-[20px] border p-3 shadow-sm transition ${themeMode === "dark" ? "border-slate-700 bg-slate-900 text-slate-100" : "border-border bg-surface text-foreground"}`}
+                >
+                <div className={`flex cursor-grab items-start justify-between gap-3 rounded-t-lg px-4 py-3 ${themeMode === "dark" ? "bg-slate-800" : "bg-gradient-to-r from-[#dbeafe] via-[#bfdbfe] to-[#f8fafc]"}`} onMouseDown={handleAudioPanelMouseDown} onTouchStart={handleAudioPanelTouchStart}>
                 <div className="flex items-center gap-3">
-                  <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${themeMode === "dark" ? "bg-slate-800 text-slate-100" : "bg-slate-100 text-[#0A66C2]"}`}>
+                  <div className={`flex h-9 w-9 items-center justify-center rounded-2xl ${themeMode === "dark" ? "bg-slate-800 text-slate-100" : "bg-muted text-brand"}`}>
                     {isAudioPlaying ? <Loader2 className="h-5 w-5 animate-spin" /> : <Music className="h-5 w-5" />}
                   </div>
                   <div>
-                    <p className={`text-sm font-semibold ${themeMode === "dark" ? "text-slate-100" : "text-slate-900"}`}>Music player</p>
-                    <p className={`text-xs ${themeMode === "dark" ? "text-slate-400" : "text-slate-500"}`}>{audioFileName || "SchoolBase jingle"}</p>
+                    <p className={`text-sm font-semibold text-foreground`}>Music player</p>
+                    <p className={`text-xs text-muted`}>{audioFileName || "SchoolBase jingle"}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -1022,38 +1078,60 @@ export default function SharedLayout({
                   </button>
                   <button
                     type="button"
-                    onClick={() => setIsAudioPlayerOpen(false)}
-                    className={`rounded-full border px-2.5 py-1.5 text-xs font-semibold transition ${themeMode === "dark" ? "border-slate-700 bg-slate-800 text-slate-100 hover:bg-slate-700" : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"}`}
+                    onClick={() => { setPlayerCollapsed(true); setIsAudioPlayerOpen(false); }}
+                    className={`inline-flex h-10 w-10 items-center justify-center rounded-full border transition ${themeMode === "dark" ? "border-slate-700 bg-slate-800 text-slate-100 hover:bg-slate-700" : "border-slate-200 bg-background text-foreground hover:bg-surface"}`}
+                    title="Minimize player"
+                    aria-label="Minimize player"
                   >
-                    Hide
+                    <ChevronDown className="h-4 w-4" />
                   </button>
                 </div>
               </div>
 
-              <div className={`mt-4 rounded-[24px] border p-4 ${themeMode === "dark" ? "border-slate-800 bg-slate-800/70" : "border-slate-200 bg-slate-50"}`}>
+                <div className={`mt-3 rounded-lg border p-3 ${themeMode === "dark" ? "border-slate-800 bg-slate-800/70" : "border-border bg-background"}`}>
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className={`text-xs uppercase tracking-[0.25em] ${themeMode === "dark" ? "text-slate-400" : "text-slate-400"}`}>Now playing</p>
                     <p className={`text-sm font-semibold ${themeMode === "dark" ? "text-slate-100" : "text-slate-900"}`}>{audioFileName || "SchoolBase jingle"}</p>
                   </div>
-                  <div className={`flex h-12 w-12 items-center justify-center rounded-full border ${themeMode === "dark" ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
-                    {isAudioPlaying ? <Loader2 className="h-5 w-5 animate-spin text-[#0A66C2]" /> : <Music className="h-5 w-5 text-[#0A66C2]" />}
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-full border ${themeMode === "dark" ? "border-slate-700 bg-slate-900" : "border-border bg-surface"}`}>
+                    {isAudioPlaying ? <Loader2 className="h-5 w-5 animate-spin text-brand" /> : <Music className="h-5 w-5 text-brand" />}
                   </div>
                 </div>
 
-                <div className={`mt-4 flex items-center justify-center rounded-[20px] border p-6 ${themeMode === "dark" ? "border-slate-700 bg-slate-900/80" : "border-slate-200 bg-white"}`}>
-                  <div className={`relative flex h-24 w-24 items-center justify-center rounded-full border-4 ${themeMode === "dark" ? "border-slate-700" : "border-slate-200"}`}>
-                    <div className={`absolute inset-0 rounded-full border-4 border-t-[#0A66C2] ${isAudioPlaying ? "animate-spin" : ""}`} />
+                <div className={`mt-4 flex items-center justify-center gap-3 rounded-lg border p-4 ${themeMode === "dark" ? "border-slate-700 bg-slate-900/80" : "border-border bg-background"}`}>
+                  <button
+                    type="button"
+                    onClick={playPreviousTrack}
+                    disabled={currentAudioIndex === null || currentAudioIndex <= 0}
+                    className={`inline-flex h-10 w-10 items-center justify-center rounded-full border transition ${currentAudioIndex === null || currentAudioIndex <= 0 ? "border-slate-700 bg-slate-800 text-slate-500" : "border-border bg-background text-foreground hover:bg-surface"}`}
+                    title="Previous track"
+                    aria-label="Previous track"
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </button>
+                  <div className={`relative flex h-20 w-20 items-center justify-center rounded-full border-4 ${themeMode === "dark" ? "border-slate-700" : "border-border"}`}>
+                    <div className={`absolute inset-0 rounded-full border-4 border-t-brand ${isAudioPlaying ? "animate-spin" : ""}`} />
                     <button
                       type="button"
                       onClick={toggleAudioPlayback}
-                      className="relative z-10 inline-flex h-14 w-14 items-center justify-center rounded-full bg-[#0A66C2] text-white shadow-lg shadow-slate-900/15 transition hover:bg-[#0952a4]"
+                      className="relative z-10 inline-flex h-12 w-12 items-center justify-center rounded-full bg-brand text-white shadow transition hover:bg-brand/90"
                       title={isAudioPlaying ? "Pause music" : "Play music"}
                       aria-label={isAudioPlaying ? "Pause music" : "Play music"}
                     >
                       {isAudioPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
                     </button>
                   </div>
+                  <button
+                    type="button"
+                    onClick={playNextTrack}
+                    disabled={currentAudioIndex === null || currentAudioIndex + 1 >= audioQueue.length}
+                    className={`inline-flex h-10 w-10 items-center justify-center rounded-full border transition ${currentAudioIndex === null || currentAudioIndex + 1 >= audioQueue.length ? "border-slate-700 bg-slate-800 text-slate-500" : "border-border bg-background text-foreground hover:bg-surface"}`}
+                    title="Next track"
+                    aria-label="Next track"
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </button>
                 </div>
               </div>
 
@@ -1151,12 +1229,49 @@ export default function SharedLayout({
                 ) : null}
                 <label className={`flex flex-1 cursor-pointer items-center justify-center rounded-full border px-3 py-2 text-sm font-medium transition ${themeMode === "dark" ? "border-slate-700 bg-slate-800 text-slate-100 hover:border-[#0A66C2] hover:text-[#0A66C2]" : "border-slate-200 bg-slate-50 text-slate-700 hover:border-[#0A66C2] hover:text-[#0A66C2]"}`}>
                   <span>Choose track</span>
-                  <input type="file" accept="audio/*" className="hidden" onChange={handleAudioFileChange} />
+                  <input type="file" accept="audio/*" multiple className="hidden" onChange={handleAudioFileChange} />
                 </label>
               </div>
             </div>
           ) : null}
         </div>
+
+          {/* Mini player when collapsed */}
+          {playerCollapsed && (
+            <div
+              className="fixed z-50 rounded-xl border border-border bg-surface px-3 py-2 shadow-sm flex cursor-grab items-center gap-2"
+              style={{ left: audioPanelPosition.x, top: audioPanelPosition.y }}
+              onMouseDown={handleAudioPanelMouseDown}
+              onTouchStart={handleAudioPanelTouchStart}
+            >
+              <button
+                type="button"
+                onClick={toggleAudioPlayback}
+                className="relative inline-flex h-8 w-8 items-center justify-center rounded-full bg-brand text-white"
+                title={isAudioBuffering ? "Loading..." : isAudioPlaying ? "Pause music" : "Play music"}
+                aria-label={isAudioBuffering ? "Loading audio" : isAudioPlaying ? "Pause music" : "Play music"}
+              >
+                {isAudioPlaying && !isAudioBuffering ? (
+                  <span className="absolute inset-0 rounded-full border-2 border-white/70 border-t-white animate-spin" />
+                ) : null}
+                {isAudioBuffering ? (
+                  <Loader2 className="relative h-4 w-4 text-white animate-spin" />
+                ) : isAudioPlaying ? (
+                  <Pause className="relative h-4 w-4" />
+                ) : (
+                  <Play className="relative h-4 w-4" />
+                )}
+              </button>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-foreground truncate" style={{ maxWidth: 160 }}>{audioFileName || "Playing"}</p>
+                <p className="text-xs text-muted">{audioQueue.length > 0 && currentAudioIndex != null ? `${currentAudioIndex + 1}/${audioQueue.length}` : ""}</p>
+              </div>
+              <div className="flex items-center gap-1">
+                <button onClick={() => { setPlayerCollapsed(false); setIsAudioPlayerOpen(true); }} className="text-xs text-muted">Open</button>
+                <button onClick={() => { setPlayerCollapsed(false); setIsAudioPlayerOpen(false); setIsAudioPlaying(false); }} className="text-xs text-muted">Close</button>
+              </div>
+            </div>
+          )}
 
         {isThemeOpen ? (
           <div

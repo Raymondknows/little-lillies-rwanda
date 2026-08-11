@@ -1237,7 +1237,7 @@ export default function SharedLayout({
         </div>
 
           {/* Mini player when collapsed */}
-          {playerCollapsed && (
+          {(playerCollapsed && (audioFileUrl || audioQueue.length > 0)) ? (
             <div
               className="fixed z-50 rounded-xl border border-border bg-surface px-3 py-2 shadow-sm flex cursor-grab items-center gap-2"
               style={{ left: audioPanelPosition.x, top: audioPanelPosition.y }}
@@ -1271,7 +1271,7 @@ export default function SharedLayout({
                 <button onClick={() => { setPlayerCollapsed(false); setIsAudioPlayerOpen(false); setIsAudioPlaying(false); }} className="text-xs text-muted">Close</button>
               </div>
             </div>
-          )}
+          ) : null}
 
         {isThemeOpen ? (
           <div

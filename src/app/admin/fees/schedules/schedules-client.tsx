@@ -620,10 +620,10 @@ export default function FeeSchedulesPageClient({
           `}</style>
 
           <div
-            className="w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_50px_rgba(10,102,194,0.16)]"
+            className="w-full max-w-2xl overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_16px_50px_rgba(10,102,194,0.16)]"
             style={{ animation: `classes_modal_enter 320ms cubic-bezier(.2,.9,.2,1)` }}
           >
-            <div className="border-b border-slate-100 px-6 py-5" style={{ background: "linear-gradient(90deg, rgba(10,102,194,0.12), rgba(10,102,194,0.04))" }}>
+            <div className="border-b border-border px-6 py-5" style={{ background: "linear-gradient(90deg, rgba(10,102,194,0.12), rgba(10,102,194,0.04))" }}>
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h2 className="text-2xl font-bold text-foreground">Create Fee Schedule</h2>
@@ -685,7 +685,7 @@ export default function FeeSchedulesPageClient({
               )}
 
               <div className="flex justify-end gap-3 pt-4 border-t border-border">
-                <button type="button" onClick={() => { doPlayCloseTone(); setShowModal(false); setError(null); }} disabled={submitting} className="flex-1 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-slate-100 disabled:opacity-50 text-slate-700">Cancel</button>
+                <button type="button" onClick={() => { doPlayCloseTone(); setShowModal(false); setError(null); }} disabled={submitting} className="flex-1 rounded-lg border border-border px-4 py-2.5 text-sm font-medium transition-colors hover:bg-surface/90 disabled:opacity-50 text-foreground">Cancel</button>
                 <button type="submit" disabled={submitting} className="flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-colors disabled:opacity-50" style={{ background: "#0A66C2" }}>
                   {submitting ? (<><div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />Creating...</>) : (<>Create Schedule</>)}
                 </button>
@@ -704,10 +704,10 @@ export default function FeeSchedulesPageClient({
           `}</style>
 
           <div
-            className="w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_50px_rgba(10,102,194,0.16)]"
+            className="w-full max-w-2xl overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_16px_50px_rgba(10,102,194,0.16)]"
             style={{ animation: `classes_modal_enter 320ms cubic-bezier(.2,.9,.2,1)` }}
           >
-            <div className="border-b border-slate-100 px-6 py-5" style={{ background: "linear-gradient(90deg, rgba(10,102,194,0.12), rgba(10,102,194,0.04))" }}>
+            <div className="border-b border-border px-6 py-5" style={{ background: "linear-gradient(90deg, rgba(10,102,194,0.12), rgba(10,102,194,0.04))" }}>
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h2 className="text-2xl font-bold text-foreground">Edit Fee Schedule</h2>
@@ -769,7 +769,7 @@ export default function FeeSchedulesPageClient({
                 </div>
               )}
 
-              <div className="flex gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4">
+              <div className="flex gap-3 border-t border-border bg-surface/80 px-6 py-4">
                 <button
                   type="button"
                   onClick={() => {
@@ -779,7 +779,7 @@ export default function FeeSchedulesPageClient({
                     setEditError(null);
                   }}
                   disabled={editSubmitting}
-                  className="flex-1 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-slate-100 disabled:opacity-50 text-slate-700"
+                  className="flex-1 rounded-lg border border-border px-4 py-2.5 text-sm font-medium transition-colors hover:bg-surface/90 disabled:opacity-50 text-foreground"
                 >
                   Cancel
                 </button>
@@ -813,19 +813,19 @@ export default function FeeSchedulesPageClient({
           `}</style>
 
           <div
-            className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_50px_rgba(220,38,38,0.16)]"
+            className="w-full max-w-md overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_16px_50px_rgba(220,38,38,0.16)]"
             style={{
               animation: `${deleteAnimateState === "enter" ? "classes_delete_enter" : "classes_delete_exit"} 320ms cubic-bezier(.2,.9,.2,1)`,
             }}
           >
-            <div className="border-b border-slate-100 px-6 py-5" style={{ background: "linear-gradient(90deg, rgba(220,38,38,0.12), rgba(220,38,38,0.04))" }}>
+            <div className="border-b border-border px-6 py-5" style={{ background: "linear-gradient(90deg, rgba(220,38,38,0.12), rgba(220,38,38,0.04))" }}>
               <div className="flex items-start gap-3">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/70 bg-red-100 shadow-sm">
                   <AlertCircle className="h-6 w-6 text-red-600" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold text-slate-900">Delete Schedule?</h2>
-                  <p className="mt-1 text-sm text-slate-600">This action cannot be undone.</p>
+                  <h2 className="text-lg font-semibold text-foreground">Delete Schedule?</h2>
+                  <p className="mt-1 text-sm text-muted">This action cannot be undone.</p>
                 </div>
               </div>
             </div>
@@ -836,12 +836,12 @@ export default function FeeSchedulesPageClient({
                   <p className="text-sm text-red-800">{deleteError}</p>
                 </div>
               )}
-              <p className="text-sm leading-6 text-slate-700">
+              <p className="text-sm leading-6 text-foreground">
                 You are about to permanently delete this fee schedule.
               </p>
             </div>
 
-            <div className="flex gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4">
+            <div className="flex gap-3 border-t border-border bg-surface/80 px-6 py-4">
                 <button
                 type="button"
                 onClick={() => {
@@ -849,7 +849,7 @@ export default function FeeSchedulesPageClient({
                   setDeleteId(null);
                   setDeleteError(null);
                 }}
-                className="flex-1 rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-slate-100 disabled:opacity-50 text-slate-700"
+                className="flex-1 rounded-lg border border-border px-4 py-2.5 text-sm font-medium transition-colors hover:bg-surface/90 disabled:opacity-50 text-foreground"
               >
                 Cancel
               </button>

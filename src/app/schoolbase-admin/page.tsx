@@ -281,7 +281,7 @@ export default function PlatformOverviewPage() {
       sub: "Across all schools",
       href: "/schoolbase-admin/schools",
       icon: Users,
-      color: "bg-purple-100",
+      color: "bg-purple-100", 
       iconColor: "text-purple-600",
     },
     {
@@ -375,7 +375,7 @@ export default function PlatformOverviewPage() {
           {/* Cards Container */}
           <div className="grid grid-cols-4 gap-3 flex-1">
             {statCards.map((stat, idx) => {
-              const IconComponent = stat.icon;
+              const IconComponent = stat.icon; 
               return (
                 <Link key={idx} href={stat.href}>
                   <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md h-full cursor-pointer hover:border-brand/50 flex flex-col">

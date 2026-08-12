@@ -229,12 +229,12 @@ export default function NewStudentClient() {
   };
 
   return (
-    <div className="mx-auto max-w-[1400px] px-6 pb-16 pt-0">
-      <div className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur-sm py-1.5">
-        <div className="mx-auto flex max-w-[1400px] items-center gap-2">
+    <div className="mx-auto max-w-[1400px] px-2 sm:px-4 md:px-6 pb-16 pt-0">
+      <div className="hidden lg:block sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur-sm py-1.5">
+        <div className="mx-auto flex max-w-[1400px] items-center gap-2 px-2 sm:px-0">
           <div className="flex-1">
             <h1 className="text-2xl font-semibold tracking-tight text-foreground">Add Student</h1>
-            <p className="mt-0.5 text-sm text-slate-600 max-w-2xl">Quickly register a student — all fields visible on a single page.</p>
+            <p className="mt-0.5 text-sm text-muted max-w-2xl">Quickly register a student — all fields visible on a single page.</p>
           </div>
 
           <div className="ml-auto flex items-center gap-3">
@@ -283,34 +283,34 @@ export default function NewStudentClient() {
 
         {/* Left: photo card (sticky) */}
         <div className="lg:col-span-1">
-          <div className="rounded-xl border border-border bg-white p-4 shadow-sm lg:sticky lg:top-28">
+          <div className="rounded-xl border border-border bg-surface p-4 shadow-sm lg:sticky lg:top-28">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-semibold text-slate-900">Profile photo</p>
-                <p className="mt-1 text-sm text-slate-500">Upload a clear student portrait for the profile card.</p>
+                <p className="text-sm font-semibold text-foreground">Profile photo</p>
+                <p className="mt-1 text-sm text-muted">Upload a clear student portrait for the profile card.</p>
               </div>
-              <div className="rounded-full bg-slate-100 p-2 text-slate-500">
+              <div className="rounded-full bg-surface/80 p-2 text-muted">
                 <Upload className="h-5 w-5" />
               </div>
             </div>
 
-            <div className="mt-4 rounded-2xl border border-dashed border-border/70 bg-slate-50 p-3 text-center">
+            <div className="mt-4 rounded-2xl border border-dashed border-border/70 bg-surface/80 p-3 text-center">
               {photoPreview ? (
                 <img src={photoPreview} alt="Selected student photo" className="mx-auto h-40 w-40 rounded-2xl object-cover" />
               ) : (
-                <div className="flex h-40 items-center justify-center rounded-3xl bg-slate-100 text-slate-500">
+                <div className="flex h-40 items-center justify-center rounded-3xl bg-surface/80 text-muted">
                   <span className="text-sm">No photo selected</span>
                 </div>
               )}
             </div>
 
-            <label className="mt-5 block text-sm font-semibold text-slate-800">
+            <label className="mt-5 block text-sm font-semibold text-foreground">
               Upload photo
               <input name="photo" type="file" accept="image/png,image/jpeg,image/jpg,image/webp" onChange={handlePhotoChange} className="mt-2 w-full rounded-2xl border border-border px-4 py-3 text-sm text-foreground file:mr-4 file:rounded-full file:border-0 file:bg-brand file:px-4 file:py-2 file:text-sm file:text-white" />
             </label>
-            <p className="mt-3 text-xs leading-5 text-slate-500">JPG, PNG or WEBP. Keep the file under 4MB and use a square image for best layout.</p>
+            <p className="mt-3 text-xs leading-5 text-muted">JPG, PNG or WEBP. Keep the file under 4MB and use a square image for best layout.</p>
 
-            <div className="mt-4 text-sm text-slate-600">
+            <div className="mt-4 text-sm text-muted">
               <p className="mt-2">Admission number: <span className="font-semibold">{nextAdmissionNo}</span></p>
             </div>
           </div>
@@ -319,16 +319,16 @@ export default function NewStudentClient() {
         {/* Right: main form fields */}
         <div className="lg:col-span-2">
           {/* Top row: Admission details */}
-          <div className="rounded-lg border border-slate-200 bg-white p-3 mb-3">
+          <div className="rounded-lg border border-border bg-surface p-3 mb-3">
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-              <label className="text-sm font-semibold text-slate-800">
+              <label className="text-sm font-semibold text-foreground">
                 Admission number
-                <input name="admissionNo" defaultValue={nextAdmissionNo} readOnly placeholder="Admission number generated automatically" className="mt-2 w-full rounded-2xl border border-border bg-slate-100 px-4 py-3 text-sm text-slate-600" />
+                <input name="admissionNo" defaultValue={nextAdmissionNo} readOnly placeholder="Admission number generated automatically" className="mt-2 w-full rounded-2xl border border-border bg-surface/80 px-4 py-3 text-sm text-muted" />
               </label>
 
-              <label className="text-sm font-semibold text-slate-800">
+              <label className="text-sm font-semibold text-foreground">
                 Class *
-                <select name="classId" value={classId} onChange={(e) => setClassId(e.target.value)} required className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10">
+                <select name="classId" value={classId} onChange={(e) => setClassId(e.target.value)} required className="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10">
                   <option value="">Select class</option>
                   {classes.map((item) => (
                     <option key={item.id} value={item.id}>
@@ -338,87 +338,87 @@ export default function NewStudentClient() {
                 </select>
               </label>
 
-              <label className="text-sm font-semibold text-slate-800">
+              <label className="text-sm font-semibold text-foreground">
                 Status
-                <select name="status" value={status} onChange={(e) => setStatus(e.target.value)} className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10">
+                <select name="status" value={status} onChange={(e) => setStatus(e.target.value)} className="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10">
                   <option value="ACTIVE">Active</option>
                   <option value="INACTIVE">Inactive</option>
                 </select>
               </label>
 
-              <label className="text-sm font-semibold text-slate-800">
+              <label className="text-sm font-semibold text-foreground">
                 Admission date
-                <input name="admissionDate" type="date" value={admissionDate} onChange={(e) => setAdmissionDate(e.target.value)} placeholder="Select admission date" className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
+                <input name="admissionDate" type="date" value={admissionDate} onChange={(e) => setAdmissionDate(e.target.value)} placeholder="Select admission date" className="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
               </label>
             </div>
           </div>
 
           {/* Section 1: Student Information */}
-          <div className="rounded-lg border border-slate-200 bg-white p-3 mb-3">
-            <h3 className="text-lg font-semibold text-slate-900">Student information</h3>
+          <div className="rounded-lg border border-border bg-surface p-3 mb-3">
+            <h3 className="text-lg font-semibold text-foreground">Student information</h3>
             <div className="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-              <label className="text-sm font-semibold text-slate-800">
+              <label className="text-sm font-semibold text-foreground">
                 Surname *
-                <input name="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} required placeholder="e.g., Adekunle" className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
+                <input name="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} required placeholder="e.g., Adekunle" className="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
               </label>
 
-              <label className="text-sm font-semibold text-slate-800">
+              <label className="text-sm font-semibold text-foreground">
                 First name *
-                <input name="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} required placeholder="e.g., Chidi" className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
+                <input name="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} required placeholder="e.g., Chidi" className="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
               </label>
 
-              <label className="text-sm font-semibold text-slate-800">
+              <label className="text-sm font-semibold text-foreground">
                 Middle name
-                <input name="middleName" value={middleName} onChange={(e) => setMiddleName(e.target.value)} placeholder="Optional" className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
+                <input name="middleName" value={middleName} onChange={(e) => setMiddleName(e.target.value)} placeholder="Optional" className="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
               </label>
 
-              <label className="text-sm font-semibold text-slate-800">
+              <label className="text-sm font-semibold text-foreground">
                 Gender *
-                <select name="gender" value={gender} onChange={(e) => setGender(e.target.value)} required className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10">
+                <select name="gender" value={gender} onChange={(e) => setGender(e.target.value)} required className="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10">
                   <option value="Male">Male</option>
                   <option value="Female">Female</option>
                 </select>
               </label>
 
-              <label className="text-sm font-semibold text-slate-800">
+              <label className="text-sm font-semibold text-foreground">
                 Date of birth
-                <input name="dateOfBirth" type="date" value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} placeholder="Select birth date" className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
+                <input name="dateOfBirth" type="date" value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} placeholder="Select birth date" className="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
               </label>
 
-              <label className="text-sm font-semibold text-slate-800">
+              <label className="text-sm font-semibold text-foreground">
                 Email
-                <input name="studentEmail" type="email" value={studentEmail} onChange={(e) => setStudentEmail(e.target.value)} placeholder="student@example.com" className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
+                <input name="studentEmail" type="email" value={studentEmail} onChange={(e) => setStudentEmail(e.target.value)} placeholder="student@example.com" className="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
               </label>
 
-              <label className="text-sm font-semibold text-slate-800">
+              <label className="text-sm font-semibold text-foreground">
                 Phone number
-                <input name="studentPhone" type="tel" value={studentPhone} onChange={(e) => setStudentPhone(e.target.value)} placeholder="+234..." className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
+                <input name="studentPhone" type="tel" value={studentPhone} onChange={(e) => setStudentPhone(e.target.value)} placeholder="+234..." className="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
               </label>
 
-              <label className="text-sm font-semibold text-slate-800 xl:col-span-3">
+              <label className="text-sm font-semibold text-foreground xl:col-span-3">
                 Address
-                <textarea name="address" value={address} onChange={(e) => setAddress(e.target.value)} rows={3} placeholder="Street address, city, state" className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
+                <textarea name="address" value={address} onChange={(e) => setAddress(e.target.value)} rows={3} placeholder="Street address, city, state" className="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
               </label>
             </div>
           </div>
 
           {/* Section 2: Parent / Guardian Information */}
-          <div className="rounded-lg border border-slate-200 bg-white p-3 mb-3">
-            <h3 className="text-lg font-semibold text-slate-900">Parent / Guardian information</h3>
+          <div className="rounded-lg border border-border bg-surface p-3 mb-3">
+            <h3 className="text-lg font-semibold text-foreground">Parent / Guardian information</h3>
             <div className="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-              <label className="text-sm font-semibold text-slate-800">
+              <label className="text-sm font-semibold text-foreground">
                 First name
-                <input name="guardianFirst" value={guardianFirst} onChange={(e) => setGuardianFirst(e.target.value)} placeholder="Guardian first name" className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
+                <input name="guardianFirst" value={guardianFirst} onChange={(e) => setGuardianFirst(e.target.value)} placeholder="Guardian first name" className="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
               </label>
 
-              <label className="text-sm font-semibold text-slate-800">
+              <label className="text-sm font-semibold text-foreground">
                 Last name
-                <input name="guardianLast" value={guardianLast} onChange={(e) => setGuardianLast(e.target.value)} placeholder="Guardian last name" className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
+                <input name="guardianLast" value={guardianLast} onChange={(e) => setGuardianLast(e.target.value)} placeholder="Guardian last name" className="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
               </label>
 
-              <label className="text-sm font-semibold text-slate-800">
+              <label className="text-sm font-semibold text-foreground">
                 Relationship *
-                <select name="guardianRelationship" value={guardianRelationship} onChange={(e) => setGuardianRelationship(e.target.value)} required className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10">
+                <select name="guardianRelationship" value={guardianRelationship} onChange={(e) => setGuardianRelationship(e.target.value)} required className="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10">
                   <option value="Parent">Parent</option>
                   <option value="Father">Father</option>
                   <option value="Mother">Mother</option>
@@ -427,56 +427,56 @@ export default function NewStudentClient() {
                 </select>
               </label>
 
-              <label className="text-sm font-semibold text-slate-800">
+              <label className="text-sm font-semibold text-foreground">
                 Phone number *
-                <input name="guardianPhone" value={guardianPhone} onChange={(e) => setGuardianPhone(e.target.value)} required placeholder="+234 800 123 4567" className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
+                <input name="guardianPhone" value={guardianPhone} onChange={(e) => setGuardianPhone(e.target.value)} required placeholder="+234 800 123 4567" className="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
               </label>
 
-              <label className="text-sm font-semibold text-slate-800">
+              <label className="text-sm font-semibold text-foreground">
                 Alternative phone
-                <input name="guardianAltPhone" value={guardianAltPhone} onChange={(e) => setGuardianAltPhone(e.target.value)} placeholder="Optional" className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
+                <input name="guardianAltPhone" value={guardianAltPhone} onChange={(e) => setGuardianAltPhone(e.target.value)} placeholder="Optional" className="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
               </label>
 
-              <label className="text-sm font-semibold text-slate-800">
+              <label className="text-sm font-semibold text-foreground">
                 Email
-                <input name="guardianEmail" value={guardianEmail} onChange={(e) => setGuardianEmail(e.target.value)} type="email" placeholder="guardian@example.com" className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
+                <input name="guardianEmail" value={guardianEmail} onChange={(e) => setGuardianEmail(e.target.value)} type="email" placeholder="guardian@example.com" className="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
               </label>
 
-              <label className="text-sm font-semibold text-slate-800">
+              <label className="text-sm font-semibold text-foreground">
                 Occupation
-                <input name="guardianOccupation" value={guardianOccupation} onChange={(e) => setGuardianOccupation(e.target.value)} placeholder="Optional" className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
+                <input name="guardianOccupation" value={guardianOccupation} onChange={(e) => setGuardianOccupation(e.target.value)} placeholder="Optional" className="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
               </label>
             </div>
           </div>
 
           {/* Section 3: Medical Information (collapsible) */}
-          <div className="rounded-lg border border-slate-200 bg-white p-0 mb-3">
-            <button type="button" onClick={() => setMedicalOpen((v) => !v)} className="w-full flex items-center justify-between p-4 text-left hover:bg-slate-50 transition">
+          <div className="rounded-lg border border-border bg-surface p-0 mb-3">
+            <button type="button" onClick={() => setMedicalOpen((v) => !v)} className="w-full flex items-center justify-between p-4 text-left hover:bg-surface/80 transition">
               <div className="flex items-center gap-3">
-                <ChevronDown className={`h-5 w-5 text-slate-600 transition-transform ${medicalOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`h-5 w-5 text-muted transition-transform ${medicalOpen ? 'rotate-180' : ''}`} />
                 <div>
-                  <h4 className="text-lg font-semibold text-slate-900">Medical information</h4>
-                  <p className="mt-1 text-sm text-slate-600">Optional medical details (expand to edit).</p>
+                  <h4 className="text-lg font-semibold text-foreground">Medical information</h4>
+                  <p className="mt-1 text-sm text-muted">Optional medical details (expand to edit).</p>
                 </div>
               </div>
             </button>
 
             {medicalOpen ? (
-              <div className="border-t border-slate-200 p-3">
+              <div className="border-t border-border p-3">
                 <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                  <label className="text-sm font-semibold text-slate-800">
+                  <label className="text-sm font-semibold text-foreground">
                     Blood group
-                    <input name="bloodGroup" value={bloodGroup} onChange={(e) => setBloodGroup(e.target.value)} placeholder="A+, O-, B+" className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
+                    <input name="bloodGroup" value={bloodGroup} onChange={(e) => setBloodGroup(e.target.value)} placeholder="A+, O-, B+" className="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
                   </label>
 
-                  <label className="text-sm font-semibold text-slate-800">
+                  <label className="text-sm font-semibold text-foreground">
                     Genotype
-                    <input name="genotype" value={genotype} onChange={(e) => setGenotype(e.target.value)} placeholder="AA, AS, SS" className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
+                    <input name="genotype" value={genotype} onChange={(e) => setGenotype(e.target.value)} placeholder="AA, AS, SS" className="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
                   </label>
 
-                  <label className="text-sm font-semibold text-slate-800 xl:col-span-3">
+                  <label className="text-sm font-semibold text-foreground xl:col-span-3">
                     Medical notes
-                    <textarea name="medicalNotes" value={medicalNotes} onChange={(e) => setMedicalNotes(e.target.value)} rows={3} placeholder="Allergies, conditions, or doctor notes" className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
+                    <textarea name="medicalNotes" value={medicalNotes} onChange={(e) => setMedicalNotes(e.target.value)} rows={3} placeholder="Allergies, conditions, or doctor notes" className="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
                   </label>
                 </div>
               </div>
@@ -484,28 +484,28 @@ export default function NewStudentClient() {
           </div>
 
           {/* Section 4: Previous School (collapsible) */}
-          <div className="rounded-lg border border-slate-200 bg-white p-0 mb-3">
-            <button type="button" onClick={() => setPreviousOpen((v) => !v)} className="w-full flex items-center justify-between p-4 text-left hover:bg-slate-50 transition">
+          <div className="rounded-lg border border-border bg-surface p-0 mb-3">
+            <button type="button" onClick={() => setPreviousOpen((v) => !v)} className="w-full flex items-center justify-between p-4 text-left hover:bg-surface/80 transition">
               <div className="flex items-center gap-3">
-                <ChevronDown className={`h-5 w-5 text-slate-600 transition-transform ${previousOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`h-5 w-5 text-muted transition-transform ${previousOpen ? 'rotate-180' : ''}`} />
                 <div>
-                  <h4 className="text-lg font-semibold text-slate-900">Previous school</h4>
-                  <p className="mt-1 text-sm text-slate-600">Optional previous school information.</p>
+                  <h4 className="text-lg font-semibold text-foreground">Previous school</h4>
+                  <p className="mt-1 text-sm text-muted">Optional previous school information.</p>
                 </div>
               </div>
             </button>
 
             {previousOpen ? (
-              <div className="border-t border-slate-200 p-4">
+              <div className="border-t border-border p-4">
                 <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                  <label className="text-sm font-semibold text-slate-800">
+                  <label className="text-sm font-semibold text-foreground">
                     Previous school
-                    <input name="previousSchool" value={previousSchool} onChange={(e) => setPreviousSchool(e.target.value)} placeholder="Previous school name" className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
+                    <input name="previousSchool" value={previousSchool} onChange={(e) => setPreviousSchool(e.target.value)} placeholder="Previous school name" className="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
                   </label>
 
-                  <label className="text-sm font-semibold text-slate-800">
+                  <label className="text-sm font-semibold text-foreground">
                     Previous class
-                    <input name="previousClass" value={previousClass} onChange={(e) => setPreviousClass(e.target.value)} placeholder="Previous class or grade" className="mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
+                    <input name="previousClass" value={previousClass} onChange={(e) => setPreviousClass(e.target.value)} placeholder="Previous class or grade" className="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
                   </label>
                 </div>
               </div>
@@ -513,7 +513,7 @@ export default function NewStudentClient() {
           </div>
 
           <div className="flex items-center justify-between">
-            <div className="text-sm text-slate-600">All fields can be edited later from the student profile.</div>
+            <div className="text-sm text-muted">All fields can be edited later from the student profile.</div>
             <div className="flex items-center gap-3">
               <Button variant="secondary" href="/admin/students">Cancel</Button>
               <Button type="submit" form="new-student-form" disabled={isSubmitting}>
@@ -536,32 +536,32 @@ export default function NewStudentClient() {
           <style>{`
             @keyframes student_error_modal_enter { from { transform: translateX(36px) scale(.98); opacity: 0 } to { transform: translateX(0) scale(1); opacity: 1 } }
           `}</style>
-          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_50px_rgba(10,102,194,0.16)]" style={{ animation: "student_error_modal_enter 320ms cubic-bezier(.2,.9,.2,1)" }}>
-            <div className="border-b border-slate-100 px-6 py-5" style={{ background: "linear-gradient(90deg, rgba(10,102,194,0.12), rgba(10,102,194,0.04))" }}>
+          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_16px_50px_rgba(10,102,194,0.16)]" style={{ animation: "student_error_modal_enter 320ms cubic-bezier(.2,.9,.2,1)" }}>
+            <div className="border-b border-border px-6 py-5" style={{ background: "linear-gradient(90deg, rgba(10,102,194,0.12), rgba(10,102,194,0.04))" }}>
               <div className="flex items-start gap-3">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/70 bg-[rgba(10,102,194,0.12)] shadow-sm">
                   <AlertCircle className="h-6 w-6 text-[#0A66C2]" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h2 id="student-registration-error-title" className="text-lg font-semibold text-slate-900">Unable to register student</h2>
-                  <p className="mt-1 text-sm text-slate-600">Please review the details below.</p>
+                  <h2 id="student-registration-error-title" className="text-lg font-semibold text-foreground">Unable to register student</h2>
+                  <p className="mt-1 text-sm text-muted">Please review the details below.</p>
                 </div>
-                <button type="button" onClick={closeErrorModal} className="rounded-lg p-1 text-slate-500 transition-colors hover:bg-white/70 hover:text-slate-900" aria-label="Close error modal">
+                <button type="button" onClick={closeErrorModal} className="rounded-lg p-1 text-muted transition-colors hover:bg-surface/90 hover:text-foreground" aria-label="Close error modal">
                   <X className="h-5 w-5" />
                 </button>
               </div>
             </div>
 
             <div className="px-6 py-5">
-              <p className="text-sm leading-6 text-slate-700">{error}</p>
+              <p className="text-sm leading-6 text-muted">{error}</p>
               {error.toLowerCase().includes("limit") && (
-                <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
-                  <p className="text-xs leading-5 text-slate-700">Your school has reached its student capacity. Upgrade your plan to register more students.</p>
+                <div className="mt-4 rounded-lg border border-border bg-surface/80 p-3">
+                  <p className="text-xs leading-5 text-muted">Your school has reached its student capacity. Upgrade your plan to register more students.</p>
                 </div>
               )}
             </div>
 
-            <div className="border-t border-slate-100 bg-slate-50 px-6 py-4">
+            <div className="border-t border-border bg-surface/80 px-6 py-4">
               <button type="button" onClick={closeErrorModal} className="w-full rounded-lg bg-[#0A66C2] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#084B8A]">
                 OK
               </button>

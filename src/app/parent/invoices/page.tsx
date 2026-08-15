@@ -89,14 +89,14 @@ export default function InvoicesPage() {
           </div>
           <div className="grid grid-cols-3 gap-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="rounded-3xl bg-surface p-5 border border-border space-y-2">
+              <div key={i} className="rounded-[20px] bg-surface p-5 border border-border space-y-2">
                 <div className="h-4 w-16 bg-slate-100 rounded animate-pulse"></div>
                 <div className="h-6 w-20 bg-slate-200 rounded animate-pulse"></div>
               </div>
             ))}
           </div>
           {[1, 2].map((i) => (
-            <div key={i} className="rounded-3xl border border-border bg-surface p-4 space-y-3 animate-pulse">
+            <div key={i} className="rounded-[20px] border border-border bg-surface p-4 space-y-3 animate-pulse">
               <div className="h-5 w-32 bg-slate-200 rounded"></div>
               <div className="h-4 w-48 bg-slate-100 rounded"></div>
             </div>
@@ -126,17 +126,17 @@ export default function InvoicesPage() {
 
       {/* Quick Totals */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div className="rounded-3xl border border-border bg-surface p-4 text-center">
+        <div className="rounded-[20px] border border-border bg-surface p-4 text-center">
           <p className="text-[10px] uppercase tracking-[0.3em] text-muted">Outstanding</p>
           <p className="mt-3 text-xl font-semibold text-error">{formatMoney(totalOutstanding, currency)}</p>
           <p className="text-xs text-muted mt-1">{invoices.filter(inv => ["SENT", "PART_PAID", "OVERDUE"].includes(inv.status)).length} pending</p>
         </div>
-        <div className="rounded-3xl border border-border bg-surface p-4 text-center">
+        <div className="rounded-[20px] border border-border bg-surface p-4 text-center">
           <p className="text-[10px] uppercase tracking-[0.3em] text-muted">Paid</p>
           <p className="mt-3 text-xl font-semibold text-success">{formatMoney(totalPaid, currency)}</p>
           <p className="text-xs text-muted mt-1">{invoices.filter(inv => inv.status === "PAID").length} paid</p>
         </div>
-        <div className="rounded-3xl border border-border bg-surface p-4 text-center">
+        <div className="rounded-[20px] border border-border bg-surface p-4 text-center">
           <p className="text-[10px] uppercase tracking-[0.3em] text-muted">Total</p>
           <p className="mt-3 text-xl font-semibold text-brand">{formatMoney(totalOutstanding + totalPaid, currency)}</p>
           <p className="text-xs text-muted mt-1">{invoices.length} invoices</p>
@@ -149,7 +149,7 @@ export default function InvoicesPage() {
       </div>
 
       {/* Invoice List */}
-      <div className="rounded-3xl border border-border bg-surface shadow-sm overflow-hidden">
+      <div className="rounded-[20px] border border-border bg-surface shadow-sm overflow-hidden">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between px-5 py-4 border-b border-border bg-background">
           <div>
             <h2 className="text-lg font-semibold text-foreground">Invoice History</h2>
@@ -159,7 +159,7 @@ export default function InvoicesPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search invoices..."
-            className="min-w-[200px] rounded-2xl border border-border bg-white px-4 py-2.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+            className="min-w-[200px] rounded-2xl border border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
           />
         </div>
 

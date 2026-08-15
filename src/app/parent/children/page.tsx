@@ -17,6 +17,7 @@ interface AttendanceData {
 
 export default function ChildrenPage() {
   const [children, setChildren] = useState<any[]>([]);
+  const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
   const [attendance, setAttendance] = useState<Record<string, AttendanceData>>({});
   const [schoolHours, setSchoolHours] = useState<{ start: string; end: string } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -36,7 +37,9 @@ export default function ChildrenPage() {
       }
 
       const data = await res.json();
-      setChildren(data.children || []);
+      // Support multiple possible API shapes: { children: [...] } or { data: [...] } or direct array
+      const childrenList = data.children || data.data || (Array.isArray(data) ? data : null) || [];
+      setChildren(childrenList || []);
 
       // Load school info to get school hours
       try {
@@ -54,9 +57,9 @@ export default function ChildrenPage() {
         console.error('Error loading school info:', err);
       }
 
-      // Fetch attendance for each child
+      // Fetch attendance for each child (use normalized children list)
       const attendanceData: Record<string, AttendanceData> = {};
-      for (const child of data.children || []) {
+      for (const child of childrenList || []) {
         try {
           const attendanceRes = await fetch(`${backendUrl}/api/parent/attendance/${child.id}?days=30`, {
             credentials: 'include',
@@ -86,6 +89,54 @@ export default function ChildrenPage() {
     loadData();
   }, []);
 
+  useEffect(() => {
+    if (children.length > 0 && !selectedChildId) {
+      setSelectedChildId(children[0].id);
+    }
+  }, [children, selectedChildId]);
+
+  // Fetch richer profile (dob, guardians) for selected child if available
+  const [childProfiles, setChildProfiles] = useState<Record<string, any>>({});
+
+  useEffect(() => {
+    if (!selectedChildId) return;
+
+    const fetchProfile = async () => {
+      try {
+        const backendUrl = getBackendUrl();
+        // Try common profile endpoints; backend may expose one of these
+        const candidates = [
+          `${backendUrl}/api/parent/children/${selectedChildId}`,
+          `${backendUrl}/api/parent/children/${selectedChildId}/profile`,
+          `${backendUrl}/api/parent/children/${selectedChildId}/summary`,
+        ];
+
+        for (const url of candidates) {
+          try {
+            const res = await fetch(url, {
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+            });
+            if (!res.ok) continue;
+            const data = await res.json();
+            // Normalize: some endpoints return { data: {...} } or direct object
+            const profile = data.data || data || {};
+            if (Object.keys(profile).length === 0) continue;
+            setChildProfiles((prev) => ({ ...prev, [selectedChildId]: profile }));
+            return;
+          } catch (err) {
+            // try next candidate
+            continue;
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching child profile:', err);
+      }
+    };
+
+    fetchProfile();
+  }, [selectedChildId]);
+
   const { school: parentSchool } = useParentSchool();
   const currency = useEffectiveCurrency(parentSchool);
 
@@ -101,7 +152,7 @@ export default function ChildrenPage() {
           
           {/* Card skeletons */}
           {[1, 2, 3].map((i) => (
-            <div key={i} className="rounded-3xl border border-border bg-surface overflow-hidden space-y-4 p-4 sm:p-5">
+            <div key={i} className="rounded-[20px] border border-border bg-surface overflow-hidden space-y-4 p-4 sm:p-5">
               {/* Header */}
               <div className="flex items-center gap-4">
                 <div className="h-12 w-12 bg-slate-200 rounded-3xl animate-pulse"></div>
@@ -112,9 +163,9 @@ export default function ChildrenPage() {
               </div>
               
               {/* Stats */}
-              <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {[1, 2, 3].map((j) => (
-                  <div key={j} className="rounded-3xl bg-white p-3">
+                  <div key={j} className="rounded-lg bg-background p-3">
                     <div className="h-3 w-16 bg-slate-100 rounded mb-2 mx-auto animate-pulse"></div>
                     <div className="h-6 w-20 bg-slate-200 rounded mx-auto animate-pulse"></div>
                   </div>
@@ -188,181 +239,174 @@ export default function ChildrenPage() {
 
   return (
     <ParentPageShell onRefresh={loadData}>
-      <div>
-        <h1 className="text-4xl font-bold text-foreground">My Children</h1>
-        <p className="mt-2 text-muted">
-          {children.length === 1 ? "1 child registered" : `${children.length} children registered`}
-        </p>
-      </div>
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-6">
+          <h1 className="text-3xl font-semibold text-foreground">My Children</h1>
+          <p className="mt-1 text-sm text-muted">{children.length === 1 ? "1 child registered" : `${children.length} children registered`}</p>
+        </div>
 
-      {error && (
-        <div className="rounded-3xl border border-red-200 bg-red-50 p-5 text-sm text-red-700 shadow-sm">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="mt-0.5 h-5 w-5 text-red-600" />
-            <div>
-              <p className="font-semibold text-red-900">Error</p>
-              <p className="mt-1">{error}</p>
+        {error && (
+          <div className="rounded-[12px] border border-red-200 bg-red-50 p-4 text-sm text-red-700 shadow-sm mb-6">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="mt-0.5 h-5 w-5 text-red-600" />
+              <div>
+                <p className="font-semibold text-red-900">Error</p>
+                <p className="mt-1">{error}</p>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {children.length === 0 ? (
-        <div className="rounded-3xl border border-border bg-surface p-12 text-center shadow-sm">
-          <Users className="h-12 w-12 text-muted mx-auto mb-3" />
-          <p className="text-muted">No children registered yet</p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {children.map((child) => {
-            const childAttendance = attendance[child.id];
-            return (
-              <div
-                key={child.id}
-                className="rounded-3xl border border-border bg-surface shadow-sm overflow-hidden"
-              >
-                {/* Header */}
-                <div className="flex items-center gap-4 p-4 sm:p-5 border-b border-border">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-3xl bg-blue-100">
-                    <Users className="h-6 w-6 text-blue-600" />
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Left: list */}
+          <aside className="lg:col-span-4">
+            <div className="sticky top-20 space-y-4">
+              <div className="rounded-[12px] border border-border bg-surface p-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand/10 text-brand">
+                    <Users className="h-5 w-5" />
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-lg font-semibold text-foreground truncate">{[child.lastName, child.firstName].filter(Boolean).join(' ')}</p>
-                    <p className="text-xs text-muted truncate">Admission: <span className="font-semibold text-foreground">{child.admissionNo}</span></p>
-                  </div>
-                  <div className="space-y-2 text-right">
-                    <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] uppercase tracking-wider font-semibold ${
-                      child.status === 'ACTIVE' ? 'border-success bg-success/10 text-success' : 'border-warning bg-warning/10 text-warning'
-                    }`}>
-                      {child.status === 'ACTIVE' ? 'Active' : 'Inactive'}
-                    </span>
-                    <span className="inline-flex rounded-full border border-border bg-background px-2.5 py-1 text-[10px] uppercase tracking-wider font-medium text-muted">
-                      {child.class?.name || 'Class'} {child.class?.section || ''}
-                    </span>
+                  <div>
+                    <p className="text-sm font-medium text-muted">Students</p>
+                    <p className="text-lg font-semibold text-foreground">{children.length}</p>
                   </div>
                 </div>
-
-                {/* Quick Stats */}
-                <div className="grid grid-cols-3 gap-3 p-4 sm:p-5 border-b border-border">
-                  <div className="rounded-3xl bg-white p-3 text-center">
-                    <p className="text-[10px] uppercase tracking-[0.25em] text-muted mb-2">Fee Due</p>
-                    <p className={`text-lg font-semibold ${child.outstandingFee > 0 ? 'text-error' : 'text-success'}`}>
-                      {formatMoney(child.outstandingFee || 0, currency)}
-                    </p>
-                  </div>
-                  <div className="rounded-3xl bg-white p-3 text-center">
-                    <p className="text-[10px] uppercase tracking-[0.25em] text-muted mb-2">Attendance</p>
-                    {childAttendance?.attendancePercentage != null ? (
-                      <p className="text-lg font-semibold text-brand">{childAttendance.attendancePercentage}%</p>
-                    ) : (
-                      <p className="text-xs text-muted font-medium">No records</p>
-                    )}
-                  </div>
-                  <div className="rounded-3xl bg-white p-3 text-center">
-                    <p className="text-[10px] uppercase tracking-[0.25em] text-muted mb-2">Today</p>
-                    {childAttendance?.todayStatus ? (
-                      <div className={`flex items-center justify-center gap-1 text-lg font-semibold ${getAttendanceColor(childAttendance.todayStatus)}`}>
-                        {getAttendanceIcon(childAttendance.todayStatus)}
-                        <span className="text-sm">{formatStatus(childAttendance.todayStatus)}</span>
-                      </div>
-                    ) : (
-                      <p className="text-xs text-muted font-medium">{getSmartStatusMessage(null, schoolHours)}</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Attendance History Chart */}
-                {childAttendance?.recentRecords && childAttendance.recentRecords.length > 0 && (
-                  <div className="p-4 sm:p-5 border-t border-border">
-                    <div className="flex items-center gap-2 mb-4">
-                      <TrendingUp className="h-5 w-5 text-brand" />
-                      <p className="text-sm font-semibold text-foreground">Attendance Trend</p>
-                    </div>
-                    <div className="bg-gradient-to-br from-brand/5 to-brand/10 rounded-2xl p-4 border border-brand/20">
-                      <div className="flex items-end justify-between gap-0.5 h-28">
-                        {childAttendance.recentRecords.slice(0, 30).reverse().map((record, idx) => {
-                          const dateObj = new Date(record.date);
-                          const dayLabel = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                          let height = 0;
-                          let barColor = 'bg-brand/40';
-                          let bgColor = 'bg-brand/10';
-                          
-                          if (record.status === 'PRESENT') {
-                            height = 100;
-                            barColor = 'bg-brand';
-                            bgColor = 'bg-brand/10';
-                          } else if (record.status === 'LATE') {
-                            height = 75;
-                            barColor = 'bg-brand/70';
-                            bgColor = 'bg-brand/5';
-                          } else if (record.status === 'EXCUSED') {
-                            height = 50;
-                            barColor = 'bg-brand/50';
-                            bgColor = 'bg-brand/5';
-                          } else if (record.status === 'ABSENT') {
-                            height = 20;
-                            barColor = 'bg-error/60';
-                            bgColor = 'bg-error/5';
-                          }
-                          
-                          return (
-                            <div key={idx} className="flex-1 flex flex-col items-center gap-1">
-                              <div className="w-full flex items-end justify-center h-24">
-                                <div
-                                  className={`w-full rounded-t-md ${barColor} transition-all hover:opacity-80 cursor-pointer shadow-sm`}
-                                  style={{ height: `${height}%`, minHeight: height > 0 ? '2px' : '0px' }}
-                                  title={`${dateObj.toLocaleDateString()}: ${record.status}`}
-                                />
-                              </div>
-                              <p className="text-[8px] text-muted font-medium text-center leading-tight">{dateObj.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' })}</p>
-                            </div>
-                          );
-                        })}
-                      </div>
-                      <div className="mt-4 pt-3 border-t border-brand/20 flex gap-4 text-[11px]">
-                        <div className="flex items-center gap-1.5">
-                          <div className="w-3 h-3 rounded-sm bg-brand"></div>
-                          <span className="text-muted">Present</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <div className="w-3 h-3 rounded-sm bg-brand/70"></div>
-                          <span className="text-muted">Late</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <div className="w-3 h-3 rounded-sm bg-brand/50"></div>
-                          <span className="text-muted">Excused</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <div className="w-3 h-3 rounded-sm bg-error/60"></div>
-                          <span className="text-muted">Absent</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Actions */}
-                <div className="p-4 sm:p-5 space-y-3">
-                  <Link
-                    href={`/parent/results?childId=${child.id}`}
-                    className="flex items-center justify-center gap-2 w-full rounded-3xl border border-border bg-white px-4 py-3 text-sm font-semibold text-foreground hover:bg-background transition"
-                  >
-                    <BookOpen className="h-4 w-4" />
-                    View Grades
-                  </Link>
-                  <Link
-                    href={`/parent/invoices?childId=${child.id}`}
-                    className="flex items-center justify-center gap-2 w-full rounded-3xl bg-brand px-4 py-3 text-sm font-semibold text-white hover:bg-brand/90 transition"
-                  >
-                    <CreditCard className="h-4 w-4" />
-                    View Fees
-                  </Link>
+                <div className="mt-4">
+                  <input
+                    placeholder="Search by name or admission no..."
+                    onChange={() => {}}
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none"
+                  />
                 </div>
               </div>
-            );
-          })}
+
+              <div className="rounded-[12px] border border-border bg-surface overflow-hidden">
+                <div className="divide-y divide-border max-h-[60vh] overflow-auto">
+                  {children.map((c) => {
+                    const isSelected = selectedChildId === c.id;
+                    return (
+                      <button
+                        key={c.id}
+                        onClick={() => setSelectedChildId(c.id)}
+                        className={`w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-background transition ${isSelected ? 'bg-background' : ''}`}
+                      >
+                        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 overflow-hidden">
+                          {c.photoUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={c.photoUrl} alt={`${c.firstName} ${c.lastName}`} className="h-10 w-10 object-cover" />
+                          ) : (
+                            <div className="h-10 w-10 flex items-center justify-center">{(c.firstName || '').charAt(0)}</div>
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-medium text-foreground truncate">{[c.lastName, c.firstName].filter(Boolean).join(' ')}</p>
+                          <p className="text-xs text-muted truncate">{c.admissionNo || '—'}</p>
+                        </div>
+                        <div className="ml-auto text-xs text-muted">{c.class?.name || ''}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </aside>
+
+          {/* Right: detail */}
+          <main className="lg:col-span-8">
+            {selectedChildId ? (
+              (() => {
+                const child = children.find((x) => x.id === selectedChildId)!;
+                const childAttendance = attendance[child.id];
+                return (
+                  <div className="rounded-[12px] border border-border bg-surface shadow-sm overflow-hidden">
+                    <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 p-6 border-b border-border">
+                      <div className="flex items-center gap-4">
+                        <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-background text-2xl font-semibold text-foreground overflow-hidden">
+                          {child.photoUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={child.photoUrl} alt={`${child.firstName} ${child.lastName}`} className="h-20 w-20 object-cover" />
+                          ) : (
+                            <div className="h-20 w-20 flex items-center justify-center text-2xl font-semibold">{(child.firstName || '').charAt(0)}</div>
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-sm uppercase tracking-[0.18em] text-muted">Student</p>
+                          <h2 className="text-2xl font-bold text-foreground">{[child.lastName, child.firstName].filter(Boolean).join(' ')}</h2>
+                          <p className="text-sm text-muted mt-1">Admission: <span className="font-medium text-foreground">{child.admissionNo}</span></p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <Link href={`/parent/results?childId=${child.id}`} className="inline-flex items-center gap-2 rounded-md bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand/90">View Grades</Link>
+                        <Link href={`/parent/invoices?childId=${child.id}`} className="inline-flex items-center gap-2 rounded-md border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground">View Fees</Link>
+                      </div>
+                    </div>
+
+                    <div className="p-6 grid gap-6 lg:grid-cols-3">
+                      <div className="lg:col-span-2 space-y-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div className="rounded-md bg-background p-4">
+                            <p className="text-xs text-muted uppercase">Fee Due</p>
+                            <p className="mt-2 text-xl font-semibold text-foreground break-words">{formatMoney(child.outstandingFee || 0, currency)}</p>
+                          </div>
+                          <div className="rounded-md bg-background p-4">
+                            <p className="text-xs text-muted uppercase">Attendance</p>
+                            <p className="mt-2 text-xl font-semibold text-foreground">{childAttendance?.attendancePercentage != null ? `${childAttendance.attendancePercentage}%` : 'No records'}</p>
+                          </div>
+                          <div className="rounded-md bg-background p-4">
+                            <p className="text-xs text-muted uppercase">Today</p>
+                            <p className="mt-2 text-xl font-semibold text-foreground">{childAttendance?.todayStatus ? formatStatus(childAttendance.todayStatus) : getSmartStatusMessage(null, schoolHours)}</p>
+                          </div>
+                        </div>
+
+                        {childAttendance?.recentRecords && childAttendance.recentRecords.length > 0 && (
+                          <div className="rounded-md bg-background p-4">
+                            <p className="text-sm font-semibold text-foreground mb-3">Attendance Trend</p>
+                            <div className="h-32 flex items-end gap-1">
+                              {childAttendance.recentRecords.slice(0, 30).reverse().map((r, idx) => (
+                                <div key={idx} className="flex-1 h-full flex items-end">
+                                  <div className={`w-full rounded-t-sm ${r.status === 'PRESENT' ? 'bg-brand' : r.status === 'LATE' ? 'bg-brand/70' : r.status === 'ABSENT' ? 'bg-error/60' : 'bg-brand/50'}`} style={{height: r.status === 'PRESENT' ? '100%' : r.status === 'LATE' ? '75%' : r.status === 'EXCUSED' ? '50%' : '20%'}} />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <aside className="space-y-4">
+                        <div className="rounded-md bg-background p-4">
+                          <p className="text-xs text-muted">Class</p>
+                          <p className="mt-2 font-semibold text-foreground">{child.class?.name ?? '—'} {child.class?.section ?? ''}</p>
+                        </div>
+                        <div className="rounded-md bg-background p-4">
+                          <p className="text-xs text-muted">DOB</p>
+                          <p className="mt-2 font-semibold text-foreground">{(childProfiles[child.id]?.dateOfBirth ?? child.dateOfBirth) ? new Date((childProfiles[child.id]?.dateOfBirth ?? child.dateOfBirth) as string).toLocaleDateString() : '—'}</p>
+                        </div>
+                        <div className="rounded-md bg-background p-4">
+                          <p className="text-xs text-muted">Guardian</p>
+                          <p className="mt-2 font-semibold text-foreground">{
+                            (() => {
+                              const profile = childProfiles[child.id] || {};
+                              const first = profile?.guardians?.[0]?.guardian?.firstName || profile?.guardians?.[0]?.firstName || profile?.guardian?.firstName || child.guardians?.[0]?.guardian?.firstName || child.guardians?.[0]?.firstName;
+                              const last = profile?.guardians?.[0]?.guardian?.lastName || profile?.guardians?.[0]?.lastName || profile?.guardian?.lastName || child.guardians?.[0]?.guardian?.lastName || child.guardians?.[0]?.lastName;
+                              return first ? `${first} ${last || ''}`.trim() : '—';
+                            })()
+                          }</p>
+                        </div>
+                      </aside>
+                    </div>
+                  </div>
+                );
+              })()
+            ) : (
+              <div className="rounded-[12px] border border-border bg-surface p-8 text-center">
+                <Users className="h-12 w-12 text-muted mx-auto mb-3" />
+                <p className="text-muted">Select a child to view details</p>
+              </div>
+            )}
+          </main>
         </div>
-      )}
+      </div>
     </ParentPageShell>
   );
 }

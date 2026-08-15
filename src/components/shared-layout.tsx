@@ -963,7 +963,7 @@ export default function SharedLayout({
 
 
         <div
-          className="fixed z-50 flex flex-col items-end gap-2"
+          className="fixed z-50 flex flex-col items-end gap-2 print:hidden"
           style={{ left: toolsPosition.x, top: toolsPosition.y }}
         >
           <div className="relative" ref={toolPanelRef}>

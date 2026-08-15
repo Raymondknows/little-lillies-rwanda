@@ -116,7 +116,7 @@ export default function SchoolPage() {
               <div className="h-8 w-48 bg-slate-200 rounded animate-pulse"></div>
             </div>
           </div>
-          <div className="rounded-3xl border border-border bg-surface p-6 space-y-6 animate-pulse">
+          <div className="rounded-[12px] border border-border bg-surface p-6 space-y-6 animate-pulse">
             {[1, 2, 3].map((i) => (
               <div key={i} className="space-y-3">
                 <div className="h-5 w-32 bg-slate-200 rounded"></div>
@@ -132,7 +132,7 @@ export default function SchoolPage() {
   if (error) {
     return (
       <div className="px-4 py-10">
-        <div className="rounded-3xl border border-red-200 bg-red-50 p-5 text-sm text-red-700 shadow-sm">
+        <div className="rounded-[12px] border border-red-200 bg-red-50 p-5 text-sm text-red-700 shadow-sm">
           <div className="flex items-start gap-3">
             <AlertCircle className="mt-0.5 h-5 w-5 text-red-600" />
             <div>
@@ -148,7 +148,7 @@ export default function SchoolPage() {
   if (!school) {
     return (
       <div className="flex min-h-screen items-center justify-center px-4 py-12">
-        <div className="rounded-3xl border border-border bg-surface p-8 text-center shadow-sm">
+        <div className="rounded-[12px] border border-border bg-surface p-8 text-center shadow-sm">
           <p className="text-sm text-muted">School information not available.</p>
         </div>
       </div>
@@ -158,50 +158,52 @@ export default function SchoolPage() {
   const contactLabel = school.email || school.phone ? 'Reach out to the school directly' : 'No direct contact details provided';
 
   return (
-    <ParentPageShell onRefresh={loadData} className="px-0 pb-12 pt-6 sm:px-2 md:px-4 lg:px-8">
-      {/* Header */}
-      <div className="mb-4 flex items-end gap-3">
-        <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-2xl bg-background border border-border/30">
-          {schoolLogoUrl ? (
-            <img src={schoolLogoUrl} alt="School logo" className="h-full w-full object-contain p-2" />
-          ) : (
-            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-brand/10 text-3xl font-bold text-brand">
-              {school.initials || school.name?.charAt(0) || 'S'}
-            </div>
-          )}
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted">School profile</p>
-          <h1 className="mt-2 text-2xl font-bold text-foreground truncate">{school.name}</h1>
+    <ParentPageShell onRefresh={loadData}>
+      <div className="mx-auto max-w-7xl">
+        {/* Header */}
+        <div className="mb-4 flex items-end gap-3">
+          <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-2xl bg-background border border-border/30">
+            {schoolLogoUrl ? (
+              <img src={schoolLogoUrl} alt="School logo" className="h-full w-full object-contain p-2" />
+            ) : (
+              <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-brand/10 text-3xl font-bold text-brand">
+                {school.initials || school.name?.charAt(0) || 'S'}
+              </div>
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted">School profile</p>
+            <h1 className="mt-2 text-3xl font-semibold text-foreground truncate">{school.name}</h1>
+          </div>
         </div>
       </div>
 
-      {school.tagline || school.motto ? (
-        <p className="mb-6 text-sm leading-6 text-muted">{school.tagline || school.motto}</p>
-      ) : null}
+        {school.tagline || school.motto ? (
+          <p className="mb-6 text-sm leading-6 text-muted">{school.tagline || school.motto}</p>
+        ) : null}
 
-      {/* Quick Actions */}
-      <div className="mb-6 flex gap-2">
-        <button
-          onClick={handleCallSchool}
-          disabled={!school.phone || calling}
-          className="flex-1 flex items-center justify-center gap-1 rounded-2xl bg-brand px-3 py-2 text-xs font-semibold text-white transition hover:bg-brand/90 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <Phone className="h-3.5 w-3.5" />
-          Call
-        </button>
-        <a
-          href={school.email ? `mailto:${school.email}` : '#'}
-          className="flex-1 flex items-center justify-center gap-1 rounded-2xl border border-border bg-surface px-3 py-2 text-xs font-semibold text-foreground transition hover:border-brand/40 hover:text-brand"
-          aria-disabled={!school.email}
-        >
-          <Mail className="h-3.5 w-3.5" />
-          Email
-        </a>
-      </div>
+        {/* Quick Actions */}
+        <div className="mb-6 flex gap-2">
+          <button
+            onClick={handleCallSchool}
+            disabled={!school.phone || calling}
+            className="flex-1 flex items-center justify-center gap-1 rounded-[12px] bg-brand px-3 py-2 text-sm font-semibold text-white transition hover:bg-brand/90 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Phone className="h-4 w-4" />
+            Call
+          </button>
+          <a
+            href={school.email ? `mailto:${school.email}` : '#'}
+            className="flex-1 flex items-center justify-center gap-1 rounded-[12px] border border-border bg-surface px-3 py-2 text-sm font-semibold text-foreground transition hover:border-brand/40 hover:text-brand"
+            aria-disabled={!school.email}
+          >
+            <Mail className="h-4 w-4" />
+            Email
+          </a>
+        </div>
 
-      {/* Main Card Container */}
-      <div className="rounded-3xl border border-border bg-surface p-4 sm:p-6 shadow-sm space-y-6">
+        {/* Main Card Container */}
+        <div className="rounded-[12px] border border-border bg-surface p-6 shadow-sm space-y-6">
         {/* Contact Details */}
         <div>
           <p className="text-lg font-bold text-foreground mb-5 tracking-tight">Contact Details</p>

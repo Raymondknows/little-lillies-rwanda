@@ -1,8 +1,9 @@
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { PullToRefreshIndicator } from "@/components/PullToRefreshIndicator";
+import { resolveStoredTheme, applyTheme } from "@/lib/theme";
 
 interface ParentPageShellProps {
   children: ReactNode;
@@ -19,6 +20,18 @@ export default function ParentPageShell({
     onRefresh,
   });
 
+  useEffect(() => {
+    const stored = resolveStoredTheme();
+    applyTheme(stored);
+
+    if (stored === "system") {
+      const media = window.matchMedia("(prefers-color-scheme: dark)");
+      const handler = () => applyTheme("system");
+      media.addEventListener("change", handler);
+      return () => media.removeEventListener("change", handler);
+    }
+  }, []);
+
   return (
     <div
       className={className}
@@ -31,3 +44,5 @@ export default function ParentPageShell({
     </div>
   );
 }
+
+

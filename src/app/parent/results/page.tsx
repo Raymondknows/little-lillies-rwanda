@@ -251,14 +251,14 @@ const termParam = selectedTerm ? `&termId=${selectedTerm.id}` : "";
             <div className="h-10 w-48 bg-slate-200 rounded-lg animate-pulse"></div>
             <div className="h-5 w-64 bg-slate-100 rounded animate-pulse"></div>
           </div>
-          <div className="rounded-3xl border border-slate-200 bg-white p-5 space-y-4 animate-pulse">
+          <div className="rounded-[20px] border border-slate-200 bg-surface p-5 space-y-4 animate-pulse">
             <div className="h-5 w-32 bg-slate-200 rounded"></div>
             {[1, 2].map((i) => (
               <div key={i} className="h-10 w-24 bg-slate-100 rounded inline-block mr-2"></div>
             ))}
           </div>
           {[1, 2].map((i) => (
-            <div key={i} className="rounded-3xl border border-slate-200 bg-white p-5 space-y-3 animate-pulse">
+            <div key={i} className="rounded-[20px] border border-slate-200 bg-surface p-5 space-y-3 animate-pulse">
               <div className="h-5 w-40 bg-slate-200 rounded"></div>
               <div className="h-16 w-full bg-slate-100 rounded"></div>
             </div>
@@ -284,12 +284,12 @@ const termParam = selectedTerm ? `&termId=${selectedTerm.id}` : "";
     return (
       <ParentPageShell onRefresh={loadData}>
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl shadow-xl max-w-md w-full p-8 space-y-6">
+          <div className="bg-surface rounded-[20px] shadow-xl max-w-md w-full p-8 space-y-6">
             <div className="text-center">
               <div className="mx-auto w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mb-4">
                 <Lock className="w-8 h-8 text-amber-600" />
               </div>
-              <h2 className="text-2xl font-bold text-slate-900">Result PIN Required</h2>
+              <h2 className="text-2xl font-bold text-foreground">Result PIN Required</h2>
               <p className="text-sm text-slate-600 mt-2">
                 Enter the result PIN provided by the school to view {[selectedChild.lastName, selectedChild.firstName].filter(Boolean).join(' ')}'s results.
               </p>
@@ -297,7 +297,7 @@ const termParam = selectedTerm ? `&termId=${selectedTerm.id}` : "";
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-slate-900 mb-2">PIN</label>
+                <label className="block text-sm font-semibold text-foreground mb-2">PIN</label>
                 <input
                   value={pinInput}
                   onChange={(event) => setPinInput(event.target.value)}
@@ -306,7 +306,7 @@ const termParam = selectedTerm ? `&termId=${selectedTerm.id}` : "";
                   type="password"
                   maxLength={20}
                   autoFocus
-                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-center text-lg font-semibold text-slate-900 outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                  className="w-full rounded-2xl border border-slate-200 bg-background px-4 py-3 text-center text-lg font-semibold text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
                 />
               </div>
 
@@ -362,14 +362,14 @@ const termParam = selectedTerm ? `&termId=${selectedTerm.id}` : "";
   return (
     <ParentPageShell onRefresh={loadData}>
       <div className="border-b border-slate-200 pb-6 print:hidden">
-        <h1 className="text-4xl font-bold text-slate-900">Academic Results</h1>
+        <h1 className="text-4xl font-bold text-foreground">Academic Results</h1>
         <p className="mt-1 text-sm text-slate-600">View your child's grades and assessment performance</p>
       </div>
 
-      <div className="rounded-3xl border border-slate-200 bg-white p-5 hover:shadow-sm transition-shadow print:hidden">
-        <div className="flex items-center gap-3 mb-4">
+      <div className="rounded-[20px] border border-slate-200 bg-surface p-5 hover:shadow-sm transition-shadow print:hidden">
+          <div className="flex items-center gap-3 mb-4">
           <Filter className="h-5 w-5 text-slate-600" />
-          <h2 className="font-semibold text-slate-900">Filter Results</h2>
+          <h2 className="font-semibold text-foreground">Filter Results</h2>
         </div>
 
         {pinRequired && selectedChild && (
@@ -381,7 +381,7 @@ const termParam = selectedTerm ? `&termId=${selectedTerm.id}` : "";
                 value={pinInput}
                 onChange={(event) => setPinInput(event.target.value)}
                 placeholder="Enter PIN"
-                className="w-full rounded-2xl border border-amber-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+                className="w-full rounded-2xl border border-amber-200 bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
               />
               <button
                 type="button"
@@ -398,7 +398,7 @@ const termParam = selectedTerm ? `&termId=${selectedTerm.id}` : "";
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-slate-900 mb-3">Select Child</label>
+              <label className="block text-sm font-semibold text-foreground mb-3">Select Child</label>
             <div className="overflow-x-auto pb-1">
               <div className="flex gap-2 min-w-[max-content]">
                 {children.map((child) => (
@@ -420,7 +420,7 @@ const termParam = selectedTerm ? `&termId=${selectedTerm.id}` : "";
                     className={`rounded-full px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
                       selectedChild?.id === child.id
                         ? "bg-brand text-white shadow-sm"
-                        : "bg-slate-100 text-slate-900 border border-slate-200 hover:border-slate-300"
+                        : "bg-slate-100 text-foreground border border-slate-200 hover:border-slate-300"
                     }`}
                   >
                     {[child.lastName, child.firstName].filter(Boolean).join(' ')}
@@ -431,7 +431,7 @@ const termParam = selectedTerm ? `&termId=${selectedTerm.id}` : "";
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-slate-900 mb-3">Select Term</label>
+            <label className="block text-sm font-semibold text-foreground mb-3">Select Term</label>
             <select
               value={selectedTerm?.id || ""}
               onChange={(event) => {
@@ -445,7 +445,7 @@ const termParam = selectedTerm ? `&termId=${selectedTerm.id}` : "";
                 setSelectedAssessmentId(null);
                 setReportCardData(null);
               }}
-              className="w-full rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+              className="w-full rounded-[20px] border border-slate-200 bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
             >
               <option value="">Latest Term</option>
               {terms.map((term) => (
@@ -459,11 +459,11 @@ const termParam = selectedTerm ? `&termId=${selectedTerm.id}` : "";
       </div>
 
       {selectedChild && (
-        <div className="space-y-6 rounded-3xl border border-slate-200 bg-white p-5 hover:shadow-sm transition-shadow print:border-0 print:bg-transparent print:p-0 print:rounded-none print:shadow-none">
+        <div className="space-y-6 rounded-[20px] border border-slate-200 bg-surface p-5 hover:shadow-sm transition-shadow print:border-0 print:bg-transparent print:p-0 print:rounded-none print:shadow-none">
           <div className="flex items-center gap-3 border-b border-slate-200 pb-4 print:hidden">
             <GraduationCap className="h-5 w-5 text-slate-600" />
             <div>
-              <h2 className="font-semibold text-slate-900">
+              <h2 className="font-semibold text-foreground">
                 Results for {[selectedChild.lastName, selectedChild.firstName].filter(Boolean).join(' ')}
               </h2>
               <p className="text-xs text-slate-600 mt-1">{activeResultsLabel}</p>
@@ -471,7 +471,7 @@ const termParam = selectedTerm ? `&termId=${selectedTerm.id}` : "";
           </div>
 
           {results.length === 0 ? (
-            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-10 text-center print:hidden">
+            <div className="rounded-[20px] border border-slate-200 bg-slate-50 p-10 text-center print:hidden">
               <GraduationCap className="h-12 w-12 text-slate-400 mx-auto mb-3" />
               <p className="text-slate-600">
                 {statusMessage || (selectedTerm ? `No published results are available for ${selectedTerm.name} yet.` : "No published results are available yet. Results will appear here once the school publishes them.")}
@@ -485,15 +485,15 @@ const termParam = selectedTerm ? `&termId=${selectedTerm.id}` : "";
                     key={result.assessmentId}
                     type="button"
                     onClick={() => setSelectedAssessmentId(result.assessmentId)}
-                    className={`w-full rounded-3xl border p-4 text-left transition ${
+                    className={`w-full rounded-[20px] border p-4 text-left transition ${
                       selectedAssessmentId === result.assessmentId
                         ? "border-brand bg-brand/5 shadow-sm"
-                        : "border-slate-200 bg-white hover:border-slate-300"
+                        : "border-slate-200 bg-background hover:border-slate-300"
                     }`}
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="text-base font-semibold text-slate-900 truncate">{result.subject}</p>
+                        <p className="text-base font-semibold text-foreground truncate">{result.subject}</p>
                         <p className="text-sm text-slate-600 mt-1 truncate">
                           CA {result.caScore ?? "—"} · Test {result.testScore ?? "—"} · Exam {result.examScore ?? "—"}
                         </p>
@@ -508,8 +508,8 @@ const termParam = selectedTerm ? `&termId=${selectedTerm.id}` : "";
                 ))}
               </div>
 
-              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700 print:hidden">
-                <p className="font-semibold text-slate-900">Selected report card</p>
+              <div className="rounded-[20px] border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700 print:hidden">
+                <p className="font-semibold text-foreground">Selected report card</p>
                 <p className="mt-1">
                   {selectedAssessment
                     ? `Showing ${selectedAssessment.subject} for ${[selectedChild.lastName, selectedChild.firstName].filter(Boolean).join(' ')}`
@@ -539,6 +539,7 @@ const termParam = selectedTerm ? `&termId=${selectedTerm.id}` : "";
                     document.body.removeChild(a);
                   }}
                   onPrint={() => window.print()}
+                  showDownload={false}
                 />
               ) : (
                 <div className="rounded-lg border border-slate-200 bg-slate-50 p-12 text-center">

@@ -136,7 +136,7 @@ export default function InvoiceDetailPage() {
             <ChevronLeft size={16} />
             Back to invoices
           </button>
-          <div className="rounded-xl border-l-4 border-red-500 bg-white p-6 shadow-sm">
+          <div className="rounded-xl border-l-4 border-red-500 bg-surface p-6 shadow-sm">
             <div className="flex items-start gap-3">
               <AlertCircle size={20} className="mt-0.5 flex-shrink-0 text-red-500" />
               <div>
@@ -202,7 +202,7 @@ export default function InvoiceDetailPage() {
           </div>
         </div>
 
-        <div className="rounded-xl bg-white p-8 shadow-sm print:bg-white print:p-6">
+        <div className="rounded-xl bg-surface p-8 shadow-sm print:bg-white print:p-6">
           <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <div className="flex items-center gap-3">

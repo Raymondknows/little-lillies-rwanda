@@ -32,18 +32,13 @@ export function ThemeSwitcher({
   }, [theme]);
 
   return (
-    <div className="rounded-[28px] border border-border bg-surface p-4 shadow-sm">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-sm font-semibold text-foreground">Theme</p>
-          <p className="mt-1 text-xs text-muted">Select a polished visual style for the admin workspace.</p>
-        </div>
-        <span className="rounded-full bg-brand/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-brand">
-          {theme === "system" ? "Auto" : theme}
-        </span>
+    <div className="rounded-[12px] border border-border bg-surface p-2 shadow-sm text-sm">
+      <div className="flex items-center justify-between gap-3 px-2 py-1">
+        <p className="text-sm font-semibold text-foreground">Theme</p>
+        <span className="text-xs text-muted">{theme === "system" ? "Auto" : theme}</span>
       </div>
 
-      <div className="mt-4 grid grid-cols-3 gap-2">
+      <div className="mt-2 grid grid-cols-3 gap-2 px-2">
         {(Object.keys(themeOptions) as ThemeMode[]).map((option) => {
           const optionMeta = themeOptions[option];
           const Icon = optionMeta.icon;
@@ -55,17 +50,13 @@ export function ThemeSwitcher({
               type="button"
               aria-pressed={active}
               onClick={() => onChange(option)}
-              className={optionClasses(active)}
+              className={optionClasses(active).replace('min-h-[44px]','min-h-[36px]').replace('px-3 py-2','px-2 py-1 text-xs')}
             >
               <Icon className="h-4 w-4" />
-              <span>{optionMeta.label}</span>
+              <span className="sr-only">{optionMeta.label}</span>
             </button>
           );
         })}
-      </div>
-
-      <div className="mt-4 rounded-3xl border border-border/80 bg-background/90 px-4 py-3 text-xs text-muted">
-        {statusText}
       </div>
     </div>
   );

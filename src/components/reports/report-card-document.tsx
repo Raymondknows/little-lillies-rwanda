@@ -153,7 +153,9 @@ export function ReportCardDocument({ reportCard, photoUrl, className }: ReportCa
   const totalSubjects = reportCard.totalSubjects ?? subjects.length;
   const passRate = reportCard.statistics?.passRate ?? 0;
   const teacherRemark = reportCard.teacherRemark ?? null;
-  const principalComment = schoolConfig?.principalComment ?? reportCard.principalRemark ?? null;
+  // Principal comment prefers the resolved Signatory on the reportCard,
+  // falling back to configured school principal comment or the report's principal remark.
+  const principalComment = (reportCard as any).signatory?.comment ?? schoolConfig?.principalComment ?? reportCard.principalRemark ?? null;
   const publishedDateLabel = reportCard.publishedAt
     ? new Date(reportCard.publishedAt).toLocaleDateString('en-NG', {
         day: 'numeric',
@@ -336,13 +338,19 @@ export function ReportCardDocument({ reportCard, photoUrl, className }: ReportCa
           <div className="space-y-2">
             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-900">Signature</p>
             <div className="min-h-12 border-b border-gray-400 pb-2">
-              {schoolConfig?.principalSignatureUrl || school.principalSignatureUrl ? (
-                <img src={schoolConfig?.principalSignatureUrl || school.principalSignatureUrl || ''} alt="Principal Signature" className="h-10 object-contain" />
-              ) : (
-                <div className="h-10" />
-              )}
+              {(() => {
+                const signatureUrl = (reportCard as any).signatory?.signatureUrl ?? schoolConfig?.principalSignatureUrl ?? school.principalSignatureUrl ?? null;
+                return signatureUrl ? (
+                  <img src={signatureUrl} alt="Signature" className="h-10 object-contain" />
+                ) : (
+                  <div className="h-10" />
+                );
+              })()}
             </div>
-            <p className="font-semibold text-gray-900">{schoolConfig?.principalName || school.principalName || 'Principal/Headmaster'}</p>
+            <p className="font-semibold text-gray-900">{(reportCard as any).signatory?.name ?? schoolConfig?.principalName ?? school.principalName ?? 'Principal/Headmaster'}</p>
+            <p className="text-sm text-gray-600">
+              {(reportCard as any).signatory?.title ?? schoolConfig?.principalName ? (reportCard as any).signatory?.title ?? schoolConfig?.principalName : 'Principal/Headmaster'}
+            </p>
             {publishedDateLabel ? (
               <p className="text-gray-600">Published on {publishedDateLabel}</p>
             ) : null}

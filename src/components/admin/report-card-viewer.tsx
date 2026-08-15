@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { getBackendUrl } from '@/lib/backend-url';
 import { Download, Eye, File } from 'lucide-react';
 import { ReportCardDocument } from '@/components/reports/report-card-document';
 
@@ -105,6 +106,8 @@ export function ReportCardViewer({
   const [reportCard, setReportCard] = useState<ReportCard | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [signatories, setSignatories] = useState<Array<any>>([]);
+  const [selectedSignatory, setSelectedSignatory] = useState<string>('auto');
 
   // Auto-load report card when in readonly mode with pupilId
   // Re-fetch when pupilId changes (for dropdown selection updates)
@@ -113,6 +116,21 @@ export function ReportCardViewer({
       handleViewReportCard(initialPupilId);
     }
   }, [readonly, initialPupilId]);
+
+  useEffect(() => {
+    // load signatories for dropdown when in admin context
+    (async () => {
+      try {
+        const backendUrl = getBackendUrl();
+        const resp = await fetch(`${backendUrl}/api/admin/signatories`, { credentials: 'include' });
+        if (!resp.ok) return;
+        const d = await resp.json();
+        setSignatories(d.signatories || []);
+      } catch (e) {
+        // ignore
+      }
+    })();
+  }, []);
 
   const handleViewReportCard = async (pupilId: string) => {
     setLoading(true);
@@ -123,9 +141,14 @@ export function ReportCardViewer({
       if (schoolId) {
         headers['x-school-id'] = schoolId;
       }
-      const response = await fetch(`/api/report-cards/${assessmentId}/${pupilId}`, {
-        headers,
-      });
+      const params = new URLSearchParams();
+      if (selectedSignatory && selectedSignatory !== 'auto') {
+        if (selectedSignatory === 'principal') params.set('signatoryMode', 'principal');
+        else params.set('signatoryId', selectedSignatory);
+      }
+      const backendUrl = getBackendUrl();
+      const url = `${backendUrl}/api/report-cards/${assessmentId}/${pupilId}${params.toString() ? `?${params.toString()}` : ''}`;
+      const response = await fetch(url, { headers, credentials: 'include' });
 
       if (!response.ok) throw new Error('Failed to fetch report card');
 
@@ -145,20 +168,25 @@ export function ReportCardViewer({
       if (schoolId) {
         headers['x-school-id'] = schoolId;
       }
-      const response = await fetch(`/api/pdf-reports/${assessmentId}/${pupilId}`, {
-        headers,
-      });
+      const params = new URLSearchParams();
+      if (selectedSignatory && selectedSignatory !== 'auto') {
+        if (selectedSignatory === 'principal') params.set('signatoryMode', 'principal');
+        else params.set('signatoryId', selectedSignatory);
+      }
+      const backendUrl = getBackendUrl();
+      const url = `${backendUrl}/api/pdf-reports/${assessmentId}/${pupilId}${params.toString() ? `?${params.toString()}` : ''}`;
+      const response = await fetch(url, { headers, credentials: 'include' });
 
       if (!response.ok) throw new Error('Failed to download PDF');
 
       const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+      const objectUrl = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url;
+      a.href = objectUrl;
       a.download = `report-card-${pupilId}.pdf`;
       document.body.appendChild(a);
       a.click();
-      window.URL.revokeObjectURL(url);
+      window.URL.revokeObjectURL(objectUrl);
       document.body.removeChild(a);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to download PDF');
@@ -171,6 +199,21 @@ export function ReportCardViewer({
       {!readonly && (
         <div className="rounded-lg border border-gray-200 p-6">
           <h3 className="mb-4 text-lg font-semibold">Report Cards</h3>
+
+          <div className="mb-4">
+            <label className="block text-sm text-gray-600 mb-1">Signature</label>
+            <select
+              value={selectedSignatory}
+              onChange={(e) => setSelectedSignatory(e.target.value)}
+              className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+            >
+              <option value="auto">Auto (use section signatory)</option>
+              <option value="principal">Principal (Global)</option>
+              {signatories.map((s) => (
+                <option key={s.id} value={s.id}>{(s.phase ? s.phase + ' — ' : '') + s.name}</option>
+              ))}
+            </select>
+          </div>
 
           {/* Pupil List */}
           {!pupils || pupils.length === 0 ? (

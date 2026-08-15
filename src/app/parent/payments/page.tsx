@@ -23,14 +23,19 @@ export default function PaymentsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [children, setChildren] = useState<any[]>([]);
+  const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
+
   const { school: parentSchool } = useParentSchool();
   const currency = useEffectiveCurrency(parentSchool);
 
   const loadData = async () => {
     try {
       const backendUrl = getBackendUrl();
+      // Load payments (optionally filtered by selected child)
+      const paymentsUrl = selectedChildId ? `${backendUrl}/api/parent/payments?childId=${selectedChildId}` : `${backendUrl}/api/parent/payments`;
       
-      const res = await fetch(`${backendUrl}/api/parent/payments`, {
+      const res = await fetch(paymentsUrl, {
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -53,9 +58,33 @@ export default function PaymentsPage() {
     }
   };
 
+  const loadChildren = async () => {
+    try {
+      const backendUrl = getBackendUrl();
+      const res = await fetch(`${backendUrl}/api/parent/children`, {
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      const childrenList = data.children || data.data || (Array.isArray(data) ? data : []) || [];
+      setChildren(childrenList);
+      if (childrenList.length > 0 && !selectedChildId) setSelectedChildId(childrenList[0].id);
+    } catch (err) {
+      console.error('Error loading children for payments:', err);
+    }
+  };
+
   useEffect(() => {
+    loadChildren();
     loadData();
   }, []);
+
+  useEffect(() => {
+    // reload payments when selected child changes
+    setLoading(true);
+    loadData();
+  }, [selectedChildId]);
 
   if (loading) {
     return (
@@ -94,96 +123,137 @@ export default function PaymentsPage() {
 
   return (
     <ParentPageShell onRefresh={loadData}>
-      {/* Header */}
-      <div>
-        <h1 className="text-4xl font-bold text-foreground">Payments</h1>
-        <p className="mt-2 text-muted">Track all your payments and receipts</p>
-      </div>
-
-      {error && (
-        <div className="rounded-3xl border border-red-200 bg-red-50 p-5 text-sm text-red-700 shadow-sm">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="mt-0.5 h-5 w-5 text-red-600" />
-            <div>
-              <p className="font-semibold text-red-900">Unable to load payments</p>
-              <p className="mt-1">{error}</p>
-            </div>
-          </div>
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-6">
+          <h1 className="text-3xl font-semibold text-foreground">Payments</h1>
+          <p className="mt-1 text-sm text-muted">Track all your payments and receipts</p>
         </div>
-      )}
 
-      {/* Summary Stats */}
-      <div className="rounded-3xl border border-border bg-surface p-5 shadow-sm">
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted">Total Paid</p>
-            <p className="mt-2 text-2xl font-bold text-success">{formatMoney(totalPaid, currency)}</p>
-          </div>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted">Count</p>
-            <p className="mt-2 text-2xl font-bold text-brand">{payments.length}</p>
-          </div>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted">Latest</p>
-            <p className="mt-2 text-lg font-semibold text-foreground">
-              {payments.length > 0
-                ? new Date(payments[0].paidAt).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                  })
-                : "—"}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Payments List */}
-      {payments.length === 0 ? (
-        <div className="rounded-3xl border border-border bg-surface p-12 text-center shadow-sm">
-          <CreditCard className="h-16 w-16 text-muted/40 mx-auto mb-4" />
-          <p className="text-lg text-muted">No payments recorded yet</p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {payments.map((payment) => (
-            <div
-              key={payment.id}
-              className="rounded-3xl border border-border bg-surface p-4 shadow-sm transition hover:shadow-md hover:border-brand/50"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex flex-wrap items-center gap-2 mb-2">
-                    <span className="inline-flex rounded-full bg-success/10 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-success">
-                      Paid
-                    </span>
-                    <span className="text-xs text-muted">
-                      {methodLabels[payment.method] || payment.method}
-                    </span>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Left: children list for filtering */}
+          <aside className="lg:col-span-4">
+            <div className="sticky top-20 space-y-4">
+              <div className="rounded-[12px] border border-border bg-surface p-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand/10 text-brand">
+                    <CreditCard className="h-5 w-5" />
                   </div>
-                  <p className="text-sm text-foreground font-medium">School Fees</p>
-                  <p className="text-xs text-muted mt-1">
-                    Ref: {payment.reference || "—"}
-                  </p>
+                  <div>
+                    <p className="text-sm font-medium text-muted">Payments</p>
+                    <p className="text-lg font-semibold text-foreground">{payments.length}</p>
+                  </div>
                 </div>
-                <div className="flex-shrink-0 text-right">
-                  <p className="text-lg font-bold text-success">{formatMoney(payment.amount, currency)}</p>
-                  <p className="text-sm font-semibold text-foreground mt-2">
-                    {new Date(payment.paidAt).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })}
-                  </p>
-                  <button className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-brand hover:text-brand/80 transition">
-                    <Download className="h-3.5 w-3.5" />
-                    Receipt
-                  </button>
+                <div className="mt-4">
+                  <input
+                    placeholder="Filter by student..."
+                    onChange={() => {}}
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="rounded-[12px] border border-border bg-surface overflow-hidden">
+                <div className="divide-y divide-border max-h-[60vh] overflow-auto">
+                  {children.map((c) => {
+                    const isSelected = selectedChildId === c.id;
+                    return (
+                      <button
+                        key={c.id}
+                        onClick={() => setSelectedChildId(c.id)}
+                        className={`w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-background transition ${isSelected ? 'bg-background' : ''}`}
+                      >
+                        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 overflow-hidden">
+                          {c.photoUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={c.photoUrl} alt={`${c.firstName} ${c.lastName}`} className="h-10 w-10 object-cover" />
+                          ) : (
+                            <div className="h-10 w-10 flex items-center justify-center">{(c.firstName || '').charAt(0)}</div>
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-medium text-foreground truncate">{[c.lastName, c.firstName].filter(Boolean).join(' ')}</p>
+                          <p className="text-xs text-muted truncate">{c.admissionNo || '—'}</p>
+                        </div>
+                        <div className="ml-auto text-xs text-muted">{c.class?.name || ''}</div>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>
-          ))}
+          </aside>
+
+          {/* Right: payments list and stats */}
+          <main className="lg:col-span-8">
+            {error && (
+              <div className="rounded-[12px] border border-red-200 bg-red-50 p-4 text-sm text-red-700 shadow-sm mb-6">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="mt-0.5 h-5 w-5 text-red-600" />
+                  <div>
+                    <p className="font-semibold text-red-900">Unable to load payments</p>
+                    <p className="mt-1">{error}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="rounded-[12px] border border-border bg-surface p-6 mb-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <p className="text-xs text-muted uppercase">Total Paid</p>
+                  <p className="mt-2 text-xl font-semibold text-success">{formatMoney(totalPaid, currency)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted uppercase">Count</p>
+                  <p className="mt-2 text-xl font-semibold text-brand">{payments.length}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted uppercase">Latest</p>
+                  <p className="mt-2 text-lg font-semibold text-foreground">
+                    {payments.length > 0
+                      ? new Date(payments[0].paidAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                      : '—'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {payments.length === 0 ? (
+              <div className="rounded-[12px] border border-border bg-surface p-12 text-center shadow-sm">
+                <CreditCard className="h-16 w-16 text-muted/40 mx-auto mb-4" />
+                <p className="text-lg text-muted">No payments recorded yet</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {payments.map((payment) => (
+                  <div key={payment.id} className="rounded-[12px] border border-border bg-surface p-4 shadow-sm">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
+                          <span className="inline-flex rounded-full bg-success/10 px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-success">Paid</span>
+                          <span className="text-xs text-muted">{methodLabels[payment.method] || payment.method}</span>
+                        </div>
+                        <p className="text-sm text-foreground font-medium">School Fees</p>
+                        <p className="text-xs text-muted mt-1">Ref: {payment.reference || '—'}</p>
+                      </div>
+                      <div className="flex-shrink-0 text-right">
+                        <p className="text-lg font-bold text-success">{formatMoney(payment.amount, currency)}</p>
+                        <p className="text-sm font-semibold text-foreground mt-2">
+                          {new Date(payment.paidAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </p>
+                        <button className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-brand hover:text-brand/80 transition">
+                          <Download className="h-3.5 w-3.5" />
+                          Receipt
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </main>
         </div>
-      )}
+      </div>
     </ParentPageShell>
   );
 }

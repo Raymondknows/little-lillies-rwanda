@@ -80,8 +80,12 @@ export default function TeacherReportsPage({
     const loadReportCard = async () => {
       try {
         setReportLoading(true);
+        const params = new URLSearchParams();
+        // Ask backend to prefer the configured signatory/principal when resolving
+        // so the report includes signatory `title` when available.
+        params.set('signatoryMode', 'principal');
         const response = await fetch(
-          `/api/report-cards/${id}/${selectedStudent}`,
+          `/api/report-cards/${id}/${selectedStudent}?${params.toString()}`,
           {
             credentials: 'include',
           }
@@ -163,7 +167,9 @@ export default function TeacherReportsPage({
         headers["x-school-id"] = schoolId;
       }
 
-      const response = await fetch(`/api/pdf-reports/${id}/${pupilId}`, {
+      const params = new URLSearchParams();
+      params.set('signatoryMode', 'principal');
+      const response = await fetch(`/api/pdf-reports/${id}/${pupilId}?${params.toString()}`, {
         headers,
       });
       if (!response.ok) throw new Error("Failed to download PDF");
@@ -256,6 +262,7 @@ export default function TeacherReportsPage({
               pupilId={selectedStudent}
               data={reportCardData}
               onDownloadPDF={handleDownloadPDF}
+              showDownload={false}
               onPrint={() => window.print()}
             />
           ) : (

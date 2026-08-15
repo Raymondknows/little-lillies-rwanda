@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { ErrorModal } from "@/components/ui/error-modal";
 import { Building2, MapPin, DollarSign, FileText, Upload, Save, AlertCircle, Zap, X, KeyRound, CalendarDays, ShieldCheck, Copy, CheckCircle2, ChevronRight, Loader2 } from "lucide-react";
 import { UserGuide, type PageHelpGuide } from "@/components/ui/user-guide";
+import SignatoriesClient from './signatories-client';
 import { WhatsAppIcon } from "@/components/ui/icons";
 import countriesData from "../../../../config/countries.json";
 import { resolveSchoolAssetUrl } from "@/lib/asset-urls";
@@ -141,6 +142,7 @@ export default function SettingsPageClient({
     resultAccess: false,
     security: false,
     payment: false,
+    signatories: false,
   });
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successModalTitle, setSuccessModalTitle] = useState<string | undefined>("Success");
@@ -162,6 +164,10 @@ export default function SettingsPageClient({
   const [admissionsIntroText, setAdmissionsIntroText] = useState(school.admissionsIntroText ?? "");
   const [admissionsRequirements, setAdmissionsRequirements] = useState(school.admissionsRequirements ?? "");
   const [admissionsContactInfo, setAdmissionsContactInfo] = useState(school.admissionsContactInfo ?? "");
+
+  const logoInputRef = useRef<HTMLInputElement | null>(null);
+  const stampInputRef = useRef<HTMLInputElement | null>(null);
+  const signatureInputRef = useRef<HTMLInputElement | null>(null);
 
   const togglePanel = (panel: keyof typeof openPanels) => {
     setOpenPanels((current) => ({ ...current, [panel]: !current[panel] }));
@@ -695,99 +701,155 @@ export default function SettingsPageClient({
               <p className="text-xs text-muted mt-1">Appears on each student's result sheet</p>
             </div>
 
-            {/* File Uploads Grid */}
+            {/* File Uploads Grid (Logo + Signature + Stamp) styled like signatories cards */}
             <div className="grid gap-4 sm:grid-cols-3">
-              {/* Logo */}
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-foreground">School Logo</label>
-                <div className="rounded-lg border border-border bg-background p-3 space-y-2">
-                  {logoUrl && (
-                    <div className="relative inline-block">
-                      <img src={logoUrl} alt="Logo" className="h-16 w-16 object-contain rounded" />
-                      <button
-                        type="button"
-                        onClick={() => setLogoUrl(null)}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
+              <div className="rounded-xl border border-border bg-background p-4 flex flex-col justify-between">
+                <div>
+                  <div className="text-sm font-semibold">School Logo</div>
+                  <p className="text-xs text-muted mt-1">Logo appears on reports and documents</p>
+                </div>
+
+                  <div className="mt-4 flex items-center justify-between">
+                    <div>
+                      <div className="h-16 w-16 overflow-hidden rounded bg-neutral-50 flex items-center justify-center">
+                        {logoUrl ? <img src={logoUrl} alt="Logo" className="object-contain h-16 w-16" /> : <div className="text-xs text-muted">No logo</div>}
+                      </div>
+                      <div className="mt-4">
+                        {logoUrl ? <Badge variant="success">Configured</Badge> : <Badge variant="outline">Not configured</Badge>}
+                      </div>
                     </div>
-                  )}
-                  <label className="flex items-center justify-center gap-2 p-2 border-2 border-dashed border-border rounded cursor-pointer hover:bg-background/50 transition">
-                    <Upload className="h-4 w-4 text-muted" />
-                    <span className="text-xs text-muted">Upload</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], "logo")}
-                      disabled={uploading.logo}
-                      className="hidden"
-                    />
-                  </label>
+
+                      <div className="flex items-center gap-3">
+                        {!logoUrl ? (
+                          <label className="flex items-center gap-2 p-2 border-2 border-dashed border-border rounded cursor-pointer bg-background">
+                            <Upload className="h-4 w-4 text-muted" />
+                            <span className="text-sm">Upload</span>
+                            <input
+                              ref={logoInputRef}
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], "logo")}
+                              disabled={uploading.logo}
+                              className="hidden"
+                            />
+                          </label>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <Button type="button" variant="ghost" onClick={() => logoInputRef.current?.click()}>Edit</Button>
+                            <Button type="button" variant="outline" onClick={() => setLogoUrl(null)}>Deactivate</Button>
+                          </div>
+                        )}
+                      </div>
+                  </div>
+              </div>
+
+              <div className="rounded-xl border border-border bg-background p-4 flex flex-col justify-between">
+                <div>
+                  <div className="text-sm font-semibold">Principal Signature</div>
+                  <p className="text-xs text-muted mt-1">Signature printed on result sheets (fallback when no signatory configured)</p>
+                </div>
+
+                <div className="mt-4 flex items-center justify-between">
+                  <div>
+                    <div className="h-16 w-32 overflow-hidden rounded bg-neutral-50 flex items-center justify-center">
+                      {signatureUrl ? <img src={signatureUrl} alt="Principal signature" className="object-contain h-16" /> : <div className="text-xs text-muted">No signature</div>}
+                    </div>
+                    <div className="mt-2">
+                      {signatureUrl ? <Badge variant="success">Configured</Badge> : <Badge variant="outline">Not configured</Badge>}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    {!signatureUrl ? (
+                      <label className="flex items-center gap-2 p-2 border-2 border-dashed border-border rounded cursor-pointer bg-background">
+                        <Upload className="h-4 w-4 text-muted" />
+                        <span className="text-sm">Upload</span>
+                        <input
+                          ref={signatureInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], "signature")}
+                          disabled={uploading.signature}
+                          className="hidden"
+                        />
+                      </label>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <Button type="button" variant="ghost" onClick={() => signatureInputRef.current?.click()}>Edit</Button>
+                        <Button type="button" variant="outline" onClick={() => setSignatureUrl(null)}>Deactivate</Button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              {/* Signature */}
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-foreground">Signature</label>
-                <div className="rounded-lg border border-border bg-background p-3 space-y-2">
-                  {signatureUrl && (
-                    <div className="relative inline-block">
-                      <img src={signatureUrl} alt="Signature" className="h-12 w-24 object-contain rounded" />
-                      <button
-                        type="button"
-                        onClick={() => setSignatureUrl(null)}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </div>
-                  )}
-                  <label className="flex items-center justify-center gap-2 p-2 border-2 border-dashed border-border rounded cursor-pointer hover:bg-background/50 transition">
-                    <Upload className="h-4 w-4 text-muted" />
-                    <span className="text-xs text-muted">Upload</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], "signature")}
-                      disabled={uploading.signature}
-                      className="hidden"
-                    />
-                  </label>
+              <div className="rounded-xl border border-border bg-background p-4 flex flex-col justify-between">
+                <div>
+                  <div className="text-sm font-semibold">School Stamp</div>
+                  <p className="text-xs text-muted mt-1">Appears on official documents</p>
                 </div>
-              </div>
 
-              {/* Stamp */}
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-foreground">School Stamp</label>
-                <div className="rounded-lg border border-border bg-background p-3 space-y-2">
-                  {stampUrl && (
-                    <div className="relative inline-block">
-                      <img src={stampUrl} alt="Stamp" className="h-16 w-16 object-contain rounded" />
-                      <button
-                        type="button"
-                        onClick={() => setStampUrl(null)}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
+                  <div className="mt-4 flex items-center justify-between">
+                  <div>
+                    <div className="h-16 w-16 overflow-hidden rounded bg-neutral-50 flex items-center justify-center">
+                      {stampUrl ? <img src={stampUrl} alt="Stamp" className="object-contain h-16 w-16" /> : <div className="text-xs text-muted">No stamp</div>}
                     </div>
-                  )}
-                  <label className="flex items-center justify-center gap-2 p-2 border-2 border-dashed border-border rounded cursor-pointer hover:bg-background/50 transition">
-                    <Upload className="h-4 w-4 text-muted" />
-                    <span className="text-xs text-muted">Upload</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], "stamp")}
-                      disabled={uploading.stamp}
-                      className="hidden"
-                    />
-                  </label>
+                    <div className="mt-2">
+                      {stampUrl ? <Badge variant="success">Configured</Badge> : <Badge variant="outline">Not configured</Badge>}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {!stampUrl ? (
+                      <label className="flex items-center gap-2 p-2 border-2 border-dashed border-border rounded cursor-pointer bg-background">
+                        <Upload className="h-4 w-4 text-muted" />
+                        <span className="text-sm">Upload</span>
+                        <input
+                          ref={stampInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], "stamp")}
+                          disabled={uploading.stamp}
+                          className="hidden"
+                        />
+                      </label>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <Button type="button" variant="ghost" onClick={() => stampInputRef.current?.click()}>Edit</Button>
+                        <Button type="button" variant="outline" onClick={() => setStampUrl(null)}>Deactivate</Button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
+          )}
+        </div>
+        {/* Report Signatories Section */}
+        <div className="rounded-lg border border-border bg-surface overflow-hidden">
+          <div className="border-b border-border bg-background px-6 py-4">
+            <button
+              type="button"
+              onClick={() => togglePanel('signatories')}
+              className="flex w-full items-center justify-between gap-3 text-left"
+              aria-expanded={openPanels.signatories}
+              aria-controls="report-signatories-panel"
+            >
+              <div className="flex items-center gap-3">
+                <FileText className="h-5 w-5 text-brand" />
+                <div>
+                  <h2 className="font-semibold text-foreground">Report Signatories</h2>
+                  <p className="text-xs text-muted">These signatures appear on student reports for each academic phase.</p>
+                </div>
+              </div>
+              <ChevronRight className={`h-4 w-4 text-muted transition-transform duration-200 ${openPanels.signatories ? 'rotate-90 text-foreground' : 'rotate-0'}`} />
+            </button>
+          </div>
+
+          {openPanels.signatories && (
+            <div id="report-signatories-panel" className="p-6">
+              <SignatoriesClient noCard />
+            </div>
           )}
         </div>
 

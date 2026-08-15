@@ -56,7 +56,7 @@ export default function PublicationsPage() {
             <div className="h-5 w-64 bg-slate-100 rounded animate-pulse"></div>
           </div>
           {[1, 2, 3].map((i) => (
-            <div key={i} className="rounded-3xl border border-border bg-surface p-4 space-y-3 animate-pulse">
+            <div key={i} className="rounded-[12px] border border-border bg-surface p-4 space-y-3 animate-pulse">
               <div className="h-5 w-32 bg-slate-200 rounded"></div>
               <div className="h-4 w-48 bg-slate-100 rounded"></div>
               <div className="h-20 w-full bg-slate-100 rounded"></div>
@@ -82,18 +82,20 @@ export default function PublicationsPage() {
 
   return (
     <ParentPageShell onRefresh={loadData}>
-      {/* Header */}
-      <div className="space-y-3">
-        <div>
-          <h1 className="text-4xl font-bold text-foreground">School Publications</h1>
-          <p className="mt-2 text-muted">Latest news and updates from your school</p>
+      <div className="mx-auto max-w-7xl">
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-3xl font-semibold text-foreground">School Publications</h1>
+          <p className="mt-1 text-sm text-muted">Latest news and updates from your school</p>
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
           <div className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-4 py-2 text-sm text-muted">
             <BookOpen className="h-4 w-4 text-brand" />
             Publications
           </div>
         </div>
+      
+      
       </div>
 
       {error && (
@@ -107,56 +109,58 @@ export default function PublicationsPage() {
       )}
 
       {/* Publications List */}
-      {announcements.length === 0 ? (
-        <div className="rounded-3xl border border-border bg-surface p-12 text-center">
-          <BookOpen className="h-16 w-16 text-muted/40 mx-auto mb-4" />
-          <p className="text-lg text-muted">No publications yet</p>
-          <p className="text-sm text-muted/70 mt-2">Check back soon for school updates</p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {announcements.map((publication) => (
-            <button
-              key={publication.id}
-              onClick={() => setSelectedAnnouncement(publication)}
-              className="w-full text-left rounded-3xl border border-border bg-surface p-4 shadow-sm transition hover:shadow-md hover:border-brand/50"
-            >
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2 mb-3">
-                    <span className="inline-flex rounded-full bg-brand/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-brand">
-                      News
-                    </span>
-                    <span className="text-xs text-muted">
-                      {getReadingTime(publication.body)} min read
+      <div className="mx-auto max-w-7xl">
+        {announcements.length === 0 ? (
+          <div className="rounded-[12px] border border-border bg-surface p-12 text-center">
+            <BookOpen className="h-16 w-16 text-muted/40 mx-auto mb-4" />
+            <p className="text-lg text-muted">No publications yet</p>
+            <p className="text-sm text-muted/70 mt-2">Check back soon for school updates</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {announcements.map((publication) => (
+              <button
+                key={publication.id}
+                onClick={() => setSelectedAnnouncement(publication)}
+                className="w-full text-left rounded-[12px] border border-border bg-surface p-6 shadow-sm transition hover:shadow-md hover:border-brand/50"
+              >
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 mb-3">
+                      <span className="inline-flex rounded-full bg-brand/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-brand">
+                        News
+                      </span>
+                      <span className="text-xs text-muted">
+                        {getReadingTime(publication.body)} min read
+                      </span>
+                    </div>
+                    <h2 className="text-lg font-semibold text-foreground truncate">{publication.title}</h2>
+                    <p className="text-sm text-muted mt-2 line-clamp-3">{getExcerpt(publication.body, 180)}</p>
+                  </div>
+
+                  <div className="flex-shrink-0 text-right">
+                    <p className="text-sm font-semibold text-foreground">{new Date(publication.publishedAt || publication.createdAt).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })}</p>
+                    <span className="mt-2 inline-flex items-center rounded-full bg-background px-3 py-1 text-xs font-semibold text-muted">
+                      Read
                     </span>
                   </div>
-                  <h2 className="text-lg font-semibold text-foreground truncate">{publication.title}</h2>
-                  <p className="text-sm text-muted mt-2 line-clamp-3">{getExcerpt(publication.body, 180)}</p>
                 </div>
-
-                <div className="flex-shrink-0 text-right">
-                  <p className="text-sm font-semibold text-foreground">{new Date(publication.publishedAt || publication.createdAt).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })}</p>
-                  <span className="mt-2 inline-flex items-center rounded-full bg-background px-3 py-1 text-xs font-semibold text-muted">
-                    Read
-                  </span>
-                </div>
-              </div>
-            </button>
-          ))}
-        </div>
-      )}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Modal */}
       {selectedAnnouncement && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-surface rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-border">
+          <div className="bg-surface rounded-[12px] max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-border">
             {/* Modal Header */}
-            <div className="sticky top-0 flex flex-col gap-4 p-5 border-b border-border bg-surface/95 backdrop-blur">
+            <div className="sticky top-0 flex flex-col gap-4 p-6 border-b border-border bg-surface/95 backdrop-blur">
               <div className="flex items-center gap-3">
                 <span className="inline-flex rounded-full bg-brand/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-brand">
                   News
@@ -177,10 +181,10 @@ export default function PublicationsPage() {
             </div>
 
             {/* Modal Body */}
-            <div className="p-5 space-y-4">
+            <div className="p-6 space-y-4">
               {/* Publication Date */}
               <div className="flex flex-col gap-2 text-sm text-muted/70 pb-4 border-b border-border/50">
-                <span className="font-semibold text-slate-900">Published on</span>
+                <span className="font-semibold text-foreground">Published on</span>
                 <time>
                   {new Date(selectedAnnouncement.publishedAt || selectedAnnouncement.createdAt).toLocaleDateString('en-US', {
                     weekday: 'long',
@@ -194,7 +198,7 @@ export default function PublicationsPage() {
               </div>
 
               {/* Featured Visual */}
-              <div className="h-64 rounded-3xl bg-gradient-to-br from-brand/20 to-brand/5 flex items-center justify-center overflow-hidden">
+              <div className="h-64 rounded-[12px] bg-gradient-to-br from-brand/20 to-brand/5 flex items-center justify-center overflow-hidden">
                 <div className="text-7xl">📰</div>
               </div>
 
@@ -207,13 +211,13 @@ export default function PublicationsPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="sticky bottom-0 flex flex-col gap-3 p-5 border-t border-border bg-surface/95 backdrop-blur sm:flex-row sm:items-center sm:justify-between">
+            <div className="sticky bottom-0 flex flex-col gap-3 p-6 border-t border-border bg-surface/95 backdrop-blur sm:flex-row sm:items-center sm:justify-between">
               <div className="text-sm text-muted">
                 {announcements.findIndex(a => a.id === selectedAnnouncement.id) + 1} of {announcements.length}
               </div>
               <button
                 onClick={() => setSelectedAnnouncement(null)}
-                className="w-full rounded-3xl bg-brand px-4 py-3 text-sm font-semibold text-white hover:bg-brand/90 transition-colors sm:w-auto"
+                className="w-full rounded-[12px] bg-brand px-4 py-3 text-sm font-semibold text-white hover:bg-brand/90 transition-colors sm:w-auto"
               >
                 Close
               </button>

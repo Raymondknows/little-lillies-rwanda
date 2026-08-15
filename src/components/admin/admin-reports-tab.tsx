@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { getBackendUrl } from '@/lib/backend-url';
 import { Badge } from "@/components/ui/badge";
-import { Download, FileText, User } from "lucide-react";
+import { FileText, User, Printer } from "lucide-react";
 import { ReportCardViewer } from "./report-card-viewer";
 import { resolveFileUrl } from "@/lib/api-client";
 
@@ -29,6 +30,7 @@ interface StudentDetails {
   className?: string;
   firstName?: string;
   lastName?: string;
+  schoolId?: string;
 }
 
 export function AdminReportsTab({ assessmentId, pupils, status }: ReportsTabProps) {
@@ -36,7 +38,7 @@ export function AdminReportsTab({ assessmentId, pupils, status }: ReportsTabProp
     pupils.length > 0 ? pupils[0].id : null
   );
   const [selectedPupilDetails, setSelectedPupilDetails] = useState<StudentDetails | null>(null);
-  const [downloading, setDownloading] = useState(false);
+  
   const [loadingPupilDetails, setLoadingPupilDetails] = useState(false);
 
   useEffect(() => {
@@ -58,7 +60,8 @@ export function AdminReportsTab({ assessmentId, pupils, status }: ReportsTabProp
     const fetchPupilDetails = async () => {
       setLoadingPupilDetails(true);
       try {
-        const response = await fetch(`/api/admin/students/${selectedPupilId}`, {
+        const backendUrl = getBackendUrl();
+        const response = await fetch(`${backendUrl}/api/admin/students/${selectedPupilId}`, {
           credentials: 'include',
         });
 
@@ -86,6 +89,7 @@ export function AdminReportsTab({ assessmentId, pupils, status }: ReportsTabProp
           className: data.class?.name,
           firstName: data.firstName,
           lastName: data.lastName,
+          schoolId: data.schoolId,
         });
       } catch (err) {
         console.error('Error fetching pupil details:', err);
@@ -108,28 +112,7 @@ export function AdminReportsTab({ assessmentId, pupils, status }: ReportsTabProp
     fetchPupilDetails();
   }, [selectedPupilId, pupils]);
 
-  const handleDownloadPDF = async (pupilId: string) => {
-    setDownloading(true);
-    try {
-      const response = await fetch(`/api/pdf-reports/${assessmentId}/${pupilId}`);
-      if (!response.ok) throw new Error("Failed to download PDF");
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `report-${selectedPupilDetails?.name || 'student'}-${assessmentId}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (err) {
-      console.error("Failed to download PDF:", err);
-      alert("Failed to download PDF");
-    } finally {
-      setDownloading(false);
-    }
-  };
+  
 
   if (pupils.length === 0) {
     return (
@@ -210,12 +193,11 @@ export function AdminReportsTab({ assessmentId, pupils, status }: ReportsTabProp
                 )}
                 <Button
                   variant="outline"
-                  onClick={() => handleDownloadPDF(selectedPupilId!)}
-                  disabled={downloading}
+                  onClick={() => window.print()}
                   className="gap-2 whitespace-nowrap"
                 >
-                  <Download className="w-4 h-4" />
-                  {downloading ? "Downloading..." : "Download PDF"}
+                  <Printer className="w-4 h-4" />
+                  Print Report Card
                 </Button>
               </div>
             </div>
@@ -242,6 +224,7 @@ export function AdminReportsTab({ assessmentId, pupils, status }: ReportsTabProp
           <ReportCardViewer
             assessmentId={assessmentId}
             pupilId={selectedPupilId}
+            schoolId={selectedPupilDetails?.schoolId}
             readonly={true}
             photoUrl={photoUrl}
           />

@@ -73,14 +73,14 @@ export default function ParentDashboardPage() {
           </div>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="rounded-3xl bg-surface p-5 border border-border space-y-2">
+              <div key={i} className="rounded-[12px] bg-surface p-5 border border-border space-y-2">
                 <div className="h-3 w-16 bg-slate-100 rounded mx-auto animate-pulse"></div>
                 <div className="h-6 w-20 bg-slate-200 rounded mx-auto animate-pulse"></div>
               </div>
             ))}
           </div>
           {[1, 2].map((i) => (
-            <div key={i} className="rounded-3xl border border-border bg-surface p-5 space-y-3 animate-pulse">
+            <div key={i} className="rounded-[12px] border border-border bg-surface p-5 space-y-3 animate-pulse">
               <div className="h-5 w-32 bg-slate-200 rounded"></div>
               <div className="h-4 w-48 bg-slate-100 rounded"></div>
             </div>
@@ -145,6 +145,7 @@ export default function ParentDashboardPage() {
 
   return (
     <ParentPageShell onRefresh={loadData}>
+      <div className="mx-auto max-w-7xl">
       {/* Page Header */}
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-foreground">
@@ -163,8 +164,8 @@ export default function ParentDashboardPage() {
           const IconComponent = stat.icon;
           return (
             <Link key={idx} href={stat.href} className="group block">
-              <div className="h-full rounded-3xl border border-border bg-surface p-4 shadow-sm transition hover:shadow-md hover:border-brand/50 cursor-pointer flex flex-col items-center text-center gap-3">
-                <div className={`flex h-14 w-14 items-center justify-center rounded-3xl ${stat.color} shadow-sm`}>
+              <div className="h-full rounded-[12px] border border-border bg-surface p-4 shadow-sm transition hover:shadow-md hover:border-brand/50 cursor-pointer flex flex-col items-center text-center gap-3">
+                <div className={`flex h-14 w-14 items-center justify-center rounded-[12px] ${stat.color} shadow-sm`}>
                   <IconComponent className={`h-6 w-6 ${stat.iconColor}`} />
                 </div>
                 <div>
@@ -183,19 +184,19 @@ export default function ParentDashboardPage() {
       {/* Quick Actions */}
       <div className="mb-10 grid grid-cols-1 md:grid-cols-3 gap-3">
         <Link href="/parent/children">
-          <button className="w-full inline-flex items-center justify-center px-4 py-3 bg-brand text-white rounded-lg hover:bg-brand/90 transition-colors font-medium shadow-sm hover:shadow-md">
+          <button className="w-full inline-flex items-center justify-center px-4 py-3 bg-brand text-white rounded-[12px] hover:bg-brand/90 transition-colors text-sm font-semibold shadow-sm hover:shadow-md">
             <Users className="h-4 w-4 mr-2" />
             View Children
           </button>
         </Link>
         <Link href="/parent/invoices">
-          <button className="w-full inline-flex items-center justify-center px-4 py-3 bg-brand text-white rounded-lg hover:bg-brand/90 transition-colors font-medium shadow-sm hover:shadow-md">
+          <button className="w-full inline-flex items-center justify-center px-4 py-3 bg-brand text-white rounded-[12px] hover:bg-brand/90 transition-colors text-sm font-semibold shadow-sm hover:shadow-md">
             <Eye className="h-4 w-4 mr-2" />
             Check Fees
           </button>
         </Link>
         <Link href="/parent/results">
-          <button className="w-full inline-flex items-center justify-center px-4 py-3 bg-brand text-white rounded-lg hover:bg-brand/90 transition-colors font-medium shadow-sm hover:shadow-md">
+          <button className="w-full inline-flex items-center justify-center px-4 py-3 bg-brand text-white rounded-[12px] hover:bg-brand/90 transition-colors text-sm font-semibold shadow-sm hover:shadow-md">
             <Download className="h-4 w-4 mr-2" />
             View Results
           </button>
@@ -204,7 +205,7 @@ export default function ParentDashboardPage() {
 
       {/* My Children Section */}
       {dashboardData?.children && dashboardData.children.length > 0 && (
-        <div className="rounded-xl border border-border bg-surface p-6 shadow-sm hover:shadow-md transition-shadow mb-10">
+        <div className="rounded-[12px] border border-border bg-surface p-6 shadow-sm hover:shadow-md transition-shadow mb-10">
           <div className="flex items-center justify-between gap-3 mb-4">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
@@ -253,7 +254,7 @@ export default function ParentDashboardPage() {
 
       {/* Recent Results Section */}
       {dashboardData?.recentResults && dashboardData.recentResults.length > 0 && (
-        <div className="rounded-xl border border-border bg-surface p-6 shadow-sm hover:shadow-md transition-shadow mb-10">
+        <div className="rounded-[12px] border border-border bg-surface p-6 shadow-sm hover:shadow-md transition-shadow mb-10">
           <div className="flex items-center justify-between gap-3 mb-4">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
@@ -300,7 +301,7 @@ export default function ParentDashboardPage() {
 
       {/* Announcements Section */}
       {dashboardData?.announcements && dashboardData.announcements.length > 0 && (
-        <div className="rounded-xl border border-border bg-surface p-6 shadow-sm hover:shadow-md transition-shadow">
+        <div className="rounded-[12px] border border-border bg-surface p-6 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between gap-3 mb-4">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100">
@@ -332,6 +333,7 @@ export default function ParentDashboardPage() {
           </Link>
         </div>
       )}
+      </div>
     </ParentPageShell>
   );
 }

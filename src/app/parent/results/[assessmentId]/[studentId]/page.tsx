@@ -98,7 +98,7 @@ export default function ParentReportCardPage({
           setAssessment(assessmentData);
         }
 
-        const reportRes = await fetch(`/api/report-cards/${assessmentId}/${studentId}`);
+        const reportRes = await fetch(`/api/report-cards/${assessmentId}/${studentId}?signatoryMode=principal`);
         if (!reportRes.ok) throw new Error("Failed to fetch report card");
         const reportData = await reportRes.json();
         setReport(reportData);
@@ -118,7 +118,7 @@ export default function ParentReportCardPage({
 
   const handleDownloadPDF = async () => {
     try {
-      const response = await fetch(`/api/pdf-reports/${assessmentId}/${studentId}`);
+      const response = await fetch(`/api/pdf-reports/${assessmentId}/${studentId}?signatoryMode=principal`);
       if (!response.ok) throw new Error("Failed to download PDF");
 
       const blob = await response.blob();
@@ -182,6 +182,7 @@ export default function ParentReportCardPage({
           data={report as never}
           onPrint={handlePrint}
           onDownloadPDF={handleDownloadPDF}
+          showDownload={false}
         />
       </div>
     </div>

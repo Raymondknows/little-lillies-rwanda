@@ -113,6 +113,7 @@ interface WaecReportCardProps {
   pupilId: string;
   onPrint?: () => void;
   onDownloadPDF?: (pupilId: string) => Promise<void>;
+  showDownload?: boolean;
 }
 
 const GRADE_COLORS: Record<string, { bg: string; text: string }> = {
@@ -133,6 +134,7 @@ export function WaecReportCard({
   pupilId,
   onPrint,
   onDownloadPDF,
+  showDownload = true,
 }: WaecReportCardProps) {
   const [isDownloading, setIsDownloading] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
@@ -166,10 +168,12 @@ export function WaecReportCard({
           <Printer className="w-4 h-4" />
           Print
         </Button>
-        <Button onClick={handleDownload} disabled={isDownloading || !onDownloadPDF} className="gap-2">
-          <Download className="w-4 h-4" />
-          {isDownloading ? "Downloading..." : "Download PDF"}
-        </Button>
+        {showDownload ? (
+          <Button onClick={handleDownload} disabled={isDownloading || !onDownloadPDF} className="gap-2">
+            <Download className="w-4 h-4" />
+            {isDownloading ? "Downloading..." : "Download PDF"}
+          </Button>
+        ) : null}
       </div>
 
       <ReportCardDocument
@@ -219,7 +223,9 @@ export function WaecReportCard({
           },
           gradingScale: data.gradingScale,
           thirdTermHistory: data.thirdTermHistory,
-        }}
+          // include resolved signatory when provided by the server
+          signatory: (data as any).signatory ?? null,
+        } as any}
         photoUrl={data.student.photoUrl}
       />
 

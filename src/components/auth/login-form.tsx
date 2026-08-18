@@ -74,13 +74,15 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
       // ✅ INTELLIGENT REDIRECT: Route based on user role
       let redirectUrl = redirectTo; // fallback to provided prop
       
-      if (data.session?.role === "TEACHER") {
+      const role = data.session?.role || data.role;
+
+      if (role === "TEACHER") {
         redirectUrl = "/teacher";
         console.log('Teacher login detected, redirecting to /teacher');
-      } else if (data.session?.role === "PLATFORM_ADMIN") {
+      } else if (role === "PLATFORM_ADMIN") {
         redirectUrl = "/schoolbase-admin";
         console.log('Platform admin login detected, redirecting to /schoolbase-admin');
-      } else if (data.session?.role === "SCHOOL_ADMIN" || data.session?.role === "BURSAR") {
+      } else if (role === "SCHOOL_ADMIN" || role === "BURSAR") {
         redirectUrl = "/admin?onboarding=1";
         console.log('School admin/bursar login detected, redirecting to /admin?onboarding=1');
       }

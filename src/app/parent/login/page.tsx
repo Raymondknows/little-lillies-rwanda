@@ -1,3 +1,4 @@
+import { LoginInfoCarousel } from '@/components/auth/login-info-carousel';
 import { redirect } from "next/navigation";
 import { AppLogo } from "@/components/app-logo";
 import { ParentLoginForm } from "@/components/auth/parent-login-form";
@@ -69,45 +70,10 @@ export default async function ParentLoginPage() {
           </div>
 
           {/* Contact Info */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20 space-y-6">
-            <div>
-              <p className="text-sm text-emerald-200 font-semibold mb-2">📍 Location</p>
-              <p className="text-white text-sm leading-relaxed">
-                Rugarama village, Nyabisindu Cell<br />
-                Remera Sector, Gasabo District<br />
-                Kigali, Rwanda
-              </p>
-            </div>
-
-            <div className="border-t border-white/20 pt-6">
-              <p className="text-sm text-emerald-200 font-semibold mb-3">📞 Contact Us</p>
-              <div className="space-y-2">
-                <p className="text-white text-sm">
-                  <a href="tel:+250781464730" className="hover:text-emerald-200 transition">
-                    +250 781 464 730
-                  </a>
-                </p>
-                <p className="text-white text-sm">
-                  <a href="tel:+250785703719" className="hover:text-emerald-200 transition">
-                    +250 785 703 719
-                  </a>
-                </p>
-                <p className="text-white text-sm">
-                  <a href="mailto:littlelillies82@gmail.com" className="hover:text-emerald-200 transition">
-                    littlelillies82@gmail.com
-                  </a>
-                </p>
-              </div>
-            </div>
-
-            <div className="border-t border-white/20 pt-6">
-              <p className="text-sm text-emerald-200 font-semibold mb-2">Principal</p>
-              <p className="text-white font-medium">Uche Emmanuel</p>
-            </div>
-          </div>
+          <LoginInfoCarousel tone="emerald" />
 
           {/* Features */}
-          <div className="pt-4">
+          <div className="pt-20">
             <p className="text-sm text-emerald-100">
               Powered by SchoolBase — Keep your family informed and engaged
             </p>

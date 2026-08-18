@@ -74,8 +74,6 @@ export default function SettingsPageClient({
   const [currency, setCurrency] = useState(
     school.currency ?? countriesData.countries[(school.country ?? countriesData.default ?? "NG") as keyof typeof countriesData.countries]?.currency ?? "NGN",
   );
-  const [detectedCountryName, setDetectedCountryName] = useState<string | null>(null);
-  const [detectedCurrency, setDetectedCurrency] = useState<string | null>(null);
   const [address, setAddress] = useState(school.address ?? "");
   const [email, setEmail] = useState(school.email ?? "");
   const [phone, setPhone] = useState(school.phone ?? "");
@@ -103,29 +101,6 @@ export default function SettingsPageClient({
     () => Array.from(new Set(countryOptions.map((option) => option.currency))),
     [countryOptions],
   );
-
-  useEffect(() => {
-    let mounted = true;
-
-    async function loadCountryConfig() {
-      try {
-        const response = await fetch("/api/country/config");
-        if (!response.ok) return;
-        const config = await response.json();
-        if (!mounted) return;
-
-        setDetectedCountryName(config.data?.name || null);
-        setDetectedCurrency(config.data?.currency || school.currency || null);
-      } catch (err) {
-        console.error("Error loading country config:", err);
-      }
-    }
-
-    loadCountryConfig();
-    return () => {
-      mounted = false;
-    };
-  }, [school.country, school.currency]);
 
   const [uploading, setUploading] = useState<{ [key: string]: boolean }>({});
   const [isSaving, setIsSaving] = useState(false);
@@ -440,11 +415,6 @@ export default function SettingsPageClient({
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-brand">Configuration</p>
           <h1 className="mt-2 text-3xl font-bold text-foreground">School Settings</h1>
           <p className="mt-3 max-w-2xl text-sm text-muted">Manage your school profile, location, branding, payments, and online admissions settings from a single secure dashboard.</p>
-          {detectedCountryName && detectedCurrency ? (
-            <p className="mt-3 text-sm text-muted">
-              Detected market: <span className="font-semibold text-foreground">{detectedCountryName}</span> · <span className="font-semibold text-brand">{detectedCurrency}</span>
-            </p>
-          ) : null}
         </div>
         <div className="flex flex-wrap gap-2">
           <Link
@@ -620,11 +590,6 @@ export default function SettingsPageClient({
                     </option>
                   ))}
                 </select>
-                {!school.currency && detectedCurrency ? (
-                  <p className="mt-2 text-xs text-muted">
-                    Default currency for your region is {detectedCurrency}.
-                  </p>
-                ) : null}
               </div>
             </div>
 

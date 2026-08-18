@@ -6,6 +6,7 @@ import { Bell, CheckCircle2, Mail, Zap } from "lucide-react";
 import { sendSetupCompletionRemindersAction, sendSetupCompletionReminder } from "@/app/schoolbase-admin/actions";
 import { ErrorModal } from "@/components/ui/error-modal";
 import { Pagination } from "@/components/ui/pagination";
+import { getBackendUrl } from "@/lib/backend-url";
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100, 500];
 
@@ -86,7 +87,7 @@ export default function SetupRemindersClient({
           const statuses: Record<string, any> = {};
           for (const school of schoolsData.schools) {
             try {
-              const statusRes = await fetch(`/api/admin/school/${school.id}/setup-status`, {
+              const statusRes = await fetch(`${getBackendUrl()}/api/admin/school/${school.id}/setup-status`, {
                 credentials: "include",
               });
               if (statusRes.ok) {

@@ -341,8 +341,8 @@ export default function ResultPinsPage() {
   const loadSchoolMeta = async () => {
     try {
       const [schoolResponse, settingsResponse] = await Promise.all([
-        fetch("/api/admin/school", { credentials: "include" }),
-        fetch("/api/admin/settings/data", { credentials: "include" }),
+        fetch(`${backendUrl}/api/admin/school`, { credentials: "include" }),
+        fetch(`${backendUrl}/api/admin/settings/data`, { credentials: "include" }),
       ]);
 
       if (!schoolResponse.ok) return;
@@ -663,7 +663,8 @@ export default function ResultPinsPage() {
     setNotifyModal({ open: true, title: 'Sending notifications', message: 'Please wait while the selected PIN notifications are being sent.' });
 
     try {
-      const response = await fetch('/api/admin/result-pins/pins/bulk/notify', {
+      const backendUrl = getBackendUrl();
+      const response = await fetch(`${backendUrl}/api/admin/result-pins/pins/bulk/notify`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json', 'x-school-id': localStorage.getItem('schoolId') || '' },

@@ -25,7 +25,7 @@ const EMAIL_TYPES = [
   { value: "SUBSCRIPTION_THANK_YOU", label: "Subscription thank-you email" },
   { value: "SUPPORT_UPDATE", label: "Support case update" },
   { value: "ONBOARDING_GUIDANCE", label: "Onboarding guidance for new schools" },
-  { value: "BEST_PRACTICE_TIP", label: "Best-practice tips for using SchoolBase" },
+  { value: "BEST_PRACTICE_TIP", label: "Best-practice tips for using Little Lillies School" },
   { value: "MANUAL_ANNOUNCEMENT", label: "Custom announcement / manual follow-up" },
   { value: "POLICY_UPDATE", label: "Compliance / policy update" },
   { value: "ACCOUNT_SECURITY", label: "Account security notice" },
@@ -35,38 +35,38 @@ const PLATFORM_FEATURES = "Admissions, Student Records, Attendance, Fees, Paymen
 
 const EMAIL_TEMPLATES: Record<string, { subject: string; body: string }> = {
   PRODUCT_UPDATE: {
-    subject: "Product news: faster workflows and better parent engagement in SchoolBase",
+    subject: "Product news: faster workflows and better parent engagement in Little Lillies School",
     body: `Hello,
 
-We’re excited to share a new SchoolBase release that makes it easier to manage Admissions, Student Records, Attendance, Fees, Payments, Results, Report Cards, Staff Management, and WhatsApp Communication from one platform.
+We’re excited to share a new Little Lillies School update that makes it easier to manage Admissions, Student Records, Attendance, Fees, Payments, Results, Report Cards, Staff Management, and WhatsApp Communication from one platform.
 
 What’s included:
 • A faster admin dashboard for attendance, fees, and report cards.
 • Streamlined student records and admissions workflows.
 • Better WhatsApp communication tools for parents and staff.
 
-Open SchoolBase to try the improved experience.`,
+Open Little Lillies School to try the improved experience.`,
   },
   PRICE_UPDATE: {
-    subject: "Important update: SchoolBase pricing and plan improvements",
+    subject: "Important update: Little Lillies School pricing and plan improvements",
     body: `Hello,
 
-We’re notifying you about an upcoming SchoolBase pricing update that brings clearer value and more flexibility to your school.
+We’re notifying you about an upcoming Little Lillies School pricing update that brings clearer value and more flexibility to your school.
 
 Key points:
 • Improved pricing structure aligned with Admissions, Student Records, Attendance, Fees, Payments, Results, Report Cards, Staff Management, and WhatsApp Communication usage.
 • New plan options designed to support growing schools and simplify budgeting.
 • Continued investment in reliability, support, and the tools your team uses every day.
 
-This change is intended to help your school capture more value from SchoolBase while keeping costs predictable.
+This change is intended to help your school capture more value from Little Lillies School while keeping costs predictable.
 
 If you have questions or want a price review for your current plan, reply directly to this email.`,
   },
   SUBSCRIPTION_THANK_YOU: {
-    subject: "Thank you for choosing SchoolBase — your school is now set up to thrive",
+    subject: "Thank you for choosing Little Lillies School — your school is now set up to thrive",
     body: `Hello,
 
-Thank you for subscribing to SchoolBase. We’re truly delighted to support your school and help your team work with greater confidence every day.
+Thank you for subscribing to Little Lillies School. We’re truly delighted to support your school and help your team work with greater confidence every day.
 
 With your subscription, your school now has access to the tools that make school operations smoother and more professional, including Admissions, Student Records, Attendance, Fees, Payments, Results, Report Cards, Staff Management, and WhatsApp Communication.
 
@@ -81,30 +81,30 @@ Payment acknowledgement:
 • This email serves as your confirmation and acknowledgement of the completed transaction.
 
 What to do next:
-• Log in to SchoolBase and review your dashboard.
+• Log in to Little Lillies School and review your dashboard.
 • Register your teachers and confirm your class structure.
 • Publish fee schedules and share the parent portal with families.
 • Start using WhatsApp communication to keep everyone informed.
 
-We’re excited to see your school grow with SchoolBase. If you ever need help, please reach out to us at info@schoolbase.live, visit our support page, or contact us on WhatsApp at +2349031368963.
+We’re excited to see your school grow with Little Lillies School. If you ever need help, please reach out to us at info@schoolbase.live, visit our support page, or contact us on WhatsApp at +2349031368963.
 
-Thank you again for choosing SchoolBase — we’re proud to be part of your journey.`,
+Thank you again for choosing Little Lillies School — we’re proud to be part of your journey.`,
   },
   SUPPORT_UPDATE: {
-    subject: "Support update: your SchoolBase request is being handled",
+    subject: "Support update: your Little Lillies School request is being handled",
     body: `Hello,
 
-This is an update on your SchoolBase support request. Our team is reviewing the issue and will respond with a clear next step shortly.
+This is an update on your Little Lillies School support request. Our team is reviewing the issue and will respond with a clear next step shortly.
 
-We are tracking your request against the full SchoolBase experience, including ${PLATFORM_FEATURES}, so you can continue operating smoothly while we resolve it.
+We are tracking your request against the full Little Lillies School experience, including ${PLATFORM_FEATURES}, so you can continue operating smoothly while we resolve it.
 
 If there are any additional details, reply directly to this email.`,
   },
   ONBOARDING_GUIDANCE: {
-    subject: "Onboarding guidance: get your school live with SchoolBase",
+    subject: "Onboarding guidance: get your school live with Little Lillies School",
     body: `Hello,
 
-Welcome to SchoolBase. We’re here to help your school complete setup and start using Admissions, Student Records, Attendance, Fees, Payments, Results, Report Cards, Staff Management, and WhatsApp Communication.
+Welcome to Little Lillies School. We’re here to help your school complete setup and start using Admissions, Student Records, Attendance, Fees, Payments, Results, Report Cards, Staff Management, and WhatsApp Communication.
 
 Key next steps:
 • Confirm your school profile and contact information.
@@ -118,7 +118,7 @@ Reply to this email if you want us to book a short onboarding call for your team
     subject: "Best practice tips: keep parents informed and collect fees faster",
     body: `Hello,
 
-Here are three best practices for schools using SchoolBase across Admissions, Student Records, Attendance, Fees, Payments, Results, Report Cards, Staff Management, and WhatsApp Communication:
+Here are three best practices for schools using Little Lillies School across Admissions, Student Records, Attendance, Fees, Payments, Results, Report Cards, Staff Management, and WhatsApp Communication:
 
 1) Send parent notifications early for term dates, fees, and events via portal and WhatsApp.
 2) Use automated fee reminders and payment tracking to reduce late payments.
@@ -127,20 +127,20 @@ Here are three best practices for schools using SchoolBase across Admissions, St
 These actions drive better communication, stronger finances, and better outcomes.`,
   },
   MANUAL_ANNOUNCEMENT: {
-    subject: "Important announcement from SchoolBase operations",
+    subject: "Important announcement from Little Lillies School operations",
     body: `Hello,
 
-We have an important update for your school. This message covers core SchoolBase capabilities including Admissions, Student Records, Attendance, Fees, Payments, Results, Report Cards, Staff Management, and WhatsApp Communication.
+We have an important update for your school. This message covers core Little Lillies School capabilities including Admissions, Student Records, Attendance, Fees, Payments, Results, Report Cards, Staff Management, and WhatsApp Communication.
 
 [Add announcement details here]
 
 Please review and share this with your administrative team. If you need support implementing this change, reply to this email.`,
   },
   POLICY_UPDATE: {
-    subject: "Compliance update: new SchoolBase policy and data requirements",
+    subject: "Compliance update: new Little Lillies School policy and data requirements",
     body: `Hello,
 
-We’re writing to share an important compliance update for SchoolBase schools.
+We’re writing to share an important compliance update for Little Lillies School.
 
 Please note the following changes:
 • Updated data handling and privacy requirements for student records and staff accounts.
@@ -150,11 +150,11 @@ Please note the following changes:
 If you have any questions, our compliance team is available to assist.`,
   },
   ACCOUNT_SECURITY: {
-    subject: "Security notice: protect your SchoolBase accounts",
+    subject: "Security notice: protect your Little Lillies School accounts",
     body: `Hello,
 
-Your security is our top priority. Please review these recommended actions for all SchoolBase modules, including Admissions, Student Records, Attendance, Fees, Payments, Results, Report Cards, Staff Management, and WhatsApp Communication:
-• Use strong, unique passwords for SchoolBase admin accounts.
+Your security is our top priority. Please review these recommended actions for all Little Lillies School modules, including Admissions, Student Records, Attendance, Fees, Payments, Results, Report Cards, Staff Management, and WhatsApp Communication:
+• Use strong, unique passwords for Little Lillies School admin accounts.
 • Enable two-factor authentication if available.
 • Report any unexpected login activity immediately.
 
@@ -195,13 +195,13 @@ function InfoTooltip({ content }: { content: string }) {
 }
 
 const DEFAULT_SUBJECTS: Record<string, string> = {
-  PRODUCT_UPDATE: "SchoolBase product update: new feature available",
-  SUPPORT_UPDATE: "Support case update from SchoolBase",
-  ONBOARDING_GUIDANCE: "Onboarding guidance for your SchoolBase setup",
-  BEST_PRACTICE_TIP: "Best practice tips for using SchoolBase",
-  MANUAL_ANNOUNCEMENT: "Important SchoolBase update from our team",
-  PRICE_UPDATE: "Important price update for SchoolBase",
-  SUBSCRIPTION_THANK_YOU: "Thank you for choosing SchoolBase",
+  PRODUCT_UPDATE: "Little Lillies School product update: new feature available",
+  SUPPORT_UPDATE: "Support case update from Little Lillies School",
+  ONBOARDING_GUIDANCE: "Onboarding guidance for your Little Lillies School setup",
+  BEST_PRACTICE_TIP: "Best practice tips for using Little Lillies School",
+  MANUAL_ANNOUNCEMENT: "Important Little Lillies School update from our team",
+  PRICE_UPDATE: "Important price update for Little Lillies School",
+  SUBSCRIPTION_THANK_YOU: "Thank you for choosing Little Lillies School",
   POLICY_UPDATE: "Important compliance and policy update",
   ACCOUNT_SECURITY: "Important account security notice",
 };

@@ -5,7 +5,7 @@ import { getStaffSession } from "@/lib/auth";
 import { TeacherSchoolDetailsContent } from "./school-details-client";
 
 export const metadata: Metadata = {
-  title: "School details | SchoolBase",
+  title: "School details | Little Lillies School",
   description: "View your school’s contact information, payment account details, and logo in the teacher portal.",
 };
 

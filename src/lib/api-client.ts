@@ -23,6 +23,7 @@
  * // Resolve file URL for display
  * const displayUrl = resolveFileUrl(photoUrl, pupilId)
  */
+import { getBackendUrl } from "@/lib/backend-url";
 
 // Lazy-load cookies only when needed (server context)
 let cookiesModule: any = null;
@@ -101,21 +102,26 @@ export function resolveFileUrl(
   // External URLs (S3, CDN, etc) pass through as-is
   if (/^https?:\/\//.test(fileUrl)) return fileUrl;
 
-  // Already a proper /api/ path - return as-is
-  if (fileUrl.startsWith("/api/")) return fileUrl;
+  const backendUrl = getBackendUrl();
+  const normalizedUrl = fileUrl.trim();
 
-  // Backend uploads paths - prepend /api
-  if (fileUrl.startsWith("/uploads/")) {
-    return `/api${fileUrl}`;
+  // Already a proper backend-backed static upload path
+  if (normalizedUrl.startsWith("/uploads/")) {
+    return `${backendUrl}${normalizedUrl}`;
+  }
+
+  // Some legacy records may still contain /api/uploads/ paths; normalize them to the static upload path
+  if (normalizedUrl.startsWith("/api/uploads/")) {
+    return `${backendUrl}${normalizedUrl.replace(/^\/api/, "")}`;
   }
 
   // Filename only (e.g., "photo.jpg") - convert to upload path
-  if (!fileUrl.startsWith("/")) {
-    return `/api/uploads/${fileUrl}`;
+  if (!normalizedUrl.startsWith("/")) {
+    return `${backendUrl}/uploads/${normalizedUrl}`;
   }
 
-  // Default: return as-is
-  return fileUrl;
+  // Default: return as-is for other relative paths such as /school-logo/...
+  return normalizedUrl;
 }
 
 /**

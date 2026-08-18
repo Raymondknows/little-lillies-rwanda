@@ -57,8 +57,13 @@ export default function StudentEditClient({ studentId }: { studentId: string }) 
   useEffect(() => {
     const loadData = async () => {
       try {
+        const backendUrl = getBackendUrl();
+
         // Load student data
-        const studentResponse = await fetch(`/api/admin/students/${studentId}`);
+        const studentResponse = await fetch(`${backendUrl}/api/admin/students/${studentId}`, {
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+        });
         if (!studentResponse.ok) {
           throw new Error("Failed to load student");
         }
@@ -104,7 +109,6 @@ export default function StudentEditClient({ studentId }: { studentId: string }) 
         }
 
         // Load classes
-        const backendUrl = getBackendUrl();
         const classesResponse = await fetch(`${backendUrl}/api/admin/students/data`, {
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
@@ -168,8 +172,10 @@ export default function StudentEditClient({ studentId }: { studentId: string }) 
         formData.append("photo", photoFile);
       }
 
-      const response = await fetch(`/api/admin/students/${studentId}`, {
+      const backendUrl = getBackendUrl();
+      const response = await fetch(`${backendUrl}/api/admin/students/${studentId}`, {
         method: "PATCH",
+        credentials: "include",
         body: formData,
       });
 

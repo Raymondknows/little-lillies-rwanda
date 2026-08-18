@@ -89,7 +89,7 @@ export function SeoPageShell({
               <Sparkles className="h-4 w-4" />
               Built for modern school teams
             </div>
-            <h2 className="mt-4 text-3xl font-bold text-foreground">Why school leaders choose SchoolBase</h2>
+            <h2 className="mt-4 text-3xl font-bold text-foreground">Why school leaders choose Little Lillies School</h2>
             <p className="mt-4 max-w-3xl text-slate-600">
               Our platform combines fee automation, parent communication, exam release, and school websites in one school management system that works beautifully for day-to-day operations.
             </p>
@@ -112,7 +112,7 @@ export function SeoPageShell({
         <div className="rounded-3xl border border-border bg-white p-10 text-center">
           <h2 className="text-3xl font-bold text-foreground">Ready to simplify school operations?</h2>
           <p className="mt-4 text-slate-600">
-            Launch faster, communicate better, and keep every parent and teacher in the loop with SchoolBase.
+            Launch faster, communicate better, and keep every parent and teacher in the loop with Little Lillies School.
           </p>
           <div className="mt-8 flex flex-col justify-center gap-4 sm:flex-row">
             <Link href={primaryHref} className="rounded-lg bg-brand px-6 py-3 font-semibold text-white transition hover:bg-brand/90">

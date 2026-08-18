@@ -10,6 +10,7 @@ import SubscriptionModal from "@/components/subscription-modal";
 
 export default function FeesPage() {
   const router = useRouter();
+  const backendUrl = getBackendUrl();
   const [data, setData] = useState<{ invoices: any[]; outstanding: number; terms: any[]; currency: string } | null>(null);
   const [subscriptionBlocked, setSubscriptionBlocked] = useState<{ reason: string; schoolName?: string } | null>(null);
   const [schoolName, setSchoolName] = useState<string>('');
@@ -20,7 +21,6 @@ export default function FeesPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const backendUrl = getBackendUrl();
         const [response, verifyResponse] = await Promise.all([
           fetch(`${backendUrl}/api/admin/fees/data`, {
             method: "GET",
@@ -67,18 +67,7 @@ export default function FeesPage() {
         }
 
         const feesData = await response.json();
-
-        let countryConfig: any = null;
-        try {
-          const countryRes = await fetch("/api/country/config");
-          if (countryRes.ok) {
-            countryConfig = await countryRes.json();
-          }
-        } catch (err) {
-          console.error("[Fees] Country config fetch error:", err);
-        }
-
-        const feesCurrency = countryConfig?.data?.currency || feesData.currency || "NGN";
+        const feesCurrency = feesData.currency || "NGN";
 
         setSchoolName(schoolNameToUse);
         setData({
@@ -89,7 +78,7 @@ export default function FeesPage() {
         });
 
         try {
-            const whatsappRes = await fetch(`/api/admin/whatsapp/status`, {
+            const whatsappRes = await fetch(`${backendUrl}/api/admin/whatsapp/data`, {
             credentials: "include",
             headers: { "Content-Type": "application/json" },
           });
@@ -118,7 +107,7 @@ export default function FeesPage() {
 
   const handleIssueBills = async (termId: string) => {
     try {
-      const response = await fetch('/api/admin/fees/invoices/issue-bills', {
+      const response = await fetch(`${backendUrl}/api/admin/fees/invoices/issue-bills`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json", "x-school-id": localStorage.getItem('schoolId') || '' },
@@ -141,7 +130,7 @@ export default function FeesPage() {
 
   const handleSendReminders = async (invoiceId?: string) => {
     try {
-      const response = await fetch('/api/admin/fees/invoices/send-reminders', {
+      const response = await fetch(`${backendUrl}/api/admin/fees/invoices/send-reminders`, {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json", "x-school-id": localStorage.getItem('schoolId') || '' },

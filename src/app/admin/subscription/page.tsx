@@ -3,9 +3,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Calendar, CreditCard, RefreshCw, TrendingUp, AlertCircle, CheckCircle, Clock } from "lucide-react";
+import { getBackendUrl } from "@/lib/backend-url";
 import { Button } from "@/components/ui/button";
 import { UserGuide, type PageHelpGuide } from "@/components/ui/user-guide";
 import AdminSkeleton from "@/components/ui/skeleton";
+import countriesData from "../../../../config/countries.json";
 
 interface SubscriptionStatus {
   subscriptionStatus: string;
@@ -126,7 +128,7 @@ const HELP_GUIDE: PageHelpGuide = {
   faqs: [
     {
       question: "What happens when my subscription expires?",
-      answer: "Your school will lose access to all SchoolBase features including student management, fees, attendance, and results publishing. You'll need to renew your subscription to regain access.",
+      answer: "Your school will lose access to all Little Lillies School features including student management, fees, attendance, and results publishing. You'll need to renew your subscription to regain access.",
     },
     {
       question: "How long does a subscription last?",
@@ -173,33 +175,35 @@ export default function SubscriptionPage() {
     async function loadSubscription() {
       try {
         console.log('[Subscription] Loading subscription status...');
-        const [countryResponse, pricingResponse, response] = await Promise.all([
-          fetch("/api/country/config", { credentials: 'include', headers: { 'Content-Type': 'application/json' } }),
-          fetch("/api/pricing", { credentials: 'include', headers: { 'Content-Type': 'application/json' }, cache: "no-store" }),
-          fetch("/api/admin/subscription/status", {
+        const backendUrl = getBackendUrl();
+        const [pricingResponse, settingsResponse, response] = await Promise.all([
+          fetch(`${backendUrl}/api/pricing`, { credentials: 'include', headers: { 'Content-Type': 'application/json' }, cache: "no-store" }),
+          fetch(`${backendUrl}/api/admin/settings/data`, { credentials: 'include', headers: { 'Content-Type': 'application/json' } }),
+          fetch(`${backendUrl}/api/admin/subscription/status`, {
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
           }),
         ]);
 
-        const countryConfig = await countryResponse.json().catch(() => null);
-        const configData = countryConfig?.data;
-        const resolvedCountryCode = countryConfig?.country || "NG";
-        const resolvedCountryName = configData?.name || "Nigeria";
-        const resolvedCurrency = configData?.currency || "NGN";
+        const pricingData = await pricingResponse.json().catch(() => null);
+        const settingsData = await settingsResponse.json().catch(() => null);
+        const settingsConfig = settingsData?.config ?? null;
+        const resolvedCountryCode = settingsConfig?.country ?? countriesData.default ?? "NG";
+        const resolvedCountryName = countriesData.countries[resolvedCountryCode as keyof typeof countriesData.countries]?.name ?? settingsConfig?.country ?? "Nigeria";
+        const resolvedCurrency = settingsConfig?.currency ?? countriesData.countries[resolvedCountryCode as keyof typeof countriesData.countries]?.currency ?? "NGN";
 
         setCountryCode(resolvedCountryCode);
         setCountryName(resolvedCountryName);
         setCurrency(resolvedCurrency);
 
-        const pricingData = await pricingResponse.json().catch(() => null);
-        if (pricingData?.plans) {
-          setCountryPlans((prevPlans) => ({
-            starter: pricingData.plans.starter || prevPlans.starter,
-            standard: pricingData.plans.standard || prevPlans.standard,
-            group: pricingData.plans.group || prevPlans.group,
-          }));
-        }
+        const selectedCountryPlans = countriesData.countries[resolvedCountryCode as keyof typeof countriesData.countries]?.plans ?? null;
+        const priceSource = selectedCountryPlans ?? pricingData?.plans ?? {};
+
+        setCountryPlans({
+          starter: priceSource.starter ?? { amountMinor: 0, priceLabel: "Pricing unavailable" },
+          standard: priceSource.standard ?? { amountMinor: 0, priceLabel: "Pricing unavailable" },
+          group: priceSource.group ?? { amountMinor: 0, priceLabel: "Contact sales" },
+        });
 
         console.log('[Subscription] Response status:', response.status);
 

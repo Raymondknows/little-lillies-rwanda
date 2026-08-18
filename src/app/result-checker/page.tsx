@@ -3,7 +3,7 @@ import { BarChart3, ShieldCheck, Users, Shield, Printer, ClipboardList } from 'l
 import { SeoPageShell } from '@/components/seo-page-shell'
 
 export const metadata: Metadata = {
-  title: 'Result Checker & PIN Management | SchoolBase',
+  title: 'Result Checker & PIN Management | Little Lillies School',
   description:
     'A secure result checker designed for parents and students, with an admin PIN settings page to generate, manage, and publish result access codes.',
   keywords: [
@@ -21,7 +21,7 @@ export default function ResultCheckerSeoPage() {
     <SeoPageShell
       eyebrow="RESULT CHECKER"
       title="Secure Result Checker with Admin PIN Management"
-      description="SchoolBase helps schools publish exam results safely with a public PIN entry page and a powerful admin settings page for generating, tracking, and controlling result access codes."
+      description="Little Lillies School helps schools publish exam results safely with a public PIN entry page and a powerful admin settings page for generating, tracking, and controlling result access codes."
       highlights={[
         'PIN-based access',
         'Admin PIN settings',

@@ -1,9 +1,8 @@
 "use client";
 
-"use client";
-
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { getBackendUrl } from "@/lib/backend-url";
 import { createAnnouncement } from "@/app/admin/actions";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -24,7 +23,8 @@ export default function NewAnnouncementPage() {
   useEffect(() => {
     async function loadAcademicYears() {
       try {
-        const response = await fetch("/api/admin/academic-years", {
+        const backendUrl = getBackendUrl();
+        const response = await fetch(`${backendUrl}/api/admin/academic-years`, {
           credentials: "include",
         });
         if (!response.ok) return;

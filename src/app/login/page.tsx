@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { CheckCircle2 } from "lucide-react";
 import { AppLogo } from "@/components/app-logo";
 import { LoginForm } from "@/components/auth/login-form";
+import { SchoolLogoImage } from "@/components/auth/school-logo-image";
 import { getStaffSession, getPlatformAdminSession } from "@/lib/auth";
 
 export default async function LoginPage({
@@ -20,55 +21,132 @@ export default async function LoginPage({
   const { next, signup, reset } = await searchParams;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="w-full max-w-md rounded-2xl border border-border bg-surface/80 backdrop-blur-sm p-8 shadow-lg">
-        <div className="mb-8 flex justify-center">
-          <AppLogo href="/" size="lg" showSpinner />
+    <div className="flex min-h-screen bg-gradient-to-br from-blue-50 via-background to-purple-50">
+      {/* Left Side - Login Form */}
+      <div className="flex w-full flex-col justify-center px-6 py-12 sm:px-12 lg:w-1/2 lg:px-16">
+        <div className="mx-auto w-full max-w-sm">
+          <h1 className="text-3xl font-bold text-foreground">
+            Welcome Back
+          </h1>
+
+          <p className="mt-3 text-base text-muted">
+            Sign in to your school management dashboard
+          </p>
+
+          {reset === "success" ? (
+            <div className="mt-6 rounded-lg border border-green-200 bg-green-50 p-4 text-green-900 shadow-sm">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="mt-1 h-5 w-5 flex-shrink-0 text-green-700" />
+                <div>
+                  <p className="font-semibold">Password reset successful</p>
+                  <p className="mt-1 text-sm text-green-900/90">
+                    Your password has been updated. Sign in with your new password.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : signup === "success" ? (
+            <div className="mt-6 rounded-lg border border-green-200 bg-green-50 p-4 text-green-900 shadow-sm">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="mt-1 h-5 w-5 flex-shrink-0 text-green-700" />
+                <div>
+                  <p className="font-semibold">Welcome to SchoolBase!</p>
+                  <p className="mt-1 text-sm text-green-900/90">
+                    Your school has been registered successfully. Sign in with your admin credentials to continue.
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          {/* Form automatically routes based on user role */}
+          <div className="mt-8">
+            <LoginForm redirectTo="/admin" />
+          </div>
+
+          <div className="mt-6 space-y-3 text-center text-sm">
+            <p>
+              <a href="/parent/login" className="text-brand font-medium hover:underline">
+                Sign in as Parent →
+              </a>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Side - School Info */}
+      <div className="hidden lg:flex lg:w-1/2 lg:flex-col lg:justify-center lg:items-center lg:bg-gradient-to-b lg:from-purple-600 lg:to-blue-700 lg:px-16 lg:py-12 lg:relative lg:overflow-hidden">
+        {/* Decorative background elements */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-10 right-10 w-40 h-40 bg-white rounded-full blur-3xl"></div>
+          <div className="absolute bottom-10 left-10 w-32 h-32 bg-white rounded-full blur-3xl"></div>
         </div>
 
-        <h1 className="text-center text-2xl font-bold text-foreground">
-          Sign in to SchoolBase
-        </h1>
+        <div className="relative z-10 text-center space-y-8 max-w-md">
+          {/* School Logo */}
+          <div className="flex justify-center">
+            <SchoolLogoImage
+              src="/schools/little-lillies/logo.png"
+              alt="Little Lillies School"
+              className="h-32 w-auto object-contain"
+              schoolName="Little Lillies School"
+            />
+          </div>
 
-        {reset === "success" ? (
-          <div className="mt-4 rounded-3xl border border-green-200 bg-green-50 p-5 text-green-900 shadow-sm">
-            <div className="flex items-start gap-3">
-              <CheckCircle2 className="mt-1 h-5 w-5 text-green-700" />
-              <div>
-                <p className="font-semibold">Password reset successful</p>
-                <p className="mt-1 text-sm text-green-900/90">
-                  Your password has been updated. Sign in with your new password.
+          {/* School Name */}
+          <div>
+            <h2 className="text-4xl font-bold text-white">
+              Little Lillies School
+            </h2>
+            <p className="mt-3 text-lg text-purple-100">
+              Excellence in Education
+            </p>
+          </div>
+
+          {/* Contact Info */}
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20 space-y-6">
+            <div>
+              <p className="text-sm text-purple-200 font-semibold mb-2">📍 Location</p>
+              <p className="text-white text-sm leading-relaxed">
+                Rugarama village, Nyabisindu Cell<br />
+                Remera Sector, Gasabo District<br />
+                Kigali, Rwanda
+              </p>
+            </div>
+
+            <div className="border-t border-white/20 pt-6">
+              <p className="text-sm text-purple-200 font-semibold mb-3">📞 Contact Us</p>
+              <div className="space-y-2">
+                <p className="text-white text-sm">
+                  <a href="tel:+250781464730" className="hover:text-purple-200 transition">
+                    +250 781 464 730
+                  </a>
+                </p>
+                <p className="text-white text-sm">
+                  <a href="tel:+250785703719" className="hover:text-purple-200 transition">
+                    +250 785 703 719
+                  </a>
+                </p>
+                <p className="text-white text-sm">
+                  <a href="mailto:littlelillies82@gmail.com" className="hover:text-purple-200 transition">
+                    littlelillies82@gmail.com
+                  </a>
                 </p>
               </div>
             </div>
-          </div>
-        ) : signup === "success" ? (
-          <div className="mt-4 rounded-3xl border border-green-200 bg-green-50 p-5 text-green-900 shadow-sm">
-            <div className="flex items-start gap-3">
-              <CheckCircle2 className="mt-1 h-5 w-5 text-green-700" />
-              <div>
-                <p className="font-semibold">Welcome to SchoolBase!</p>
-                <p className="mt-1 text-sm text-green-900/90">
-                  Your school has been registered successfully. Sign in with your admin credentials to continue.
-                </p>
-              </div>
+
+            <div className="border-t border-white/20 pt-6">
+              <p className="text-sm text-purple-200 font-semibold mb-2">Proprietor</p>
+              <p className="text-white font-medium">Uche Emmanuel</p>
             </div>
           </div>
-        ) : null}
 
-        <p className="mt-2 text-center text-sm text-muted">
-          Sign in to manage your school.
-        </p>
-
-        {/* Form automatically routes based on user role */}
-        <LoginForm redirectTo="/admin" />
-
-        <div className="mt-4 space-y-2 text-center text-sm">
-          <p>
-            <a href="/parent/login" className="text-brand hover:underline">
-              Parent sign in →
-            </a>
-          </p>
+          {/* Features */}
+          <div className="pt-4">
+            <p className="text-sm text-purple-100">
+              Powered by SchoolBase — Complete school management solution
+            </p>
+          </div>
         </div>
       </div>
     </div>

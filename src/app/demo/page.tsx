@@ -65,7 +65,7 @@ export default function Page() {
                 Modern school management, beautifully presented for parents and staff.
               </h2>
               <p className="mt-5 max-w-2xl text-lg leading-8 text-muted">
-                Bright Future College uses SchoolBase to manage fees, publish results, share updates, and keep every family informed in real time.
+                Bright Future College uses Little Lillies School to manage fees, publish results, share updates, and keep every family informed in real time.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <a href="/signup" className="inline-flex items-center gap-2 rounded-full bg-brand px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand/90">
@@ -205,9 +205,9 @@ export default function Page() {
             <div className="rounded-3xl border border-border bg-background p-8 shadow-sm sm:p-10">
               <div className="max-w-2xl">
                 <p className="text-sm font-semibold uppercase tracking-[0.25em] text-brand">Ready to see it in action?</p>
-                <h2 className="mt-3 text-3xl font-semibold sm:text-4xl">Bring the same experience to your school with SchoolBase.</h2>
+                <h2 className="mt-3 text-3xl font-semibold sm:text-4xl">Bring the same experience to your school with Little Lillies School.</h2>
                 <p className="mt-4 text-lg leading-8 text-muted">
-                  From quick setup to ongoing parent communication, SchoolBase helps schools run faster and look more professional online.
+                  From quick setup to ongoing parent communication, Little Lillies School helps schools run faster and look more professional online.
                 </p>
               </div>
               <div className="mt-8 flex flex-wrap gap-3">

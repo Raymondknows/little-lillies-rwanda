@@ -37,7 +37,7 @@ export function AppLogo({
       <span className="relative z-10 flex items-center justify-center rounded-full overflow-hidden" style={{ width: box, height: box }}>
         <Image
           src="/logo.png"
-          alt="SchoolBase"
+          alt="Little Lillies School"
           width={LOGO_WIDTH}
           height={LOGO_HEIGHT}
           className="object-contain"
@@ -71,7 +71,7 @@ export function AppLogo({
         <span
           className={`font-semibold tracking-tight text-foreground ${text}`}
         >
-          SchoolBase
+          Little Lillies School
         </span>
       )}
     </span>

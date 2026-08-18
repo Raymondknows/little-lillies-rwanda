@@ -5,6 +5,7 @@ import SharedLayout from '@/components/shared-layout';
 import PendingSchoolModal from '@/components/pending-school-modal';
 import SubscriptionModal from '@/components/subscription-modal';
 import AdminSkeleton from '@/components/ui/skeleton';
+import { getBackendUrl } from '@/lib/backend-url';
 
 const baseNav = [
   { href: "/admin/getting-started", label: "Setup your workspace", icon: "Sparkles" },
@@ -42,7 +43,8 @@ export default function AdminLayout({
 
   async function exchangeImpersonationToken(impersonationToken: string) {
     try {
-      const response = await fetch('/api/admin/impersonate', {
+      const backendUrl = getBackendUrl();
+      const response = await fetch(`${backendUrl}/api/admin/impersonate`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -89,7 +91,7 @@ export default function AdminLayout({
         }
 
         // Fetch session
-        const sessionRes = await fetch('/api/admin/verify', {
+        const sessionRes = await fetch(`${getBackendUrl()}/api/admin/verify`, {
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
@@ -123,7 +125,7 @@ export default function AdminLayout({
         console.log('[AdminLayout] Loading school data for schoolId:', schoolId);
 
         // Fetch school
-        const schoolRes = await fetch(`/api/admin/school/${encodeURIComponent(schoolId)}`, {
+        const schoolRes = await fetch(`${getBackendUrl()}/api/admin/school/${encodeURIComponent(schoolId)}`, {
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
         });
@@ -145,7 +147,7 @@ export default function AdminLayout({
         setSchool(schoolData);
 
         try {
-          const setupStatusRes = await fetch(`/api/admin/school/${encodeURIComponent(schoolId)}/setup-status`, {
+          const setupStatusRes = await fetch(`${getBackendUrl()}/api/admin/school/${encodeURIComponent(schoolId)}/setup-status`, {
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
           });

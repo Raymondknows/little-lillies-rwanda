@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { getBackendUrl } from "@/lib/backend-url";
 
 export function LoginForm({ redirectTo }: { redirectTo: string }) {
   const router = useRouter();
@@ -29,11 +30,11 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
       console.log('Email:', email);
       console.log('Password length:', password.length);
 
-      // ✅ Call the canonical auth proxy route
-      const res = await fetch("/api/auth/login", {
+      const backendUrl = getBackendUrl();
+      const res = await fetch(`${backendUrl}/api/auth/school-login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include", // ✅ CRITICAL: Allow cookies to be set
+        credentials: "include",
         body: JSON.stringify({ email, password }),
       });
 

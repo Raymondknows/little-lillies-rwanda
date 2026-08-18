@@ -186,7 +186,7 @@ export default function AdminDashboardPage() {
           let setupStatus: { isComplete?: boolean; completionPercentage?: number } | null = null;
           if (verifyData?.authenticated && verifyData.session?.schoolId) {
             try {
-              const setupStatusRes = await fetch(`/api/admin/school/${verifyData.session.schoolId}/setup-status`, {
+              const setupStatusRes = await fetch(`${backendUrl}/api/admin/school/${verifyData.session.schoolId}/setup-status`, {
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
                 signal: controller.signal,
@@ -199,23 +199,13 @@ export default function AdminDashboardPage() {
             }
           }
 
-          let countryConfig: any = null;
-          try {
-            const countryRes = await fetch("/api/country/config");
-            if (countryRes.ok) {
-              countryConfig = await countryRes.json();
-            }
-          } catch (err) {
-            console.error('[Dashboard] Country config fetch error:', err);
-          }
-
-          const dashboardCurrency = countryConfig?.data?.currency || feesData.currency || "NGN";
-          const dashboardCountryName = countryConfig?.data?.name || null;
-          const dashboardCountryCode = countryConfig?.country || null;
+          const dashboardCurrency = feesData.currency || "NGN";
+          const dashboardCountryName = null;
+          const dashboardCountryCode = null;
 
           // Get WhatsApp connection status if available
           try {
-            const whatsappRes = await fetch(`/api/admin/whatsapp/status`, {
+            const whatsappRes = await fetch(`${backendUrl}/api/admin/whatsapp/data`, {
               credentials: 'include',
               headers: { 'Content-Type': 'application/json' },
               signal: controller.signal,

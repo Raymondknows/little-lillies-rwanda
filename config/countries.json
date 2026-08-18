@@ -50,6 +50,16 @@
         "standard": { "amountMinor": 3500, "priceLabel": "D3,500 / term" },
         "group": { "amountMinor": 0, "priceLabel": "Custom from D6,500 / term" }
       }
+    },
+    "RW": {
+      "name": "Rwanda",
+      "currency": "RWF",
+      "timezone": "Africa/Kigali",
+      "plans": {
+        "starter": { "amountMinor": 5000000, "priceLabel": "60,000 RWF / term" },
+        "standard": { "amountMinor": 7000000, "priceLabel": "85,000 RWF / term" },
+        "group": { "amountMinor": 0, "priceLabel": "Custom from 150,000 RWF / term" }
+      }
     }
   }
 }

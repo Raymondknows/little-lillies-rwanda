@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
+import { getBackendUrl } from '@/lib/backend-url';
 
 interface ClientAuthWrapperProps {
   children: ReactNode;
@@ -22,7 +23,7 @@ export function ClientAuthWrapper({
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const response = await fetch('/api/admin/verify', {
+        const response = await fetch(`${getBackendUrl()}/api/admin/verify`, {
           method: 'POST',
           credentials: 'include',
         });

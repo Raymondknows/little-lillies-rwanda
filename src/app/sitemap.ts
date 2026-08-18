@@ -1,14 +1,20 @@
 import { MetadataRoute } from 'next'
-import { blogPosts } from './blog/data'
+import fs from 'fs'
+import path from 'path'
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://schoolbase.live'
-  const blogPages: MetadataRoute.Sitemap = blogPosts.map((post) => ({
-    url: `${baseUrl}/blog/${post.slug}`,
-    lastModified: new Date(),
-    changeFrequency: 'weekly',
-    priority: 0.9,
-  }))
+  const root = process.cwd()
+  let baseUrl = 'https://schoolbase.live'
+  try {
+    const tenantPath = path.join(root, 'public', 'tenants', 'little-lillies.json')
+    if (fs.existsSync(tenantPath)) {
+      const raw = fs.readFileSync(tenantPath, 'utf8')
+      const tenant = JSON.parse(raw)
+      if (tenant && tenant.domain) baseUrl = tenant.domain
+    }
+  } catch (e) {
+    // ignore and fall back to default baseUrl
+  }
 
   // Public pages
   const publicPages: MetadataRoute.Sitemap = [
@@ -24,13 +30,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'monthly',
       priority: 0.9,
     },
-    {
-      url: `${baseUrl}/blog`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.95,
-    },
-    ...blogPages,
+    // Blog listing and individual posts removed for this tenant customization
     {
       url: `${baseUrl}/pricing`,
       lastModified: new Date(),

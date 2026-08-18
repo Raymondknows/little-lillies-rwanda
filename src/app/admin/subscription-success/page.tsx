@@ -38,7 +38,7 @@ async function ActivateSchoolServer({ reference }: { reference: string }) {
             <div>
               <h2 className="text-xl font-semibold text-green-900">Subscription Activated</h2>
               <p className="mt-2 text-sm text-green-800">
-                Your payment has been confirmed and your school can now access SchoolBase.
+                Your payment has been confirmed and your school can now access Little Lillies School.
               </p>
             </div>
           </div>

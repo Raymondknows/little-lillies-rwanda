@@ -7,6 +7,8 @@ import { FlutterwavePurchaseButton } from "@/components/flutterwave-purchase-but
 import { Check, Zap, Users, BarChart3, MessageSquare, Globe, CreditCard, ToggleRight } from "lucide-react";
 import { UserGuide, type PageHelpGuide } from "@/components/ui/user-guide";
 import AdminSkeleton from "@/components/ui/skeleton";
+import { getBackendUrl } from "@/lib/backend-url";
+import countriesData from "../../../../config/countries.json";
 
 interface Plan {
   id: string;
@@ -73,7 +75,7 @@ const defaultPlans: Plan[] = [
 ];
 
 const HELP_GUIDE: PageHelpGuide = {
-  title: "Choosing Your SchoolBase Plan",
+  title: "Choosing Your Little Lillies School Plan",
   overview: "Select the perfect subscription plan for your school. Each plan offers different features and capacity to match your school's size and needs.",
   steps: [
     "Review the features and pricing of each plan.",
@@ -129,7 +131,7 @@ const HELP_GUIDE: PageHelpGuide = {
     },
     {
       question: "What payment methods are accepted?",
-      answer: "SchoolBase uses Paystack for secure payments. You can pay using bank transfers, cards, USSD, or other methods supported by Paystack in your region.",
+      answer: "Little Lillies School uses Paystack for secure payments. You can pay using bank transfers, cards, USSD, or other methods supported by Paystack in your region.",
     },
     {
       question: "Is there a free trial?",
@@ -170,44 +172,54 @@ export default function SubscribePage() {
   useEffect(() => {
     let mounted = true;
 
+    const backendUrl = getBackendUrl();
+
     Promise.all([
-      fetch("/api/country/config").then((r) => r.json()).catch(() => ({})),
-      fetch("/api/pricing", { cache: "no-store" }).then((r) => r.json()).catch(() => ({})),
-      fetch("/api/admin/verify", { method: "POST" }).then((r) => r.json()).catch(() => ({})),
+      fetch(`${backendUrl}/api/pricing`, { cache: "no-store", credentials: "include" }).then((r) => r.json()).catch(() => ({})),
+      fetch(`${backendUrl}/api/admin/settings/data`, { credentials: "include" }).then((r) => r.json()).catch(() => ({})),
+      fetch(`${backendUrl}/api/admin/verify`, { method: "POST", credentials: "include" }).then((r) => r.json()).catch(() => ({})),
     ])
-      .then(([countryData, pricingData, adminData]) => {
+      .then(([pricingData, settingsData, adminData]) => {
         if (!mounted) return;
 
-        const configData = countryData?.data;
-
-        const resolvedCountryCode = countryData?.country || "NG";
-        const resolvedCountryName = configData?.name || "Nigeria";
-        const resolvedCurrency = configData?.currency || "NGN";
+        const settingsConfig = settingsData?.config ?? null;
+        const resolvedCountryCode = settingsConfig?.country ?? countriesData.default ?? "NG";
+        const resolvedCountryName = countriesData.countries[resolvedCountryCode as keyof typeof countriesData.countries]?.name ?? settingsConfig?.country ?? "Nigeria";
+        const resolvedCurrency = settingsConfig?.currency ?? countriesData.countries[resolvedCountryCode as keyof typeof countriesData.countries]?.currency ?? "NGN";
 
         setCountryCode(resolvedCountryCode);
         setCountryName(resolvedCountryName);
         setCurrency(resolvedCurrency);
 
-        const configuredPlans = pricingData?.plans;
-        if (configuredPlans) {
-          const updatedPlans = defaultPlans.map((p) => ({
+        const configuredPlans = pricingData?.plans ?? {};
+        const selectedCountryPlans = countriesData.countries[resolvedCountryCode as keyof typeof countriesData.countries]?.plans ?? null;
+
+        const updatedPlans = defaultPlans.map((p) => {
+          const planKey = p.id === "enterprise" ? "group" : p.id === "standard" ? "standard" : "starter";
+          const sourcePlan = (selectedCountryPlans?.[planKey] ?? configuredPlans[planKey] ?? null) as {
+            amountMinor?: number;
+            priceLabel?: string;
+            studentLimit?: number;
+          } | null;
+
+          return {
             ...p,
-            amountMinor: configuredPlans[p.id === "enterprise" ? "group" : p.id]?.amountMinor ?? p.amountMinor,
-            priceLabel: configuredPlans[p.id === "enterprise" ? "group" : p.id]?.priceLabel ?? p.priceLabel,
+            amountMinor: sourcePlan?.amountMinor ?? p.amountMinor,
+            priceLabel: sourcePlan?.priceLabel ?? p.priceLabel,
             disabled: p.id === "enterprise",
             features: p.features.map((feature) => {
-              const limit = configuredPlans[p.id === "enterprise" ? "group" : p.id]?.studentLimit;
+              const limit = sourcePlan?.studentLimit ?? null;
               if (feature.startsWith("Up to ") && limit) return `Up to ${limit.toLocaleString()} students`;
               if (feature === "Unlimited students" && limit) return `Up to ${limit.toLocaleString()} students`;
               return feature;
             }),
-          }));
+          };
+        });
 
-          setPlans(updatedPlans);
-          setSelectedPlan((current) =>
-            updatedPlans.find((plan) => plan.id === current.id) ?? updatedPlans[1]
-          );
-        }
+        setPlans(updatedPlans);
+        setSelectedPlan((current) =>
+          updatedPlans.find((plan) => plan.id === current.id) ?? updatedPlans[1]
+        );
 
         if (adminData?.authenticated && adminData?.session) {
           const session = adminData.session;
@@ -216,7 +228,7 @@ export default function SubscribePage() {
           setAdminEmail(session.email || "");
 
           if (session.schoolId) {
-            fetch(`/api/admin/school/${session.schoolId}`)
+            fetch(`${getBackendUrl()}/api/admin/school/${session.schoolId}`, { credentials: 'include' })
               .then((r) => {
                 if (!r.ok) throw new Error(`HTTP ${r.status}`);
                 return r.json();
@@ -271,7 +283,7 @@ export default function SubscribePage() {
       <div className="text-center">
         <h1 className="text-3xl font-bold">Choose Your Plan</h1>
         <p className="text-sm text-muted mt-2">
-          Select the right plan for your school and unlock SchoolBase features
+          Select the right plan for your school and unlock Little Lillies School features
         </p>
       </div>
 

@@ -5,10 +5,12 @@ import ResultsPageClient from "./results-client";
 import AdminSkeleton from "@/components/ui/skeleton";
 import { useAssessmentData } from "@/lib/hooks/useAssessmentData";
 import SubscriptionModal from "@/components/subscription-modal";
+import { getBackendUrl } from "@/lib/backend-url";
 
 export default function ResultsPage() {
+  const backendUrl = getBackendUrl();
   const { data, loading, error, subscriptionBlocked } = useAssessmentData({
-    endpoint: "/api/admin/results/data",
+    endpoint: `${backendUrl}/api/admin/results/data`,
   });
 
   const assessments = data?.assessments || [];

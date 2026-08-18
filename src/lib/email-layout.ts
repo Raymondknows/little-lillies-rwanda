@@ -81,7 +81,7 @@ export function buildDerivStyleEmail(opts: EmailLayoutOptions): string {
   const subtitle = opts.heroSubtitle
     ? `<p style="margin:0;font-size:16px;color:${COLORS.muted};line-height:1.6;">${opts.heroSubtitle.includes("<") ? opts.heroSubtitle : escapeHtml(opts.heroSubtitle)}</p>`
     : "";
-  const headerTitle = opts.headerTitle ? escapeHtml(opts.headerTitle) : "SchoolBase";
+  const headerTitle = opts.headerTitle ? escapeHtml(opts.headerTitle) : "Little Lillies School";
 
   // Cardless variant: render a simpler, flat layout (no rounded card or shadow)
   if (opts.cardless) {
@@ -122,7 +122,7 @@ ${preheader}
     <tr>
       <td style="background:${COLORS.footerBg};padding:18px;text-align:center;font-size:13px;color:${COLORS.muted};">
         <p style="margin:0 0 8px 0;">Need support? Reply to this email or contact your school administrator.</p>
-        <p style="margin:0;">© ${new Date().getFullYear()} ${headerTitle} via SchoolBase</p>
+        <p style="margin:0;">© ${new Date().getFullYear()} ${headerTitle}</p>
       </td>
     </tr>
   </table>

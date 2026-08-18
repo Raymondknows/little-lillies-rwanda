@@ -80,37 +80,52 @@ export async function getExchangeRate(
  * These are approximate rates - live rates come from exchangerate-api.com
  */
 function getFallbackRate(from: string, to: string): number {
-  // NGN to other African currencies
+  // African currencies exchange rates (approximate)
   const fallbackRates: Record<string, Record<string, number>> = {
     NGN: {
       GHS: 0.0074, // 1 NGN = 0.0074 GHS
       KES: 0.0806, // 1 NGN = 0.0806 KES
       UGX: 3.96, // 1 NGN = 3.96 UGX
       ZAR: 0.14, // 1 NGN = 0.14 ZAR
+      RWF: 0.97, // 1 NGN ≈ 0.97 RWF
       USD: 0.00063,
       GBP: 0.0005,
       EUR: 0.00059,
     },
+    RWF: {
+      NGN: 1.03, // 1 RWF ≈ 1.03 NGN
+      GHS: 0.0076,
+      KES: 0.083,
+      UGX: 4.08,
+      ZAR: 0.144,
+      USD: 0.00065,
+      GBP: 0.00052,
+      EUR: 0.00061,
+    },
     GHS: {
       NGN: 135.14, // 1 GHS = 135.14 NGN
+      RWF: 131.14,
       KES: 10.87,
       UGX: 534.59,
       ZAR: 18.89,
     },
     KES: {
       NGN: 12.42, // 1 KES = 12.42 NGN
+      RWF: 12.05,
       GHS: 0.092,
       UGX: 49.18,
       ZAR: 1.74,
     },
     UGX: {
       NGN: 0.252, // 1 UGX = 0.252 NGN
+      RWF: 0.245,
       GHS: 0.0019,
       KES: 0.0203,
       ZAR: 0.0354,
     },
     ZAR: {
       NGN: 7.14, // 1 ZAR = 7.14 NGN
+      RWF: 6.94,
       GHS: 0.053,
       KES: 0.575,
       UGX: 28.25,

@@ -22,7 +22,7 @@ export function VideoHeroSection({ videoCount = 0, onSearchChange }: VideoHeroSe
           </div>
           <div>
             <h1 className="text-4xl md:text-5xl font-bold text-slate-900 leading-tight">
-              Learn SchoolBase Step-by-Step
+              Learn Little Lillies School Step-by-Step
             </h1>
             <p className="text-lg text-slate-600 mt-2 max-w-2xl">
               Master every feature with our comprehensive video tutorials. From setup to advanced configurations, we've got you covered.

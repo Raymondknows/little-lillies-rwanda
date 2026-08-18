@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, Edit2, Mail, Phone, MapPin } from "lucide-react";
 import { formatMoney, pupilName } from "@/lib/format";
 import { resolveFileUrl } from "@/lib/api-client";
+import { getBackendUrl } from "@/lib/backend-url";
 
 export default function StudentViewClient({ studentId }: { studentId: string }) {
   const [student, setStudent] = useState<any>(null);
@@ -15,7 +16,11 @@ export default function StudentViewClient({ studentId }: { studentId: string }) 
   useEffect(() => {
     const loadStudent = async () => {
       try {
-        const response = await fetch(`/api/admin/students/${studentId}`);
+        const backendUrl = getBackendUrl();
+        const response = await fetch(`${backendUrl}/api/admin/students/${studentId}`, {
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+        });
         if (!response.ok) throw new Error("Failed to load student");
         const data = await response.json();
         setStudent(data);

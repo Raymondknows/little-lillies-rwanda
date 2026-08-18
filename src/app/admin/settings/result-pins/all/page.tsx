@@ -64,8 +64,8 @@ export default function ResultPinsAllPage() {
   const loadSchoolMeta = async () => {
     try {
       const [schoolResponse, settingsResponse] = await Promise.all([
-        fetch("/api/admin/school", { credentials: "include" }),
-        fetch("/api/admin/settings/data", { credentials: "include" }),
+        fetch(`${backendUrl}/api/admin/school`, { credentials: "include" }),
+        fetch(`${backendUrl}/api/admin/settings/data`, { credentials: "include" }),
       ]);
 
       if (!schoolResponse.ok) return;

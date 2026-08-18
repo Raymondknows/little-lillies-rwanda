@@ -1,340 +1,65 @@
 import Link from "next/link";
 import { Linkedin, Facebook, Mail, MessageCircle } from "lucide-react";
 
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://schoolbase.live";
-
 export default function Footer() {
   return (
     <footer className="bg-foreground text-white print:hidden">
-      {/* Main Footer */}
-      <div className="mx-auto max-w-6xl px-4 py-16">
-        <div className="grid gap-12 md:grid-cols-5">
-          {/* Brand & Social */}
-          <div className="md:col-span-1">
-            <h3 className="font-bold text-lg mb-4">SchoolBase</h3>
-            <p className="text-sm text-white/70 mb-6">
-              The school management system built for West African schools. Fees, attendance, results, and parent communication in one platform.
+      <div className="mx-auto max-w-6xl px-4 py-10">
+        <div className="grid gap-8 md:grid-cols-2">
+          <div>
+            <h3 className="font-bold text-lg">Little Lillies School</h3>
+            <p className="mt-3 max-w-lg text-sm text-white/70">
+              A warm, nurturing school community where every child grows in confidence, character, and academic excellence.
             </p>
-            <div className="flex gap-3">
-              <a
-                href="https://www.linkedin.com/company/106371744/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-white/70 hover:text-white"
-              >
+
+            <div className="mt-5 flex gap-3">
+              <a href="https://www.linkedin.com/company/106371744/" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-white">
                 <Linkedin className="h-5 w-5" />
               </a>
-              <a
-                href="https://web.facebook.com/profile.php?id=61577572757498"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-white/70 hover:text-white"
-              >
+              <a href="https://web.facebook.com/profile.php?id=61577572757498" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-white">
                 <Facebook className="h-5 w-5" />
               </a>
-              <a
-                href="mailto:support@schoolbase.live"
-                className="text-white/70 hover:text-white"
-              >
+              <a href="mailto:littlelillies82@gmail.com" className="text-white/70 hover:text-white">
                 <Mail className="h-5 w-5" />
               </a>
-              <a
-                href="https://wa.me/2349031368963"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-white/70 hover:text-white"
-              >
+              <a href="https://wa.me/2349031368963" target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-white">
                 <MessageCircle className="h-5 w-5" />
               </a>
             </div>
           </div>
 
-          {/* Solutions */}
-          <div>
-            <h4 className="font-semibold mb-4">Solutions</h4>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link
-                  href={`${siteUrl}/solutions/school-fee-management`}
-                  className="text-white/70 hover:text-white"
-                >
-                  Fee Management
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href={`${siteUrl}/solutions/digital-result-management`}
-                  className="text-white/70 hover:text-white"
-                >
-                  Results Management
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href={`${siteUrl}/solutions/student-attendance-tracking`}
-                  className="text-white/70 hover:text-white"
-                >
-                  Attendance Tracking
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href={`${siteUrl}/solutions/parent-communication`}
-                  className="text-white/70 hover:text-white"
-                >
-                  Parent Communication
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href={`${siteUrl}/solutions/school-broadsheet`}
-                  className="text-white/70 hover:text-white"
-                >
-                  Broadsheet
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Guides (High Authority) */}
-          <div>
-            <h4 className="font-semibold mb-4">Learning Guides</h4>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link
-                  href={`${siteUrl}/guides/school-fee-management`}
-                  className="text-white/70 hover:text-white"
-                >
-                  Fee Management Guide
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href={`${siteUrl}/guides/digital-report-cards`}
-                  className="text-white/70 hover:text-white"
-                >
-                  Digital Report Cards
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href={`${siteUrl}/guides/school-broadsheet`}
-                  className="text-white/70 hover:text-white"
-                >
-                  Broadsheet Guide
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href={`${siteUrl}/guides/digital-transformation`}
-                  className="text-white/70 hover:text-white"
-                >
-                  Digital Transformation
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href={`${siteUrl}/video-tutorials`}
-                  className="text-white/70 hover:text-white"
-                >
-                  Video Tutorials
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Countries */}
-          <div>
-            <h4 className="font-semibold mb-4">West Africa</h4>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link
-                  href={`${siteUrl}/ghana-school-software`}
-                  className="text-white/70 hover:text-white"
-                >
-                  🇬🇭 Ghana
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href={`${siteUrl}/nigeria-school-software`}
-                  className="text-white/70 hover:text-white"
-                >
-                  🇳🇬 Nigeria
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href={`${siteUrl}/school-management-software`}
-                  className="text-white/70 hover:text-white"
-                >
-                  🇱🇷 Liberia
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href={`${siteUrl}/school-management-software`}
-                  className="text-white/70 hover:text-white"
-                >
-                  🇸🇱 Sierra Leone
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href={`${siteUrl}/school-management-software`}
-                  className="text-white/70 hover:text-white"
-                >
-                  🇬🇲 The Gambia
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* ClickBase Ecosystem */}
-          <div>
-            <h4 className="font-semibold mb-4">ClickBase Ecosystem</h4>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <a
-                  href="https://clickbasegroup.com/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-white/70 hover:text-white"
-                >
-                  ClickBase Group
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://clickinvoice.app/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-white/70 hover:text-white"
-                >
-                  ClickInvoice
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://tradebase.live/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-white/70 hover:text-white"
-                >
-                  TradeBase AI
-                </a>
-              </li>
-              <li>
-                <Link
-                  href={`${siteUrl}/founder`}
-                  className="text-white/70 hover:text-white font-semibold"
-                >
-                  Founder
-                </Link>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        {/* Divider */}
-        <div className="border-t border-white/10 mt-12 pt-8">
-          <div className="grid gap-6 md:grid-cols-3 text-sm text-white/70 mb-8">
-            {/* Comparison Links (SEO) */}
+          <div className="space-y-4 text-sm text-white/80">
             <div>
-              <p className="font-semibold text-white mb-2">Compare</p>
-              <div className="space-y-1">
-                <Link
-                  href={`${siteUrl}/compare/manual-systems`}
-                  className="block hover:text-white"
-                >
-                  vs Manual Systems
-                </Link>
-                <Link href={`${siteUrl}/compare/edumis`} className="block hover:text-white">
-                  vs EduMIS
-                </Link>
-                <Link href={`${siteUrl}/compare/free-vs-paid`} className="block hover:text-white">
-                  Free vs Paid
-                </Link>
-              </div>
-            </div>
-
-            {/* Role Pages (Segmentation) */}
-            <div>
-              <p className="font-semibold text-white mb-2">For Your Role</p>
-              <div className="space-y-1">
-                <Link href={`${siteUrl}/for-principals`} className="block hover:text-white">
-                  Principals
-                </Link>
-                <Link href={`${siteUrl}/for-bursars`} className="block hover:text-white">
-                  Bursars
-                </Link>
-                <Link href={`${siteUrl}/for-teachers`} className="block hover:text-white">
-                  Teachers
-                </Link>
-                <Link href={`${siteUrl}/for-parents`} className="block hover:text-white">
-                  Parents
-                </Link>
-              </div>
-            </div>
-
-            {/* Industries (Vertical Targeting) */}
-            <div>
-              <p className="font-semibold text-white mb-2">By School Type</p>
-              <div className="space-y-1">
-                <Link
-                  href={`${siteUrl}/school-management-software-for-secondary-schools`}
-                  className="block hover:text-white"
-                >
-                  Secondary Schools
-                </Link>
-                <Link
-                  href={`${siteUrl}/school-management-software-for-early-childhood-schools`}
-                  className="block hover:text-white"
-                >
-                  Early Childhood
-                </Link>
-                <Link
-                  href={`${siteUrl}/school-management-software-for-international-schools`}
-                  className="block hover:text-white"
-                >
-                  International Schools
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Bottom Footer */}
-      <div className="border-t border-white/10 bg-black/30 py-6">
-        <div className="mx-auto max-w-6xl px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-white/70">
-            <div>
-              <p>© 2026 SchoolBase. A ClickBase Group product.</p>
-            </div>
-            <div className="flex gap-6">
-              <Link href="/privacy" className="hover:text-white">
-                Privacy Policy
-              </Link>
-              <Link href="/terms" className="hover:text-white">
-                Terms & Conditions
-              </Link>
-              <Link href="/contact" className="hover:text-white">
-                Contact Support
-              </Link>
-            </div>
-            <div className="text-right">
+              <h4 className="font-semibold text-white">Contact</h4>
               <p>
-                <a
-                  href="tel:+2349031368963"
-                  className="hover:text-white"
-                >
-                  +234 903 136 8963
+                <a href="mailto:littlelillies82@gmail.com" className="hover:text-white">
+                  littlelillies82@gmail.com
                 </a>
               </p>
-              <p className="text-xs">Mon–Sat 8am–8pm WAT</p>
+              <p>
+                <a href="tel:+234781464730" className="hover:text-white">
+                  0781464730
+                </a>
+              </p>
+            </div>
+
+            <div>
+              <h4 className="font-semibold text-white">Location</h4>
+              <p className="mt-2 max-w-md">
+                Rugarama village, Nyabisindu Cell, Remera Sector, Gasabo District (KG 8 AVE HOUSE 98), KIGALI, RWANDA
+              </p>
             </div>
           </div>
+        </div>
+
+        <div className="mt-8 border-t border-white/10 pt-6 text-center text-sm text-white/70">
+          <p>© {new Date().getFullYear()} Little Lillies School. All rights reserved.</p>
+          <p className="mt-3">
+            Powered by{" "}
+            <a href="https://www.schoolbase.live" target="_blank" rel="noopener noreferrer" className="text-white hover:text-brand transition">
+              SchoolBase
+            </a>
+          </p>
         </div>
       </div>
     </footer>

@@ -71,7 +71,7 @@ export default function ForgotPasswordPage() {
           </div>
         ) : (
           <p className="mt-2 text-center text-sm text-muted">
-            Enter the email for your SchoolBase account and we'll send a secure
+            Enter the email for your Little Lillies School account and we'll send a secure
             reset link.
           </p>
         )}

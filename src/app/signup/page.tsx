@@ -63,7 +63,7 @@ export default function SignupPage() {
           ? "Please enter a valid email address."
           : errorMessage,
         details: isServerRenderError
-          ? "Please review the form and try again. If the problem continues, contact SchoolBase support."
+          ? "Please review the form and try again. If the problem continues, contact Little Lillies School support."
           : errorMessage.includes("Email already registered")
           ? "Use a different admin email or recover the existing account if that school already exists."
           : errorMessage.includes("Invalid email")

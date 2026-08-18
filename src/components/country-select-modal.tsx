@@ -9,9 +9,10 @@ const COUNTRY_EMOJIS: Record<string, string> = {
   SL: "🇸🇱",
   LR: "🇱🇷",
   GM: "🇬🇲",
+  RW: "🇷🇼",
 };
 
-const COUNTRY_ORDER = ["NG", "GH", "SL", "LR", "GM"];
+const COUNTRY_ORDER = ["NG", "GH", "RW", "SL", "LR", "GM"];
 
 const COUNTRIES = Object.entries((countriesJson as any).countries || {})
   .sort(([a], [b]) => COUNTRY_ORDER.indexOf(a) - COUNTRY_ORDER.indexOf(b))
@@ -21,19 +22,46 @@ const COUNTRIES = Object.entries((countriesJson as any).countries || {})
     emoji: COUNTRY_EMOJIS[code] || "🌍",
   }));
 
+// Tenant-specific country defaults
+const TENANT_DEFAULTS: Record<string, string> = {
+  "little-lillies": "RW",
+};
+
+function getTenantSlug(): string | null {
+  if (typeof window === "undefined") return null;
+  // Try to get from window config set by TenantBranding component
+  return (window as any).__tenantConfig?.slug || null;
+}
+
 export function CountrySelectModal() {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [initialRegion, setInitialRegion] = useState<string | null>(null);
   const [autoConfirmed, setAutoConfirmed] = useState(false);
+  const [tenantSlug, setTenantSlug] = useState<string | null>(null);
 
   useEffect(() => {
+    setTenantSlug(getTenantSlug());
+  }, []);
+
+  useEffect(() => {
+    // Check if tenant has a default country
+    const tenantDefault = tenantSlug ? TENANT_DEFAULTS[tenantSlug] : null;
+
     fetch("/api/country/config")
       .then((r) => r.json())
       .then((data) => {
         if (data && data.cookiePresent) {
           setOpen(false);
+          return;
+        }
+
+        // If tenant has a default country, use it
+        if (tenantDefault) {
+          setSelected(tenantDefault);
+          setInitialRegion(tenantDefault);
+          setOpen(true);
           return;
         }
 
@@ -49,10 +77,10 @@ export function CountrySelectModal() {
         setOpen(true);
       })
       .catch(() => {
-        setSelected(COUNTRIES[0].code);
+        setSelected(tenantDefault || COUNTRIES[0].code);
         setOpen(true);
       });
-  }, []);
+  }, [tenantSlug]);
 
   const confirm = useCallback(async () => {
     if (!selected) return;
@@ -76,11 +104,12 @@ export function CountrySelectModal() {
       console.error("Country selection error:", {
         error: err instanceof Error ? err.message : String(err),
         selected,
+        tenant: tenantSlug,
         timestamp: new Date().toISOString(),
       });
       setLoading(false);
     }
-  }, [selected]);
+  }, [selected, tenantSlug]);
 
   useEffect(() => {
     if (!open || !initialRegion || autoConfirmed || loading) return;

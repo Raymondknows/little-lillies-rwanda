@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { useEffect, useState } from "react";
+import { getBackendUrl } from "@/lib/backend-url";
 
 type TeacherSchoolDetailsProps = {
   school: any;
@@ -13,27 +14,12 @@ export function TeacherSchoolDetailsContent({ school }: TeacherSchoolDetailsProp
 
   useEffect(() => {
     let active = true;
+    const resolvedCurrency = school?.currency || "NGN";
 
-    async function loadCurrency() {
-      try {
-        const countryRes = await fetch("/api/country/config");
-        if (!countryRes.ok) {
-          throw new Error("Country config request failed");
-        }
-
-        const countryConfig = await countryRes.json();
-        if (active) {
-          setEffectiveCurrency(countryConfig?.data?.currency || school?.currency || "NGN");
-        }
-      } catch (err) {
-        console.error("[TeacherSchoolPage] Country config fetch error:", err);
-        if (active) {
-          setEffectiveCurrency(school?.currency || "NGN");
-        }
-      }
+    if (active) {
+      setEffectiveCurrency(resolvedCurrency);
     }
 
-    loadCurrency();
     return () => {
       active = false;
     };

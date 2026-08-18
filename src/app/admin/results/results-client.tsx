@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { getBackendUrl } from "@/lib/backend-url";
 import {
   FileText,
   CheckCircle2,
@@ -174,7 +175,8 @@ export default function ResultsPageClient({ assessments, sessions = [] }: { asse
     setResultsNotificationsLoading(true);
     setResultsNotificationsError(null);
     try {
-      const response = await fetch('/api/admin/communications/rules', { credentials: 'include' });
+      const backendUrl = getBackendUrl();
+      const response = await fetch(`${backendUrl}/api/admin/communications/rules`, { credentials: 'include' });
       if (!response.ok) {
         const fallback = await response.text();
         console.error('Communication rules endpoint failed', response.status, fallback);

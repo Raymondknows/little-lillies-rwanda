@@ -59,7 +59,7 @@ const HELP_GUIDE: PageHelpGuide = {
     },
     {
       question: "What should I do if I can't resolve a request?",
-      answer: "You can add a note explaining the situation or contact the SchoolBase support team (support@schoolbase.live) to escalate complex issues.",
+      answer: "You can add a note explaining the situation or contact the Little Lillies School support team (support@schoolbase.live) to escalate complex issues.",
     },
   ],
 };

@@ -97,7 +97,7 @@ export function PurchaseForm({ initialPlan = "starter", success = false }: Purch
       <div className="rounded-3xl border border-green-200 bg-green-50 p-8 text-sm text-green-900">
         <p className="text-lg font-semibold">Thanks! Your payment is confirmed.</p>
         <p className="mt-3">
-          Your SchoolBase subscription purchase is complete. A member of our team will contact you for onboarding and next steps.
+          Your Little Lillies School subscription purchase is complete. A member of our team will contact you for onboarding and next steps.
         </p>
       </div>
     );

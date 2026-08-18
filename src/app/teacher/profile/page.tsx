@@ -291,7 +291,7 @@ export default function ProfilePage() {
             </h2>
 
             <p className="mt-1 text-sm text-muted">
-              Information associated with your SchoolBase account.
+              Information associated with your Little Lillies School account.
             </p>
           </div>
 

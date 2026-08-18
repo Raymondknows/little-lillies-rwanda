@@ -1,134 +1,67 @@
-import { Metadata } from 'next'
-import { Button } from '@/components/ui/button'
-
-export const metadata: Metadata = {
-  title: 'Contact SchoolBase | Get Support',
-  description:
-    "Get in touch with SchoolBase support. We're here to help with questions, feedback, or to schedule a demo.",
-  openGraph: {
-    title: 'Contact SchoolBase',
-    description: 'Contact the SchoolBase team for support and inquiries.',
-    url: 'https://schoolbase.live/contact',
-    type: 'website',
-  },
-}
+import { Mail, MapPin, Phone } from "lucide-react";
+import { PublicPageShell } from "@/components/public-page-shell";
 
 export default function ContactPage() {
   return (
-    <div className="min-h-screen bg-background">
-      <section className="border-b border-border bg-surface py-20">
-        <div className="mx-auto max-w-4xl px-6">
-          <h1 className="text-4xl font-bold text-foreground">Get in Touch</h1>
-          <p className="mt-4 max-w-2xl text-lg text-muted">
-            Have questions? We'd love to hear from you. Our team is here to help.
-          </p>
-        </div>
-      </section>
-
-      <section className="py-20">
-        <div className="mx-auto max-w-4xl px-6">
-          <div className="grid gap-12 md:grid-cols-2">
-            {/* Contact Info */}
-            <div className="space-y-8">
+    <PublicPageShell
+      eyebrow="Contact"
+      title="We would love to hear from you"
+      subtitle="Whether you want to enquire about admissions, ask about the school, or schedule a visit, our team is here to help."
+      ctaLabel="Call the school"
+      ctaHref="tel:+250781464730"
+    >
+      <div className="grid gap-8 md:grid-cols-2">
+        <div className="rounded-2xl border border-border bg-surface p-8">
+          <h2 className="text-2xl font-bold text-foreground">Contact details</h2>
+          <div className="mt-6 space-y-5 text-muted">
+            <div className="flex items-start gap-3">
+              <Phone className="mt-1 h-5 w-5 text-brand" />
               <div>
-                <h3 className="text-lg font-semibold text-foreground">Email</h3>
-                <p className="mt-2 text-muted">
-                  <a
-                    href="mailto:support@schoolbase.live"
-                    className="text-brand hover:underline"
-                  >
-                    support@schoolbase.live
-                  </a>
-                </p>
-                <p className="mt-1 text-sm text-muted">
-                  We typically respond within 24 hours
-                </p>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-semibold text-foreground">Phone</h3>
-                <p className="mt-2 text-muted">
-                  <a
-                    href="tel:+2349031368963"
-                    className="text-brand hover:underline"
-                  >
-                    +234 903 136 8963
-                  </a>
-                </p>
-                <p className="mt-1 text-sm text-muted">Monday-Friday, 9am-6pm WAT</p>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-semibold text-foreground">WhatsApp</h3>
-                <p className="mt-2 text-muted">
-                  <a
-                    href="https://wa.me/2349031368963"
-                    className="text-brand hover:underline"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Chat with us on WhatsApp
-                  </a>
-                </p>
-                <p className="mt-1 text-sm text-muted">
-                  Quick responses to your questions
-                </p>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-semibold text-foreground">Location</h3>
-                <p className="mt-2 text-muted">
-                  Abuja, Nigeria
-                  <br />
-                  ClickBase Technologies Ltd
-                </p>
+                <p className="font-semibold text-foreground">Phone</p>
+                <a href="tel:+250781464730" className="hover:text-brand">0781464730</a>
+                <br />
+                <a href="tel:+250785703719" className="hover:text-brand">0785703719</a>
               </div>
             </div>
 
-            {/* CTA */}
-            <div className="flex flex-col justify-center gap-6 rounded-xl border border-border bg-surface p-8">
+            <div className="flex items-start gap-3">
+              <Mail className="mt-1 h-5 w-5 text-brand" />
               <div>
-                <h3 className="text-xl font-bold text-foreground">
-                  Ready to get started?
-                </h3>
-                <p className="mt-3 text-muted">
-                  Stop wasting time on paper receipts and fee tracking. Start managing
-                  your school smarter today.
-                </p>
+                <p className="font-semibold text-foreground">Email</p>
+                <a href="mailto:littlelillies82@gmail.com" className="hover:text-brand">littlelillies82@gmail.com</a>
+                <br />
+                <a href="mailto:namfla86@gmail.com" className="hover:text-brand">namfla86@gmail.com</a>
               </div>
+            </div>
 
-              <div className="space-y-3">
-                <Button href="/purchase" className="w-full">
-                  Get Started
-                </Button>
-                <Button href="/demo" variant="secondary" className="w-full">
-                  View Demo
-                </Button>
-              </div>
-
-              <div className="rounded-lg bg-brand-light p-4 text-sm text-foreground">
-                <p className="font-semibold">💡 Try free for 7 days</p>
-                <p className="mt-1 text-muted">
-                  No credit card required. Full access to all features.
-                </p>
+            <div className="flex items-start gap-3">
+              <MapPin className="mt-1 h-5 w-5 text-brand" />
+              <div>
+                <p className="font-semibold text-foreground">Visit us</p>
+                <p>Rugarama village, Nyabisindu Cell, Remera Sector, Gasabo District (KG 8 AVE HOUSE 98), Kigali, Rwanda</p>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* FAQ Quick Links */}
-          <div className="mt-16 rounded-xl border border-border bg-surface p-8">
-            <h3 className="text-xl font-bold text-foreground">Quick Answers</h3>
-            <p className="mt-2 text-muted">
-              Check out our FAQ for answers to common questions:
-            </p>
-            <div className="mt-4">
-              <a href="/faq" className="text-brand hover:underline font-semibold">
-                Go to FAQ →
-              </a>
+        <div className="rounded-2xl border border-border bg-surface p-8">
+          <h2 className="text-2xl font-bold text-foreground">School hours</h2>
+          <div className="mt-6 space-y-4 text-muted">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <span>Monday - Friday</span>
+              <span className="font-medium text-foreground">7:30 AM - 4:00 PM</span>
+            </div>
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <span>Saturday</span>
+              <span className="font-medium text-foreground">By appointment</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>Sunday</span>
+              <span className="font-medium text-foreground">Closed</span>
             </div>
           </div>
         </div>
-      </section>
-    </div>
-  )
+      </div>
+    </PublicPageShell>
+  );
 }

@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Search, UserPlus, X, Upload, Download } from "lucide-react";
 import { playCloseTone, playOpenTone } from "@/lib/sounds";
+import { getBackendUrl } from "@/lib/backend-url";
 import { WhatsAppIcon } from "@/components/ui/icons";
 import { Pagination } from "@/components/ui/pagination";
 import { UserGuide, type PageHelpGuide } from "@/components/ui/user-guide";
@@ -131,7 +132,8 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
   useEffect(() => {
     async function fetchWhatsAppStatus() {
       try {
-        const res = await fetch(`/api/admin/whatsapp/status`, {
+        const backendUrl = getBackendUrl();
+        const res = await fetch(`${backendUrl}/api/admin/whatsapp/data`, {
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
         });
@@ -388,7 +390,8 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
     formData.append('file', importFile);
 
     try {
-      const res = await fetch('/api/admin/students/import?preview=true', {
+      const backendUrl = getBackendUrl();
+      const res = await fetch(`${backendUrl}/api/admin/students/import?preview=true`, {
         method: 'POST',
         body: formData,
         credentials: 'include',
@@ -449,7 +452,8 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
     formData.append('file', importFile);
 
     try {
-      const res = await fetch('/api/admin/students/import', {
+      const backendUrl = getBackendUrl();
+      const res = await fetch(`${backendUrl}/api/admin/students/import`, {
         method: 'POST',
         body: formData,
         credentials: 'include',

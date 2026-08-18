@@ -1,5 +1,5 @@
 export const brand = {
-  name: "SchoolBase",
+  name: "Little Lillies School",
   tagline: "Everything your school needs in one simple platform.",
   colors: {
     primary: "#0A66C2",

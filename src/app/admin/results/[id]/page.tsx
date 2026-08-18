@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Fragment, useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
+import { getBackendUrl } from "@/lib/backend-url";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table2, ChevronRight, AlertCircle } from "lucide-react";
@@ -158,7 +159,11 @@ export default function AssessmentDetailPage({
   const fetchAssessment = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/admin/results/${id}`);
+      const backendUrl = getBackendUrl();
+      const response = await fetch(`${backendUrl}/api/admin/results/${id}`, {
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+      });
       if (!response.ok) throw new Error("Failed to fetch assessment");
       const data = await response.json();
       setAssessment(data);
@@ -327,8 +332,11 @@ const subjectId = result.subjectRef?.id ?? null;
     setActionLoading(true);
 
     try {
-      const response = await fetch(`/api/admin/assessments/${id}/approve`, {
+      const backendUrl = getBackendUrl();
+      const response = await fetch(`${backendUrl}/api/admin/assessments/${id}/approve`, {
         method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
       });
 
       if (!response.ok) throw new Error("Failed to approve");
@@ -346,8 +354,11 @@ const subjectId = result.subjectRef?.id ?? null;
     setActionLoading(true);
 
     try {
-      const response = await fetch(`/api/admin/assessments/${id}/publish`, {
+      const backendUrl = getBackendUrl();
+      const response = await fetch(`${backendUrl}/api/admin/assessments/${id}/publish`, {
         method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
       });
 
       if (!response.ok) throw new Error("Failed to publish");
@@ -365,8 +376,11 @@ const subjectId = result.subjectRef?.id ?? null;
     setActionLoading(true);
 
     try {
-      const response = await fetch(`/api/admin/assessments/${id}/return-draft`, {
+      const backendUrl = getBackendUrl();
+      const response = await fetch(`${backendUrl}/api/admin/assessments/${id}/return-draft`, {
         method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
       });
 
       if (!response.ok) throw new Error("Failed to return to draft");
@@ -428,7 +442,8 @@ const subjectId = result.subjectRef?.id ?? null;
         return;
       }
 
-      const response = await fetch('/api/admin/results/historical-totals', {
+      const backendUrl = getBackendUrl();
+      const response = await fetch(`${backendUrl}/api/admin/results/historical-totals`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -204,7 +204,7 @@ export default function GettingStartedPage() {
 
         if (schoolId) {
           try {
-            const statusRes = await fetch(`/api/admin/school/${schoolId}/setup-status`, { credentials: "include" });
+            const statusRes = await fetch(`${getBackendUrl()}/api/admin/school/${schoolId}/setup-status`, { credentials: "include" });
             if (statusRes.ok) {
               setupStatus = await statusRes.json().catch(() => null);
             }
@@ -369,7 +369,7 @@ export default function GettingStartedPage() {
                     <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
                       {isOnboarding
                         ? "This guided workspace setup helps your team complete the essentials quickly and move into daily use with confidence."
-                        : "Use this guided checklist to make sure nothing important is missed as your school grows with SchoolBase."}
+                        : "Use this guided checklist to make sure nothing important is missed as your school grows with Little Lillies School."}
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-3">

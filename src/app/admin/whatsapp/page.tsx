@@ -176,7 +176,8 @@ export default function WhatsAppPage() {
           setStats(data.stats);
 
           try {
-              const whatsappRes = await fetch(`/api/admin/whatsapp/status`, {
+              const backendUrl = getBackendUrl();
+              const whatsappRes = await fetch(`${backendUrl}/api/admin/whatsapp/data`, {
               credentials: "include",
               headers: { "Content-Type": "application/json" },
             });

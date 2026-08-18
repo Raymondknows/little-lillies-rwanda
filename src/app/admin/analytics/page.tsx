@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { BarChart3, TrendingUp, Users, BookOpen, AlertCircle, Activity, Download, Filter, Search, ChevronDown, ArrowRight } from "lucide-react";
 import SubscriptionModal from "@/components/subscription-modal";
 import AdminSkeleton from "@/components/ui/skeleton";
+import { getBackendUrl } from "@/lib/backend-url";
 
 // NOTE: using shared AdminSkeleton for page-level loading
 function CardSkeleton() {
@@ -151,7 +152,8 @@ export default function AnalyticsPage() {
       try {
         setLoading(true);
         // Fetch academic years (which include terms)
-        const yearsResponse = await fetch("/api/admin/academic-years", {
+        const backendUrl = getBackendUrl();
+        const yearsResponse = await fetch(`${backendUrl}/api/admin/academic-years`, {
           credentials: "include",
           headers: { "Content-Type": "application/json" },
         });
@@ -178,7 +180,7 @@ export default function AnalyticsPage() {
         }
 
         // Fetch all classes/sections
-        const classesResponse = await fetch("/api/admin/classes/data", {
+        const classesResponse = await fetch(`${backendUrl}/api/admin/classes/data`, {
           credentials: "include",
           headers: { "Content-Type": "application/json" },
         });

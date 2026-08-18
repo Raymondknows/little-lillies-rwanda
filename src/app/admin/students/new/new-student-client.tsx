@@ -60,7 +60,8 @@ export default function NewStudentClient() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const response = await fetch('/api/admin/students/data', {
+        const backendUrl = getBackendUrl();
+        const response = await fetch(`${backendUrl}/api/admin/students/data`, {
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
         });
@@ -81,7 +82,8 @@ export default function NewStudentClient() {
   useEffect(() => {
     async function fetchWhatsAppStatus() {
       try {
-        const res = await fetch(`/api/admin/whatsapp/status`, {
+        const backendUrl = getBackendUrl();
+        const res = await fetch(`${backendUrl}/api/admin/whatsapp/data`, {
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
         });
@@ -200,7 +202,8 @@ export default function NewStudentClient() {
         headers['Content-Type'] = 'application/json';
       }
 
-      const response = await fetch('/api/admin/students', {
+      const backendUrl = getBackendUrl();
+      const response = await fetch(`${backendUrl}/api/admin/students`, {
         method: "POST",
         credentials: 'include',
         headers,

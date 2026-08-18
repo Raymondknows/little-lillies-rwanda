@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import AdminSkeleton from "@/components/ui/skeleton";
 import { useRouter } from "next/navigation";
 import { Users, Search, ChevronLeft, ChevronRight, Download } from "lucide-react";
+import { getBackendUrl } from "@/lib/backend-url";
 
 interface Class {
   id: string;
@@ -40,7 +41,8 @@ export default function ClassesPage() {
     const fetchAnalytics = async () => {
       try {
         setLoading(true);
-        const response = await fetch("/api/admin/analytics/data", { credentials: "include" });
+        const backendUrl = getBackendUrl();
+        const response = await fetch(`${backendUrl}/api/admin/analytics/data`, { credentials: "include" });
         if (!response.ok) {
           // Check for subscription blocking
           if (response.status === 403) {

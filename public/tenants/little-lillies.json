@@ -1,0 +1,36 @@
+{
+  "name": "Little Lillies School",
+  "appName": "Little Lillies School",
+  "slug": "little-lillies",
+  "domain": "littlelillies.school",
+  "logo_path": "/schools/little-lillies/logo.png",
+  "currency": "RWF",
+  "phones": [
+    "0781464730",
+    "0785703719"
+  ],
+  "emails": [
+    "littlelillies82@gmail.com",
+    "namfla86@gmail.com"
+  ],
+  "address": "Rugarama village, Nyabisindu Cell, Remera Sector, Gasabo District (KG 8 AVE HOUSE 98), KIGALI, RWANDA",
+  "proprietor": "UCHE EMMANUEL",
+  "colors": {
+    "primary": "#663399",
+    "secondary": "#0066FF",
+    "accent": "#00AA00"
+  },
+  "colorNames": [
+    "PURPLE",
+    "BLUE",
+    "GREEN"
+  ],
+  "onboarding": [
+    "Place official logo at /public/schools/little-lillies/logo.png",
+    "Frontend reads this JSON from /tenants/little-lillies.json for static branding",
+    "Tag namfla86@gmail.com on all official communications",
+    "Currency: Rwandan Francs (RWF)",
+    "App name: Little Lillies School"
+  ],
+  "notes": "Canonical tenant manifest. Keep in sync with /docs/customizations/little-lillies.md"
+}

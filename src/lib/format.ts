@@ -4,8 +4,20 @@ export type ResultStatus = "DRAFT" | "APPROVED" | "PUBLISHED";
 
 export function formatMoney(amountMinor: number, currency = "NGN") {
   const value = amountMinor / 100;
+
+  if (currency === "RWF") {
+    return `FRw ${value.toLocaleString("en-US", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    })}`;
+  }
+
   try {
-    return new Intl.NumberFormat(currency === "NGN" ? "en-NG" : "en", {
+    // Select appropriate locale based on currency
+    let locale = "en-US";
+    if (currency === "NGN") locale = "en-NG"; // Nigeria
+
+    return new Intl.NumberFormat(locale, {
       style: "currency",
       currency,
       minimumFractionDigits: 0,

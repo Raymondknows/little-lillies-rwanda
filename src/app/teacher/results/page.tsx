@@ -5,10 +5,12 @@ import { useSearchParams } from 'next/navigation';
 import TeacherResultsEnhancedClient from "./results-client";
 import { useAssessmentData } from "@/lib/hooks/useAssessmentData";
 import SubscriptionModal from "@/components/subscription-modal";
+import { getBackendUrl } from "@/lib/backend-url";
 
 export default function ResultsPage() {
+  const backendUrl = getBackendUrl();
   const { data, loading, error, subscriptionBlocked } = useAssessmentData({
-    endpoint: "/api/teacher/assessments",
+    endpoint: `${backendUrl}/api/teacher/assessments`,
   });
   const searchParams = useSearchParams();
   const initialSubject = searchParams?.get('subject') ?? undefined;

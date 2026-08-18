@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import AdminSkeleton from "@/components/ui/skeleton";
 import { useRouter } from "next/navigation";
+import { getBackendUrl } from "@/lib/backend-url";
 import { BookOpen, Search, ChevronLeft, ChevronRight, Download } from "lucide-react";
 
 interface Subject {
@@ -30,7 +31,8 @@ export default function SubjectsPage() {
     const fetchAnalytics = async () => {
       try {
         setLoading(true);
-        const response = await fetch("/api/admin/analytics/data", { credentials: "include" });
+        const backendUrl = getBackendUrl();
+        const response = await fetch(`${backendUrl}/api/admin/analytics/data`, { credentials: "include" });
         if (!response.ok) {
           // Check for subscription blocking
           if (response.status === 403) {

@@ -18,13 +18,12 @@ export function ParentLoginForm() {
       const formData = new FormData(e.currentTarget);
       const phone = formData.get("phone") as string;
       const admissionNo = formData.get("admissionNo") as string;
-      const schoolSlug = formData.get("schoolSlug") as string;
 
       const res = await fetch("/api/auth/parent-login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include", // ✅ CRITICAL: Allow cookies to be set
-        body: JSON.stringify({ phone, admissionNo, schoolSlug }),
+        body: JSON.stringify({ phone, admissionNo }),
       });
 
       const data = await res.json();
@@ -61,21 +60,12 @@ export function ParentLoginForm() {
         </p>
       )}
       <label className="block text-sm font-medium text-foreground">
-        School slug (optional)
-        <input
-          name="schoolSlug"
-          type="text"
-          placeholder="greenfield"
-          className="mt-2 w-full rounded-lg border border-border bg-surface px-4 py-2.5 text-sm placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand"
-        />
-      </label>
-      <label className="block text-sm font-medium text-foreground">
         Phone (WhatsApp)
         <input
           name="phone"
           type="tel"
           required
-          placeholder="+2348098765432"
+          placeholder="+250781464730"
           className="mt-2 w-full rounded-lg border border-border bg-surface px-4 py-2.5 text-sm placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand"
         />
       </label>

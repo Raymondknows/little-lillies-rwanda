@@ -207,7 +207,8 @@ export default function FeesPageClient({
   useEffect(() => {
     const fetchAcademicYears = async () => {
       try {
-        const res = await fetch("/api/admin/academic-years", { credentials: "include" });
+        const backendUrl = getBackendUrl();
+        const res = await fetch(`${backendUrl}/api/admin/academic-years`, { credentials: "include" });
         if (!res.ok) return;
         const data = await res.json();
         const years = (data.academicYears || []).sort((a: any, b: any) => {

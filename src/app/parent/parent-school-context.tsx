@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { getBackendUrl } from "@/lib/backend-url";
 
 export type ParentSchoolData = {
   id?: string;
@@ -35,27 +36,11 @@ export function useEffectiveCurrency(school?: ParentSchoolData | null) {
   useEffect(() => {
     let active = true;
 
-    async function loadCurrency() {
-      try {
-        const response = await fetch("/api/country/config");
-        if (!response.ok) {
-          throw new Error("Country config request failed");
-        }
-
-        const config = await response.json();
-        const resolvedCurrency = config?.data?.currency || school?.currency || "NGN";
-        if (active) {
-          setCurrency(resolvedCurrency);
-        }
-      } catch (error) {
-        console.error("Error loading country config for parent currency:", error);
-        if (active) {
-          setCurrency(school?.currency || "NGN");
-        }
-      }
+    const resolvedCurrency = school?.currency || "NGN";
+    if (active) {
+      setCurrency(resolvedCurrency);
     }
 
-    loadCurrency();
     return () => {
       active = false;
     };

@@ -99,7 +99,7 @@ export default function Sidebar({
 }) {
   const pathname = usePathname();
   const schoolLogo = school?.logoUrl ? resolveSchoolAssetUrl(school.logoUrl) : null;
-  const schoolName = school?.name || "SchoolBase";
+  const schoolName = school?.name || "Little Lillies School";
   const normalizedProgress = typeof setupProgress === "number" ? Math.max(0, Math.min(100, setupProgress)) : 0;
   const progressCircumference = 2 * Math.PI * 10;
   const navItemsWithSectionVisibility = navItems.map((item, index) => ({

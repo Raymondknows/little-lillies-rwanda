@@ -60,7 +60,7 @@ export function OfferPopup() {
             </h2>
 
             <p className="mt-4 text-lg text-gray-600 font-semibold">
-              There's never been a better time to move your school to SchoolBase.
+              There's never been a better time to move your school to Little Lillies School.
             </p>
 
             {/* Main offer text */}
@@ -108,7 +108,7 @@ export function OfferPopup() {
 
             {/* Footer hashtags */}
             <p className="mt-6 text-center text-xs text-gray-500">
-              #SchoolBase #SchoolManagement #EdTech #Education #SchoolOwners
+              #LittleLilliesSchool #SchoolManagement #EdTech #Education #SchoolOwners
               #WestAfrica
             </p>
           </div>

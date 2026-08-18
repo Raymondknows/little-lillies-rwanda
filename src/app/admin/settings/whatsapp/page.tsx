@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { getBackendUrl } from "@/lib/backend-url";
 import { Button } from "@/components/ui/button";
 import { UserGuide, type PageHelpGuide } from "@/components/ui/user-guide";
 import { Badge } from "@/components/ui/badge";
@@ -149,7 +150,8 @@ export default function WhatsAppSettingsPage() {
       setLoading(true);
     }
     try {
-      const response = await fetch('/api/admin/whatsapp/status', { credentials: 'include' });
+      const backendUrl = getBackendUrl();
+      const response = await fetch(`${backendUrl}/api/admin/whatsapp/data`, { credentials: 'include' });
       if (!response.ok) {
         if (showLoading) {
           setActionMessage('Unable to load WhatsApp status.');
@@ -179,7 +181,8 @@ export default function WhatsAppSettingsPage() {
     setIsConnecting(true);
     try {
       setLastRequestedMode(usePairingCode ? 'pairing' : 'qr');
-      const response = await fetch('/api/admin/whatsapp/connect', {
+      const backendUrl = getBackendUrl();
+      const response = await fetch(`${backendUrl}/api/admin/whatsapp/connect`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -206,7 +209,8 @@ export default function WhatsAppSettingsPage() {
     setActionMessage(null);
     setIsDisconnecting(true);
     try {
-      const response = await fetch('/api/admin/whatsapp/disconnect', {
+      const backendUrl = getBackendUrl();
+      const response = await fetch(`${backendUrl}/api/admin/whatsapp/disconnect`, {
         method: 'POST',
         credentials: 'include',
       });
@@ -236,7 +240,8 @@ export default function WhatsAppSettingsPage() {
     try {
       const payloadMessage = `${message.trim()}\n\n— ${schoolPreviewName || ''}${schoolPreviewName && schoolPreviewPhone ? ' | ' : ''}${schoolPreviewPhone || ''}`;
 
-      const response = await fetch('/api/admin/whatsapp/send-message', {
+      const backendUrl = getBackendUrl();
+      const response = await fetch(`${backendUrl}/api/admin/whatsapp/send-message`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -271,7 +276,8 @@ export default function WhatsAppSettingsPage() {
     setActionMessage(null);
     setIsRunningDebug(true);
     try {
-      const response = await fetch('/api/admin/whatsapp/debug', {
+      const backendUrl = getBackendUrl();
+      const response = await fetch(`${backendUrl}/api/admin/whatsapp/debug`, {
         method: 'POST',
         credentials: 'include',
       });

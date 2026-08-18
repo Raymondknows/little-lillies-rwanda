@@ -10,12 +10,15 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { AppLogo } from "@/components/app-logo";
-import { CountrySelectModal } from "@/components/country-select-modal";
 import { OfferPopup } from "@/components/offer-popup";
+import { SchoolLanding } from "@/components/school-landing";
 import countriesJson from "../../config/countries.json";
 import { getCountryFromHeaders } from "@/lib/country";
 import { getParentSession, getStaffSession } from "@/lib/auth";
 import { getBackendUrl } from "@/lib/backend-url";
+
+// List of tenant-specific domains that should show school landing instead of SaaS landing
+const SCHOOL_LANDING_TENANTS = ['little-lillies'];
 
 const features = [
   {
@@ -84,6 +87,7 @@ async function getPublicPricing() {
 }
 
 export default async function HomePage() {
+  // Check authentication first
   const staffSession = await getStaffSession();
   if (staffSession) {
     if (staffSession.role === "PLATFORM_ADMIN") {
@@ -99,6 +103,9 @@ export default async function HomePage() {
   if (parentSession) {
     redirect("/parent");
   }
+
+  // For unauthenticated users, show school landing (default to little-lillies)
+  return <SchoolLanding tenantSlug="little-lillies" />;
   const [{ country, config }, pricingData] = await Promise.all([getCountryConfig(), getPublicPricing()]);
   const configuredPlans = pricingData?.plans;
   const starterPlan = configuredPlans?.starter || config.plans.starter;
@@ -268,7 +275,6 @@ export default async function HomePage() {
           </Button>
         </div>
       </section>
-      <CountrySelectModal />
     </div>
   );
 }

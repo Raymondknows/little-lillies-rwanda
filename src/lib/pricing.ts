@@ -1,6 +1,6 @@
 /**
- * Simple fixed NGN pricing for all countries
- * Everyone pays ₦60,000 (Starter) or ₦85,000 (Growth) regardless of selected country
+ * Currency-aware pricing for different regions
+ * Supports NGN (Nigeria), RWF (Rwanda), and other currencies
  */
 
 export interface PlanConfig {
@@ -27,7 +27,28 @@ export function getPlanStudentLimit(plan: string): number | null {
 }
 
 export function getPricingByCurrency(currencyCode: string): CountryPlans {
-  // Fixed NGN prices for everyone
+  // Currency-specific pricing
+  if (currencyCode === 'RWF') {
+    // Rwanda Francs pricing (approximately 50,000-60,000 RWF equivalent)
+    const starterRWF = 50000;
+    const growthRWF = 70000;
+    return {
+      starter: {
+        amountMinor: starterRWF * 100,
+        priceLabel: `${starterRWF.toLocaleString()} RWF / term`,
+      },
+      standard: {
+        amountMinor: growthRWF * 100,
+        priceLabel: `${growthRWF.toLocaleString()} RWF / term`,
+      },
+      group: {
+        amountMinor: 0,
+        priceLabel: 'Custom from 150,000 RWF / term',
+      },
+    };
+  }
+
+  // Default NGN pricing for Nigeria and other regions
   const starterNGN = 60000;
   const growthNGN = 85000;
 
@@ -50,6 +71,7 @@ export function getPricingByCurrency(currencyCode: string): CountryPlans {
 export function getCurrencySymbol(currencyCode: string): string {
   const symbols: Record<string, string> = {
     NGN: '₦',
+    RWF: 'FRw',
     GHS: 'GHS',
     KES: 'KSh',
     UGX: 'USh',

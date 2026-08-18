@@ -39,18 +39,22 @@ export function getBackendUrl(): string {
       return 'http://localhost:3006';
     }
 
+    if (host === 'littlelillies.schoolbase.live' || host === 'www.littlelillies.schoolbase.live' || host.endsWith('.littlelillies.schoolbase.live')) {
+      return 'https://custom-api.schoolbase.live';
+    }
+
     if (host.includes('schoolbase.live')) {
       return 'https://api.schoolbase.live';
     }
 
     if (host.includes('vercel.app')) {
-      return 'https://api.schoolbase.live';
+      return 'https://custom-api.schoolbase.live';
     }
   }
 
-  // Server-side or fallback: use NODE_ENV-based default
+  // Server-side or fallback: use the custom app in production unless explicitly overridden
   if (process.env.NODE_ENV === 'production') {
-    return 'https://api.schoolbase.live';
+    return 'https://custom-api.schoolbase.live';
   }
 
   return 'http://localhost:3006';

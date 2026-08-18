@@ -69,13 +69,15 @@ export function buildApiUrl(endpoint: string, search: string = ""): string {
   // Client-side: detect production domain
   if (typeof window !== "undefined") {
     const host = window.location.hostname;
-    if (host === "schoolbase.live" || host === "www.schoolbase.live" || host.includes("vercel.app")) {
+    if (host === "littlelillies.schoolbase.live" || host === "www.littlelillies.schoolbase.live" || host.endsWith(".littlelillies.schoolbase.live")) {
+      backendBase = "https://custom-api.schoolbase.live";
+    } else if (host === "schoolbase.live" || host === "www.schoolbase.live" || host.includes("vercel.app")) {
       backendBase = "https://api.schoolbase.live";
     }
   } else {
-    // Server-side: use api.schoolbase.live for production
+    // Server-side: use the custom app in production unless explicitly overridden
     if (process.env.NODE_ENV === "production") {
-      backendBase = "https://api.schoolbase.live";
+      backendBase = "https://custom-api.schoolbase.live";
     }
   }
   

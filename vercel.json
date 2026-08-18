@@ -3,8 +3,8 @@
   "outputDirectory": ".next",
   "framework": "nextjs",
   "env": {
-    "NEXT_PUBLIC_API_URL": "https://api.schoolbase.live",
-    "BACKEND_URL": "https://api.schoolbase.live",
+    "NEXT_PUBLIC_API_URL": "https://custom-api.schoolbase.live",
+    "BACKEND_URL": "https://custom-api.schoolbase.live",
     "SESSION_SECRET": "5VgLoEqv46hkBH3pFLr04Q8UPEZCFeYJvEo7YP7BdwzO88I7k9NgVFYL3gLVmegr",
     "NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY": "pk_live_8aea06ae2a6f23eae09943bffce2765fe37b5ca3",
     "NEXT_PUBLIC_PAYSTACK_SUBSCRIPTION_PUBLIC_KEY": "pk_live_8aea06ae2a6f23eae09943bffce2765fe37b5ca3",

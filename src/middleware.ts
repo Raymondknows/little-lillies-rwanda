@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 // Unified session cookie for all user types (staff, teachers, parents, admins)
-const SESSION_COOKIE = "schoolbase_session";
+const SESSION_COOKIE = "littlelillies_session";
 
 function secret() {
   return new TextEncoder().encode(

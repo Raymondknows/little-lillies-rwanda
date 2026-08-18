@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getBackendUrl } from "@/lib/backend-url";
 
-const SESSION_COOKIE_NAME = "schoolbase_session";
+const SESSION_COOKIE_NAME = "littlelillies_session";
 const LEGACY_SESSION_COOKIE_NAMES = ["schoolbase_staff", "schoolbase_parent"];
 
 function getSessionCookieOptions() {

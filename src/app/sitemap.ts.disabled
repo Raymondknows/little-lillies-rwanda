@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next'
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://schoolbase.live'
+  const baseUrl = 'https://littlelillies.schoolbase.live'
 
   // Public pages
   const publicPages: MetadataRoute.Sitemap = [

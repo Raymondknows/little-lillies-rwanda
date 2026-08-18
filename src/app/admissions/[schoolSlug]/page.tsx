@@ -66,12 +66,12 @@ export default function PublicAdmissionsPage() {
 
   const school = settings?.school;
   const fallbackGreenfield = {
-    name: "Greenfield Academy",
+    name: "Little Lillies School",
     address: "12 Admiralty Way",
     city: "Lekki Phase 1, Lagos",
     email: "info@greenfieldacademy.ng",
     phone: "+2348012345678",
-    logoUrl: "https://www.schoolbase.live/uploads/settings/1783056195488-q5rfiq.png",
+    logoUrl: "https://www.littlelillies.schoolbase.live/uploads/settings/1783056195488-q5rfiq.png",
   };
   const displaySchool = school ?? (schoolSlug === "greenfield" ? fallbackGreenfield : null);
   const primaryColor = useMemo(() => school?.primaryColor || "#0A66C2", [school]);

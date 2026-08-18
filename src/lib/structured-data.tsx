@@ -3,8 +3,8 @@ export const structuredData = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: 'SchoolBase',
-    url: 'https://schoolbase.live',
-    logo: 'https://schoolbase.live/logo.png',
+    url: 'https://littlelillies.schoolbase.live',
+    logo: 'https://littlelillies.schoolbase.live/logo.png',
     description:
       'SchoolBase is an all-in-one school management platform for fee collection, parent communication, and result publishing.',
     sameAs: [
@@ -38,7 +38,7 @@ export const structuredData = {
     name: 'SchoolBase',
     description:
       'All-in-one school management platform with fee collection, WhatsApp parent communication, result publishing, and school website.',
-    url: 'https://schoolbase.live',
+    url: 'https://littlelillies.schoolbase.live',
     applicationCategory: 'EducationApplication',
     operatingSystem: 'Web, iOS, Android',
     offers: {
@@ -63,7 +63,7 @@ export const structuredData = {
     provider: {
       '@type': 'Organization',
       name: 'SchoolBase',
-      url: 'https://schoolbase.live',
+      url: 'https://littlelillies.schoolbase.live',
     },
     areaServed: 'NG',
     serviceType: 'School Management Software',
@@ -108,25 +108,25 @@ export const structuredData = {
         '@type': 'ListItem',
         position: 1,
         name: 'Home',
-        item: 'https://schoolbase.live',
+        item: 'https://littlelillies.schoolbase.live',
       },
       {
         '@type': 'ListItem',
         position: 2,
         name: 'Features',
-        item: 'https://schoolbase.live/features',
+        item: 'https://littlelillies.schoolbase.live/features',
       },
       {
         '@type': 'ListItem',
         position: 3,
         name: 'Pricing',
-        item: 'https://schoolbase.live/pricing',
+        item: 'https://littlelillies.schoolbase.live/pricing',
       },
       {
         '@type': 'ListItem',
         position: 4,
         name: 'About',
-        item: 'https://schoolbase.live/about',
+        item: 'https://littlelillies.schoolbase.live/about',
       },
     ],
   },
@@ -135,9 +135,9 @@ export const structuredData = {
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
     name: 'SchoolBase',
-    image: 'https://schoolbase.live/logo.png',
+    image: 'https://littlelillies.schoolbase.live/logo.png',
     description: 'School management platform serving West African schools',
-    url: 'https://schoolbase.live',
+    url: 'https://littlelillies.schoolbase.live',
     telephone: '+2349031368963',
     email: 'support@schoolbase.live',
     address: {

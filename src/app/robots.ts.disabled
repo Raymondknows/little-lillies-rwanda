@@ -83,7 +83,7 @@ export default function robots(): MetadataRoute.Robots {
         allow: '/',
       },
     ],
-    sitemap: 'https://schoolbase.live/sitemap.xml',
-    host: 'https://schoolbase.live',
+    sitemap: 'https://littlelillies.schoolbase.live/sitemap.xml',
+    host: 'https://littlelillies.schoolbase.live',
   }
 }

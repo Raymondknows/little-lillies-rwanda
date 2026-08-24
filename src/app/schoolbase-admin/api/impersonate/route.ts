@@ -38,9 +38,35 @@ export async function POST(req: NextRequest) {
     }
     
     const data = await response.json();
-    const json = NextResponse.json(data);
+    let sessionToken = data?.token;
 
-    if (data?.token) {
+    if (sessionToken) {
+      const exchangeResponse = await fetch(
+        `${backendUrl}/schoolbase-admin/api/impersonate/exchange`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: sessionToken }),
+        },
+      );
+
+      const exchangeData = await exchangeResponse.json();
+      if (!exchangeResponse.ok || !exchangeData?.token) {
+        return NextResponse.json(
+          exchangeData?.message ? { message: exchangeData.message } : { message: "Impersonation exchange failed" },
+          { status: exchangeResponse.ok ? 502 : exchangeResponse.status },
+        );
+      }
+
+      sessionToken = exchangeData.token;
+    }
+
+    const json = NextResponse.json({
+      message: "Impersonation session created.",
+      redirectUrl: "/admin",
+    });
+
+    if (sessionToken) {
       const cookieOptions = getSessionCookieOptions();
       json.cookies.set(SESSION_COOKIE_NAME, "", {
         ...cookieOptions,
@@ -52,7 +78,7 @@ export async function POST(req: NextRequest) {
           maxAge: 0,
         });
       }
-      json.cookies.set(SESSION_COOKIE_NAME, data.token, {
+      json.cookies.set(SESSION_COOKIE_NAME, sessionToken, {
         ...cookieOptions,
         maxAge: 7 * 24 * 60 * 60,
       });

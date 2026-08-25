@@ -52,6 +52,7 @@ export const metadata: Metadata = {
   other: {
     "msapplication-config": "/browserconfig.xml",
     "theme-color": "#0052cc",
+    "apple-mobile-web-app-title": "Little Lillies School",
     "google-site-verification": "cAqU-s5g0iU-8bvOexUa_zShdcpkNX7pMX7QKxLQM2A",
   },
   openGraph: {

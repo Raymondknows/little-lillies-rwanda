@@ -38,6 +38,17 @@ body {
   font-family: var(--font-inter), system-ui, sans-serif;
 }
 
+@keyframes app-logo-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.app-logo-spinner {
+  transform-origin: center;
+  animation: app-logo-spin 1s linear infinite;
+}
+
 @keyframes login-info-single {
   from {
     opacity: 0;

@@ -47,7 +47,7 @@ export function AppLogo({
       </span>
 
       {showSpinner ? (
-        <svg className="absolute inset-0 w-full h-full z-20 animate-spin" viewBox={`0 0 ${box} ${box}`} xmlns="http://www.w3.org/2000/svg" aria-hidden>
+        <svg className="app-logo-spinner absolute inset-0 z-20 h-full w-full" viewBox={`0 0 ${box} ${box}`} xmlns="http://www.w3.org/2000/svg" aria-hidden>
           <circle
             cx={box / 2}
             cy={box / 2}

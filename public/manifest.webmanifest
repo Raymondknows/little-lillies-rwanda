@@ -1,6 +1,6 @@
 {
-  "name": "SchoolBase",
-  "short_name": "SchoolBase",
+  "name": "Little Lillies School",
+  "short_name": "Little Lillies",
   "description": "Everything your school needs in one simple platform",
   "start_url": "/",
   "display": "standalone",

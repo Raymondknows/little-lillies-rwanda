@@ -3,9 +3,9 @@ import Link from "next/link";
 
 type Size = "sm" | "md" | "lg";
 
-/** Source asset: 247×230px (publish/logo.png) */
-const LOGO_WIDTH = 247;
-const LOGO_HEIGHT = 230;
+/** Source asset: 579x431px (public/logo.png) */
+const LOGO_WIDTH = 579;
+const LOGO_HEIGHT = 431;
 
 const sizeMap: Record<Size, { box: number; img: number; text: string }> = {
   sm: { box: 40, img: 28, text: "text-base" },

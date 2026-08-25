@@ -3,6 +3,7 @@ import "./globals.css";
 import Header from "@/components/header";
 import FooterWrapper from "@/components/footer-wrapper";
 import TenantBranding from "@/components/tenant-branding";
+import PwaInstallPrompt from "@/components/pwa-install-prompt";
 import fs from "fs";
 import path from "path";
 
@@ -44,9 +45,9 @@ export const metadata: Metadata = {
   ],
   manifest: "/manifest.webmanifest",
   icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon.ico",
-    apple: "/apple-touch-icon.png",
+    icon: "/logo.png",
+    shortcut: "/logo.png",
+    apple: "/logo.png",
   },
   other: {
     "msapplication-config": "/browserconfig.xml",
@@ -107,6 +108,7 @@ export default function RootLayout({
         <Header />
         <main className="flex-1">{children}</main>
         <FooterWrapper />
+        <PwaInstallPrompt />
       </body>
     </html>
   );

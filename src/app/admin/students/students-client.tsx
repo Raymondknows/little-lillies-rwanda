@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Search, UserPlus, X, Upload, Download } from "lucide-react";
+import { Search, UserPlus, X, Upload, Download, Trash2, Check } from "lucide-react";
 import { playCloseTone, playOpenTone } from "@/lib/sounds";
 import { getBackendUrl } from "@/lib/backend-url";
 import { WhatsAppIcon } from "@/components/ui/icons";
@@ -114,6 +114,19 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
   const [importErrors, setImportErrors] = useState<string[]>([]);
   const [importSummary, setImportSummary] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
+  const [selectedPupilIds, setSelectedPupilIds] = useState<string[]>([]);
+  const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
+  const [deactivateConfirmation, setDeactivateConfirmation] = useState("");
+  const [deactivatePassword, setDeactivatePassword] = useState("");
+  const [isDeactivating, setIsDeactivating] = useState(false);
+  const [deactivateError, setDeactivateError] = useState<string | null>(null);
+  const [inactivePupils, setInactivePupils] = useState<any[]>([]);
+  const [selectedInactiveIds, setSelectedInactiveIds] = useState<string[]>([]);
+  const [isInactiveModalOpen, setIsInactiveModalOpen] = useState(false);
+  const [restoreConfirmation, setRestoreConfirmation] = useState("");
+  const [restorePassword, setRestorePassword] = useState("");
+  const [restoreError, setRestoreError] = useState<string | null>(null);
+  const [isRestoring, setIsRestoring] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const importFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -128,6 +141,12 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
       playOpenTone();
     }
   }, [isImportModalOpen]);
+
+  useEffect(() => {
+    if (isDeactivateModalOpen) {
+      playOpenTone();
+    }
+  }, [isDeactivateModalOpen]);
 
   useEffect(() => {
     async function fetchWhatsAppStatus() {
@@ -296,6 +315,92 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
+  const visiblePupilIds = paginatedPupils.map((pupil) => pupil.id);
+  const allVisibleSelected = visiblePupilIds.length > 0 && visiblePupilIds.every((id) => selectedPupilIds.includes(id));
+
+  const togglePupilSelection = (pupilId: string) => {
+    setSelectedPupilIds((current) => current.includes(pupilId)
+      ? current.filter((id) => id !== pupilId)
+      : [...current, pupilId]);
+  };
+
+  const toggleVisibleSelection = () => {
+    setSelectedPupilIds((current) => allVisibleSelected
+      ? current.filter((id) => !visiblePupilIds.includes(id))
+      : [...new Set([...current, ...visiblePupilIds])]);
+  };
+
+  const handleDeactivate = async () => {
+    const expectedConfirmation = `DEACTIVATE ${selectedPupilIds.length} STUDENTS`;
+    if (deactivateConfirmation !== expectedConfirmation) return;
+
+    setIsDeactivating(true);
+    setDeactivateError(null);
+    try {
+      const res = await fetch(`${getBackendUrl()}/api/admin/students/bulk-deactivate`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ studentIds: selectedPupilIds, confirmation: expectedConfirmation, currentPassword: deactivatePassword }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || "Students could not be removed from the active roster.");
+
+      setSelectedPupilIds([]);
+      setDeactivateConfirmation("");
+      setDeactivatePassword("");
+      setIsDeactivateModalOpen(false);
+      setSuccessModalMessage(`${data.count} student${data.count === 1 ? "" : "s"} removed from the active roster. Records were preserved.`);
+      router.refresh();
+    } catch (error) {
+      setDeactivateError(error instanceof Error ? error.message : "Students could not be removed from the active roster.");
+    } finally {
+      setIsDeactivating(false);
+    }
+  };
+
+  const openInactiveStudents = async () => {
+    setRestoreError(null);
+    try {
+      const res = await fetch(`${getBackendUrl()}/api/admin/students/inactive`, { credentials: "include" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || "Inactive students could not be loaded.");
+      setInactivePupils(Array.isArray(data.pupils) ? data.pupils : []);
+      setSelectedInactiveIds([]);
+      setRestoreConfirmation("");
+      setRestorePassword("");
+      setIsInactiveModalOpen(true);
+    } catch (error) {
+      setRestoreError(error instanceof Error ? error.message : "Inactive students could not be loaded.");
+    }
+  };
+
+  const handleRestore = async () => {
+    const expectedConfirmation = `RESTORE ${selectedInactiveIds.length} STUDENTS`;
+    if (restoreConfirmation !== expectedConfirmation || !restorePassword) return;
+    setIsRestoring(true);
+    setRestoreError(null);
+    try {
+      const res = await fetch(`${getBackendUrl()}/api/admin/students/bulk-restore`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ studentIds: selectedInactiveIds, confirmation: expectedConfirmation, currentPassword: restorePassword }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || "Students could not be restored.");
+      setIsInactiveModalOpen(false);
+      setSelectedInactiveIds([]);
+      setRestoreConfirmation("");
+      setRestorePassword("");
+      setSuccessModalMessage(`${data.count} student${data.count === 1 ? "" : "s"} restored to the active roster.`);
+      router.refresh();
+    } catch (error) {
+      setRestoreError(error instanceof Error ? error.message : "Students could not be restored.");
+    } finally {
+      setIsRestoring(false);
+    }
+  };
 
   const handlePageSizeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setItemsPerPage(Number(event.target.value));
@@ -558,6 +663,14 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
               <UserPlus className="h-4 w-4" />
               Register Student
             </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={openInactiveStudents}
+              className="h-9 w-full px-3 py-1.5 text-sm font-semibold sm:w-auto"
+            >
+              Restore inactive
+            </Button>
           </div>
         </div>
 
@@ -569,7 +682,9 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
                   ✓
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold text-foreground">Student saved successfully</h3>
+                  <h3 className="text-xl font-semibold text-foreground">
+                    {successModalMessage.includes("removed from the active roster") ? "Roster updated successfully" : "Student saved successfully"}
+                  </h3>
                   <p className="mt-2 text-sm text-muted">{successModalMessage}</p>
                 </div>
               </div>
@@ -716,6 +831,29 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
           </div>
         </div>
 
+        {selectedPupilIds.length > 0 ? (
+          <div className="mb-4 flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-950 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold">{selectedPupilIds.length} student{selectedPupilIds.length === 1 ? "" : "s"} selected</p>
+              <p className="mt-0.5 text-xs text-amber-900">Remove them from the active roster. Their academic and billing records will be preserved.</p>
+            </div>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                setDeactivateError(null);
+                setDeactivateConfirmation("");
+                setDeactivatePassword("");
+                setIsDeactivateModalOpen(true);
+              }}
+              className="inline-flex items-center gap-2 border-amber-300 text-amber-950 hover:bg-amber-100"
+            >
+              <Trash2 className="h-4 w-4" />
+              Remove from roster
+            </Button>
+          </div>
+        ) : null}
+
       {/* Table */}
       {paginatedPupils.length > 0 ? (
         <>
@@ -724,6 +862,15 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
             <table className="w-full text-left text-sm">
               <thead className="border-b border-border bg-background text-muted">
                 <tr>
+                  <th className="w-12 px-4 py-2">
+                    <input
+                      type="checkbox"
+                      checked={allVisibleSelected}
+                      onChange={toggleVisibleSelection}
+                      aria-label="Select visible students"
+                      className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                    />
+                  </th>
                   <th className="px-4 py-2 font-medium">Photo</th>
                   <th className="px-4 py-2 font-medium">Name</th>
                   <th className="px-4 py-2 font-medium">Class</th>
@@ -741,6 +888,15 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
 
                   return (
                     <tr key={p.id} className="border-t border-border hover:bg-background/50 transition-colors">
+                      <td className="px-4 py-2">
+                        <input
+                          type="checkbox"
+                          checked={selectedPupilIds.includes(p.id)}
+                          onChange={() => togglePupilSelection(p.id)}
+                          aria-label={`Select ${p.firstName} ${p.lastName}`}
+                          className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                        />
+                      </td>
                       <td className="px-4 py-2">
                         {p.photoUrl ? (
                           <img
@@ -800,6 +956,13 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
                   className="rounded-lg border border-border bg-surface px-3 py-2 hover:bg-background/50 transition-colors"
                 >
                   <div className="flex items-center justify-between gap-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedPupilIds.includes(p.id)}
+                      onChange={() => togglePupilSelection(p.id)}
+                      aria-label={`Select ${p.firstName} ${p.lastName}`}
+                      className="h-4 w-4 shrink-0 rounded border-border text-primary focus:ring-primary"
+                    />
                     <div className="min-w-0">
                       <p className="font-medium text-sm truncate">
                         {[p.lastName, p.firstName].filter(Boolean).join(" ")}
@@ -889,6 +1052,120 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
         </div>
       )}
     </div>
+
+      {isInactiveModalOpen ? (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 px-4 py-8">
+          <div className="w-full max-w-2xl rounded-2xl border border-border bg-white p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-bold text-foreground">Restore inactive students</h2>
+                <p className="mt-1 text-sm text-muted">Select records to return to the active roster. Admission numbers are not automatically changed.</p>
+              </div>
+              <button type="button" onClick={() => setIsInactiveModalOpen(false)} aria-label="Close restore dialog" className="rounded-lg p-2 text-muted hover:bg-background"><X className="h-4 w-4" /></button>
+            </div>
+
+            <div className="mt-5 max-h-72 overflow-y-auto rounded-lg border border-border">
+              {inactivePupils.length > 0 ? inactivePupils.map((pupil) => (
+                <label key={pupil.id} className="flex cursor-pointer items-center gap-3 border-b border-border px-3 py-2 last:border-b-0 hover:bg-background">
+                  <input type="checkbox" checked={selectedInactiveIds.includes(pupil.id)} onChange={() => setSelectedInactiveIds((current) => current.includes(pupil.id) ? current.filter((id) => id !== pupil.id) : [...current, pupil.id])} className="h-4 w-4 rounded border-border text-primary focus:ring-primary" />
+                  <span className="min-w-0 flex-1 text-sm text-foreground">{[pupil.lastName, pupil.firstName].filter(Boolean).join(" ")}</span>
+                  <span className="text-xs text-muted">{pupil.admissionNo || "No admission number"}</span>
+                </label>
+              )) : <p className="p-6 text-center text-sm text-muted">No inactive students are available.</p>}
+            </div>
+
+            {selectedInactiveIds.length > 0 ? (
+              <>
+                <label className="mt-4 block text-sm font-medium text-foreground">
+                  Type <span className="font-bold">RESTORE {selectedInactiveIds.length} STUDENTS</span> to confirm
+                  <input value={restoreConfirmation} onChange={(event) => setRestoreConfirmation(event.target.value)} placeholder={`RESTORE ${selectedInactiveIds.length} STUDENTS`} className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" autoComplete="off" />
+                </label>
+                <label className="mt-4 block text-sm font-medium text-foreground">
+                  Confirm with your admin login password
+                  <input type="password" value={restorePassword} onChange={(event) => setRestorePassword(event.target.value)} placeholder="Current password" className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20" autoComplete="current-password" />
+                </label>
+              </>
+            ) : null}
+            {restoreError ? <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{restoreError}</p> : null}
+            <div className="mt-6 flex justify-end gap-3">
+              <Button type="button" variant="secondary" onClick={() => setIsInactiveModalOpen(false)} disabled={isRestoring}>Cancel</Button>
+              <Button type="button" onClick={handleRestore} disabled={isRestoring || selectedInactiveIds.length === 0 || !restorePassword || restoreConfirmation !== `RESTORE ${selectedInactiveIds.length} STUDENTS`}>{isRestoring ? "Restoring..." : "Restore selected"}</Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {isDeactivateModalOpen ? (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 px-4 py-8">
+          <div className="w-full max-w-lg rounded-2xl border border-amber-200 bg-white p-6 shadow-2xl">
+            <div className="flex items-start gap-4">
+              <div className="rounded-xl bg-amber-100 p-3 text-amber-700">
+                <Trash2 className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-foreground">Remove students from active roster?</h2>
+                <p className="mt-2 text-sm text-muted">
+                  This will mark {selectedPupilIds.length} selected student{selectedPupilIds.length === 1 ? "" : "s"} inactive. Grades, attendance, invoices, and audit history will be preserved.
+                </p>
+                <p className="mt-2 text-sm font-semibold text-amber-900">Admission numbers for existing students are preserved and will not be reused.</p>
+              </div>
+            </div>
+
+            <label className="mt-6 block text-sm font-medium text-foreground">
+              Type <span className="font-bold">DEACTIVATE {selectedPupilIds.length} STUDENTS</span> to confirm
+              <input
+                value={deactivateConfirmation}
+                onChange={(event) => setDeactivateConfirmation(event.target.value)}
+                placeholder={`DEACTIVATE ${selectedPupilIds.length} STUDENTS`}
+                className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                autoComplete="off"
+              />
+            </label>
+
+            <label className="mt-4 block text-sm font-medium text-foreground">
+              Confirm with your admin login password
+              <input
+                type="password"
+                value={deactivatePassword}
+                onChange={(event) => setDeactivatePassword(event.target.value)}
+                placeholder="Current password"
+                className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                autoComplete="current-password"
+              />
+            </label>
+
+            {deactivateError ? (
+              <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{deactivateError}</p>
+            ) : null}
+
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  playCloseTone();
+                  setIsDeactivateModalOpen(false);
+                  setDeactivateConfirmation("");
+                  setDeactivatePassword("");
+                  setDeactivateError(null);
+                }}
+                disabled={isDeactivating}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={handleDeactivate}
+                disabled={isDeactivating || !deactivatePassword || deactivateConfirmation !== `DEACTIVATE ${selectedPupilIds.length} STUDENTS`}
+                className="inline-flex items-center justify-center gap-2 bg-amber-700 text-white hover:bg-amber-800"
+              >
+                <Check className="h-4 w-4" />
+                {isDeactivating ? "Removing..." : "Confirm removal"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {isImportModalOpen ? (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 px-4">

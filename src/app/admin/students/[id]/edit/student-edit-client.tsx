@@ -35,13 +35,8 @@ export default function StudentEditClient({ studentId }: { studentId: string }) 
   const [status, setStatus] = useState("ACTIVE");
   const [address, setAddress] = useState("");
 
-  const [guardianFirst, setGuardianFirst] = useState("");
-  const [guardianLast, setGuardianLast] = useState("");
-  const [guardianRelationship, setGuardianRelationship] = useState("Parent");
-  const [guardianEmail, setGuardianEmail] = useState("");
-  const [guardianPhone, setGuardianPhone] = useState("");
-  const [guardianAltPhone, setGuardianAltPhone] = useState("");
-  const [guardianOccupation, setGuardianOccupation] = useState("");
+  const [mother, setMother] = useState({ id: "", firstName: "", lastName: "", email: "", phone: "", altPhone: "", occupation: "" });
+  const [father, setFather] = useState({ id: "", firstName: "", lastName: "", email: "", phone: "", altPhone: "", occupation: "" });
 
   const [bloodGroup, setBloodGroup] = useState("");
   const [genotype, setGenotype] = useState("");
@@ -89,16 +84,20 @@ export default function StudentEditClient({ studentId }: { studentId: string }) 
         setPreviousClass(studentData.previousClass || "");
 
         // Load guardian data if exists
-        if (studentData.guardians && studentData.guardians.length > 0) {
-          const g = studentData.guardians[0];
-          setGuardianFirst(g.guardian?.firstName || "");
-          setGuardianLast(g.guardian?.lastName || "");
-          setGuardianRelationship(g.relationship || "Parent");
-          setGuardianEmail(g.guardian?.email || "");
-          setGuardianPhone(g.guardian?.phone || "");
-          setGuardianAltPhone(g.guardian?.altPhone || "");
-          setGuardianOccupation(g.guardian?.occupation || "");
-        }
+        const guardianEntries = studentData.guardians || [];
+        const toParent = (entry: any) => ({
+          id: entry.guardian?.id || "",
+          firstName: entry.guardian?.firstName || "",
+          lastName: entry.guardian?.lastName || "",
+          email: entry.guardian?.email || "",
+          phone: entry.guardian?.phone || "",
+          altPhone: entry.guardian?.altPhone || "",
+          occupation: entry.guardian?.occupation || "",
+        });
+        const motherEntry = guardianEntries.find((entry: any) => entry.relation === "Mother") || guardianEntries[0];
+        const fatherEntry = guardianEntries.find((entry: any) => entry.relation === "Father") || guardianEntries[1];
+        if (motherEntry) setMother(toParent(motherEntry));
+        if (fatherEntry && fatherEntry !== motherEntry) setFather(toParent(fatherEntry));
 
         // Set photo preview if exists
         if (studentData.photoUrl) {
@@ -160,13 +159,14 @@ export default function StudentEditClient({ studentId }: { studentId: string }) 
       formData.append("medicalNotes", medicalNotes);
       formData.append("previousSchool", previousSchool);
       formData.append("previousClass", previousClass);
-      formData.append("guardianFirst", guardianFirst);
-      formData.append("guardianLast", guardianLast);
-      formData.append("guardianRelationship", guardianRelationship);
-      formData.append("guardianEmail", guardianEmail);
-      formData.append("guardianPhone", guardianPhone);
-      formData.append("guardianAltPhone", guardianAltPhone);
-      formData.append("guardianOccupation", guardianOccupation);
+      const guardians = [
+        { guardianId: mother.id || undefined, firstName: mother.firstName.trim(), lastName: mother.lastName.trim(), relation: "Mother", email: mother.email.trim() || null, phone: mother.phone.trim() || null, altPhone: mother.altPhone.trim() || null, occupation: mother.occupation.trim() || null },
+        { guardianId: father.id || undefined, firstName: father.firstName.trim(), lastName: father.lastName.trim(), relation: "Father", email: father.email.trim() || null, phone: father.phone.trim() || null, altPhone: father.altPhone.trim() || null, occupation: father.occupation.trim() || null },
+      ].filter((guardian) => guardian.firstName || guardian.lastName);
+      if (guardians.some((guardian) => !guardian.firstName || !guardian.lastName)) {
+        throw new Error("Enter both first and last name for each parent you add.");
+      }
+      formData.append("guardians", JSON.stringify(guardians));
 
       if (photoFile) {
         formData.append("photo", photoFile);
@@ -354,50 +354,33 @@ export default function StudentEditClient({ studentId }: { studentId: string }) 
             </div>
           </div>
 
-          {/* Parent / Guardian Information */}
+          {/* Parent Information */}
           <div className="rounded-lg border border-border bg-surface p-4 mb-3">
-            <h3 className="text-lg font-semibold text-foreground mb-4">Parent / Guardian information</h3>
-            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-              <label className="text-sm font-semibold text-foreground">
-                First name
-                <input name="guardianFirst" value={guardianFirst} onChange={(e) => setGuardianFirst(e.target.value)} className="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
-              </label>
-
-              <label className="text-sm font-semibold text-foreground">
-                Last name
-                <input name="guardianLast" value={guardianLast} onChange={(e) => setGuardianLast(e.target.value)} className="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
-              </label>
-
-              <label className="text-sm font-semibold text-foreground">
-                Relationship *
-                <select name="guardianRelationship" value={guardianRelationship} onChange={(e) => setGuardianRelationship(e.target.value)} required className="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10">
-                  <option value="Parent">Parent</option>
-                  <option value="Father">Father</option>
-                  <option value="Mother">Mother</option>
-                  <option value="Guardian">Guardian</option>
-                  <option value="Other">Other</option>
-                </select>
-              </label>
-
-              <label className="text-sm font-semibold text-foreground">
-                Phone number *
-                <input name="guardianPhone" value={guardianPhone} onChange={(e) => setGuardianPhone(e.target.value)} required placeholder="+234..." className="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
-              </label>
-
-              <label className="text-sm font-semibold text-foreground">
-                Alternative phone
-                <input name="guardianAltPhone" value={guardianAltPhone} onChange={(e) => setGuardianAltPhone(e.target.value)} placeholder="Optional" className="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
-              </label>
-
-              <label className="text-sm font-semibold text-foreground">
-                Email
-                <input name="guardianEmail" value={guardianEmail} onChange={(e) => setGuardianEmail(e.target.value)} type="email" placeholder="guardian@example.com" className="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
-              </label>
-
-              <label className="text-sm font-semibold text-foreground">
-                Occupation
-                <input name="guardianOccupation" value={guardianOccupation} onChange={(e) => setGuardianOccupation(e.target.value)} placeholder="Optional" className="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
-              </label>
+            <h3 className="text-lg font-semibold text-foreground mb-1">Parent information <span className="text-sm font-normal text-muted">(optional)</span></h3>
+            <p className="text-sm text-muted">Update either parent or both parents. Contact details are optional.</p>
+            <div className="mt-4 grid gap-4 lg:grid-cols-2">
+              {[
+                { label: "Mother", value: mother, setValue: setMother },
+                { label: "Father", value: father, setValue: setFather },
+              ].map((parent) => (
+                <fieldset key={parent.label} className="rounded-2xl border border-border p-4">
+                  <legend className="px-2 text-sm font-bold text-foreground">{parent.label}</legend>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {(["firstName", "lastName", "phone", "email"] as const).map((field) => (
+                      <label key={field} className="text-sm font-semibold text-foreground">
+                        {field === "firstName" ? "First name" : field === "lastName" ? "Last name" : field === "phone" ? "Phone" : "Email"}
+                        <input type={field === "email" ? "email" : field === "phone" ? "tel" : "text"} value={parent.value[field]} onChange={(event) => parent.setValue((current) => ({ ...current, [field]: event.target.value }))} placeholder={field === "phone" ? "+250 788 123 456" : `${parent.label} ${field === "firstName" ? "first name" : field === "lastName" ? "last name" : field}`} className="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
+                      </label>
+                    ))}
+                    {(["altPhone", "occupation"] as const).map((field) => (
+                      <label key={field} className="text-sm font-semibold text-foreground sm:col-span-2">
+                        {field === "altPhone" ? "Alternative phone" : "Occupation"}
+                        <input type={field === "altPhone" ? "tel" : "text"} value={parent.value[field]} onChange={(event) => parent.setValue((current) => ({ ...current, [field]: event.target.value }))} placeholder="Optional" className="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm text-foreground outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/10" />
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+              ))}
             </div>
           </div>
 

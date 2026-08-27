@@ -212,7 +212,7 @@ export default function StudentViewClient({ studentId }: { studentId: string }) 
                     <h4 className="text-sm font-bold text-foreground">
                       {g.guardian?.firstName} {g.guardian?.lastName}
                     </h4>
-                    <p className="text-xs text-muted">{g.relationship}</p>
+                    <p className="text-xs text-muted">{g.relation || "Parent / Guardian"}</p>
                   </div>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     {g.guardian?.phone && (

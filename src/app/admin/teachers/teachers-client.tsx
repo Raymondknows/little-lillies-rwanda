@@ -97,6 +97,13 @@ export default function TeachersPageClient({
     teacherSubjects: teacher.teacherSubjects ?? [],
   });
 
+  const getTeacherInitials = (name: string | null | undefined) => {
+    const parts = String(name || "Teacher").trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return "T";
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+  };
+
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -266,7 +273,14 @@ export default function TeachersPageClient({
             {filteredTeachers.length > 0 ? (
               filteredTeachers.map((teacher, index) => (
                 <tr key={teacher.id ?? `teacher-${index}`} className="border-t border-border hover:bg-background/50 transition-colors">
-                  <td className="px-4 py-2 font-medium text-foreground">{teacher.name}</td>
+                  <td className="px-4 py-2">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand/10 text-xs font-bold text-brand ring-1 ring-brand/15" aria-hidden="true">
+                        {getTeacherInitials(teacher.name)}
+                      </div>
+                      <span className="font-medium text-foreground">{teacher.name}</span>
+                    </div>
+                  </td>
                   <td className="px-4 py-2 text-muted">{teacher.email}</td>
                   <td className="px-4 py-2 text-sm text-muted">
                     { (teacher.teacherClasses?.length ?? 0) > 0 ? (
@@ -320,8 +334,11 @@ export default function TeachersPageClient({
                 className="block w-full text-left rounded-lg border border-border bg-surface px-3 py-2 hover:bg-background/50 transition-colors"
               >
                 <div className="flex items-center justify-between">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">{teacher.name}</p>
+                  <div className="flex min-w-0 flex-1 items-center gap-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand/10 text-xs font-bold text-brand ring-1 ring-brand/15" aria-hidden="true">
+                      {getTeacherInitials(teacher.name)}
+                    </div>
+                    <p className="truncate font-medium text-sm">{teacher.name}</p>
                   </div>
                   <div className="flex-shrink-0 text-right ml-2">
                     <p className="text-xs text-muted">
@@ -379,8 +396,6 @@ export default function TeachersPageClient({
                 const nameInput = form.querySelector('input[name="name"]') as HTMLInputElement | null;
                 const emailInput = form.querySelector('input[name="email"]') as HTMLInputElement | null;
                 const passwordInput = form.querySelector('input[name="password"]') as HTMLInputElement | null;
-                const classSelect = form.querySelector('select[name="classIds"]') as HTMLSelectElement | null;
-                const subjectSelect = form.querySelector('select[name="subjectIds"]') as HTMLSelectElement | null;
 
                 if (!nameInput || !emailInput || !passwordInput) {
                   setErrorMessage('Form fields not found. Please try again.');
@@ -398,13 +413,11 @@ export default function TeachersPageClient({
                   return;
                 }
 
-                const classIds = classSelect ? Array.from(classSelect.options)
-                  .filter((o) => o.selected)
-                  .map((o) => o.value) : [];
+                const classIds = Array.from(form.querySelectorAll<HTMLInputElement>('input[name="classIds"]:checked'))
+                  .map((input) => input.value);
 
-                const subjectIds = subjectSelect ? Array.from(subjectSelect.options)
-                  .filter((o) => o.selected)
-                  .map((o) => o.value) : [];
+                const subjectIds = Array.from(form.querySelectorAll<HTMLInputElement>('input[name="subjectIds"]:checked'))
+                  .map((input) => input.value);
 
                 const assignedTeacherClasses = classIds.map((classId) => {
                   const classItem = classes.find((item) => item.id === classId);
@@ -511,36 +524,38 @@ export default function TeachersPageClient({
               </label>
 
               <div className="grid gap-4 sm:grid-cols-2">
-                <label className="text-sm font-medium">
-                  Assign classes
-                  <select
-                    name="classIds"
-                    multiple
-                    size={4}
-                    className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
-                  >
+                <fieldset className="text-sm font-medium">
+                  <legend>Assign classes</legend>
+                  <div className="mt-1 max-h-40 space-y-2 overflow-y-auto rounded-lg border border-border bg-background p-3">
                     {classes.map((classItem) => (
-                      <option key={classItem.id} value={classItem.id}>
-                        {classItem.name}{classItem.arm ? ` ${classItem.arm}` : ""}
-                      </option>
+                      <label key={classItem.id} className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 font-normal hover:bg-surface">
+                        <input
+                          type="checkbox"
+                          name="classIds"
+                          value={classItem.id}
+                          className="h-4 w-4 rounded border-border text-brand focus:ring-brand"
+                        />
+                        <span>{classItem.name}{classItem.arm ? ` ${classItem.arm}` : ""}</span>
+                      </label>
                     ))}
-                  </select>
-                </label>
-                <label className="text-sm font-medium">
-                  Assign subjects
-                  <select
-                    name="subjectIds"
-                    multiple
-                    size={4}
-                    className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
-                  >
+                  </div>
+                </fieldset>
+                <fieldset className="text-sm font-medium">
+                  <legend>Assign subjects</legend>
+                  <div className="mt-1 max-h-40 space-y-2 overflow-y-auto rounded-lg border border-border bg-background p-3">
                     {subjects.map((subject) => (
-                      <option key={subject.id} value={subject.id}>
-                        {subject.name}
-                      </option>
+                      <label key={subject.id} className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 font-normal hover:bg-surface">
+                        <input
+                          type="checkbox"
+                          name="subjectIds"
+                          value={subject.id}
+                          className="h-4 w-4 rounded border-border text-brand focus:ring-brand"
+                        />
+                        <span>{subject.name}</span>
+                      </label>
                     ))}
-                  </select>
-                </label>
+                  </div>
+                </fieldset>
               </div>
 
               <div className="flex justify-end">
@@ -613,8 +628,6 @@ export default function TeachersPageClient({
                     const nameInput = form.querySelector('input[name="name"]') as HTMLInputElement | null;
                     const emailInput = form.querySelector('input[name="email"]') as HTMLInputElement | null;
                     const passwordInput = form.querySelector('input[name="password"]') as HTMLInputElement | null;
-                    const classSelect = form.querySelector('select[name="classIds"]') as HTMLSelectElement | null;
-                    const subjectSelect = form.querySelector('select[name="subjectIds"]') as HTMLSelectElement | null;
 
                     if (!idInput || !nameInput || !emailInput) {
                       throw new Error('Form fields not found. Please try again.');
@@ -629,13 +642,11 @@ export default function TeachersPageClient({
                     if (!name) throw new Error('Name is required');
                     if (!email) throw new Error('Email is required');
 
-                    const classIds = classSelect ? Array.from(classSelect.options)
-                      .filter(o => o.selected)
-                      .map(o => o.value) : [];
-                    
-                    const subjectIds = subjectSelect ? Array.from(subjectSelect.options)
-                      .filter(o => o.selected)
-                      .map(o => o.value) : [];
+                    const classIds = Array.from(form.querySelectorAll<HTMLInputElement>('input[name="classIds"]:checked'))
+                      .map((input) => input.value);
+
+                    const subjectIds = Array.from(form.querySelectorAll<HTMLInputElement>('input[name="subjectIds"]:checked'))
+                      .map((input) => input.value);
 
                     const backendUrl = getBackendUrl();
                     console.log('Updating teacher:', { id, name, email, classIds, subjectIds });
@@ -715,38 +726,40 @@ export default function TeachersPageClient({
               </label>
 
               <div className="grid gap-4 sm:grid-cols-2">
-                <label className="text-sm font-medium">
-                  Assign classes
-                  <select
-                    name="classIds"
-                    multiple
-                    size={4}
-                    defaultValue={selectedTeacher.teacherClasses.map((t: any) => t.classId)}
-                    className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
-                  >
+                <fieldset className="text-sm font-medium">
+                  <legend>Assign classes</legend>
+                  <div className="mt-1 max-h-40 space-y-2 overflow-y-auto rounded-lg border border-border bg-background p-3">
                     {classes.map((classItem) => (
-                      <option key={classItem.id} value={classItem.id}>
-                        {classItem.name}{classItem.arm ? ` ${classItem.arm}` : ""}
-                      </option>
+                      <label key={classItem.id} className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 font-normal hover:bg-surface">
+                        <input
+                          type="checkbox"
+                          name="classIds"
+                          value={classItem.id}
+                          defaultChecked={selectedTeacher.teacherClasses.some((teacherClass: any) => teacherClass.classId === classItem.id)}
+                          className="h-4 w-4 rounded border-border text-brand focus:ring-brand"
+                        />
+                        <span>{classItem.name}{classItem.arm ? ` ${classItem.arm}` : ""}</span>
+                      </label>
                     ))}
-                  </select>
-                </label>
-                <label className="text-sm font-medium">
-                  Assign subjects
-                  <select
-                    name="subjectIds"
-                    multiple
-                    size={4}
-                    defaultValue={selectedTeacher.teacherSubjects.map((t: any) => t.subjectId)}
-                    className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
-                  >
+                  </div>
+                </fieldset>
+                <fieldset className="text-sm font-medium">
+                  <legend>Assign subjects</legend>
+                  <div className="mt-1 max-h-40 space-y-2 overflow-y-auto rounded-lg border border-border bg-background p-3">
                     {subjects.map((subject) => (
-                      <option key={subject.id} value={subject.id}>
-                        {subject.name}
-                      </option>
+                      <label key={subject.id} className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 font-normal hover:bg-surface">
+                        <input
+                          type="checkbox"
+                          name="subjectIds"
+                          value={subject.id}
+                          defaultChecked={selectedTeacher.teacherSubjects.some((teacherSubject: any) => teacherSubject.subjectId === subject.id)}
+                          className="h-4 w-4 rounded border-border text-brand focus:ring-brand"
+                        />
+                        <span>{subject.name}</span>
+                      </label>
                     ))}
-                  </select>
-                </label>
+                  </div>
+                </fieldset>
               </div>
 
               <div className="flex justify-end">

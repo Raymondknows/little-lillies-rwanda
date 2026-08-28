@@ -120,6 +120,12 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
   const [deactivatePassword, setDeactivatePassword] = useState("");
   const [isDeactivating, setIsDeactivating] = useState(false);
   const [deactivateError, setDeactivateError] = useState<string | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deleteStudentIds, setDeleteStudentIds] = useState<string[]>([]);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [deletePassword, setDeletePassword] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [inactivePupils, setInactivePupils] = useState<any[]>([]);
   const [selectedInactiveIds, setSelectedInactiveIds] = useState<string[]>([]);
   const [isInactiveModalOpen, setIsInactiveModalOpen] = useState(false);
@@ -356,6 +362,37 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
       setDeactivateError(error instanceof Error ? error.message : "Students could not be removed from the active roster.");
     } finally {
       setIsDeactivating(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    const expectedConfirmation = `DELETE ${deleteStudentIds.length} STUDENTS`;
+    if (deleteConfirmation !== expectedConfirmation) return;
+
+    setIsDeleting(true);
+    setDeleteError(null);
+    try {
+      const res = await fetch(`${getBackendUrl()}/api/admin/students/bulk-delete`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ studentIds: deleteStudentIds, confirmation: expectedConfirmation, currentPassword: deletePassword }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || "Students could not be permanently deleted.");
+
+      setSelectedPupilIds([]);
+      setSelectedInactiveIds([]);
+      setDeleteStudentIds([]);
+      setDeleteConfirmation("");
+      setDeletePassword("");
+      setIsDeleteModalOpen(false);
+      setSuccessModalMessage(`${data.count} student${data.count === 1 ? "" : "s"} permanently deleted.`);
+      router.refresh();
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : "Students could not be permanently deleted.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -832,11 +869,10 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
         </div>
 
         {selectedPupilIds.length > 0 ? (
-          <div className="mb-4 flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-950 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm font-semibold">{selectedPupilIds.length} student{selectedPupilIds.length === 1 ? "" : "s"} selected</p>
-              <p className="mt-0.5 text-xs text-amber-900">Remove them from the active roster. Their academic and billing records will be preserved.</p>
-            </div>
+          <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-border bg-background/60 px-3 py-2">
+            <span className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1 text-xs font-semibold text-foreground">
+              {selectedPupilIds.length} selected
+            </span>
             <Button
               type="button"
               variant="secondary"
@@ -846,10 +882,25 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
                 setDeactivatePassword("");
                 setIsDeactivateModalOpen(true);
               }}
-              className="inline-flex items-center gap-2 border-amber-300 text-amber-950 hover:bg-amber-100"
+              className="inline-flex items-center gap-1.5 rounded-lg border-amber-300 px-3 py-1.5 text-xs font-semibold text-amber-950 hover:bg-amber-100"
             >
-              <Trash2 className="h-4 w-4" />
-              Remove from roster
+              <Trash2 className="h-3.5 w-3.5" />
+              Remove
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                setDeleteStudentIds(selectedPupilIds);
+                setDeleteError(null);
+                setDeleteConfirmation("");
+                setDeletePassword("");
+                setIsDeleteModalOpen(true);
+              }}
+              className="inline-flex items-center gap-1.5 rounded-lg border-red-300 px-3 py-1.5 text-xs font-semibold text-red-800 hover:bg-red-100"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Delete
             </Button>
           </div>
         ) : null}
@@ -1087,9 +1138,29 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
               </>
             ) : null}
             {restoreError ? <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{restoreError}</p> : null}
-            <div className="mt-6 flex justify-end gap-3">
+            <div className="mt-4 flex items-center justify-between gap-3">
+              {selectedInactiveIds.length > 0 ? (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => {
+                    setDeleteStudentIds(selectedInactiveIds);
+                    setDeleteError(null);
+                    setDeleteConfirmation("");
+                    setDeletePassword("");
+                    setIsInactiveModalOpen(false);
+                    setIsDeleteModalOpen(true);
+                  }}
+                  className="inline-flex items-center gap-1.5 border-red-300 px-3 py-1.5 text-xs font-semibold text-red-800 hover:bg-red-100"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Delete permanently
+                </Button>
+              ) : <span />}
+              <div className="flex justify-end gap-3">
               <Button type="button" variant="secondary" onClick={() => setIsInactiveModalOpen(false)} disabled={isRestoring}>Cancel</Button>
               <Button type="button" onClick={handleRestore} disabled={isRestoring || selectedInactiveIds.length === 0 || !restorePassword || restoreConfirmation !== `RESTORE ${selectedInactiveIds.length} STUDENTS`}>{isRestoring ? "Restoring..." : "Restore selected"}</Button>
+              </div>
             </div>
           </div>
         </div>
@@ -1161,6 +1232,77 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
               >
                 <Check className="h-4 w-4" />
                 {isDeactivating ? "Removing..." : "Confirm removal"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {isDeleteModalOpen ? (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 px-4 py-8">
+          <div className="w-full max-w-lg rounded-2xl border border-red-200 bg-white p-6 shadow-2xl">
+            <div className="flex items-start gap-4">
+              <div className="rounded-xl bg-red-100 p-3 text-red-700">
+                <Trash2 className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-foreground">Permanently delete students?</h2>
+                <p className="mt-2 text-sm text-muted">
+                  This permanently deletes {deleteStudentIds.length} selected student{deleteStudentIds.length === 1 ? "" : "s"}, including linked academic, attendance, billing, and guardian records. This cannot be undone.
+                </p>
+              </div>
+            </div>
+
+            <label className="mt-6 block text-sm font-medium text-foreground">
+              Type <span className="font-bold">DELETE {deleteStudentIds.length} STUDENTS</span> to confirm
+              <input
+                value={deleteConfirmation}
+                onChange={(event) => setDeleteConfirmation(event.target.value)}
+                placeholder={`DELETE ${deleteStudentIds.length} STUDENTS`}
+                className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                autoComplete="off"
+              />
+            </label>
+
+            <label className="mt-4 block text-sm font-medium text-foreground">
+              Confirm with your admin login password
+              <input
+                type="password"
+                value={deletePassword}
+                onChange={(event) => setDeletePassword(event.target.value)}
+                placeholder="Current password"
+                className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                autoComplete="current-password"
+              />
+            </label>
+
+            {deleteError ? (
+              <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{deleteError}</p>
+            ) : null}
+
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  playCloseTone();
+                  setIsDeleteModalOpen(false);
+                  setDeleteConfirmation("");
+                  setDeletePassword("");
+                  setDeleteError(null);
+                }}
+                disabled={isDeleting}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={handleDelete}
+                disabled={isDeleting || !deletePassword || deleteConfirmation !== `DELETE ${deleteStudentIds.length} STUDENTS`}
+                className="inline-flex items-center justify-center gap-2 bg-red-700 text-white hover:bg-red-800"
+              >
+                <Trash2 className="h-4 w-4" />
+                {isDeleting ? "Deleting..." : "Delete permanently"}
               </Button>
             </div>
           </div>

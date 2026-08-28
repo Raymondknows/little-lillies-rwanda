@@ -1,6 +1,7 @@
 "use client";
 
 import { Download, X } from "lucide-react";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 type BeforeInstallPromptEvent = Event & {
@@ -16,6 +17,7 @@ function isStandalone() {
 }
 
 export default function PwaInstallPrompt() {
+  const pathname = usePathname();
   const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [installed, setInstalled] = useState(false);
   const [showInstructions, setShowInstructions] = useState(false);
@@ -50,7 +52,10 @@ export default function PwaInstallPrompt() {
     };
   }, []);
 
-  if (installed) return null;
+  const isAuthenticatedRoute = ["/admin", "/schoolbase-admin", "/teacher", "/parent"]
+    .some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+
+  if (installed || isAuthenticatedRoute) return null;
 
   const install = async () => {
     if (!installEvent) {

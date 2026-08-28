@@ -9,6 +9,15 @@ function normalizeBackendUrl(url: string): string {
 }
 
 export function getBackendUrl(): string {
+  // Admin pages use same-origin proxy routes so their HttpOnly session cookie
+  // is forwarded to the API even though the custom frontend and API domains differ.
+  if (typeof window !== 'undefined') {
+    const pathname = window.location.pathname;
+    if (pathname.startsWith('/admin') || pathname.startsWith('/schoolbase-admin')) {
+      return window.location.origin;
+    }
+  }
+
   // First, check if explicitly set in environment
   if (process.env.NEXT_PUBLIC_API_URL) {
     return normalizeBackendUrl(process.env.NEXT_PUBLIC_API_URL);

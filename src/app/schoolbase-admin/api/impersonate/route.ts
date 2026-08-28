@@ -18,14 +18,19 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const backendUrl = getBackendUrl();
+    const incomingSessionToken =
+      req.cookies.get(SESSION_COOKIE_NAME)?.value ||
+      req.cookies.get("schoolbase_session")?.value ||
+      req.cookies.get("schoolbase_staff")?.value ||
+      req.cookies.get("schoolbase_parent")?.value;
     
     const response = await fetch(
       `${backendUrl}/schoolbase-admin/api/impersonate`,
       {
         method: "POST",
         headers: {
-          "Cookie": req.headers.get("cookie") || "",
           "Content-Type": "application/json",
+          ...(incomingSessionToken ? { "x-schoolbase-session": incomingSessionToken } : {}),
         },
         body: JSON.stringify(body),
       }
@@ -63,7 +68,6 @@ export async function POST(req: NextRequest) {
     const json = NextResponse.json({
       message: "Impersonation session created.",
       redirectUrl: "/admin",
-      apiImpersonationToken: data?.token || null,
     });
 
     if (sessionToken) {

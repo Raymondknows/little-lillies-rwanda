@@ -66,6 +66,18 @@ export default function AdminLayout({
         });
         throw new Error(data?.error || data?.message || 'Impersonation exchange failed');
       }
+      if (typeof data?.token !== 'string' || !data.token) {
+        throw new Error('Impersonation exchange returned no session token.');
+      }
+      const sessionResponse = await fetch('/api/auth/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ token: data.token }),
+      });
+      if (!sessionResponse.ok) {
+        throw new Error('Impersonation succeeded but the frontend session could not be created.');
+      }
       console.log('[AdminLayout] Impersonation exchange succeeded:', {
         schoolId: data.schoolId,
         redirectUrl: data.redirectUrl,

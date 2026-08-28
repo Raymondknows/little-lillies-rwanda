@@ -1,6 +1,6 @@
 export const brand = {
   name: "Little Lillies School",
-  tagline: "Everything your school needs in one simple platform.",
+  tagline: "Connected school management for Little Lillies School.",
   colors: {
     primary: "#0A66C2",
     primaryHover: "#004182",

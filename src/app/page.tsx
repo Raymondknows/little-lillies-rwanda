@@ -125,11 +125,10 @@ export default async function HomePage() {
       <section className="border-b border-border bg-surface">
         <div className="mx-auto max-w-6xl px-6 py-20 md:py-28">
           <h1 className="max-w-3xl text-4xl font-bold leading-tight tracking-tight text-foreground md:text-5xl md:leading-tight">
-            Everything your school needs in one simple platform.
+            Little Lillies School, beautifully connected.
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted">
-            Collect fees, remind parents on WhatsApp, publish results, and give
-            your school a professional digital experience, all in one place. <strong className="text-foreground">Register and start using immediately</strong> — includes a <strong className="text-foreground">7-day free trial</strong>.
+            Manage fees, attendance, results, and parent communication in one calm, connected workspace built around the Little Lillies School community.
           </p>
           <div className="mt-10 flex flex-wrap gap-4" id="start">
             <Button href="#buy">Subscribe</Button>

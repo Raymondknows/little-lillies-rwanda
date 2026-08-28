@@ -26,12 +26,12 @@ try {
   // ignore and fall back to defaults
 }
 
-const tagline = "Everything your school needs in one simple platform";
+const tagline = "Connected school management for Little Lillies School";
 
 export const metadata: Metadata = {
   title: `${tenantAppName} — ${tagline}`,
   description:
-    "Collect fees, reach parents on WhatsApp, publish results, and run a beautiful school website. Live in 48 hours.",
+    "Little Lillies School keeps fees, attendance, results, parent communication, and everyday school operations together in one clear digital workspace.",
   keywords: [
     "school management",
     "fee collection",
@@ -58,7 +58,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: `${tenantAppName} — ${tagline}`,
     description:
-      "Collect fees, reach parents on WhatsApp, publish results, and run a beautiful school website. Live in 48 hours.",
+      "Little Lillies School keeps fees, attendance, results, parent communication, and everyday school operations together in one clear digital workspace.",
     url: tenantDomain,
     siteName: "Little Lillies School",
     images: [

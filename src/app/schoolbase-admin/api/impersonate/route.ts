@@ -11,7 +11,6 @@ function getSessionCookieOptions() {
     secure: isProduction,
     sameSite: isProduction ? "none" : "lax",
     path: "/",
-    ...(isProduction ? { domain: ".schoolbase.live" } : {}),
   } as const;
 }
 

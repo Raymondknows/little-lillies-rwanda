@@ -7,6 +7,7 @@ import { Activity, AlertTriangle, Building2, CheckCircle2, Clock, Mail, MapPin, 
 import { SchoolTable, type SchoolRow, ActionMenu } from "@/components/platform-admin/school-table";
 import { getPlanStudentLimit } from "@/lib/pricing";
 import { resolveSchoolAssetUrl } from "@/lib/asset-urls";
+import { getBackendUrl } from "@/lib/backend-url";
 
 function getInitials(name: string) {
   return name
@@ -226,7 +227,7 @@ export default function SchoolsViewSwitcher({
   const impersonate = async (schoolId: string) => {
     setBusy(true);
     try {
-      const response = await fetch("/schoolbase-admin/api/impersonate", {
+      const response = await fetch(`${getBackendUrl()}/schoolbase-admin/api/impersonate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

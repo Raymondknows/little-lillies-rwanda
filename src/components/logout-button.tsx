@@ -24,6 +24,11 @@ export function LogoutButton({ redirectUrl = "/login" }: { redirectUrl?: string 
         console.error('Logout failed with status:', response.status);
       }
 
+      await fetch('/api/auth/session', {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
       // Redirect after logout completes
       router.push(redirectUrl);
       router.refresh();

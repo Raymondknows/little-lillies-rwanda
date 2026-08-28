@@ -65,6 +65,20 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
         return;
       }
 
+      if (typeof data?.token !== "string" || !data.token) {
+        throw new Error("Login succeeded but no session token was returned.");
+      }
+
+      const sessionResponse = await fetch("/api/auth/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ token: data.token }),
+      });
+      if (!sessionResponse.ok) {
+        throw new Error("Login succeeded but the frontend session could not be created.");
+      }
+
       setNotice("Login successful. Redirecting...");
 
       // ✅ Token is set in cookie by /api/auth/login (httpOnly cookie can't be accessed from JS)

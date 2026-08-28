@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getBackendUrl } from "@/lib/backend-url";
 
 const SESSION_COOKIE_NAME = "littlelillies_session";
-const LEGACY_SESSION_COOKIE_NAMES = ["schoolbase_staff", "schoolbase_parent"];
+const LEGACY_SESSION_COOKIE_NAMES = ["schoolbase_session", "schoolbase_staff", "schoolbase_parent"];
 
 function getSessionCookieOptions() {
   const isProduction = process.env.NODE_ENV === "production";

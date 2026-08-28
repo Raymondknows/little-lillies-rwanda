@@ -10,7 +10,7 @@ export async function buildPlatformAdminHeaders(sessionCookie?: string | null) {
   };
 
   if (sessionCookie) {
-    headers.Cookie = `littlelillies_session=${sessionCookie}`;
+    headers.Cookie = `schoolbase_session=${sessionCookie}`;
     headers['X-Schoolbase-Session'] = sessionCookie;
   }
 
@@ -35,7 +35,7 @@ export async function platformAdminLogoutAction(formData?: FormData): Promise<an
 
   // Clear the custom app session cookie.
   const cookieStore = await cookies();
-  cookieStore.delete('littlelillies_session');
+  cookieStore.delete('schoolbase_session');
   cookieStore.delete('schoolbase_staff');   // Legacy fallback
   cookieStore.delete('schoolbase_parent');  // Legacy fallback
 
@@ -47,7 +47,7 @@ export async function sendPlatformCommunicationEmailAction(...args: any[]): Prom
   try {
     const backendUrl = getBackendUrl();
     const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get('littlelillies_session')?.value;
+    const sessionCookie = cookieStore.get('schoolbase_session')?.value;
     
     const emailData = args[0] as {
       targetType: 'school' | 'segment';
@@ -62,7 +62,7 @@ export async function sendPlatformCommunicationEmailAction(...args: any[]): Prom
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...(sessionCookie ? { Cookie: `littlelillies_session=${sessionCookie}` } : {}),
+        ...(sessionCookie ? { Cookie: `schoolbase_session=${sessionCookie}` } : {}),
       },
       body: JSON.stringify(emailData),
     });
@@ -87,7 +87,7 @@ export async function sendDirectCampaignEmailAction(data: {
   try {
     const backendUrl = getBackendUrl();
     const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get('littlelillies_session')?.value;
+    const sessionCookie = cookieStore.get('schoolbase_session')?.value;
 
     const response = await fetch(`${backendUrl}/schoolbase-admin/api/campaigns/send`, {
       method: 'POST',
@@ -111,7 +111,7 @@ export async function sendSetupCompletionRemindersAction(...args: any[]): Promis
   try {
     const backendUrl = getBackendUrl();
     const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get('littlelillies_session')?.value;
+    const sessionCookie = cookieStore.get('schoolbase_session')?.value;
 
     const response = await fetch(`${backendUrl}/schoolbase-admin/api/reminders/send-bulk`, {
       method: 'POST',
@@ -135,7 +135,7 @@ export async function sendSetupCompletionReminder(schoolId: string): Promise<any
   try {
     const backendUrl = getBackendUrl();
     const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get('littlelillies_session')?.value;
+    const sessionCookie = cookieStore.get('schoolbase_session')?.value;
 
     const response = await fetch(`${backendUrl}/schoolbase-admin/api/reminders/send-single`, {
       method: 'POST',
@@ -165,13 +165,13 @@ export async function setSchoolPlanAction(formData: FormData): Promise<any> {
 
   const backendUrl = getBackendUrl();
   const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get('littlelillies_session')?.value;
+  const sessionCookie = cookieStore.get('schoolbase_session')?.value;
 
   const response = await fetch(`${backendUrl}/schoolbase-admin/api/schools`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
-      ...(sessionCookie ? { Cookie: `littlelillies_session=${sessionCookie}` } : {}),
+      ...(sessionCookie ? { Cookie: `schoolbase_session=${sessionCookie}` } : {}),
     },
     body: JSON.stringify({ schoolId, action: 'setPlan', plan }),
   });
@@ -193,13 +193,13 @@ export async function approveSchoolSubscriptionAction(formData: FormData): Promi
 
   const backendUrl = getBackendUrl();
   const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get('littlelillies_session')?.value;
+  const sessionCookie = cookieStore.get('schoolbase_session')?.value;
 
   const response = await fetch(`${backendUrl}/schoolbase-admin/api/schools`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
-      ...(sessionCookie ? { Cookie: `littlelillies_session=${sessionCookie}` } : {}),
+      ...(sessionCookie ? { Cookie: `schoolbase_session=${sessionCookie}` } : {}),
     },
     body: JSON.stringify({ schoolId, action: 'setPlan', plan }),
   });
@@ -219,13 +219,13 @@ export async function rejectSchoolSubscriptionAction(formData: FormData): Promis
 
   const backendUrl = getBackendUrl();
   const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get('littlelillies_session')?.value;
+  const sessionCookie = cookieStore.get('schoolbase_session')?.value;
 
   const response = await fetch(`${backendUrl}/schoolbase-admin/api/schools`, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
-      ...(sessionCookie ? { Cookie: `littlelillies_session=${sessionCookie}` } : {}),
+      ...(sessionCookie ? { Cookie: `schoolbase_session=${sessionCookie}` } : {}),
     },
     body: JSON.stringify({ schoolId, action: 'cancel' }),
   });

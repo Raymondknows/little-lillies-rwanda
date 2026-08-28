@@ -7,7 +7,7 @@ import { sendEmail, buildSignupVerificationEmail } from "@/lib/email";
 
 export type UserRole = "SCHOOL_ADMIN" | "TEACHER" | "PARENT" | "STUDENT" | "PLATFORM_ADMIN";
 
-const SESSION_COOKIE = "littlelillies_session";
+const SESSION_COOKIE = "schoolbase_session";
 
 function secret() {
   const key = process.env.SESSION_SECRET ?? "schoolbase-dev-secret-change-me";

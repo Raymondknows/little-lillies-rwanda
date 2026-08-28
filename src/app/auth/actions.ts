@@ -27,7 +27,7 @@ export async function staffLogoutAction() {
 
   // Clear all session cookies
   const cookieStore = await cookies();
-  cookieStore.delete('littlelillies_session');
+  cookieStore.delete('schoolbase_session');
   cookieStore.delete('schoolbase_staff');
   cookieStore.delete('schoolbase_parent');
 
@@ -56,7 +56,7 @@ export async function platformAdminLogoutAction() {
 
   // Clear all session cookies
   const cookieStore = await cookies();
-  cookieStore.delete('littlelillies_session');
+  cookieStore.delete('schoolbase_session');
   cookieStore.delete('schoolbase_staff');
   cookieStore.delete('schoolbase_parent');
 
@@ -81,7 +81,7 @@ export async function parentLogoutAction() {
 
   // Clear all session cookies
   const cookieStore = await cookies();
-  cookieStore.delete('littlelillies_session');
+  cookieStore.delete('schoolbase_session');
   cookieStore.delete('schoolbase_staff');
   cookieStore.delete('schoolbase_parent');
 

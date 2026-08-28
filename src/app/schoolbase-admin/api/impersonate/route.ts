@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getBackendUrl } from "@/lib/backend-url";
 
-const SESSION_COOKIE_NAME = "littlelillies_session";
-const LEGACY_SESSION_COOKIE_NAMES = ["schoolbase_session", "schoolbase_staff", "schoolbase_parent"];
+const SESSION_COOKIE_NAME = "schoolbase_session";
+const LEGACY_SESSION_COOKIE_NAMES = ["littlelillies_session", "schoolbase_staff", "schoolbase_parent"];
 
 function getSessionCookieOptions() {
   const isProduction = process.env.NODE_ENV === "production";
@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     const backendUrl = getBackendUrl();
     const incomingSessionToken =
       req.cookies.get(SESSION_COOKIE_NAME)?.value ||
-      req.cookies.get("schoolbase_session")?.value ||
+      req.cookies.get("littlelillies_session")?.value ||
       req.cookies.get("schoolbase_staff")?.value ||
       req.cookies.get("schoolbase_parent")?.value;
     

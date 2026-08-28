@@ -1,7 +1,7 @@
 import { jwtVerify } from "jose";
 import { NextResponse } from "next/server";
 
-const SESSION_COOKIE = "littlelillies_session";
+const SESSION_COOKIE = "schoolbase_session";
 
 function secret() {
   return new TextEncoder().encode(

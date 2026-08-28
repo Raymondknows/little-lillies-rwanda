@@ -19,7 +19,7 @@ export default function Header() {
   const pathname = usePathname();
 
   useEffect(() => {
-    const hasSessionCookie = /(?:^|;\s*)littlelillies_session=/.test(document.cookie)
+    const hasSessionCookie = /(?:^|;\s*)schoolbase_session=/.test(document.cookie)
       || /(?:^|;\s*)schoolbase_staff=/.test(document.cookie)
       || /(?:^|;\s*)staff_session=/.test(document.cookie);
 

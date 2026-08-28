@@ -100,28 +100,30 @@ export default function PlatformOverviewPage() {
 
     async function loadData() {
       try {
+        const backendUrl = getBackendUrl();
+
         const [statsRes, schoolsRes, activityRes, emailRes, trialRes, supportRes] = await Promise.all([
-          fetch("/schoolbase-admin/api/stats", {
+          fetch(`${backendUrl}/schoolbase-admin/api/stats`, {
             credentials: "include",
             headers: { "Content-Type": "application/json" },
           }),
-          fetch("/schoolbase-admin/api/schools?limit=5", {
+          fetch(`${backendUrl}/schoolbase-admin/api/schools?limit=5`, {
             credentials: "include",
             headers: { "Content-Type": "application/json" },
           }),
-          fetch("/schoolbase-admin/api/audit-logs?limit=5", {
+          fetch(`${backendUrl}/schoolbase-admin/api/audit-logs?limit=5`, {
             credentials: "include",
             headers: { "Content-Type": "application/json" },
           }),
-          fetch("/schoolbase-admin/api/email-logs?limit=5", {
+          fetch(`${backendUrl}/schoolbase-admin/api/email-logs?limit=5`, {
             credentials: "include",
             headers: { "Content-Type": "application/json" },
           }),
-          fetch("/schoolbase-admin/api/schools?status=TRIAL&limit=5", {
+          fetch(`${backendUrl}/schoolbase-admin/api/schools?status=TRIAL&limit=5`, {
             credentials: "include",
             headers: { "Content-Type": "application/json" },
           }),
-          fetch("/schoolbase-admin/api/support", {
+          fetch(`${backendUrl}/schoolbase-admin/api/support`, {
             credentials: "include",
             headers: { "Content-Type": "application/json" },
           }),
@@ -167,7 +169,8 @@ export default function PlatformOverviewPage() {
   useEffect(() => {
     const intervalId = window.setInterval(async () => {
       try {
-        const res = await fetch("/schoolbase-admin/api/support", {
+        const backendUrl = getBackendUrl();
+        const res = await fetch(`${backendUrl}/schoolbase-admin/api/support`, {
           credentials: "include",
           cache: "no-store",
           headers: { "Content-Type": "application/json" },

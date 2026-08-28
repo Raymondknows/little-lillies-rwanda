@@ -2146,7 +2146,7 @@ const HELP_GUIDE: PageHelpGuide = {
     'Search or filter the registry by PIN, student name, batch, status, session, or term.',
     'Generate student PINs, class PINs, or scratch cards from the forms below.',
     'Use row selection to print, export, deactivate, or delete multiple PINs at once.',
-    'Share the public Result Checker link — https://littlelillies.schoolbase.live/result/check — with parents and students for secure result entry.',
+    'Share the public Result Checker link — https://littlelilliesschool.com/result/check — with parents and students for secure result entry.',
   ],
   commonTasks: [
     {
@@ -2168,7 +2168,7 @@ const HELP_GUIDE: PageHelpGuide = {
   faqs: [
     {
       question: 'Where can students use the PIN?',
-      answer: 'Students use the public Result Checker entry page at https://littlelillies.schoolbase.live/result/check to enter their PIN and view results.',
+      answer: 'Students use the public Result Checker entry page at https://littlelilliesschool.com/result/check to enter their PIN and view results.',
     },
     {
       question: 'How do I revoke an old PIN?',

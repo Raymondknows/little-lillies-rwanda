@@ -71,7 +71,7 @@ export default function PublicAdmissionsPage() {
     city: "Lekki Phase 1, Lagos",
     email: "info@greenfieldacademy.ng",
     phone: "+2348012345678",
-    logoUrl: "https://www.littlelillies.schoolbase.live/uploads/settings/1783056195488-q5rfiq.png",
+    logoUrl: "https://littlelilliesschool.com/uploads/settings/1783056195488-q5rfiq.png",
   };
   const displaySchool = school ?? (schoolSlug === "greenfield" ? fallbackGreenfield : null);
   const primaryColor = useMemo(() => school?.primaryColor || "#0A66C2", [school]);

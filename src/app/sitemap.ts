@@ -4,7 +4,7 @@ import path from 'path'
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const root = process.cwd()
-  let baseUrl = 'https://littlelillies.schoolbase.live'
+  let baseUrl = 'https://littlelilliesschool.com'
   try {
     const tenantPath = path.join(root, 'public', 'tenants', 'little-lillies.json')
     if (fs.existsSync(tenantPath)) {

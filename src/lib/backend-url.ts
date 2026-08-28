@@ -39,7 +39,7 @@ export function getBackendUrl(): string {
       return 'http://localhost:3006';
     }
 
-    if (host === 'littlelillies.schoolbase.live' || host === 'www.littlelillies.schoolbase.live' || host.endsWith('.littlelillies.schoolbase.live')) {
+    if (host === 'littlelilliesschool.com' || host === 'www.littlelilliesschool.com' || host.endsWith('.littlelilliesschool.com')) {
       return 'https://custom-api.schoolbase.live';
     }
 

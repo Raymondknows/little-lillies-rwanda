@@ -8,7 +8,7 @@ import fs from "fs";
 import path from "path";
 
 // Read tenant config from public tenant JSON at build time (server)
-let tenantDomain = "https://littlelillies.schoolbase.live";
+let tenantDomain = "https://littlelilliesschool.com";
 let tenantAppName = "Little Lillies School";
 let tenantCurrency = "NGN";
 try {

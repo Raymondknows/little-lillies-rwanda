@@ -56,7 +56,7 @@ export default function Footer() {
           <p>© {new Date().getFullYear()} Little Lillies School. All rights reserved.</p>
           <p className="mt-3">
             Powered by{" "}
-            <a href="https://www.littlelillies.schoolbase.live" target="_blank" rel="noopener noreferrer" className="text-white hover:text-brand transition">
+            <a href="https://littlelilliesschool.com" target="_blank" rel="noopener noreferrer" className="text-white hover:text-brand transition">
               SchoolBase
             </a>
           </p>

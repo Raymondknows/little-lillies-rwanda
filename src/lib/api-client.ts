@@ -69,7 +69,7 @@ export function buildApiUrl(endpoint: string, search: string = ""): string {
   // Client-side: detect production domain
   if (typeof window !== "undefined") {
     const host = window.location.hostname;
-    if (host === "littlelillies.schoolbase.live" || host === "www.littlelillies.schoolbase.live" || host.endsWith(".littlelillies.schoolbase.live")) {
+    if (host === "littlelilliesschool.com" || host === "www.littlelilliesschool.com" || host.endsWith(".littlelilliesschool.com")) {
       backendBase = "https://custom-api.schoolbase.live";
     } else if (host === "schoolbase.live" || host === "www.schoolbase.live" || host.includes("vercel.app")) {
       backendBase = "https://api.schoolbase.live";

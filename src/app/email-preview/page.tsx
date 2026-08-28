@@ -34,8 +34,8 @@ export default function EmailPreviewPage() {
 <body>
   <div class="email-container">
     <div class="email-header">
-      <a href="https://littlelillies.schoolbase.live" target="_blank" rel="noreferrer" class="logo-badge">
-        <img src="https://littlelillies.schoolbase.live/logo.png" alt="SchoolBase Logo" />
+      <a href="https://littlelilliesschool.com" target="_blank" rel="noreferrer" class="logo-badge">
+        <img src="https://littlelilliesschool.com/logo.png" alt="SchoolBase Logo" />
       </a>
       <h1>SchoolBase</h1>
     </div>
@@ -87,7 +87,7 @@ export default function EmailPreviewPage() {
       <p>Thank you for trusting us.<br/><strong>We are honoured to serve schools building the next generation of Africa.</strong></p>
 
       <center>
-        <a href="https://littlelillies.schoolbase.live/admin" class="cta-button">Go to your workspace</a>
+        <a href="https://littlelilliesschool.com/admin" class="cta-button">Go to your workspace</a>
       </center>
     </div>
 

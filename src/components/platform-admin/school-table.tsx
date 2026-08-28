@@ -4,6 +4,7 @@ import { useMemo, useState, useRef, useEffect, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { resolveSchoolAssetUrl } from "@/lib/asset-urls";
+import { getBackendUrl } from "@/lib/backend-url";
 import { playCloseTone, playOpenTone } from "@/lib/sounds";
 import { Bell, CalendarPlus, CheckSquare, Download, MoreVertical, Pause, Play, X } from "lucide-react";
 
@@ -456,6 +457,18 @@ export function SchoolTable({
       if (!response.ok) {
         setMessage(result.message || "Impersonation failed.");
         return;
+      }
+      if (result.apiImpersonationToken) {
+        const apiResponse = await fetch(`${getBackendUrl()}/api/admin/impersonate`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ token: result.apiImpersonationToken }),
+        });
+        if (!apiResponse.ok) {
+          setMessage("Impersonation session could not be established.");
+          return;
+        }
       }
       const redirectUrl = result.redirectUrl || `/admin?impersonate=${encodeURIComponent(result.token)}`;
       window.location.href = redirectUrl;

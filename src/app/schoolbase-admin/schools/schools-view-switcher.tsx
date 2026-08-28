@@ -7,6 +7,7 @@ import { Activity, AlertTriangle, Building2, CheckCircle2, Clock, Mail, MapPin, 
 import { SchoolTable, type SchoolRow, ActionMenu } from "@/components/platform-admin/school-table";
 import { getPlanStudentLimit } from "@/lib/pricing";
 import { resolveSchoolAssetUrl } from "@/lib/asset-urls";
+import { getBackendUrl } from "@/lib/backend-url";
 
 function getInitials(name: string) {
   return name
@@ -236,6 +237,18 @@ export default function SchoolsViewSwitcher({
       if (!response.ok) {
         console.error(result.message || "Impersonation failed.");
         return;
+      }
+      if (result.apiImpersonationToken) {
+        const apiResponse = await fetch(`${getBackendUrl()}/api/admin/impersonate`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ token: result.apiImpersonationToken }),
+        });
+        if (!apiResponse.ok) {
+          console.error("Backend impersonation session could not be established.");
+          return;
+        }
       }
       const redirectUrl = result.redirectUrl || `/admin?impersonate=${encodeURIComponent(result.token)}`;
       window.location.href = redirectUrl;

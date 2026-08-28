@@ -63,6 +63,7 @@ export async function POST(req: NextRequest) {
     const json = NextResponse.json({
       message: "Impersonation session created.",
       redirectUrl: "/admin",
+      apiImpersonationToken: data?.token || null,
     });
 
     if (sessionToken) {

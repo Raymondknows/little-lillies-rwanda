@@ -44,7 +44,7 @@ export default function AdminLayout({
   async function exchangeImpersonationToken(impersonationToken: string) {
     try {
       const backendUrl = getBackendUrl();
-      const response = await fetch(`${backendUrl}/api/admin/impersonate`, {
+      const response = await fetch('/api/admin/impersonate', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -103,7 +103,7 @@ export default function AdminLayout({
         }
 
         // Fetch session
-        const sessionRes = await fetch(`${getBackendUrl()}/api/admin/verify`, {
+        const sessionRes = await fetch('/api/admin/verify', {
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
@@ -137,7 +137,7 @@ export default function AdminLayout({
         console.log('[AdminLayout] Loading school data for schoolId:', schoolId);
 
         // Fetch school
-        const schoolRes = await fetch(`${getBackendUrl()}/api/admin/school/${encodeURIComponent(schoolId)}`, {
+        const schoolRes = await fetch(`/api/admin/school/${encodeURIComponent(schoolId)}`, {
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
         });

@@ -1,4 +1,4 @@
-const CACHE_NAME = "schoolbase-shell-v1";
+const CACHE_NAME = "schoolbase-shell-v2";
 const APP_SHELL = ["/", "/manifest.webmanifest", "/logo.png"];
 
 self.addEventListener("install", (event) => {
@@ -16,9 +16,16 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
-  if (event.request.method !== "GET") return;
+  if (event.request.method !== "GET" || event.request.url.includes("/api/")) return;
 
   event.respondWith(
-    fetch(event.request).catch(() => caches.match(event.request)),
+    fetch(event.request).catch(() =>
+      caches.match(event.request).then((cachedResponse) =>
+        cachedResponse || new Response("You are offline. Please reconnect and try again.", {
+          status: 503,
+          headers: { "Content-Type": "text/plain; charset=utf-8" },
+        }),
+      ),
+    ),
   );
 });

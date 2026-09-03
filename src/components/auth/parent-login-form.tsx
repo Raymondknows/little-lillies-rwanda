@@ -35,6 +35,20 @@ export function ParentLoginForm() {
         return;
       }
 
+      if (typeof data?.token !== "string" || !data.token) {
+        throw new Error("Login succeeded but no session token was returned.");
+      }
+
+      const sessionResponse = await fetch("/api/auth/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ token: data.token }),
+      });
+      if (!sessionResponse.ok) {
+        throw new Error("Login succeeded but the frontend session could not be created.");
+      }
+
       // Wait for cookie to be set
       await new Promise(resolve => setTimeout(resolve, 100));
       

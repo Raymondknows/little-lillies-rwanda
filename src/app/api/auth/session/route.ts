@@ -16,7 +16,9 @@ export async function POST(request: Request) {
     if (!token) return NextResponse.json({ error: "Session token is required." }, { status: 400 });
 
     const { payload } = await jwtVerify(token, secret());
-    if (!payload.userId || !payload.role) {
+    const isStaffSession = Boolean(payload.userId && payload.role);
+    const isParentSession = Boolean(payload.guardianId);
+    if (!isStaffSession && !isParentSession) {
       return NextResponse.json({ error: "Invalid session token." }, { status: 401 });
     }
 

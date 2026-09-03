@@ -524,8 +524,8 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
 
   const handleDownloadImportTemplate = () => {
     const template = [
-      'firstName,lastName,middleName,admissionNo,className,motherFirst,motherLast,motherPhone,motherEmail,fatherFirst,fatherLast,fatherPhone,fatherEmail,dateOfBirth,gender,address,status',
-      'Ada,Okafor,,ADM001,Primary 1,Ada,Mother,08012345678,mother@example.com,John,Father,08087654321,father@example.com,2005-01-10,Female,12 Main Street,ACTIVE',
+      'firstName,lastName,middleName,className,motherFirst,motherLast,motherPhone,motherEmail,fatherFirst,fatherLast,fatherPhone,fatherEmail,dateOfBirth,gender,address,status',
+      'Ada,Okafor,,Primary 1,Ada,Mother,08012345678,mother@example.com,John,Father,08087654321,father@example.com,2005-01-10,Female,12 Main Street,ACTIVE',
     ].join('\n');
 
     const blob = new Blob([template], { type: 'text/csv;charset=utf-8;' });
@@ -1368,7 +1368,7 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="font-semibold text-foreground">Use the template below to prepare your file.</p>
-                    <p className="mt-1">Required columns: firstName, lastName, and className. The template supports both parents' names, parent contact details, and Address. Admission numbers are optional and assigned automatically when blank.</p>
+                    <p className="mt-1">Required columns: firstName, lastName, and className. The template supports both parents' names, parent contact details, and Address. Admission numbers are assigned automatically by the system.</p>
                   </div>
                   <button
                     type="button"

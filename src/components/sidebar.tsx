@@ -38,6 +38,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { WhatsAppIcon } from "@/components/ui/icons";
+import { useLanguage } from "@/components/language-provider";
 
 type NavItem = {
   href: string;
@@ -98,6 +99,10 @@ export default function Sidebar({
   onClose?: () => void;
 }) {
   const pathname = usePathname();
+  const { t } = useLanguage();
+  const translatedLabels: Record<string, string> = {
+    Overview: t("overview"), Dashboard: t("dashboard"), Students: t("students"), Fees: t("fees"), Classes: t("classes"), Teachers: t("teachers"), Subjects: t("subjects"), Results: t("results"), Admissions: t("admissions"), Promotions: t("promotions"), Analytics: t("analytics"), Attendance: t("attendance"), WhatsApp: t("whatsapp"), Support: t("support"), Announcements: t("announcements"), Subscription: t("subscription"), Settings: t("settings"),
+  };
   const schoolLogo = school?.logoUrl ? resolveSchoolAssetUrl(school.logoUrl) : null;
   const schoolName = school?.name || "Little Lillies School";
   const normalizedProgress = typeof setupProgress === "number" ? Math.max(0, Math.min(100, setupProgress)) : 0;
@@ -176,7 +181,7 @@ export default function Sidebar({
                     )}
                   </div>
                 ) : icons[icon] ? createElement(icons[icon], { className: "h-4 w-4" }) : null}
-                {label}
+                {translatedLabels[label] || label}
               </Link>
             </div>
           );
@@ -184,7 +189,7 @@ export default function Sidebar({
       </nav>
 
       <div className="border-t border-border px-3 py-3 space-y-2 flex-shrink-0">
-        <LogoutButton redirectUrl={logoutRedirectUrl} />
+        <LogoutButton redirectUrl={logoutRedirectUrl} label={t("signOut")} />
       </div>
     </aside>
   );

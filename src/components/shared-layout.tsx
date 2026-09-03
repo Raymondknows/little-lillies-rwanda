@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ThemeSwitcher } from "@/components/platform-admin/theme-switcher";
 import { playCloseTone, playOpenTone } from "@/lib/sounds";
 import { applyTheme, detectSystemTheme, resolveStoredTheme, ThemeMode } from "@/lib/theme";
+import { useLanguage } from "@/components/language-provider";
 
 export type NavItem = {
   href: string;
@@ -95,6 +96,7 @@ export default function SharedLayout({
   ];
 
   const pathname = usePathname();
+  const { t } = useLanguage();
   const hideSidebar = pathname?.startsWith("/login");
 
   useEffect(() => {

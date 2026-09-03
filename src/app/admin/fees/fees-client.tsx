@@ -12,7 +12,6 @@ import type { PaymentMethod } from "@prisma/client";
 import {
   formatMoney,
   invoiceStatusClass,
-  invoiceStatusLabel,
   pupilName,
 } from "@/lib/format";
 import {
@@ -39,6 +38,7 @@ import {
   ScrollText,
 } from "lucide-react";
 import { WhatsAppIcon } from "@/components/ui/icons";
+import { useLanguage } from "@/components/language-provider";
 
 const STATUS_CONFIG = {
   DRAFT: { label: "Draft", color: "bg-gray-100 text-gray-800" },
@@ -50,6 +50,15 @@ const STATUS_CONFIG = {
 };
 
 const STATUS_ORDER = ["ALL", "OVERDUE", "PART_PAID", "SENT", "DRAFT", "PAID"];
+
+// Status label mapping for internationalization
+const STATUS_LABEL_MAP: Record<string, string> = {
+  "OVERDUE": "overdue",
+  "PART_PAID": "part-paid",
+  "PAID": "paid",
+  "DRAFT": "draft",
+  "SENT": "sent",
+};
 const PAYMENT_METHODS = ["CASH", "BANK_TRANSFER", "CARD", "ONLINE", "OTHER"] as const;
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100, 500] as const;
 const DEFAULT_ITEMS_PER_PAGE = 20;
@@ -129,6 +138,7 @@ export default function FeesPageClient({
   whatsAppStatusMessage?: string | null;
 }) {
   const searchParams = useSearchParams();
+    const { t, translateText } = useLanguage();
   const router = useRouter();
   const [activePhase, setActivePhase] = useState("ALL");
   const [activeStatus, setActiveStatus] = useState("ALL");
@@ -334,6 +344,18 @@ export default function FeesPageClient({
     handleFilterChange();
   };
 
+  // Localized status label using the school's language
+  const getInvoiceStatusLabel = (status: string) => {
+    const statusMap: Record<string, string> = {
+      "PAID": t("paid"),
+      "PART_PAID": t("partPaid"),
+      "OVERDUE": translateText("overdue"),
+      "DRAFT": translateText("Draft") || "Draft",
+      "SENT": translateText("Sent") || "Sent",
+    };
+    return statusMap[status] || t("outstanding") || "Outstanding";
+  };
+
   const selectInvoiceForPayment = (invoice: Invoice) => {
     setSelectedInvoice(invoice);
     setPaymentAmount(((invoice.amountDue - invoice.amountPaid) / 100).toFixed(0));
@@ -390,7 +412,7 @@ export default function FeesPageClient({
           <div className="w-full max-w-md rounded-xl border border-border bg-surface p-6 shadow-lg my-8">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-semibold text-foreground">
-                Record payment
+                {translateText("Record payment")}
               </h2>
               <button
                 type="button"
@@ -403,7 +425,7 @@ export default function FeesPageClient({
 
             <div className="mb-6 space-y-2 text-sm">
               <div>
-                <p className="text-muted">Student</p>
+                <p className="text-muted">{translateText("Student")}</p>
                 <p className="font-medium text-foreground">{pupilName(selectedInvoice.pupil.firstName, selectedInvoice.pupil.lastName)}</p>
               </div>
               <div>
@@ -411,7 +433,7 @@ export default function FeesPageClient({
                 <p className="font-medium text-foreground">{selectedInvoice.invoiceNo}</p>
               </div>
               <div>
-                <p className="text-muted">Outstanding Balance</p>
+                <p className="text-muted">{t("outstandingBalance")}</p>
                 <p className="font-semibold text-red-600">{formatStatMoney(selectedInvoice.amountDue - selectedInvoice.amountPaid)}</p>
               </div>
             </div>
@@ -475,7 +497,7 @@ export default function FeesPageClient({
 
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
-                  Amount Paid ({currency})
+                  {t("amountPaid")} ({currency})
                 </label>
                 <input
                   type="number"
@@ -491,7 +513,7 @@ export default function FeesPageClient({
 
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
-                  Payment Method
+                  {translateText("Payment Method")}
                 </label>
                 <select
                   name="method"
@@ -510,14 +532,14 @@ export default function FeesPageClient({
 
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">
-                  Reference (optional)
+                  {translateText("Reference (optional)")}
                 </label>
                 <input
                   type="text"
                   name="reference"
                   value={paymentReference}
                   onChange={(e) => setPaymentReference(e.target.value)}
-                  placeholder="Receipt number, bank reference, etc."
+                  placeholder={translateText("Receipt number, bank reference, etc.")}
                   disabled={isSubmittingPayment}
                   className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
@@ -530,14 +552,14 @@ export default function FeesPageClient({
                   disabled={isSubmittingPayment}
                   className="flex-1 rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Cancel
+                  {translateText("Cancel")}
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmittingPayment}
                   className="flex-1 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white transition hover:bg-brand/90 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isSubmittingPayment ? "Recording..." : "Record Payment"}
+                  {isSubmittingPayment ? "Recording..." : translateText("Record Payment")}
                 </button>
               </div>
             </form>
@@ -618,8 +640,8 @@ export default function FeesPageClient({
         {/* Header */}
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between lg:gap-6">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Fees & Invoices</h1>
-          <p className="mt-1 text-muted">Manage student invoices and track fee payments by phase, term, and class</p>
+          <h1 className="text-3xl font-bold text-foreground">{translateText("Fees & Invoices")}</h1>
+          <p className="mt-1 text-muted">{translateText("Manage student invoices and track fee payments by phase, term, and class")}</p>
         </div>
 
         {whatsAppConnected !== null && (
@@ -650,7 +672,7 @@ export default function FeesPageClient({
                 <TrendingUp className="h-4 w-4 text-blue-600" />
               </div>
               <div className="flex-1">
-                <p className="text-xs text-muted">Total Due</p>
+                <p className="text-xs text-muted">{t("total")} {t("due").toLowerCase()}</p>
                 <p className="mt-1 text-lg font-bold text-foreground">{formatStatMoney(summaryStats.totalDue)}</p>
               </div>
               <ArrowUpRight className="h-3 w-3 text-muted opacity-0 transition-opacity group-hover:opacity-100 flex-shrink-0" />
@@ -664,12 +686,12 @@ export default function FeesPageClient({
                 <CheckCircle className="h-4 w-4 text-emerald-600" />
               </div>
               <div className="flex-1">
-                <p className="text-xs text-muted">Paid</p>
+                <p className="text-xs text-muted">{t("paid")}</p>
                 <p className="mt-1 text-lg font-bold text-foreground">{formatStatMoney(summaryStats.totalPaid)}</p>
               </div>
               <ArrowUpRight className="h-3 w-3 text-muted opacity-0 transition-opacity group-hover:opacity-100 flex-shrink-0" />
             </div>
-            <p className="mt-2 text-[11px] text-muted">{summaryStats.byStatus.PAID} fully paid</p>
+            <p className="mt-2 text-[11px] text-muted">{summaryStats.byStatus.PAID} {t("paid").toLowerCase()}</p>
           </div>
 
           <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md h-full cursor-pointer hover:border-brand/50 flex flex-col">
@@ -678,12 +700,12 @@ export default function FeesPageClient({
                 <AlertCircle className="h-4 w-4 text-amber-600" />
               </div>
               <div className="flex-1">
-                <p className="text-xs text-muted">Outstanding</p>
+                <p className="text-xs text-muted">{t("outstanding")}</p>
                 <p className="mt-1 text-lg font-bold text-foreground">{formatStatMoney(summaryStats.outstanding)}</p>
               </div>
               <ArrowUpRight className="h-3 w-3 text-muted opacity-0 transition-opacity group-hover:opacity-100 flex-shrink-0" />
             </div>
-            <p className="mt-2 text-[11px] text-muted">{summaryStats.byStatus.OVERDUE} overdue</p>
+            <p className="mt-2 text-[11px] text-muted">{summaryStats.byStatus.OVERDUE} {translateText("overdue")}</p>
           </div>
 
           <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md h-full cursor-pointer hover:border-brand/50 flex flex-col">
@@ -692,12 +714,12 @@ export default function FeesPageClient({
                 <Clock className="h-4 w-4 text-purple-600" />
               </div>
               <div className="flex-1">
-                <p className="text-xs text-muted">Part Paid</p>
+                <p className="text-xs text-muted">{t("partPaid")}</p>
                 <p className="mt-1 text-lg font-bold text-foreground">{summaryStats.byStatus.PART_PAID}</p>
               </div>
               <ArrowUpRight className="h-3 w-3 text-muted opacity-0 transition-opacity group-hover:opacity-100 flex-shrink-0" />
             </div>
-            <p className="mt-2 text-[11px] text-muted">Partial payments recorded</p>
+            <p className="mt-2 text-[11px] text-muted">{translateText("Partial payments recorded")}</p>
           </div>
         </div>
 
@@ -709,7 +731,7 @@ export default function FeesPageClient({
                 <TrendingUp className="h-4 w-4 text-blue-600" />
               </div>
               <div className="flex-1">
-                <p className="text-xs text-muted">Total Due</p>
+                <p className="text-xs text-muted">{t("total")} {t("due").toLowerCase()}</p>
                 <p className="mt-1 text-lg font-bold text-foreground">{formatStatMoney(summaryStats.totalDue)}</p>
               </div>
               <ArrowUpRight className="h-3 w-3 text-muted opacity-0 transition-opacity group-hover:opacity-100 flex-shrink-0" />
@@ -723,12 +745,12 @@ export default function FeesPageClient({
                 <CheckCircle className="h-4 w-4 text-emerald-600" />
               </div>
               <div className="flex-1">
-                <p className="text-xs text-muted">Paid</p>
+                <p className="text-xs text-muted">{t("paid")}</p>
                 <p className="mt-1 text-lg font-bold text-foreground">{formatStatMoney(summaryStats.totalPaid)}</p>
               </div>
               <ArrowUpRight className="h-3 w-3 text-muted opacity-0 transition-opacity group-hover:opacity-100 flex-shrink-0" />
             </div>
-            <p className="mt-2 text-[11px] text-muted">{summaryStats.byStatus.PAID} fully paid</p>
+            <p className="mt-2 text-[11px] text-muted">{summaryStats.byStatus.PAID} {translateText("fully paid")}</p>
           </div>
 
           <div className="group rounded-lg border border-border bg-surface p-4 shadow-sm transition-shadow hover:shadow-md cursor-pointer hover:border-brand/50">
@@ -737,7 +759,7 @@ export default function FeesPageClient({
                 <AlertCircle className="h-4 w-4 text-amber-600" />
               </div>
               <div className="flex-1">
-                <p className="text-xs text-muted">Outstanding</p>
+                <p className="text-xs text-muted">{t("outstanding")}</p>
                 <p className="mt-1 text-lg font-bold text-foreground">{formatStatMoney(summaryStats.outstanding)}</p>
               </div>
               <ArrowUpRight className="h-3 w-3 text-muted opacity-0 transition-opacity group-hover:opacity-100 flex-shrink-0" />
@@ -751,25 +773,25 @@ export default function FeesPageClient({
                 <Clock className="h-4 w-4 text-purple-600" />
               </div>
               <div className="flex-1">
-                <p className="text-xs text-muted">Part Paid</p>
+                <p className="text-xs text-muted">{t("partPaid")}</p>
                 <p className="mt-1 text-lg font-bold text-foreground">{summaryStats.byStatus.PART_PAID}</p>
               </div>
               <ArrowUpRight className="h-3 w-3 text-muted opacity-0 transition-opacity group-hover:opacity-100 flex-shrink-0" />
             </div>
-            <p className="mt-2 text-[11px] text-muted">Partial payments recorded</p>
+            <p className="mt-2 text-[11px] text-muted">{translateText("Partial payments recorded")}</p>
           </div>
         </div>
 
         {/* Actions & Search Bar */}
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
           {/* Buttons - Right */}
-          <div className="flex flex-wrap gap-2 items-center">
+              <div className="flex flex-wrap gap-2 items-center">
             {/* Animated Search Panel - slides out on same line */}
             <div className={`overflow-hidden transition-all duration-300 ease-out flex-shrink-0 ${isSearchOpen ? "w-72 opacity-100 translate-x-0" : "w-0 opacity-0 translate-x-full"}`}>
               <input
                 ref={searchInputRef}
                 type="text"
-                placeholder="Search by student name, invoice number, or class..."
+                placeholder={translateText("Search by student name, invoice number, or class...")}
                 value={searchQuery}
                 onChange={handleSearchChange}
                 className="w-full rounded-lg border-2 border-[#0A66C2] bg-background px-4 py-2 text-sm text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
@@ -782,7 +804,7 @@ export default function FeesPageClient({
               className="h-9 rounded-md border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8]"
             >
               <Search className="h-4 w-4" />
-              {isSearchOpen ? "Close Search" : "Search Fees"}
+              {isSearchOpen ? translateText("Close Search") : translateText("Search Fees")}
             </Button>
             <form onSubmit={handleIssueBillsSubmit} className="flex flex-col sm:flex-row sm:items-center gap-2">
               <div className="flex items-center gap-2 rounded-md border border-[#0A66C2] bg-background px-2.5 py-1.5 text-sm text-foreground shadow-sm w-full sm:w-auto">
@@ -823,7 +845,7 @@ export default function FeesPageClient({
                 className="w-full sm:w-auto h-9 rounded-md border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8]"
               >
                 <ReceiptText className="h-4 w-4" />
-                {issuingBills ? "Issuing..." : "Issue Bills"}
+                {issuingBills ? "Issuing..." : translateText("Issue Bills")}
               </Button>
             </form>
 
@@ -835,7 +857,7 @@ export default function FeesPageClient({
                 className="h-9 rounded-md border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8]"
               >
                 <SendHorizonal className="h-4 w-4" />
-                {sendingReminders ? "Sending..." : "Send Reminders"}
+                {sendingReminders ? "Sending..." : translateText("Send Reminders")}
               </Button>
             </form>
 
@@ -845,7 +867,7 @@ export default function FeesPageClient({
               className="h-9 rounded-md border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8]"
             >
               <ScrollText className="h-4 w-4" />
-              Fee Schedules
+              {translateText("Fee Schedules")}
             </Button>
           </div>
         </div>
@@ -853,7 +875,7 @@ export default function FeesPageClient({
         {/* Filters */}
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap gap-2">
-            <label className="text-sm font-medium text-muted">School Phase:</label>
+            <label className="text-sm font-medium text-muted">{translateText("School Phase:")}</label>
             {phaseOptions.map((option) => (
               <button
                 key={option.value}
@@ -894,7 +916,7 @@ export default function FeesPageClient({
             {searchQuery && ` matching "${searchQuery}"`}
           </p>
           <label className="text-sm text-muted whitespace-nowrap">
-            Rows per page
+            {translateText("Rows per page")}
             <select
               value={itemsPerPage}
               onChange={handlePageSizeChange}
@@ -917,15 +939,15 @@ export default function FeesPageClient({
               <table className="w-full text-left text-sm">
                 <thead className="border-b border-border bg-background text-muted">
                   <tr>
-                    <th className="px-4 py-2 font-medium">Student</th>
-                    <th className="px-4 py-2 font-medium">Phase / Class</th>
-                    <th className="px-4 py-2 font-medium">Term</th>
-                    <th className="px-4 py-2 font-medium">Invoice No.</th>
-                    <th className="px-4 py-2 font-medium text-right">Amount Due</th>
-                    <th className="px-4 py-2 font-medium text-right">Paid</th>
-                    <th className="px-4 py-2 font-medium text-right">Balance</th>
-                    <th className="px-4 py-2 font-medium">Status</th>
-                    <th className="px-4 py-2 font-medium">Actions</th>
+                    <th className="px-4 py-2 font-medium">{translateText("Student")}</th>
+                    <th className="px-4 py-2 font-medium">{translateText("Phase / Class")}</th>
+                    <th className="px-4 py-2 font-medium">{translateText("Term")}</th>
+                    <th className="px-4 py-2 font-medium">{t("invoiceNo")}</th>
+                    <th className="px-4 py-2 font-medium text-right">{translateText("Amount Due")}</th>
+                    <th className="px-4 py-2 font-medium text-right">{t("paid")}</th>
+                    <th className="px-4 py-2 font-medium text-right">{t("balance")}</th>
+                    <th className="px-4 py-2 font-medium">{t("status")}</th>
+                    <th className="px-4 py-2 font-medium">{translateText("Actions")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -953,9 +975,9 @@ export default function FeesPageClient({
                         <td className="px-4 py-2 text-right font-semibold">{formatStatMoney(inv.amountDue)}</td>
                         <td className="px-4 py-2 text-right font-semibold text-green-600">{formatStatMoney(inv.amountPaid)}</td>
                         <td className={`px-4 py-2 text-right font-semibold ${invoiceStatusClass(inv.status)}`}>{formatStatMoney(balance)}</td>
-                        <td className="px-4 py-2"><Badge variant={inv.status === "PAID" ? "success" : inv.status === "OVERDUE" ? "error" : inv.status === "PART_PAID" ? "warning" : "secondary"}>{invoiceStatusLabel(inv.status)}</Badge></td>
+                        <td className="px-4 py-2"><Badge variant={inv.status === "PAID" ? "success" : inv.status === "OVERDUE" ? "error" : inv.status === "PART_PAID" ? "warning" : "secondary"}>{getInvoiceStatusLabel(inv.status)}</Badge></td>
                         <td className="px-4 py-2 flex flex-wrap gap-1">
-                          <Link href={`/admin/fees/${inv.id}`} className="rounded-full border border-[#0A66C2] bg-[#0A66C2] px-2 py-0.5 text-xs font-semibold text-white transition hover:bg-[#0A66C2]/90">View</Link>
+                          <Link href={`/admin/fees/${inv.id}`} className="rounded-full border border-[#0A66C2] bg-[#0A66C2] px-2 py-0.5 text-xs font-semibold text-white transition hover:bg-[#0A66C2]/90">{translateText("View")}</Link>
                           {balance > 0 ? (
                             <>
                               <button
@@ -964,14 +986,14 @@ export default function FeesPageClient({
                                 disabled={sendingReminderInvoiceId === inv.id}
                                 className="rounded-full border border-[#0A66C2] bg-white px-2 py-0.5 text-xs font-semibold text-[#0A66C2] transition hover:bg-[#0A66C2]/5 disabled:cursor-not-allowed disabled:opacity-60"
                               >
-                                {sendingReminderInvoiceId === inv.id ? "Sending..." : "Remind"}
+                                {sendingReminderInvoiceId === inv.id ? "Sending..." : translateText("Remind")}
                               </button>
                               <button
                                 type="button"
                                 onClick={() => selectInvoiceForPayment(inv)}
                                 className="rounded-full border border-[#0A66C2] bg-white px-2 py-0.5 text-xs font-semibold text-[#0A66C2] transition hover:bg-[#0A66C2]/5"
                               >
-                                Pay
+                                {translateText("Pay")}
                               </button>
                             </>
                           ) : null}
@@ -1012,14 +1034,14 @@ export default function FeesPageClient({
                       </div>
                       <div className="flex flex-col items-end gap-1">
                         <Badge variant={inv.status === "PAID" ? "success" : inv.status === "OVERDUE" ? "error" : inv.status === "PART_PAID" ? "warning" : "secondary"} className="text-xs whitespace-nowrap">
-                          {invoiceStatusLabel(inv.status)}
+                          {getInvoiceStatusLabel(inv.status)}
                         </Badge>
                         <p className="text-xs font-semibold text-foreground">{formatStatMoney(balance)}</p>
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <Link href={`/admin/fees/${inv.id}`} className="rounded-full border border-[#0A66C2] bg-[#0A66C2] px-1.5 py-0.5 text-xs font-semibold text-white transition hover:bg-[#0A66C2]/90">
-                        View
+                        {translateText("View")}
                       </Link>
                       {balance > 0 ? (
                         <>
@@ -1029,14 +1051,14 @@ export default function FeesPageClient({
                             disabled={sendingReminderInvoiceId === inv.id}
                             className="rounded-full border border-[#0A66C2] bg-white px-1.5 py-0.5 text-xs font-semibold text-[#0A66C2] transition hover:bg-[#0A66C2]/5 disabled:cursor-not-allowed disabled:opacity-60"
                           >
-                            {sendingReminderInvoiceId === inv.id ? "Sending..." : "Remind"}
+                            {sendingReminderInvoiceId === inv.id ? "Sending..." : translateText("Remind")}
                           </button>
                           <button
                             type="button"
                             onClick={() => selectInvoiceForPayment(inv)}
                             className="rounded-full border border-[#0A66C2] bg-white px-1.5 py-0.5 text-xs font-semibold text-[#0A66C2] transition hover:bg-[#0A66C2]/5"
                           >
-                            Pay
+                            {translateText("Pay")}
                           </button>
                         </>
                       ) : null}
@@ -1051,7 +1073,7 @@ export default function FeesPageClient({
         ) : (
           <div className="rounded-lg border border-border bg-surface px-4 py-8 text-center sm:px-6 sm:py-12">
             <p className="text-sm text-muted">
-              {searchQuery ? `No invoices found matching "${searchQuery}"` : "No invoices to display"}
+              {searchQuery ? `${translateText("No invoices found matching")} "${searchQuery}"` : translateText("No invoices to display")}
             </p>
           </div>
         )}

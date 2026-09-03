@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { getBackendUrl } from "@/lib/backend-url";
+import { useLanguage } from "@/components/language-provider";
 import { playCloseTone, playOpenTone } from "@/lib/sounds";
 import { Button } from "@/components/ui/button";
 import { ErrorModal } from "@/components/ui/error-modal";
@@ -104,6 +105,7 @@ const HELP_GUIDE: PageHelpGuide = {
 };
 
 export default function WebsitePage() {
+  const { translateText } = useLanguage();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -357,7 +359,7 @@ export default function WebsitePage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Announcements</h1>
+            <h1 className="text-3xl font-bold text-foreground">{translateText("Announcements")}</h1>
             <p className="mt-1 text-muted">Manage your school's public announcements</p>
           </div>
           <Link href="/admin/website/new">

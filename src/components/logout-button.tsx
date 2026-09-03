@@ -6,7 +6,7 @@ import { LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getBackendUrl } from '@/lib/backend-url';
 
-export function LogoutButton({ redirectUrl = "/login" }: { redirectUrl?: string }) {
+export function LogoutButton({ redirectUrl = "/login", label = "Sign out" }: { redirectUrl?: string; label?: string }) {
   const [pending, setPending] = useState(false);
   const router = useRouter();
 
@@ -47,7 +47,7 @@ export function LogoutButton({ redirectUrl = "/login" }: { redirectUrl?: string 
       className="cursor-pointer w-full justify-center gap-2 text-sm py-3"
     >
       <LogOut className="h-4 w-4" />
-      {pending ? 'Signing out...' : 'Sign out'}
+      {pending ? `${label}...` : label}
     </Button>
   );
 }

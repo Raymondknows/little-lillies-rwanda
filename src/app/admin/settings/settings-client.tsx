@@ -14,6 +14,7 @@ import countriesData from "../../../../config/countries.json";
 import { resolveSchoolAssetUrl } from "@/lib/asset-urls";
 import { getBackendUrl } from "@/lib/backend-url";
 import { playCloseTone, playOpenTone } from "@/lib/sounds";
+import { useLanguage } from "@/components/language-provider";
 
 interface SchoolSettingsProps {
   school: {
@@ -26,6 +27,7 @@ interface SchoolSettingsProps {
     city?: string | null;
     country?: string | null;
     currency?: string | null;
+    preferredLanguage?: string | null;
     phone?: string | null;
     email?: string | null;
     logoUrl?: string | null;
@@ -66,6 +68,7 @@ export default function SettingsPageClient({
   isOnboarding = false,
 }: SchoolSettingsProps) {
   const router = useRouter();
+  const { t, setLanguage } = useLanguage();
   const [name, setName] = useState(school.name);
   const [initials, setInitials] = useState(school.initials ?? "");
   const [slug, setSlug] = useState(school.slug);
@@ -74,6 +77,7 @@ export default function SettingsPageClient({
   const [currency, setCurrency] = useState(
     school.currency ?? countriesData.countries[(school.country ?? countriesData.default ?? "NG") as keyof typeof countriesData.countries]?.currency ?? "NGN",
   );
+  const [preferredLanguage, setPreferredLanguage] = useState(school.preferredLanguage ?? "en");
   const [address, setAddress] = useState(school.address ?? "");
   const [email, setEmail] = useState(school.email ?? "");
   const [phone, setPhone] = useState(school.phone ?? "");
@@ -218,6 +222,7 @@ export default function SettingsPageClient({
           tagline: tagline.trim() || null,
           country: country.trim() || null,
           currency: currency.trim() || null,
+          preferredLanguage,
           address: address.trim() || null,
           email: email.trim() || null,
           phone: phone.trim() || null,
@@ -251,6 +256,7 @@ export default function SettingsPageClient({
       }
 
       setShowSuccessModal(true);
+      setLanguage(preferredLanguage as "en" | "rw" | "fr" | "sw");
       setSuccessModalTitle("Settings Saved");
       setSuccessModalMessage("Your school settings were updated successfully.");
     } catch (err) {
@@ -529,7 +535,7 @@ export default function SettingsPageClient({
               </div>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-3">
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">Tagline / Motto</label>
                 <input
@@ -554,7 +560,7 @@ export default function SettingsPageClient({
               </div>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-3">
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">Country *</label>
                 <select
@@ -590,6 +596,20 @@ export default function SettingsPageClient({
                     </option>
                   ))}
                 </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">{t("systemLanguage")}</label>
+                <select
+                  value={preferredLanguage}
+                  onChange={(event) => setPreferredLanguage(event.target.value)}
+                  className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand/50"
+                >
+                  <option value="en">English</option>
+                  <option value="rw">Kinyarwanda</option>
+                  <option value="fr">French</option>
+                  <option value="sw">Swahili</option>
+                </select>
+                <p className="mt-2 text-xs text-muted">Used for translated pages, invoices, receipts, and notifications.</p>
               </div>
             </div>
 
@@ -1140,7 +1160,7 @@ export default function SettingsPageClient({
             className="flex items-center gap-2"
           >
             <Save className="h-4 w-4" />
-            {isSaving ? "Saving..." : "Save Settings"}
+            {isSaving ? "Saving..." : t("saveSettings")}
           </Button>
         </div>
       </form>

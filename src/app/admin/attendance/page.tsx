@@ -16,6 +16,7 @@ import { getBackendUrl } from "@/lib/backend-url";
 import { Button } from "@/components/ui/button";
 import SubscriptionModal from "@/components/subscription-modal";
 import AdminSkeleton from "@/components/ui/skeleton";
+import { useLanguage } from "@/components/language-provider";
 
 interface ClassData {
   id: string;
@@ -58,6 +59,7 @@ const PHASE_LABELS: Record<string, string> = {
 };
 
 export default function AttendanceOverviewPage() {
+  const { translateText } = useLanguage();
   const [allClasses, setAllClasses] = useState<ClassData[]>([]);
   const [selectedPhase, setSelectedPhase] = useState<string>("ALL");
   const [selectedClass, setSelectedClass] = useState<string>("ALL");
@@ -323,7 +325,7 @@ export default function AttendanceOverviewPage() {
           </style>
         </head>
         <body>
-          <h1>Attendance Overview</h1>
+          <h1>{translateText("Attendance Overview")}</h1>
           <div class="meta">Period: ${startDate} to ${endDate}${selectedClass !== "ALL" ? ` | Class: ${filteredClasses.find((cls) => cls.id === selectedClass)?.name || selectedClass}` : " | All Classes"}</div>
           <div class="metrics">
             <div class="metric"><div class="label">Records</div><div class="value">${stats.records}</div></div>

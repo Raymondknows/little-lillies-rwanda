@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Calendar, CreditCard, RefreshCw, TrendingUp, AlertCircle, CheckCircle, Clock } from "lucide-react";
 import { getBackendUrl } from "@/lib/backend-url";
+import { useLanguage } from "@/components/language-provider";
 import { Button } from "@/components/ui/button";
 import { UserGuide, type PageHelpGuide } from "@/components/ui/user-guide";
 import AdminSkeleton from "@/components/ui/skeleton";
@@ -146,6 +147,7 @@ const HELP_GUIDE: PageHelpGuide = {
 };
 
 export default function SubscriptionPage() {
+  const { translateText } = useLanguage();
   const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -252,7 +254,7 @@ export default function SubscriptionPage() {
       <div className="w-full max-w-5xl mx-auto space-y-10">
         {/* Header */}
         <div className="text-center">
-          <h1 className="text-3xl font-bold">Your Subscription</h1>
+          <h1 className="text-3xl font-bold">{translateText("Your Subscription")}</h1>
           <p className="text-sm text-muted mt-2">
             Manage your school's subscription plan and billing
           </p>
@@ -358,7 +360,7 @@ export default function SubscriptionPage() {
     <div className="w-full max-w-5xl mx-auto space-y-10">
       {/* Header */}
       <div className="text-center">
-        <h1 className="text-3xl font-bold">Your Subscription</h1>
+        <h1 className="text-3xl font-bold">{translateText("Your Subscription")}</h1>
         <p className="text-sm text-muted mt-2">
           Manage your school's subscription plan and billing
         </p>

@@ -4,6 +4,7 @@ import Header from "@/components/header";
 import FooterWrapper from "@/components/footer-wrapper";
 import TenantBranding from "@/components/tenant-branding";
 import PwaInstallPrompt from "@/components/pwa-install-prompt";
+import { LanguageProvider } from "@/components/language-provider";
 import fs from "fs";
 import path from "path";
 
@@ -105,11 +106,13 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full antialiased">
       <body className="min-h-full flex flex-col">
+        <LanguageProvider>
         <TenantBranding />
         <Header />
         <main className="flex-1">{children}</main>
         <FooterWrapper />
         <PwaInstallPrompt />
+        </LanguageProvider>
       </body>
     </html>
   );

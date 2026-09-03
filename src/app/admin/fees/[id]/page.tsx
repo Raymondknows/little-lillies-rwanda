@@ -6,6 +6,7 @@ import { getBackendUrl } from "@/lib/backend-url";
 import { formatMoney, pupilName as formatPupilName, invoiceStatusLabel } from "@/lib/format";
 import { playOpenTone, playCloseTone } from "@/lib/sounds";
 import { Download, Printer, ChevronLeft, Check, AlertCircle, Edit2 } from "lucide-react";
+import { useLanguage } from "@/components/language-provider";
 
 const BRAND_BLUE = "#0A66C2";
 const LIGHT_BLUE = "#E7F1F8";
@@ -15,6 +16,7 @@ const LIGHT_GRAY = "#F3F4F6";
 const BORDER_GRAY = "#E5E7EB";
 
 export default function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { t, locale } = useLanguage();
   const [invoiceId, setInvoiceId] = useState<string>("");
   const [invoice, setInvoice] = useState<any>(null);
   const [school, setSchool] = useState<any>(null);
@@ -283,7 +285,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                   </div>
                 )}
                 <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.3em] text-gray-500">Invoice</p>
+                  <p className="text-sm font-semibold uppercase tracking-[0.3em] text-gray-500">{t("invoice")}</p>
                   <h1 className="mt-1 text-3xl font-semibold text-gray-900">{school?.name || "School Name"}</h1>
                 </div>
               </div>
@@ -295,11 +297,11 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
             </div>
 
             <div className="lg:text-right">
-              <div className="text-sm font-semibold uppercase tracking-[0.3em] text-gray-500">Invoice No.</div>
+              <div className="text-sm font-semibold uppercase tracking-[0.3em] text-gray-500">{t("invoiceNo")}</div>
               <div className="mt-2 text-xl font-semibold text-gray-900">{invoice.invoiceNo}</div>
               <div className="mt-4 inline-flex items-center gap-2 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-gray-700">
                 {isPaid ? <Check size={14} /> : <AlertCircle size={14} />}
-                {isPaid ? "Paid" : isPartPaid ? "Part Paid" : "Outstanding"}
+                {isPaid ? t("paid") : isPartPaid ? t("partPaid") : t("outstanding")}
               </div>
             </div>
           </div>
@@ -307,7 +309,7 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
           <div className="mt-8">
             <div className="grid gap-8 pb-8 md:grid-cols-[1.1fr_0.9fr]">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-500">Bill To</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-500">{t("billTo")}</p>
                 <div className="mt-3 space-y-1 text-sm text-gray-700">
                   <p className="text-lg font-semibold text-gray-900">{pupilFullName}</p>
                   <p>{className}</p>
@@ -317,22 +319,22 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
               </div>
 
               <div className="md:text-right">
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-500">Invoice Details</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-500">{t("invoiceDetails")}</p>
                 <div className="mt-3 space-y-2 text-sm text-gray-700">
                   <div className="flex items-center justify-between gap-4 md:justify-end">
-                    <span className="text-gray-500">Date</span>
-                    <span className="font-medium text-gray-900">{invoiceDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                    <span className="text-gray-500">{t("date")}</span>
+                    <span className="font-medium text-gray-900">{invoiceDate.toLocaleDateString(locale, { year: 'numeric', month: 'long', day: 'numeric' })}</span>
                   </div>
                   <div className="flex items-center justify-between gap-4 md:justify-end">
-                    <span className="text-gray-500">Due</span>
-                    <span className="font-medium text-gray-900">{dueDate ? dueDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : "On Demand"}</span>
+                    <span className="text-gray-500">{t("due")}</span>
+                    <span className="font-medium text-gray-900">{dueDate ? dueDate.toLocaleDateString(locale, { year: 'numeric', month: 'long', day: 'numeric' }) : t("onDemand")}</span>
                   </div>
                   <div className="flex items-center justify-between gap-4 md:justify-end">
-                    <span className="text-gray-500">Status</span>
+                    <span className="text-gray-500">{t("status")}</span>
                     <span className="font-medium text-gray-900">{invoiceStatusLabel(invoice.status)}</span>
                   </div>
                   <div className="flex items-center justify-between gap-4 md:justify-end">
-                    <span className="text-gray-500">Currency</span>
+                    <span className="text-gray-500">{t("currency")}</span>
                     <span className="font-medium text-gray-900">{currency}</span>
                   </div>
                 </div>
@@ -365,11 +367,11 @@ export default function InvoiceDetailPage({ params }: { params: Promise<{ id: st
                   <span className="font-medium text-gray-900">{formatMoney(invoice.amountDue, currency)}</span>
                 </div>
                 <div className="flex items-center justify-between px-4 py-3 text-sm text-gray-600">
-                  <span>Amount Paid</span>
+                        <span>{t("amountPaid")}</span>
                   <span className="font-medium text-gray-900">{formatMoney(invoice.amountPaid, currency)}</span>
                 </div>
                 <div className="flex items-center justify-between px-4 py-4 text-base font-bold text-gray-900">
-                  <span>{outstanding > 0 ? "Outstanding Balance" : "Total Paid"}</span>
+                  <span>{outstanding > 0 ? t("outstandingBalance") : t("totalPaid")}</span>
                   <span>{formatMoney(outstanding > 0 ? outstanding : invoice.amountPaid, currency)}</span>
                 </div>
               </div>

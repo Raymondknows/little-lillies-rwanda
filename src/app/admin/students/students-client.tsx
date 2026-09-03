@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Search, UserPlus, X, Upload, Download, Trash2, Check } from "lucide-react";
 import { playCloseTone, playOpenTone } from "@/lib/sounds";
 import { getBackendUrl } from "@/lib/backend-url";
+import { useLanguage } from "@/components/language-provider";
 import { WhatsAppIcon } from "@/components/ui/icons";
 import { Pagination } from "@/components/ui/pagination";
 import { UserGuide, type PageHelpGuide } from "@/components/ui/user-guide";
@@ -72,7 +73,7 @@ const HELP_GUIDE: PageHelpGuide = {
     },
     {
       question: "Can I bulk import students?",
-      answer: "Yes. Click 'Import CSV' and upload a file with columns: firstName, lastName, admissionNo, classId. Consult the template for exact format.",
+      answer: "Yes. Click 'Import CSV' and use the downloaded template. It includes both parents' names, contact details, the student's Address, and the other supported fields.",
     },
     {
       question: "Why is a student not appearing in fees/results?",
@@ -82,10 +83,32 @@ const HELP_GUIDE: PageHelpGuide = {
 };
 
 export default function StudentsPageClient({ pupils, classes }: { pupils: any[]; classes: any[] }) {
+  const { translateText, t } = useLanguage();
   const router = useRouter();
   const [activePhase, setActivePhase] = useState("ALL");
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+  // Localized phase labels
+  const getPhaseLabel = (phase: string) => {
+    const labels: Record<string, string> = {
+      "EARLY_YEARS": translateText("Early Years"),
+      "PRIMARY": translateText("Primary"),
+      "SECONDARY": translateText("Secondary"),
+      "ALL": translateText("All Students"),
+    };
+    return labels[phase] || phase;
+  };
+
+  const getPhaseConfig = (phase: string) => {
+    const baseConfigs: Record<string, any> = {
+      EARLY_YEARS: { badge: "bg-amber-100 text-amber-800" },
+      PRIMARY: { badge: "bg-blue-100 text-blue-800" },
+      SECONDARY: { badge: "bg-purple-100 text-purple-800" },
+      ALL: { badge: "bg-gray-100 text-gray-800" },
+    };
+    return baseConfigs[phase] || { badge: "bg-gray-100 text-gray-800" };
+  };
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(DEFAULT_ITEMS_PER_PAGE);
   const [sortMode, setSortMode] = useState("alphabet-asc");
@@ -501,8 +524,8 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
 
   const handleDownloadImportTemplate = () => {
     const template = [
-      'firstName,lastName,middleName,className,guardianFirst,guardianLast,guardianPhone,guardianEmail,dateOfBirth,gender,address,status',
-      'Ada,Okafor,,Primary 1,Ade,Okafor,08012345678,ade@example.com,2005-01-10,Female,12 Main Street,ACTIVE',
+      'firstName,lastName,middleName,admissionNo,className,motherFirst,motherLast,motherPhone,motherEmail,fatherFirst,fatherLast,fatherPhone,fatherEmail,dateOfBirth,gender,address,status',
+      'Ada,Okafor,,ADM001,Primary 1,Ada,Mother,08012345678,mother@example.com,John,Father,08087654321,father@example.com,2005-01-10,Female,12 Main Street,ACTIVE',
     ].join('\n');
 
     const blob = new Blob([template], { type: 'text/csv;charset=utf-8;' });
@@ -640,7 +663,7 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
       <div>
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Students</h1>
+            <h1 className="text-3xl font-bold text-foreground">{translateText("Students")}</h1>
             <p className="mt-2 text-sm text-muted">
               {pupils.length} active student{pupils.length !== 1 ? "s" : ""} across all phases
             </p>
@@ -653,10 +676,10 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
                 </span>
                 <div className="flex flex-col">
                   <span className={`text-sm font-semibold ${whatsAppConnected ? 'text-foreground' : 'text-foreground'}`}>
-                    {whatsAppConnected ? 'WhatsApp connected' : 'WhatsApp disconnected'}
+                    {whatsAppConnected ? translateText("WhatsApp connected") : translateText("WhatsApp disconnected")}
                   </span>
                   <span className="text-xs text-muted">
-                    {whatsAppConnected ? 'Ready to send school messages.' : 'Reconnect via settings.'}
+                    {whatsAppConnected ? translateText("Ready to send school messages.") : translateText("Reconnect via settings.")}
                   </span>
                 </div>
                 <span className={`inline-flex h-6 min-w-[2.25rem] items-center justify-center rounded-full px-2 text-xs font-semibold ${whatsAppConnected ? 'bg-emerald-600 text-white' : 'bg-amber-600 text-white'}`}>
@@ -669,7 +692,7 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
               <input
                 ref={searchInputRef}
                 type="text"
-                placeholder="Search by name or admission number..."
+                placeholder={translateText("Search by name or admission number...")}
                 value={searchQuery}
                 onChange={handleSearchChange}
                 className="w-full rounded-lg border-2 border-[#0A66C2] bg-background px-3 py-1.5 text-sm text-foreground placeholder-muted focus:outline-none focus:ring-2 focus:ring-[#0A66C2]"
@@ -682,7 +705,7 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
               className="h-9 w-full rounded-md border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8] sm:w-auto"
             >
               <Search className="h-4 w-4" />
-              {isSearchOpen ? "Close Search" : "Search Student"}
+              {isSearchOpen ? translateText("Close Search") : translateText("Search Student")}
             </Button>
             <Button
               type="button"
@@ -690,7 +713,7 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
               className="h-9 w-full rounded-md border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8] sm:w-auto"
             >
               <Upload className="h-4 w-4" />
-              Import CSV
+              {translateText("Import CSV")}
             </Button>
             <Button
               type="button"
@@ -698,7 +721,7 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
               className="h-9 w-full rounded-md border border-[#0A66C2] bg-[#0A66C2] px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-[#0858a8] sm:w-auto"
             >
               <UserPlus className="h-4 w-4" />
-              Register Student
+              {translateText("Add student")}
             </Button>
             <Button
               type="button"
@@ -706,7 +729,7 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
               onClick={openInactiveStudents}
               className="h-9 w-full px-3 py-1.5 text-sm font-semibold sm:w-auto"
             >
-              Restore inactive
+              {translateText("Restore inactive")}
             </Button>
           </div>
         </div>
@@ -720,7 +743,7 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold text-foreground">
-                    {successModalMessage.includes("removed from the active roster") ? "Roster updated successfully" : "Student saved successfully"}
+                    {successModalMessage.includes("removed from the active roster") ? translateText("Roster updated successfully") : translateText("Student saved successfully")}
                   </h3>
                   <p className="mt-2 text-sm text-muted">{successModalMessage}</p>
                 </div>
@@ -728,10 +751,10 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
 
               <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
                 <Button type="button" variant="secondary" onClick={() => setSuccessModalMessage(null)}>
-                  Close
+                  {translateText("Close")}
                 </Button>
                 <Button type="button" onClick={() => setSuccessModalMessage(null)}>
-                  Back to roster
+                  {translateText("Back to roster")}
                 </Button>
               </div>
             </div>
@@ -742,10 +765,10 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
           <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-950">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-sm font-semibold">Student registered, but guardian email failed to send.</p>
+                <p className="text-sm font-semibold">{translateText("Student registered, but guardian email failed to send.")}</p>
                 <p className="mt-1 text-sm text-amber-900">{emailErrorMessage}</p>
                 <p className="mt-1 text-sm text-amber-900">
-                  Please verify the guardian's email address and SMTP settings. The student record was still created.
+                  {translateText("Please verify the guardian's email address and SMTP settings. The student record was still created.")}
                 </p>
               </div>
               <button
@@ -765,7 +788,7 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
           <div className="flex flex-wrap gap-1 sm:gap-2">
             {PHASE_ORDER.map((phase) => {
               const count = getPhaseStats(phase);
-              const config = PHASE_CONFIG[phase as keyof typeof PHASE_CONFIG];
+              const config = getPhaseConfig(phase);
               const isActive = activePhase === phase;
 
               return (
@@ -778,7 +801,7 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
                       : "border-b-2 border-transparent text-muted hover:text-foreground"
                   }`}
                 >
-                  {config.label}
+                  {getPhaseLabel(phase)}
                   <span className="ml-1 inline-block rounded px-1.5 py-0.5 text-xs font-semibold bg-background text-foreground sm:ml-2 sm:px-2">
                     {count}
                   </span>
@@ -789,13 +812,13 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
 
           <div className="flex flex-wrap items-center gap-2 text-sm text-muted">
             <p className="whitespace-nowrap text-sm text-muted">
-              Showing {paginatedPupils.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0}–
-              {Math.min(currentPage * itemsPerPage, filteredPupils.length)} of {filteredPupils.length}
-              {searchQuery && ` matching "${searchQuery}"`}
+              {translateText("Showing")} {paginatedPupils.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0}–
+              {Math.min(currentPage * itemsPerPage, filteredPupils.length)} {translateText("of")} {filteredPupils.length}
+              {searchQuery && ` ${translateText("matching")} "${searchQuery}"`}
             </p>
 
             <label className="flex items-center gap-2 text-sm text-muted">
-              <span className="hidden sm:inline">Sort</span>
+              <span className="hidden sm:inline">{translateText("Sort")}</span>
               <select
                 value={sortMode}
                 onChange={handleSortChange}
@@ -811,13 +834,13 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
             </label>
 
             <label className="flex items-center gap-2 text-sm text-muted">
-              <span className="hidden sm:inline">Class</span>
+              <span className="hidden sm:inline">{translateText("Class")}</span>
               <select
                 value={selectedClassId}
                 onChange={handleClassChange}
                 className="rounded-lg border border-border bg-transparent px-2.5 py-1.5 text-sm text-foreground focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
               >
-                <option value="ALL">All classes</option>
+                <option value="ALL">{translateText("All classes")}</option>
                 {classOptions.map((cls) => (
                   <option key={cls.id} value={cls.id}>
                     {cls.name}{cls.arm ? ` ${cls.arm}` : ""}
@@ -827,7 +850,7 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
             </label>
 
             <label className="flex items-center gap-2 text-sm text-muted">
-              <span className="hidden sm:inline">Starts with</span>
+              <span className="hidden sm:inline">{translateText("Starts with")}</span>
               <select
                 value={selectedLetter}
                 onChange={handleLetterChange}
@@ -835,14 +858,14 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
               >
                 {alphabetOptions.map((letter) => (
                   <option key={letter} value={letter}>
-                    {letter === "ALL" ? "All" : letter}
+                    {letter === "ALL" ? translateText("All") : letter}
                   </option>
                 ))}
               </select>
             </label>
 
             <label className="flex items-center gap-2 text-sm text-muted">
-              <span className="hidden sm:inline">Rows</span>
+              <span className="hidden sm:inline">{translateText("Rows")}</span>
               <select
                 value={itemsPerPage}
                 onChange={handlePageSizeChange}
@@ -862,7 +885,7 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
                 onClick={resetAdvancedFilters}
                 className="rounded-lg border border-border px-2.5 py-1.5 text-sm font-medium text-foreground transition hover:bg-background"
               >
-                Reset
+                {translateText("Reset")}
               </button>
             )}
           </div>
@@ -871,7 +894,7 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
         {selectedPupilIds.length > 0 ? (
           <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-border bg-background/60 px-3 py-2">
             <span className="inline-flex items-center rounded-full border border-border bg-background px-3 py-1 text-xs font-semibold text-foreground">
-              {selectedPupilIds.length} selected
+              {selectedPupilIds.length} {translateText("selected")}
             </span>
             <Button
               type="button"
@@ -885,7 +908,7 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
               className="inline-flex items-center gap-1.5 rounded-lg border-amber-300 px-3 py-1.5 text-xs font-semibold text-amber-950 hover:bg-amber-100"
             >
               <Trash2 className="h-3.5 w-3.5" />
-              Remove
+              {translateText("Remove")}
             </Button>
             <Button
               type="button"
@@ -900,7 +923,7 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
               className="inline-flex items-center gap-1.5 rounded-lg border-red-300 px-3 py-1.5 text-xs font-semibold text-red-800 hover:bg-red-100"
             >
               <Trash2 className="h-3.5 w-3.5" />
-              Delete
+              {translateText("Delete")}
             </Button>
           </div>
         ) : null}
@@ -922,12 +945,12 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
                       className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
                     />
                   </th>
-                  <th className="px-4 py-2 font-medium">Photo</th>
-                  <th className="px-4 py-2 font-medium">Name</th>
-                  <th className="px-4 py-2 font-medium">Class</th>
-                  <th className="px-4 py-2 font-medium">Admission No.</th>
-                  <th className="px-4 py-2 font-medium">Parent Contact</th>
-                  <th className="px-4 py-2 font-medium">Action</th>
+                  <th className="px-4 py-2 font-medium">{translateText("Photo")}</th>
+                  <th className="px-4 py-2 font-medium">{translateText("Name")}</th>
+                  <th className="px-4 py-2 font-medium">{translateText("Class")}</th>
+                  <th className="px-4 py-2 font-medium">{translateText("Admission No.")}</th>
+                  <th className="px-4 py-2 font-medium">{translateText("Parent Contact")}</th>
+                  <th className="px-4 py-2 font-medium">{translateText("Action")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -981,10 +1004,10 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
                           onClick={() => router.push(`/admin/students/${p.id}`)}
                           className="rounded-lg bg-brand px-2 py-1 text-xs font-semibold text-white transition hover:bg-brand/90"
                         >
-                          View
+                          {translateText("View")}
                         </button>
                         <Button type="button" variant="secondary" className="text-xs px-1.5 py-0.5" onClick={() => router.push(`/admin/students/${p.id}/edit`)}>
-                          Edit
+                          {translateText("Edit")}
                         </Button>
                       </td>
                     </tr>
@@ -1026,14 +1049,14 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
                         onClick={() => router.push(`/admin/students/${p.id}`)}
                         className="rounded-lg bg-brand px-2 py-1 text-xs font-semibold text-white transition hover:bg-brand/90"
                       >
-                        View
+                        {translateText("View")}
                       </button>
                       <button
                         type="button"
                         onClick={() => router.push(`/admin/students/${p.id}/edit`)}
                         className="rounded-full border border-border bg-surface px-1.5 py-0.5 text-xs font-semibold text-foreground transition hover:bg-background"
                       >
-                        Edit
+                        {translateText("Edit")}
                       </button>
                     </div>
                   </div>
@@ -1054,7 +1077,7 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
                   disabled={currentPage === 1}
                   className="rounded px-3 py-1.5 border border-border text-sm font-medium text-foreground hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Previous
+                  {translateText("Previous")}
                 </button>
                 {Array.from({ length: totalPages }, (_, i) => i + 1)
                   .filter((page) => {
@@ -1087,7 +1110,7 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
                   disabled={currentPage === totalPages}
                   className="rounded px-3 py-1.5 border border-border text-sm font-medium text-foreground hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Next
+                  {translateText("Next")}
                 </button>
               </div>
             </div>
@@ -1097,8 +1120,8 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
         <div className="rounded-lg border border-border bg-surface px-6 py-12 text-center">
           <p className="text-muted">
             {searchQuery
-              ? `No students found matching "${searchQuery}"`
-              : "No students in this phase"}
+              ? `${translateText("No students found matching")} "${searchQuery}"`
+              : `${translateText("No students")} ${translateText("in this phase")}`}
           </p>
         </div>
       )}
@@ -1109,8 +1132,8 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
           <div className="w-full max-w-2xl rounded-2xl border border-border bg-white p-6 shadow-2xl">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-xl font-bold text-foreground">Restore inactive students</h2>
-                <p className="mt-1 text-sm text-muted">Select records to return to the active roster. Admission numbers are not automatically changed.</p>
+                <h2 className="text-xl font-bold text-foreground">{translateText("Restore inactive students")}</h2>
+                <p className="mt-1 text-sm text-muted">{translateText("Select records to return to the active roster. Admission numbers are not automatically changed.")}</p>
               </div>
               <button type="button" onClick={() => setIsInactiveModalOpen(false)} aria-label="Close restore dialog" className="rounded-lg p-2 text-muted hover:bg-background"><X className="h-4 w-4" /></button>
             </div>
@@ -1345,7 +1368,7 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="font-semibold text-foreground">Use the template below to prepare your file.</p>
-                    <p className="mt-1">Required columns: firstName, lastName, and className. Admission numbers are assigned automatically by the system.</p>
+                    <p className="mt-1">Required columns: firstName, lastName, and className. The template supports both parents' names, parent contact details, and Address. Admission numbers are optional and assigned automatically when blank.</p>
                   </div>
                   <button
                     type="button"
@@ -1427,6 +1450,9 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
                           <th className="px-3 py-2">Name</th>
                           <th className="px-3 py-2">Admission No.</th>
                           <th className="px-3 py-2">Class</th>
+                          <th className="px-3 py-2">Mother</th>
+                          <th className="px-3 py-2">Father</th>
+                          <th className="px-3 py-2">Address</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1435,6 +1461,9 @@ export default function StudentsPageClient({ pupils, classes }: { pupils: any[];
                             <td className="px-3 py-2">{row.firstName} {row.lastName}</td>
                             <td className="px-3 py-2">{row.admissionNo || '—'}</td>
                             <td className="px-3 py-2">{row.className || 'Unassigned'}</td>
+                            <td className="px-3 py-2">{row.motherFirst && row.motherLast ? `${row.motherFirst} ${row.motherLast}` : '—'}</td>
+                            <td className="px-3 py-2">{row.fatherFirst && row.fatherLast ? `${row.fatherFirst} ${row.fatherLast}` : '—'}</td>
+                            <td className="px-3 py-2">{row.address || '—'}</td>
                           </tr>
                         ))}
                       </tbody>

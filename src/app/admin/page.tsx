@@ -9,6 +9,7 @@ import { formatMoney } from "@/lib/format";
 import { getBackendUrl } from "@/lib/backend-url";
 import SubscriptionModal from "@/components/subscription-modal";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useLanguage } from "@/components/language-provider";
 
 const dashboardSectionThemes = [
   {
@@ -46,6 +47,7 @@ const dashboardSectionThemes = [
 ] as const;
 
 export default function AdminDashboardPage() {
+  const { t, locale } = useLanguage();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [dashboardData, setDashboardData] = useState<any>(null);
@@ -368,7 +370,7 @@ export default function AdminDashboardPage() {
 
   const stats = [
     {
-      label: "Outstanding fees",
+      label: t("outstandingFees"),
       value: formatMoney(dashboardData?.outstanding || 0, dashboardData?.currency || "NGN"),
       sub: `${dashboardData?.attentionCount || 0} invoices need attention`,
       href: "/admin/fees",
@@ -377,7 +379,7 @@ export default function AdminDashboardPage() {
       iconColor: "text-blue-600",
     },
     {
-      label: "Active pupils",
+      label: t("activePupils"),
       value: String(dashboardData?.pupilCount || 0),
       sub: `${dashboardData?.classCount || 0} classes`,
       href: "/admin/students",
@@ -395,9 +397,9 @@ export default function AdminDashboardPage() {
       iconColor: "text-amber-600",
     },
     {
-      label: "Recent payments",
+      label: t("recentPayments"),
       value: String(dashboardData?.recentPayments?.length || 0),
-      sub: "Latest transactions",
+      sub: t("latestTransactions"),
       href: "/admin/fees",
       icon: TrendingUp,
       color: "bg-emerald-100",
@@ -410,10 +412,10 @@ export default function AdminDashboardPage() {
       <div className="mb-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">
-            Good morning, {schoolName || 'Dashboard'}
+            Good morning, {schoolName || t("dashboard")}
           </h1>
           <p className="mt-1 text-muted">
-            Live dashboard — fees, results, and pupils from your database.
+            {t("dashboard")} — {t("fees")}, {t("results")}, and {t("students")} from your database.
           </p>
         </div>
 
@@ -514,28 +516,28 @@ export default function AdminDashboardPage() {
       {/* Quick Actions */}
       <div className="mb-10">
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-foreground">Quick Actions</h3>
+          <h3 className="text-sm font-semibold text-foreground">{t("quickActions")}</h3>
           <Link href="/admin/getting-started" className="inline-flex items-center gap-2 rounded-full border border-brand/20 bg-brand/10 px-3 py-2 text-sm font-semibold text-brand hover:bg-brand/20">
             <CheckCircle2 className="h-4 w-4" />
-            Start guide
+            {t("startGuide")}
           </Link>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <Link href="/admin/fees" className="w-full inline-flex cursor-pointer items-center justify-center px-4 py-3 bg-brand text-white rounded-lg hover:bg-brand/90 transition-colors font-medium shadow-sm hover:shadow-md">
             <CreditCard className="h-4 w-4 mr-2" />
-            Fees
+            {t("fees")}
           </Link>
           <Link href="/admin/students" className="w-full inline-flex cursor-pointer items-center justify-center px-4 py-3 bg-brand text-white rounded-lg hover:bg-brand/90 transition-colors font-medium shadow-sm hover:shadow-md">
             <Users className="h-4 w-4 mr-2" />
-            Students
+            {t("students")}
           </Link>
           <Link href="/admin/teachers" className="w-full inline-flex cursor-pointer items-center justify-center px-4 py-3 bg-brand text-white rounded-lg hover:bg-brand/90 transition-colors font-medium shadow-sm hover:shadow-md">
             <BookOpen className="h-4 w-4 mr-2" />
-            Teachers
+            {t("teachers")}
           </Link>
           <Link href="/admin/website" className="w-full inline-flex cursor-pointer items-center justify-center px-4 py-3 bg-brand text-white rounded-lg hover:bg-brand/90 transition-colors font-medium shadow-sm hover:shadow-md">
             <MessageSquare className="h-4 w-4 mr-2" />
-            Announcements
+            {t("announcements")}
           </Link>
         </div>
       </div>
@@ -549,15 +551,15 @@ export default function AdminDashboardPage() {
               <div className={`flex h-10 w-10 items-center justify-center rounded-full ${dashboardSectionThemes[1].iconWrap}`}>
                 <DollarSign className={`h-5 w-5 ${dashboardSectionThemes[1].iconColor}`} />
               </div>
-              <h2 className="font-semibold text-foreground">Recent payments</h2>
+              <h2 className="font-semibold text-foreground">{t("recentPayments")}</h2>
             </div>
             <span className={`rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-wider font-medium ${dashboardSectionThemes[1].badge}`}>
-              Latest
+              {t("latestTransactions")}
             </span>
           </div>
           <ul className="mt-4 divide-y divide-border/70 flex-1">
             {!dashboardData?.recentPayments || dashboardData.recentPayments.length === 0 ? (
-              <li className="py-3 text-sm text-muted">No payments yet.</li>
+              <li className="py-3 text-sm text-muted">{t("noPayments")}</li>
             ) : (
               dashboardData.recentPayments.slice(0, 3).map((p: any, idx: number) => (
                 <li key={idx} className={`flex items-center justify-between gap-2 px-3 py-2.5 first:pt-2.5 last:pb-2.5 ${dashboardSectionThemes[1].row}`}>
@@ -569,7 +571,7 @@ export default function AdminDashboardPage() {
             )}
           </ul>
           <Link href="/admin/fees" className={`mt-4 flex justify-end items-center gap-1 text-sm font-semibold transition ${dashboardSectionThemes[1].link}`}>
-            View all <ArrowUpRight className="h-3 w-3" />
+            {t("viewAll")} <ArrowUpRight className="h-3 w-3" />
           </Link>
         </div>
 
@@ -580,7 +582,7 @@ export default function AdminDashboardPage() {
               <div className={`flex h-10 w-10 items-center justify-center rounded-full ${dashboardSectionThemes[2].iconWrap}`}>
                 <Users className={`h-5 w-5 ${dashboardSectionThemes[2].iconColor}`} />
               </div>
-              <h2 className="font-semibold text-foreground">Latest students</h2>
+              <h2 className="font-semibold text-foreground">{t("latestStudents")}</h2>
             </div>
             <span className={`rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-wider font-medium ${dashboardSectionThemes[2].badge}`}>
               New
@@ -588,7 +590,7 @@ export default function AdminDashboardPage() {
           </div>
           <ul className="mt-4 divide-y divide-border/70 flex-1">
             {!dashboardData?.recentPupils || dashboardData.recentPupils.length === 0 ? (
-              <li className="py-3 text-sm text-muted">No new students yet.</li>
+              <li className="py-3 text-sm text-muted">{t("noNewStudents")}</li>
             ) : (
               dashboardData.recentPupils.slice(0, 3).map((pupil: any, idx: number) => (
                 <li key={idx} className={`flex items-center justify-between gap-2 px-3 py-2.5 first:pt-2.5 last:pb-2.5 ${dashboardSectionThemes[2].row}`}>
@@ -605,7 +607,7 @@ export default function AdminDashboardPage() {
             )}
           </ul>
           <Link href="/admin/students" className={`mt-4 flex justify-end items-center gap-1 text-sm font-semibold transition ${dashboardSectionThemes[2].link}`}>
-            View all <ArrowUpRight className="h-3 w-3" />
+            {t("viewAll")} <ArrowUpRight className="h-3 w-3" />
           </Link>
         </div>
 
@@ -616,7 +618,7 @@ export default function AdminDashboardPage() {
               <div className={`flex h-10 w-10 items-center justify-center rounded-full ${dashboardSectionThemes[0].iconWrap}`}>
                 <BookOpen className={`h-5 w-5 ${dashboardSectionThemes[0].iconColor}`} />
               </div>
-              <h2 className="font-semibold text-foreground">Latest teachers</h2>
+              <h2 className="font-semibold text-foreground">{t("latestTeachers")}</h2>
             </div>
             <span className={`rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-wider font-medium ${dashboardSectionThemes[0].badge}`}>
               New
@@ -624,7 +626,7 @@ export default function AdminDashboardPage() {
           </div>
           <ul className="mt-4 divide-y divide-border/70 flex-1">
             {!dashboardData?.recentTeachers || dashboardData.recentTeachers.length === 0 ? (
-              <li className="py-3 text-sm text-muted">No recent teachers yet.</li>
+              <li className="py-3 text-sm text-muted">{t("noRecentTeachers")}</li>
             ) : (
               dashboardData.recentTeachers.slice(0, 3).map((teacher: any, idx: number) => (
                 <li key={idx} className={`flex items-center justify-between gap-2 px-3 py-2.5 first:pt-2.5 last:pb-2.5 ${dashboardSectionThemes[0].row}`}>
@@ -635,7 +637,7 @@ export default function AdminDashboardPage() {
             )}
           </ul>
           <Link href="/admin/teachers" className={`mt-4 flex justify-end items-center gap-1 text-sm font-semibold transition ${dashboardSectionThemes[0].link}`}>
-            View all <ArrowUpRight className="h-3 w-3" />
+            {t("viewAll")} <ArrowUpRight className="h-3 w-3" />
           </Link>
         </div>
 
@@ -646,7 +648,7 @@ export default function AdminDashboardPage() {
               <div className={`flex h-10 w-10 items-center justify-center rounded-full ${dashboardSectionThemes[3].iconWrap}`}>
                 <MessageSquare className={`h-5 w-5 ${dashboardSectionThemes[3].iconColor}`} />
               </div>
-              <h2 className="font-semibold text-foreground">Latest announcements</h2>
+              <h2 className="font-semibold text-foreground">{t("latestAnnouncements")}</h2>
             </div>
             <span className={`rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-wider font-medium ${dashboardSectionThemes[3].badge}`}>
               New
@@ -654,7 +656,7 @@ export default function AdminDashboardPage() {
           </div>
           <ul className="mt-4 divide-y divide-border/70 flex-1">
             {!dashboardData?.recentAnnouncements || dashboardData.recentAnnouncements.length === 0 ? (
-              <li className="py-3 text-sm text-muted">No announcements yet.</li>
+              <li className="py-3 text-sm text-muted">{t("noAnnouncements")}</li>
             ) : (
               dashboardData.recentAnnouncements.slice(0, 3).map((announcement: any, idx: number) => (
                 <li key={idx} className={`flex items-center justify-between gap-2 px-3 py-2.5 first:pt-2.5 last:pb-2.5 ${dashboardSectionThemes[3].row}`}>
@@ -670,7 +672,7 @@ export default function AdminDashboardPage() {
             )}
           </ul>
           <Link href="/admin/website" className={`mt-4 flex justify-end items-center gap-1 text-sm font-semibold transition ${dashboardSectionThemes[3].link}`}>
-            View all <ArrowUpRight className="h-3 w-3" />
+            {t("viewAll")} <ArrowUpRight className="h-3 w-3" />
           </Link>
         </div>
       </section>

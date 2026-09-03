@@ -13,7 +13,7 @@ export function getBackendUrl(): string {
   // is forwarded to the API even though the custom frontend and API domains differ.
   if (typeof window !== 'undefined') {
     const pathname = window.location.pathname;
-    if (pathname.startsWith('/admin') || pathname.startsWith('/schoolbase-admin') || pathname.startsWith('/teacher')) {
+    if (pathname.startsWith('/admin') || pathname.startsWith('/schoolbase-admin') || pathname.startsWith('/teacher') || pathname.startsWith('/parent')) {
       return window.location.origin;
     }
   }

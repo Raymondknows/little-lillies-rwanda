@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { getBackendUrl } from "@/lib/backend-url";
 
 export function ParentLoginForm() {
   const router = useRouter();
@@ -19,7 +20,7 @@ export function ParentLoginForm() {
       const phone = formData.get("phone") as string;
       const admissionNo = formData.get("admissionNo") as string;
 
-      const res = await fetch("/api/auth/parent-login", {
+      const res = await fetch(`${getBackendUrl()}/api/parent/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include", // ✅ CRITICAL: Allow cookies to be set
